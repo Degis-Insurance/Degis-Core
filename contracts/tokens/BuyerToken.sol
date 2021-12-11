@@ -23,7 +23,7 @@ contract BuyerToken is ERC20PermitWithMultipleMinters {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Mint degis tokens
+     * @notice Mint buyer tokens
      * @param  _account Receiver's address
      * @param  _amount Amount to be minted
      */
@@ -32,7 +32,7 @@ contract BuyerToken is ERC20PermitWithMultipleMinters {
     }
 
     /**
-     * @notice Burn degis tokens
+     * @notice Burn buyer tokens
      * @param  _account Receiver's address
      * @param  _amount Amount to be burned
      */

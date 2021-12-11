@@ -17,4 +17,11 @@ interface IDegisToken is IERC20, IERC20Permit {
      * @param  _amount Amount to be minted
      */
     function mintDegis(address _account, uint256 _amount) external;
+
+    /**
+     * @notice Burn degis tokens
+     * @param  _account Receiver's address
+     * @param  _amount Amount to be burned
+     */
+    function burnDegis(address _account, uint256 _amount) external;
 }
