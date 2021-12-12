@@ -43,7 +43,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
     /**
      *@notice Check if the msg.sender is in the minter list
      */
-    modifier inMinterList(address _sender) {
+    modifier validMinter(address _sender) {
         require(
             isMinter[_sender] == true,
             "Only the address in the minter list can call this function"
@@ -54,12 +54,28 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
     /**
      * @notice Check if the msg.sender is in the burner list
      */
-    modifier inBurnerList(address _sender) {
+    modifier validBurner(address _sender) {
         require(
             isBurner[_sender] == true,
             "Only the address in the minter list can call this function"
         );
         _;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    // TODO: If we still need this function
+    function getMinterList() external view returns (address[] memory) {
+        uint256 length = minterList.length;
+        address[] memory allMinters = new address[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            allMinters[i] = minterList[i];
+        }
+
+        return allMinters;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -147,7 +163,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
      */
     function mint(address _account, uint256 _amount)
         internal
-        inMinterList(_msgSender())
+        validMinter(_msgSender())
     {
         _mint(_account, _amount); // ERC20 method with an event
         emit Mint(_account, _amount);
@@ -160,7 +176,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
      */
     function burn(address _account, uint256 _amount)
         internal
-        inBurnerList(_msgSender())
+        validBurner(_msgSender())
     {
         _burn(_account, _amount);
         emit Burn(_account, _amount);
