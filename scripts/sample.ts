@@ -3,7 +3,6 @@ const ethers = hre.ethers;
 
 async function main() {
   const Greeter = await ethers.getContractFactory("Greeter");
-
   const greeter = await Greeter.deploy("Hello");
 
   await greeter.deployed();
