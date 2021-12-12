@@ -175,9 +175,9 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
      * @notice Change the oracle address
      * @param _oracleAddress New oracle address
      */
-    function setFlightOracle(address _oracleAddress) external onlyOwner {
-        flightOracle = IFlightOracle(_oracleAddress);
-    }
+    // function setFlightOracle(address _oracleAddress) external onlyOwner {
+    //     flightOracle = IFlightOracle(_oracleAddress);
+    // }
 
     /**
      * @notice Set a new url
@@ -240,16 +240,16 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         );
 
         // Should be signed by operators
-        _checkSignature(
-            signature,
-            _flightNumber,
-            msg.sender,
-            _premium,
-            _deadline
-        );
+        // _checkSignature(
+        //     signature,
+        //     _flightNumber,
+        //     msg.sender,
+        //     _premium,
+        //     _deadline
+        // );
 
         // Generate the policy
-        uint256 currentPolicyId = Total_Policies;
+        uint256 currentPolicyId = totalPolicies;
         policyList[currentPolicyId] = PolicyInfo(
             PRODUCT_ID,
             msg.sender,
@@ -267,10 +267,10 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
 
         // Check the policy with the insurance pool status
         // May be accepted or rejected, if accepted then update the status of insurancePool
-        _policyCheck(_premium, MAX_PAYOFF, msg.sender, currentPolicyId);
+        // _policyCheck(_premium, MAX_PAYOFF, msg.sender, currentPolicyId);
 
         // Give buyer tokens depending on the usd value they spent
-        buyerToken.mint(msg.sender, _premium);
+        buyerToken.mintBuyerToken(msg.sender, _premium);
 
         // Store the policy's total order with userAddress
         userPolicyList[msg.sender].push(totalPolicies);

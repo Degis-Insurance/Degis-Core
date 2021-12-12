@@ -16,5 +16,17 @@ export async function loadInstance() {
     "PurchaseInventiveVault"
   );
 
-  return { Greeter, MockUSD, DegisToken, BuyerToken, PurchaseIncentiveVault };
+  // Flight-delay
+  const PolicyFlow = await ethers.getContractFactory("PolicyFlow");
+  const SigManager = await ethers.getContractFactory("SigManager");
+
+  return {
+    Greeter,
+    MockUSD,
+    DegisToken,
+    BuyerToken,
+    PurchaseIncentiveVault,
+    PolicyFlow,
+    SigManager,
+  };
 }

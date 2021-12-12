@@ -14,7 +14,7 @@ import "../utils/ERC20PermitWithMultipleMinters.sol";
  *         The minterList should contain FarmingPool and PurchaseIncentiveVault.
  *         The burnerList should contain EmergencyPool.
  */
-contract DegisToken is ERC20PermitWithMultipleMinters, IDegisToken {
+contract DegisToken is ERC20PermitWithMultipleMinters {
     // Degis has a total supply of 100 million
     uint256 public constant CAP = 1e8 ether;
 
