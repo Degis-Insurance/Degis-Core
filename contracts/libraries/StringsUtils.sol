@@ -8,6 +8,28 @@ library StringsUtils {
     bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
 
     /**
+     * @notice Bytes to string (not human-readable form)
+     * @param _bytes Input bytes
+     * @return stringBytes String form of the bytes
+     */
+    function byToString(bytes32 _bytes) internal pure returns (string memory) {
+        return toHexString(uint256(_bytes), 32);
+    }
+
+    /**
+     * @notice Transfer address to string (not change the content)
+     * @param _addr Input address
+     * @return stringAddress String form of the address
+     */
+    function addressToString(address _addr)
+        internal
+        pure
+        returns (string memory)
+    {
+        return toHexString(uint256(uint160(_addr)), 20);
+    }
+
+    /**
      * @dev Converts a `uint256` to its ASCII `string` decimal representation.
      */
     function toString(uint256 value) internal pure returns (string memory) {
@@ -51,7 +73,11 @@ library StringsUtils {
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
-    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+    function toHexString(uint256 value, uint256 length)
+        internal
+        pure
+        returns (string memory)
+    {
         bytes memory buffer = new bytes(2 * length + 2);
         buffer[0] = "0";
         buffer[1] = "x";

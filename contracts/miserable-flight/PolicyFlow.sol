@@ -6,8 +6,9 @@ import "../utils/Ownable.sol";
 
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
+import "./interfaces/IFDPolicyToken.sol";
 
-import "./PolicyParameters.sol";
+import "./struct/PolicyParameters.sol";
 
 contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
     using Chainlink for Chainlink.Request;
@@ -15,6 +16,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
     // Other contracts
     IBuyerToken buyerToken;
     ISigManager sigManager;
+    IFDPolicyToken policyToken;
 
     string public FLIGHT_STATUS_URL =
         "https://18.163.254.50:3207/flight_status?";
@@ -23,33 +25,26 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
 
     uint256 public fee;
 
-    enum PolicyStatus {
-        INI,
-        SOLD,
-        DECLINED,
-        EXPIRED,
-        CLAIMED
-    }
-
-    struct PolicyInfo {
-        uint256 productId;
-        address buyerAddress;
-        uint256 policyId;
-        string flightNumber;
-        uint256 premium;
-        uint256 payoff;
-        uint256 purchaseTimestamp;
-        uint256 departureTimestamp;
-        uint256 landingTimestamp;
-        PolicyStatus status;
-        bool alreadySettled;
-        uint256 delayResult;
-    }
     mapping(uint256 => PolicyInfo) public policyList;
 
     mapping(address => uint256[]) userPolicyList;
 
+    mapping(uint256 => uint256) requestList;
+
     mapping(uint256 => uint256) delayResultList;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    event NewPolicyApplication(uint256 _policyID, address indexed _userAddress);
+    event PolicySold(uint256 _policyID, address indexed _userAddress);
+    event PolicyDeclined(uint256 _policyID, address indexed _userAddress);
+    event PolicyClaimed(uint256 _policyID, address indexed _userAddress);
+    event PolicyExpired(uint256 _policyID, address indexed _userAddress);
+    event FulfilledOracleRequest(uint256 _policyId, bytes32 _requestId);
+    event PolicyOwnerTransfer(uint256 indexed _tokenId, address _newOwner);
+    event DelayThresholdSet(uint256 _thresholdMin, uint256 _thresholdMax);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -60,6 +55,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         address _sigManager,
         address _buyerToken
     ) {
+        policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
     }
@@ -278,8 +274,101 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         // Update total policies
         totalPolicies += 1;
 
-        emit newPolicyApplication(currentPolicyId, msg.sender);
+        emit NewPolicyApplication(currentPolicyId, msg.sender);
 
         return currentPolicyId;
+    }
+
+    /** @notice Make a claim request
+     *  @param _policyId The total order/id of the policy
+     *  @param _flightNumber The flight number
+     *  @param _timestamp The flight departure timestamp
+     *  @param _path Which data in json needs to get
+     *  @param _forceUpdate Owner can force to update
+     */
+    function newClaimRequest(
+        uint256 _policyId,
+        string memory _flightNumber,
+        string memory _timestamp,
+        string memory _path,
+        bool _forceUpdate
+    ) public {
+        // Can not get the result before landing date
+        // Landing date may not be true, may be a fixed interval (4hours)
+        require(
+            block.timestamp >= policyList[_policyId].landingTimestamp,
+            "Can only claim a policy after its expected landing timestamp"
+        );
+
+        // Check if the policy has been settled
+        require(
+            (!policyList[_policyId].alreadySettled) ||
+                (_forceUpdate && (msg.sender == owner)),
+            "The policy status has already been settled, or you need to make a force update"
+        );
+
+        // Check if the flight number is correct
+        require(
+            keccak256(abi.encodePacked(_flightNumber)) ==
+                keccak256(abi.encodePacked(policyList[_policyId].flightNumber)),
+            "Wrong flight number provided"
+        );
+
+        // Check if the departure date is correct
+        require(
+            keccak256(abi.encodePacked(_timestamp)) ==
+                keccak256(
+                    abi.encodePacked(policyList[_policyId].departureDate)
+                ),
+            "Wrong departure timestamp provided"
+        );
+
+        // Construct the url for oracle
+        string memory _url = string(
+            abi.encodePacked(
+                FLIGHT_STATUS_URL,
+                "flight_no=",
+                _flightNumber,
+                "&timestamp=",
+                _timestamp
+            )
+        );
+
+        // Start a new oracle request
+        bytes32 requestId = flightOracle.newOracleRequest(fee, _url, _path, 1);
+
+        // Record this request
+        requestList[requestId] = _policyId;
+        policyList[_policyId].isUsed = true;
+    }
+
+    /**
+     * @notice Update information when a policy token's ownership has been transferred
+     * @dev This function is called by the ERC721 contract of PolicyToken
+     * @param _tokenId Token Id of the policy token
+     * @param _oldOwner The initial owner
+     * @param _newOwner The new owner
+     */
+    function policyOwnerTransfer(
+        uint256 _tokenId,
+        address _oldOwner,
+        address _newOwner
+    ) external override {
+        // Check the call is from policy token contract
+        require(
+            _msgSender() == address(policyToken),
+            "only called from the flight delay policy token contract"
+        );
+
+        // Check the previous owner record
+        uint256 policyId = _tokenId;
+        require(
+            _oldOwner == policyList[policyId].buyerAddress,
+            "The previous owner is wrong"
+        );
+
+        // Update the new buyer address
+        policyList[policyId].buyerAddress = _newOwner;
+        emit PolicyOwnerTransfer(_tokenId, _newOwner);
     }
 }
