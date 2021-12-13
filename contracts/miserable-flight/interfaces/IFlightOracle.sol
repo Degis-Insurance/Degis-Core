@@ -20,4 +20,6 @@ interface IFlightOracle {
 
     // Set a new policy flow
     function setPolicyFlow(address _policyFlow) external;
+
+    function getChainlinkTokenAddress() external view returns (address);
 }

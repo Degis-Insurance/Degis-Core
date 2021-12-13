@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "./PolicyStruct.sol";
-
-contract PolicyParameters is PolicyStruct {
+abstract contract PolicyParameters {
     // Product parameter
     uint256 public constant PRODUCT_ID = 0;
 
@@ -14,6 +12,4 @@ contract PolicyParameters is PolicyStruct {
 
     // Minimum time before departure for applying
     uint256 public MIN_TIME_BEFORE_DEPARTURE = 24 hours;
-
-    /// @notice Event list
 }

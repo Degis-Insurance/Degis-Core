@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "../utils/Ownable.sol";
 import "../libraries/StringsUtils.sol";
 import "./interfaces/IPolicyFlow.sol";
+import "./interfaces/IPolicyStruct.sol";
 
 /**
  * @title  Policy Token for flight delay
@@ -12,8 +13,9 @@ import "./interfaces/IPolicyFlow.sol";
  *         Can get a long string form of the tokenURI
  *         When the ownership is transferred, it will update the status in policyFlow
  */
-contract FDPolicyToken is ERC721Enumerable, Ownable {
+contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
     using StringsUtils for uint256;
+    using StringsUtils for address;
 
     // PolicyFlow contract interface
     IPolicyFlow policyFlow;
@@ -21,32 +23,14 @@ contract FDPolicyToken is ERC721Enumerable, Ownable {
     uint256 public _nextId;
 
     struct PolicyTokenURIParam {
-        uint256 productId;
         string flightNumber;
-        uint256 policyId;
         address owner;
         uint256 premium;
         uint256 payoff;
-        uint256 purchaseDate;
-        uint256 departureDate;
-        uint256 landingDate;
+        uint256 purchaseTimestamp;
+        uint256 departureTimestamp;
+        uint256 landingTimestamp;
         uint256 status;
-    }
-
-    struct PolicyInfo {
-        uint256 productId; // 0: flight delay 1,2,3: future products
-        address buyerAddress; // buyer's address
-        uint256 policyId; // total order: 0 - N (unique for each policy)(used to link)
-        string flightNumber; // Flight number
-        uint256 premium; // Premium
-        uint256 payoff; // Max payoff
-        uint256 purchaseDate; // Unix timestamp (s)
-        uint256 departureDate; // Used for buying new applications. Unix timestamp (s)
-        uint256 landingDate; // Used for oracle. Unix timestamp (s)
-        PolicyStatus status; // INI, SOLD, DECLINED, EXPIRED, CLAIMED
-        // Oracle Related
-        bool isUsed; // Whether has call the oracle
-        uint256 delayResult; // [400:cancelled] [0: on time] [0 ~ 240: delay time] [404: initial]
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -98,11 +82,11 @@ contract FDPolicyToken is ERC721Enumerable, Ownable {
      */
     function mintPolicyToken(address _to) public {
         require(
-            msg.sender == address(policyFlow),
+            _msgSender() == address(policyFlow),
             "only the policyflow can mint policy token"
         );
         uint256 tokenId = _nextId++;
-        _mint(_to, tokenId);
+        _safeMint(_to, tokenId);
     }
 
     /**
@@ -139,15 +123,13 @@ contract FDPolicyToken is ERC721Enumerable, Ownable {
         return
             constructTokenURI(
                 PolicyTokenURIParam(
-                    info.productId,
                     info.flightNumber,
-                    info.policyId,
                     info.buyerAddress,
                     info.premium,
                     info.payoff,
-                    info.purchaseDate,
-                    info.departureDate,
-                    info.landingDate,
+                    info.purchaseTimestamp,
+                    info.departureTimestamp,
+                    info.landingTimestamp,
                     uint256(info.status)
                 )
             );
@@ -161,39 +143,81 @@ contract FDPolicyToken is ERC721Enumerable, Ownable {
         pure
         returns (string memory)
     {
-        uint256 status = uint256(_params.status);
-        return
-            string(
-                abi.encodePacked(
-                    "ProductId: ",
-                    _params.productId.toString(),
-                    ", ",
-                    "FlightNumber: ",
-                    _params.flightNumber,
-                    "PolicyId: ",
-                    _params.policyId.toString(),
-                    ", ",
-                    "BuyerAddress: ",
-                    addressToString(_params.owner),
-                    "Premium: ",
-                    (_params.premium / 10**18).toString(),
-                    ", ",
-                    "Payoff: ",
-                    (_params.payoff / 10**18).toString(),
-                    ", ",
-                    "PurchaseDate: ",
-                    _params.purchaseDate.toString(),
-                    ", ",
-                    "DepartureDate:",
-                    _params.departureDate.toString(),
-                    ", ",
-                    "LandingDate: ",
-                    _params.landingDate.toString(),
-                    ", ",
-                    "PolicyStatus: ",
-                    status.toString(),
-                    "."
-                )
-            );
+        string[9] memory parts;
+
+        parts[0] = "ProductId: 0, ";
+        parts[1] = string(
+            abi.encodePacked("FlightNumber: ", _params.flightNumber, ", ")
+        );
+        parts[2] = string(
+            abi.encodePacked(
+                "BuyerAddress: ",
+                (_params.owner).addressToString(),
+                ", "
+            )
+        );
+
+        parts[3] = string(
+            abi.encodePacked(
+                "Premium: ",
+                (_params.premium / 1e18).uintToString(),
+                ", "
+            )
+        );
+
+        parts[4] = string(
+            abi.encodePacked(
+                "Payoff: ",
+                (_params.payoff / 1e18).uintToString(),
+                ", "
+            )
+        );
+
+        parts[5] = string(
+            abi.encodePacked(
+                "PurchaseTimestamp: ",
+                _params.purchaseTimestamp.uintToString(),
+                ", "
+            )
+        );
+
+        parts[6] = string(
+            abi.encodePacked(
+                "DepartureTimestamp:",
+                _params.departureTimestamp.uintToString(),
+                ", "
+            )
+        );
+
+        parts[7] = string(
+            abi.encodePacked(
+                "LandingTimestamp: ",
+                (_params.landingTimestamp).uintToString(),
+                ", "
+            )
+        );
+
+        parts[8] = string(
+            abi.encodePacked(
+                "PolicyStatus: ",
+                _params.status.uintToString(),
+                "."
+            )
+        );
+
+        string memory output = string(
+            abi.encodePacked(
+                parts[0],
+                parts[1],
+                parts[2],
+                parts[3],
+                parts[4],
+                parts[5],
+                parts[6],
+                parts[7],
+                parts[8]
+            )
+        );
+        return output;
     }
 }

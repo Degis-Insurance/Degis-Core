@@ -13,7 +13,7 @@ library StringsUtils {
      * @return stringBytes String form of the bytes
      */
     function byToString(bytes32 _bytes) internal pure returns (string memory) {
-        return toHexString(uint256(_bytes), 32);
+        return uintToHexString(uint256(_bytes), 32);
     }
 
     /**
@@ -26,13 +26,13 @@ library StringsUtils {
         pure
         returns (string memory)
     {
-        return toHexString(uint256(uint160(_addr)), 20);
+        return uintToHexString(uint256(uint160(_addr)), 20);
     }
 
     /**
      * @dev Converts a `uint256` to its ASCII `string` decimal representation.
      */
-    function toString(uint256 value) internal pure returns (string memory) {
+    function uintToString(uint256 value) internal pure returns (string memory) {
         // Inspired by OraclizeAPI's implementation - MIT licence
         // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
 
@@ -57,7 +57,11 @@ library StringsUtils {
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation.
      */
-    function toHexString(uint256 value) internal pure returns (string memory) {
+    function uintToHexString(uint256 value)
+        internal
+        pure
+        returns (string memory)
+    {
         if (value == 0) {
             return "0x00";
         }
@@ -67,13 +71,13 @@ library StringsUtils {
             length++;
             temp >>= 8;
         }
-        return toHexString(value, length);
+        return uintToHexString(value, length);
     }
 
     /**
      * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.
      */
-    function toHexString(uint256 value, uint256 length)
+    function uintToHexString(uint256 value, uint256 length)
         internal
         pure
         returns (string memory)

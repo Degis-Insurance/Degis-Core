@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-contract PolicyStruct {
+interface IPolicyStruct {
     enum PolicyStatus {
         INI,
         SOLD,

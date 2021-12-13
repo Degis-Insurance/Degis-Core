@@ -1,22 +1,29 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
-import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 
 import "../utils/Ownable.sol";
+import "../utils/Context.sol";
 
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
 import "./interfaces/IFDPolicyToken.sol";
+import "./interfaces/IFlightOracle.sol";
+import "./interfaces/IInsurancePool.sol";
 
-import "./struct/PolicyParameters.sol";
+import "./interfaces/IPolicyStruct.sol";
+import "./abstracts/PolicyParameters.sol";
 
-contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
-    using Chainlink for Chainlink.Request;
-
+contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Context {
     // Other contracts
-    IBuyerToken buyerToken;
-    ISigManager sigManager;
-    IFDPolicyToken policyToken;
+    IBuyerToken public buyerToken;
+    ISigManager public sigManager;
+    IFDPolicyToken public policyToken;
+    IFlightOracle public flightOracle;
+    IInsurancePool public insurancePool;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     string public FLIGHT_STATUS_URL =
         "https://18.163.254.50:3207/flight_status?";
@@ -29,7 +36,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
 
     mapping(address => uint256[]) userPolicyList;
 
-    mapping(uint256 => uint256) requestList;
+    mapping(bytes32 => uint256) requestList;
 
     mapping(uint256 => uint256) delayResultList;
 
@@ -49,12 +56,14 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
+
     constructor(
         address _insurancePool,
         address _policyToken,
         address _sigManager,
         address _buyerToken
     ) {
+        insurancePool = IInsurancePool(_insurancePool);
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
@@ -75,15 +84,6 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
     // ----------------------------------------------------------------------------------- //
     // ********************************* View Functions ********************************** //
     // ----------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Returns the address of the LINK token
-     * @dev This is the public implementation for chainlinkTokenAddress, which is
-     *      an internal method of the ChainlinkClient contract
-     */
-    function getChainlinkTokenAddress() external view returns (address) {
-        return chainlinkTokenAddress();
-    }
 
     /**
      * @notice Show a user's policies (all)
@@ -220,8 +220,9 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         uint256 _deadline,
         bytes calldata signature
     ) public returns (uint256 _policyId) {
+        uint256 currentTimestamp = block.timestamp;
         require(
-            block.timestamp <= _deadline,
+            currentTimestamp <= _deadline,
             "Expired deadline, please resubmit a transaction"
         );
 
@@ -231,29 +232,29 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         );
 
         require(
-            _departureTimestamp >= block.timestamp + MIN_TIME_BEFORE_DEPARTURE,
+            _departureTimestamp >= currentTimestamp + MIN_TIME_BEFORE_DEPARTURE,
             "It's too close to the departure time, you cannot buy this policy"
         );
 
         // Should be signed by operators
-        // _checkSignature(
-        //     signature,
-        //     _flightNumber,
-        //     msg.sender,
-        //     _premium,
-        //     _deadline
-        // );
+        _checkSignature(
+            signature,
+            _flightNumber,
+            _msgSender(),
+            _premium,
+            _deadline
+        );
 
         // Generate the policy
         uint256 currentPolicyId = totalPolicies;
         policyList[currentPolicyId] = PolicyInfo(
             PRODUCT_ID,
-            msg.sender,
+            _msgSender(),
             currentPolicyId,
             _flightNumber,
             _premium,
             MAX_PAYOFF,
-            block.timestamp,
+            currentTimestamp,
             _departureTimestamp,
             _landingDate,
             PolicyStatus.INI,
@@ -263,7 +264,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
 
         // Check the policy with the insurance pool status
         // May be accepted or rejected, if accepted then update the status of insurancePool
-        // _policyCheck(_premium, MAX_PAYOFF, msg.sender, currentPolicyId);
+        _policyCheck(_premium, MAX_PAYOFF, msg.sender, currentPolicyId);
 
         // Give buyer tokens depending on the usd value they spent
         buyerToken.mintBuyerToken(msg.sender, _premium);
@@ -303,7 +304,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         // Check if the policy has been settled
         require(
             (!policyList[_policyId].alreadySettled) ||
-                (_forceUpdate && (msg.sender == owner)),
+                (_forceUpdate && (_msgSender() == owner())),
             "The policy status has already been settled, or you need to make a force update"
         );
 
@@ -318,12 +319,13 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         require(
             keccak256(abi.encodePacked(_timestamp)) ==
                 keccak256(
-                    abi.encodePacked(policyList[_policyId].departureDate)
+                    abi.encodePacked(policyList[_policyId].departureTimestamp)
                 ),
             "Wrong departure timestamp provided"
         );
 
         // Construct the url for oracle
+
         string memory _url = string(
             abi.encodePacked(
                 FLIGHT_STATUS_URL,
@@ -339,7 +341,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
 
         // Record this request
         requestList[requestId] = _policyId;
-        policyList[_policyId].isUsed = true;
+        policyList[_policyId].alreadySettled = true;
     }
 
     /**
@@ -353,7 +355,7 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         uint256 _tokenId,
         address _oldOwner,
         address _newOwner
-    ) external override {
+    ) external {
         // Check the call is from policy token contract
         require(
             _msgSender() == address(policyToken),
@@ -370,5 +372,163 @@ contract PolicyFlow is ChainlinkClient, PolicyParameters, Ownable {
         // Update the new buyer address
         policyList[policyId].buyerAddress = _newOwner;
         emit PolicyOwnerTransfer(_tokenId, _newOwner);
+    }
+
+    // ----------------------------------------------------------------------------------- //
+    // ********************************* Oracle Functions ******************************** //
+    // ----------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Do the final settlement, called by FlightOracle contract
+     * @param _requestId Chainlink request id
+     * @param _result Delay result (minutes) given by oracle
+     */
+    function finalSettlement(bytes32 _requestId, uint256 _result) public {
+        // Check if the call is from flight oracle
+        require(
+            msg.sender == address(flightOracle),
+            "this function should be called by FlightOracle contract"
+        );
+
+        uint256 policyId = requestList[_requestId];
+
+        PolicyInfo storage policy = policyList[policyId];
+        policy.delayResult = _result;
+
+        uint256 premium = policy.premium;
+        address buyerAddress = policy.buyerAddress;
+
+        require(
+            _result <= DELAY_THRESHOLD_MAX || _result == 400,
+            "Abnormal oracle result, result should be [0 - 240] or 400"
+        );
+
+        if (_result == 0) {
+            // 0: on time
+            policyExpired(premium, MAX_PAYOFF, buyerAddress, policyId);
+        } else if (_result <= DELAY_THRESHOLD_MAX) {
+            uint256 real_payoff = calcPayoff(_result);
+            _policyClaimed(premium, real_payoff, buyerAddress, policyId);
+        } else if (_result == 400) {
+            // 400: cancelled
+            _policyClaimed(premium, MAX_PAYOFF, buyerAddress, policyId);
+        }
+
+        emit FulfilledOracleRequest(policyId, _requestId);
+    }
+
+    // ----------------------------------------------------------------------------------- //
+    // ******************************** Internal Functions ******************************* //
+    // ----------------------------------------------------------------------------------- //
+
+    /**
+     * @notice check the policy and then determine whether we can afford it
+     * @param _payoff the payoff of the policy sold
+     * @param _userAddress user's address
+     * @param _policyId the unique policy ID
+     */
+    function _policyCheck(
+        uint256 _premium,
+        uint256 _payoff,
+        address _userAddress,
+        uint256 _policyId
+    ) internal {
+        // Whether there are enough capacity in the pool
+        bool _isAccepted = insurancePool.checkCapacity(_payoff);
+
+        if (_isAccepted) {
+            insurancePool.updateWhenBuy(_premium, _payoff, _userAddress);
+            policyList[_policyId].status = PolicyStatus.SOLD;
+            emit PolicySold(_policyId, _userAddress);
+
+            policyToken.mintPolicyToken(_userAddress);
+        } else {
+            policyList[_policyId].status = PolicyStatus.DECLINED;
+            emit PolicyDeclined(_policyId, _userAddress);
+            revert("not sufficient capacity in the insurance pool");
+        }
+    }
+
+    /**
+     * @notice update the policy when it is expired
+     * @param _premium the premium of the policy sold
+     * @param _payoff the payoff of the policy sold
+     * @param _userAddress user's address
+     * @param _policyId the unique policy ID
+     */
+    function policyExpired(
+        uint256 _premium,
+        uint256 _payoff,
+        address _userAddress,
+        uint256 _policyId
+    ) internal {
+        insurancePool.updateWhenExpire(_premium, _payoff, _userAddress);
+        policyList[_policyId].status = PolicyStatus.EXPIRED;
+        emit PolicyExpired(_policyId, _userAddress);
+    }
+
+    /**
+     * @notice Update the policy when it is claimed
+     * @param _premium Premium of the policy sold
+     * @param _payoff Payoff of the policy sold
+     * @param _userAddress User's address
+     * @param _policyId The unique policy ID
+     */
+    function _policyClaimed(
+        uint256 _premium,
+        uint256 _payoff,
+        address _userAddress,
+        uint256 _policyId
+    ) internal {
+        insurancePool.payClaim(_premium, MAX_PAYOFF, _payoff, _userAddress);
+        policyList[_policyId].status = PolicyStatus.CLAIMED;
+        emit PolicyClaimed(_policyId, _userAddress);
+    }
+
+    /**
+     * @notice The payoff formula
+     * @param _delay Delay in minutes
+     * @return the final payoff volume
+     */
+    function calcPayoff(uint256 _delay) internal view returns (uint256) {
+        uint256 payoff = 0;
+
+        // payoff model 1 - linear
+        if (_delay <= DELAY_THRESHOLD_MIN) {
+            payoff = 0;
+        } else if (
+            _delay > DELAY_THRESHOLD_MIN && _delay <= DELAY_THRESHOLD_MAX
+        ) {
+            payoff = (_delay * _delay) / 480;
+        } else if (_delay > DELAY_THRESHOLD_MAX) {
+            payoff = MAX_PAYOFF;
+        }
+
+        payoff = payoff * 1e18;
+        return payoff;
+    }
+
+    /**
+     * @notice Check whether the signature is valid
+     * @param signature 65 byte array: [[v (1)], [r (32)], [s (32)]]
+     * @param _flightNumber Flight number
+     * @param _address userAddress
+     * @param _premium Premium of the policy
+     * @param _deadline Deadline of the application
+     */
+    function _checkSignature(
+        bytes calldata signature,
+        string memory _flightNumber,
+        address _address,
+        uint256 _premium,
+        uint256 _deadline
+    ) internal view {
+        sigManager.checkSignature(
+            signature,
+            _flightNumber,
+            _address,
+            _premium,
+            _deadline
+        );
     }
 }
