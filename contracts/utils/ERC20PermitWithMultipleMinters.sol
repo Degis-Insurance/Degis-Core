@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
-import "./Ownable.sol";
+import "./OwnableWithoutContext.sol";
 
 /**
  * @title  ERC20 with Multiple Minters and Burners
@@ -11,7 +11,7 @@ import "./Ownable.sol";
  *         Even if the owner is renounced to zero address, the token can still be minted/burned.
  *         DegisToken and BuyerToken are both this kind ERC20 token.
  */
-contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
+contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
     // List of all minters
     address[] public minterList;
     mapping(address => bool) public isMinter;
@@ -109,6 +109,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
                     minterList[j] = minterList[j + 1];
                 }
                 minterList.pop();
+                break;
             } else continue;
         }
         isMinter[_oldMinter] = false;
@@ -145,6 +146,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, Ownable {
                     burnerList[j] = burnerList[j + 1];
                 }
                 burnerList.pop();
+                break;
             } else continue;
         }
         isBurner[_oldBurner] = false;

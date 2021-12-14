@@ -258,8 +258,13 @@ contract FarmingPool is Ownable {
      * @param _amount Staking amount
      */
     function stake(uint256 _poolId, uint256 _amount) public {
+        require(
+            _amount > 0,
+            "Do not stake 0, you can use harvest for your reward"
+        );
+
         PoolInfo storage pool = poolList[_poolId];
-        UserInfo storage user = userInfo[_poolId][msg.sender];
+        UserInfo storage user = userInfo[_poolId][_msgSender()];
 
         // Must update first!!
         updatePool(_poolId);
@@ -268,12 +273,12 @@ contract FarmingPool is Ownable {
             uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
                 user.rewardDebt;
 
-            safeDegisTransfer(msg.sender, pending);
+            safeDegisTransfer(_msgSender(), pending);
         }
 
-        // Approve
+        // Transfer the lptoken into farming pool
         IERC20(pool.lpToken).safeTransferFrom(
-            address(msg.sender),
+            address(_msgSender()),
             address(this),
             _amount
         );
@@ -281,7 +286,7 @@ contract FarmingPool is Ownable {
         user.stakingBalance += _amount;
         user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
 
-        emit Stake(msg.sender, _poolId, _amount);
+        emit Stake(_msgSender(), _poolId, _amount);
     }
 
     /**
@@ -291,23 +296,23 @@ contract FarmingPool is Ownable {
      */
     function withdraw(uint256 _poolId, uint256 _amount) public {
         PoolInfo storage pool = poolList[_poolId];
-        UserInfo storage user = userInfo[_poolId][msg.sender];
+        UserInfo storage user = userInfo[_poolId][_msgSender()];
 
-        require(user.stakingBalance >= _amount, "not enough balance");
+        require(user.stakingBalance >= _amount, "Not enough stakingBalance");
 
         updatePool(_poolId);
 
         uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
             user.rewardDebt;
 
-        safeDegisTransfer(msg.sender, pending);
+        safeDegisTransfer(_msgSender(), pending);
 
         user.stakingBalance -= _amount;
         user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
 
-        IERC20(pool.lpToken).safeTransfer(address(msg.sender), _amount);
+        IERC20(pool.lpToken).safeTransfer(_msgSender(), _amount);
 
-        emit Withdraw(msg.sender, _poolId, _amount);
+        emit Withdraw(_msgSender(), _poolId, _amount);
     }
 
     /**
@@ -346,7 +351,7 @@ contract FarmingPool is Ownable {
     function harvest(uint256 _poolId, address _to) public {
         updatePool(_poolId);
         PoolInfo memory pool = poolList[_poolId];
-        UserInfo storage user = userInfo[_poolId][msg.sender];
+        UserInfo storage user = userInfo[_poolId][_msgSender()];
 
         uint256 pendingReward = user.stakingBalance.mul(pool.accDegisPerShare) -
             user.rewardDebt;
@@ -359,7 +364,7 @@ contract FarmingPool is Ownable {
             degis.safeTransfer(_to, pendingReward);
         }
 
-        emit Harvest(msg.sender, _to, _poolId, pendingReward);
+        emit Harvest(_msgSender(), _to, _poolId, pendingReward);
     }
 
     /**
