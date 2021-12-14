@@ -52,6 +52,14 @@ const config: HardhatUserConfig = {
         count: 20,
       },
     },
+    avax: {
+      url: process.env.AVAX_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
+        count: 20,
+      },
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
