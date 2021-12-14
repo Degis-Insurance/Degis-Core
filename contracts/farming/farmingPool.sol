@@ -94,7 +94,7 @@ contract FarmingPool is Ownable {
      * @notice The address can not be zero
      */
     modifier notZeroAddress(address _address) {
-        require(_address != address(0), "the address can not be zero address");
+        require(_address != address(0), "Can not be zero address");
         _;
     }
 
@@ -109,7 +109,7 @@ contract FarmingPool is Ownable {
      * @return pendingDegisAmount Amount of pending degis
      */
     function pendingDegis(uint256 _poolId, address _userAddress)
-        public
+        external
         view
         notZeroAddress(_userAddress)
         returns (uint256)
