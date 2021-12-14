@@ -2,7 +2,6 @@
 pragma solidity ^0.8.4;
 
 import "../utils/Ownable.sol";
-import "../utils/Context.sol";
 
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
@@ -13,7 +12,7 @@ import "./interfaces/IInsurancePool.sol";
 import "./interfaces/IPolicyStruct.sol";
 import "./abstracts/PolicyParameters.sol";
 
-contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Context {
+contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     // Other contracts
     IBuyerToken public buyerToken;
     ISigManager public sigManager;

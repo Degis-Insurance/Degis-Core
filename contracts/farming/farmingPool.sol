@@ -11,7 +11,7 @@ import "../tokens/interfaces/IDegisToken.sol";
 
 /**
  * @title  Farming Pool
- * @notice This contract is similar to MasterChef
+ * @notice This contract is for LPToken mining on Degis.
  * @dev    The pool id starts from 1 not 0
  */
 contract FarmingPool is Ownable {
@@ -389,9 +389,8 @@ contract FarmingPool is Ownable {
         returns (bool _isInPool)
     {
         uint256 poolId = poolMapping[_lpTokenAddress];
-        // Never been added
-        if (poolId == 0) _isInPool = false;
-        else _isInPool = true;
+
+        _isInPool = (poolId != 0) ? true : false;
     }
 
     /**
@@ -400,9 +399,9 @@ contract FarmingPool is Ownable {
      * @param _amount Amount to transfer
      */
     function safeDegisTransfer(address _to, uint256 _amount) internal {
-        uint256 DegisBalance = degis.balanceOf(address(this));
-        if (_amount > DegisBalance) {
-            degis.transfer(_to, DegisBalance);
+        uint256 totalDegis = degis.balanceOf(address(this));
+        if (_amount > totalDegis) {
+            degis.transfer(_to, totalDegis);
         } else {
             degis.transfer(_to, _amount);
         }

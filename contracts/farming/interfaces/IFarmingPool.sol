@@ -2,7 +2,9 @@
 pragma solidity ^0.8.4;
 
 interface IFarmingPool {
-    function pendingDegis(uint256, address) external returns (uint256);
+    function pendingDegis(uint256 _poolId, address _userAddress)
+        external
+        returns (uint256);
 
     function setStartBlock(uint256 _startBlock) external;
 

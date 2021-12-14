@@ -2,7 +2,7 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "../utils/Ownable.sol";
+import "../utils/OwnableWithoutContext.sol";
 import "../libraries/StringsUtils.sol";
 import "./interfaces/IPolicyFlow.sol";
 import "./interfaces/IPolicyStruct.sol";
@@ -15,7 +15,11 @@ import "hardhat/console.sol";
  *         Can get a long string form of the tokenURI
  *         When the ownership is transferred, it will update the status in policyFlow
  */
-contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
+contract FDPolicyToken is
+    ERC721Enumerable,
+    IPolicyStruct,
+    OwnableWithoutContext
+{
     using StringsUtils for uint256;
     using StringsUtils for address;
 
@@ -39,7 +43,7 @@ contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() ERC721("Degis_FlightDelay_PolicyToken", "DEGIS_FD_PT") {
+    constructor() ERC721("Degis FlightDelay PolicyToken", "DEGIS_FD_PT") {
         _nextId = 1;
     }
 

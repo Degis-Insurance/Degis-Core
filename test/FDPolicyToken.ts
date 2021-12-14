@@ -20,7 +20,7 @@ describe("Flight Delay Policy Token", function () {
 
   describe("Deployment", function () {
     it("should have correct name and symbol", async function () {
-      expect(await fdToken.name()).to.equal("Degis_FlightDelay_PolicyToken");
+      expect(await fdToken.name()).to.equal("Degis FlightDelay PolicyToken");
       expect(await fdToken.symbol()).to.equal("DEGIS_FD_PT");
     });
 
