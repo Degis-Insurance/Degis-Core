@@ -7,6 +7,8 @@ import "../libraries/StringsUtils.sol";
 import "./interfaces/IPolicyFlow.sol";
 import "./interfaces/IPolicyStruct.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Policy Token for flight delay
  * @notice ERC721 policy token
@@ -18,7 +20,7 @@ contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
     using StringsUtils for address;
 
     // PolicyFlow contract interface
-    IPolicyFlow policyFlow;
+    IPolicyFlow public policyFlow;
 
     uint256 public _nextId;
 
@@ -56,7 +58,7 @@ contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
         override(ERC721)
         returns (string memory)
     {
-        require(_tokenId < _nextId, "error, tokenId too large!");
+        require(_tokenId < _nextId, "TokenId is too large!");
         return getTokenURI(_tokenId);
     }
 
@@ -83,7 +85,7 @@ contract FDPolicyToken is ERC721Enumerable, IPolicyStruct, Ownable {
     function mintPolicyToken(address _to) public {
         require(
             _msgSender() == address(policyFlow),
-            "only the policyflow can mint policy token"
+            "Only the policyflow contract can mint policy token"
         );
         uint256 tokenId = _nextId++;
         _safeMint(_to, tokenId);

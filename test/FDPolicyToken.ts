@@ -1,18 +1,75 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { FDPolicyToken, FDPolicyToken__factory } from "../typechain";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Flight Delay Policy Token", function () {
   let FDPolicyToken: FDPolicyToken__factory, fdToken: FDPolicyToken;
+  let dev_account: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress,
+    policyflow: SignerWithAddress;
 
-  before(async function () {
+  beforeEach(async function () {
     FDPolicyToken = await ethers.getContractFactory("FDPolicyToken");
     fdToken = await FDPolicyToken.deploy();
     await fdToken.deployed();
+
+    [dev_account, user1, user2, policyflow] = await ethers.getSigners();
   });
 
-  it("should have correct name and symbol", async function () {
-    expect(await fdToken.name()).to.equal("Degis_FlightDelay_PolicyToken");
-    expect(await fdToken.symbol()).to.equal("DEGIS_FD_PT");
+  describe("Deployment", function () {
+    it("should have correct name and symbol", async function () {
+      expect(await fdToken.name()).to.equal("Degis_FlightDelay_PolicyToken");
+      expect(await fdToken.symbol()).to.equal("DEGIS_FD_PT");
+    });
+
+    it("should set the deployer as the owner", async function () {
+      const [dev_account] = await ethers.getSigners();
+      expect(await fdToken.owner()).to.equal(dev_account.address);
+    });
+
+    it("should be able to transfer ownership", async function () {
+      await fdToken.transferOwnership(user1.address);
+      expect(await fdToken.owner()).to.equal(user1.address);
+    });
+
+    it("should be able to renounce ownership", async function () {
+      await expect(fdToken.renounceOwnership())
+        .to.emit(fdToken, "OwnershipTransferred")
+        .withArgs(dev_account.address, ethers.constants.AddressZero);
+    });
+
+    it("_nextId should start from 1", async function () {
+      expect(await fdToken._nextId()).to.equal(1);
+    });
+  });
+
+  describe("Basic functions", function () {
+    it("should not query a incorrect tokenId", async function () {
+      const nextId = await fdToken._nextId();
+      await expect(fdToken.tokenURI(nextId)).to.be.revertedWith(
+        "TokenId is too large!"
+      );
+    });
+
+    it("should not be able to mint policy tokens before setting the policyflow address", async function () {
+      await expect(fdToken.mintPolicyToken(user1.address)).to.be.revertedWith(
+        "Only the policyflow contract can mint policy token"
+      );
+    });
+
+    it("should set the policyflow address successfully", async function () {
+      await fdToken.updatePolicyFlow(policyflow.address);
+      expect(await fdToken.policyFlow()).to.equal(policyflow.address);
+    });
+
+    it("should mint policy tokens successfully by the new policyflow address", async function () {
+      const nextId = await fdToken._nextId();
+      await fdToken.updatePolicyFlow(policyflow.address);
+      await expect(fdToken.connect(policyflow).mintPolicyToken(user1.address))
+        .to.emit(fdToken, "Transfer")
+        .withArgs(ethers.constants.AddressZero, user1.address, nextId);
+    });
   });
 });

@@ -6,14 +6,20 @@ import {
   DegisToken,
   DegisToken__factory,
 } from "../typechain";
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("DegisToken", function () {
   let DegisToken: DegisToken__factory, degis: DegisToken;
+  let dev_account: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress;
 
-  before(async function () {
+  beforeEach(async function () {
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
     await degis.deployed();
+
+    [dev_account, user1, user2] = await ethers.getSigners();
   });
 
   it("should have the correct name and symbol", async function () {
@@ -26,33 +32,34 @@ describe("DegisToken", function () {
   });
 
   it("should have the owner as the first minter", async function () {
-    const [owner] = await ethers.getSigners();
-
-    expect(await degis.isMinter(owner.address)).to.equal(true);
+    expect(await degis.isMinter(dev_account.address)).to.equal(true);
   });
 
   it("should have the function to add a new minter", async function () {
-    const [owner, user1] = await ethers.getSigners();
-
-    await degis.addMinter(user1.address, { from: owner.address });
+    await degis.addMinter(user1.address);
     expect(await degis.isMinter(user1.address)).to.equal(true);
   });
 
   it("should have the function to remove a minter", async function () {
-    const [owner, user1] = await ethers.getSigners();
+    await degis.addMinter(user1.address);
 
-    await degis.removeMinter(user1.address, { from: owner.address });
+    await degis.removeMinter(user1.address, { from: dev_account.address });
     expect(await degis.isMinter(user1.address)).to.equal(false);
   });
 });
 
 describe("BuyerToken", function () {
   let BuyerToken: BuyerToken__factory, buyer: BuyerToken;
+  let dev_account: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress;
 
-  before(async function () {
+  beforeEach(async function () {
     BuyerToken = await ethers.getContractFactory("BuyerToken");
     buyer = await BuyerToken.deploy();
     await buyer.deployed();
+
+    [dev_account, user1, user2] = await ethers.getSigners();
   });
 
   it("should have the correct name and symbol", async function () {
