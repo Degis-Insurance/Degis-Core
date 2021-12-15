@@ -112,7 +112,7 @@ contract InsurancePool is
      * @notice Get the real balance: LPValue * LP_Num
      * @dev Used in many places so give it a seperate function
      * @param _userAddress User's address
-     * @return userBalance Real balance of this user
+     * @return _userBalance Real balance of this user
      */
     function getUserBalance(address _userAddress)
         public
@@ -167,23 +167,12 @@ contract InsurancePool is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Set the purchase incentive amount
-     */
-    function setPurchaseIncentive(uint256 _purchaseIncentive)
-        external
-        onlyOwner
-    {
-        purchaseIncentiveAmount = _purchaseIncentive;
-        emit PurchaseIncentiveChanged(block.timestamp, _purchaseIncentive);
-    }
-
-    /**
      * @notice Set a new frozen time
      * @param _newFrozenTime New frozen time, in timestamp(s)
      */
     function setFrozenTime(uint256 _newFrozenTime) external onlyOwner {
         frozenTime = _newFrozenTime;
-        emit SetFrozenTime(_newFrozenTime);
+        emit FrozenTimeChanged(_newFrozenTime);
     }
 
     /**
@@ -195,7 +184,7 @@ contract InsurancePool is
         notZeroAddress(_policyFlowAddress)
     {
         policyFlow = _policyFlowAddress;
-        emit SetPolicyFlow(_policyFlowAddress);
+        emit PolicyFlowSet(_policyFlowAddress);
     }
 
     /**
@@ -214,24 +203,11 @@ contract InsurancePool is
         for (uint256 i = 0; i < 3; i++) {
             rewardDistribution[i] = _newDistribution[i];
         }
-        emit ChangeRewardDistribution(
+        emit RewardDistributionChanged(
             _newDistribution[0],
             _newDistribution[1],
             _newDistribution[2]
         );
-    }
-
-    /**
-     * @notice Transfer the ownership to a new owner
-     * @param _newOwner New owner address
-     */
-    function transferOwnership(address _newOwner)
-        public
-        onlyOwner
-        notZeroAddress(_newOwner)
-    {
-        owner = _newOwner;
-        emit OwnerChanged(owner, _newOwner);
     }
 
     /**
@@ -240,8 +216,9 @@ contract InsurancePool is
      */
     function setCollateralFactor(uint256 _factor) public onlyOwner {
         require(_factor > 0, "Collateral Factor should be larger than 0");
-        collateralFactor = _doDiv(_factor, 100);
-        emit ChangeCollateralFactor(owner, _factor);
+        uint256 oldFactor = collateralFactor;
+        collateralFactor = _factor.div(100);
+        emit CollateralFactorChanged(oldFactor, _factor);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -283,7 +260,7 @@ contract InsurancePool is
             "Not enough balance to be unlocked or your withdraw amount is 0"
         );
 
-        uint256 unlocked = getPoolUnlocked();
+        uint256 unlocked = totalStakingBalance - lockedBalance;
         uint256 unstakeAmount = _amount;
 
         // Will jump this part when the pool has enough liquidity
@@ -312,7 +289,7 @@ contract InsurancePool is
 
         uint256 userBalance = getUserBalance(_userAddress);
 
-        uint256 unlocked = getPoolUnlocked();
+        uint256 unlocked = totalStakingBalance - lockedBalance;
         uint256 unstakeAmount = userBalance;
 
         // Will jump this part when the pool has enough liquidity
@@ -347,7 +324,7 @@ contract InsurancePool is
         availableCapacity -= _payoff;
 
         // Update lockedRatio
-        lockedRatio = _doDiv(lockedBalance, totalStakingBalance);
+        lockedRatio = lockedBalance.div(totalStakingBalance);
 
         // Remember approval
         USDT.safeTransferFrom(_userAddress, address(this), _premium);
@@ -359,19 +336,11 @@ contract InsurancePool is
      * @notice Update the status when a policy expires
      * @param _premium Policy's premium
      * @param _payoff Policy's payoff (max payoff)
-     * @param _userAddress User's address
      */
-    function updateWhenExpire(
-        uint256 _premium,
-        uint256 _payoff,
-        address _userAddress
-    ) external onlyPolicyFlow {
-        // Give purchase incentive when no payoff
-        if (purchaseIncentiveAmount > 0) {
-            DEGIS.mint(_userAddress, purchaseIncentiveAmount);
-            emit SendPurchaseIncentive(_userAddress, purchaseIncentiveAmount);
-        }
-
+    function updateWhenExpire(uint256 _premium, uint256 _payoff)
+        external
+        onlyPolicyFlow
+    {
         // Update pool status
         activePremiums -= _premium;
         lockedBalance -= _payoff;
@@ -426,7 +395,7 @@ contract InsurancePool is
         notZeroAddress(_userAddress)
     {
         require(
-            msg.sender == _userAddress || msg.sender == owner,
+            _msgSender() == _userAddress || _msgSender() == owner(),
             "Only the owner or the user himself can revert"
         );
 
@@ -455,7 +424,7 @@ contract InsurancePool is
         notZeroAddress(_userAddress)
     {
         require(
-            msg.sender == _userAddress || msg.sender == owner,
+            _msgSender() == _userAddress || _msgSender() == owner(),
             "Only the owner or the user himself can revert"
         );
 
@@ -519,14 +488,14 @@ contract InsurancePool is
         realStakingBalance += _amount;
         availableCapacity += amountWithFactor;
 
-        lockedRatio = _doDiv(lockedBalance, totalStakingBalance);
+        lockedRatio = lockedBalance.div(totalStakingBalance);
 
         // msg.sender always pays
         USDT.safeTransferFrom(msg.sender, address(this), _amount);
 
         // LP Token number need to be newly minted
-        uint256 lp_num = _doDiv(_amount, LPValue);
-        LPMint(_userAddress, lp_num);
+        uint256 lp_num = _amount.div(LPValue);
+        _mint(_userAddress, lp_num);
 
         userInfo[_userAddress].depositTime = block.timestamp;
 
@@ -546,12 +515,12 @@ contract InsurancePool is
         realStakingBalance -= _amount;
         availableCapacity -= amountWithFactor;
 
-        lockedRatio = _doDiv(lockedBalance, totalStakingBalance);
+        lockedRatio = lockedBalance.div(totalStakingBalance);
 
         USDT.safeTransfer(_userAddress, _amount);
 
-        uint256 lp_num = _doDiv(_amount, LPValue);
-        LPBurn(_userAddress, lp_num);
+        uint256 lp_num = _amount.div(LPValue);
+        _burn(_userAddress, lp_num);
 
         emit Unstake(_userAddress, _amount);
     }
@@ -633,21 +602,5 @@ contract InsurancePool is
                 }
             } else break;
         }
-    }
-
-    /**
-     * @notice Do division via PRBMath
-     * @dev    E.g. doDiv(1, 1) = 1e18  doDiv(1, 10) = 1e17 doDiv(10, 1) = 1e19
-     */
-    function _doDiv(uint256 x, uint256 y) internal pure returns (uint256) {
-        return PRBMathUD60x18.div(x, y);
-    }
-
-    /**
-     * @notice Do multiplication via PRBMath
-     * @dev    E.g. doMul(1, 1) = 1e18  doMul(2, 5) = 1e19
-     */
-    function _doMul(uint256 x, uint256 y) internal pure returns (uint256) {
-        return PRBMathUD60x18.mul(x, y);
     }
 }

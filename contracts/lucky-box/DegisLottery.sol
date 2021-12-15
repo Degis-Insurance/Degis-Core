@@ -26,6 +26,11 @@ contract DegisLottery is Ownable {
     uint256 public MIN_LENGTH = 1 hours;
     uint256 public MAX_LENGTH = 60 days;
 
+    uint32 public constant MAX_TICKET_NUMBER = 19999;
+    uint32 public constant MIN_TICKET_NUMBER = 10000;
+
+    uint256 public maxTicketsPerTx = 50;
+
     IERC20 public degis;
     IERC20 public USDC;
 
@@ -60,8 +65,24 @@ contract DegisLottery is Ownable {
     }
     mapping(uint256 => TicketInfo) private ticketList;
 
+    mapping(address => uint256[]) private userTickets;
+
+    // LotteryId => Ticket Number => Amount of this number
+    mapping(uint256 => mapping(uint32 => uint256)) certainTicketAmountPerLotteryId;
+
     // Bracket calculator is used for verifying claims for ticket prizes
     mapping(uint32 => uint32) private _bracketCalculator;
+
+    event RandomGeneratorChanged(address oldGenerator, address newGenerator);
+
+    event TicketsPurchased(
+        address buyerAddress,
+        uint256 lotteryId,
+        uint256 startTicketId,
+        uint256 endTicketId
+    );
+
+    event EmergencyWithdraw(address indexed tokenAddress, uint256 amount);
 
     /**
      * @notice Constructor function
@@ -118,15 +139,85 @@ contract DegisLottery is Ownable {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    function setRandomGenerator(address _randomGenerator) external onlyOwner {}
-
-    function setTicketPrice(uint256 _newPrice) external onlyOwner {}
+    function setRandomGenerator(address _randomGenerator) external onlyOwner {
+        address oldGenerator = address(randomGenerator);
+        randomGenerator = IRandomNumberGenerator(_randomGenerator);
+        emit RandomGeneratorChanged(oldGenerator, _randomGenerator);
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function buyTickets(uint32[] calldata _ticketNumbers) external {}
+    function buyTickets(uint32[] calldata _ticketNumbers) external {
+        // Gas saving
+        // Note: CALLDATALOAD 3 gas, CALLDATASIZE 2 gas, MLOAD & MSTORE 3 gas
+        uint256 ticketAmount = _ticketNumbers.length;
+        require(ticketAmount != 0, "No tickets are being bought");
+
+        require(
+            ticketAmount <= maxTicketsPerTx,
+            "Too many tickets are bought at one time"
+        );
+
+        require(
+            lotteryList[currentLotteryId].status == Status.Open,
+            "Current lottery is not open"
+        );
+
+        uint256 degisAmountToPay = lotteryList[currentLotteryId].ticketPrice *
+            ticketAmount;
+
+        degis.safeTransferFrom(_msgSender(), address(this), degisAmountToPay);
+
+        uint256 startTicketId = currentTicketId;
+
+        for (uint256 i = 0; i < ticketAmount; i++) {
+            uint32 number = _ticketNumbers[i];
+
+            require(
+                number >= MIN_TICKET_NUMBER && number <= MAX_TICKET_NUMBER,
+                "Ticket number is out of range"
+            );
+
+            // Used when drawing prizes
+            certainTicketAmountPerLotteryId[currentLotteryId][
+                1 + (number % 10)
+            ]++;
+            certainTicketAmountPerLotteryId[currentLotteryId][
+                11 + (number % 100)
+            ]++;
+            certainTicketAmountPerLotteryId[currentLotteryId][
+                111 + (number % 1000)
+            ]++;
+            certainTicketAmountPerLotteryId[currentLotteryId][
+                1111 + (number % 10000)
+            ]++;
+
+            // Update user's record
+            userTickets[_msgSender()].push(currentTicketId);
+
+            // Store this ticket number to global ticket state
+            ticketList[currentTicketId] = TicketInfo({
+                number: number,
+                owner: _msgSender(),
+                buyLotteryId: currentLotteryId,
+                isRedeemed: false,
+                redeemLotteryId: 0,
+                price: lotteryList[currentLotteryId].ticketPrice
+            });
+
+            // Increase the global ticket id
+            currentTicketId++;
+        }
+
+        emit TicketsPurchased(
+            _msgSender(),
+            currentLotteryId,
+            startTicketId,
+            currentTicketId - 1
+        );
+    }
 
     function redeemTickets(uint256[] calldata _ticketIds) external {}
 
@@ -164,6 +255,10 @@ contract DegisLottery is Ownable {
             IERC20(_tokenAddress).balanceOf(address(this)) >= _amount,
             "Withdraw amount exceeds balance"
         );
+
+        USDC.safeTransfer(owner(), _amount);
+
+        emit EmergencyWithdraw(_tokenAddress, _amount);
     }
 
     // ---------------------------------------------------------------------------------------- //

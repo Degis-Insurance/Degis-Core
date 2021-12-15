@@ -56,26 +56,24 @@ abstract contract InsurancePoolStore {
     // events
     event Stake(address indexed userAddress, uint256 amount);
     event Unstake(address indexed userAddress, uint256 amount);
-    event ChangeCollateralFactor(address indexed onwerAddress, uint256 factor);
-    event SetPolicyFlow(address _policyFlowAddress);
+
+    event CollateralFactorChanged(uint256 oldFactor, uint256 newFactor);
+
+    event PolicyFlowSet(address policyFlowAddress);
+
     event BuyNewPolicy(
         address indexed userAddress,
         uint256 premium,
         uint256 payout
     );
-    event OwnerChanged(address oldOwner, address newOwner);
-    event ChangeRewardDistribution(
-        uint256 _toLP,
-        uint256 _toEmergency,
-        uint256 _toLottery
-    );
-    event PurchaseIncentiveChanged(
-        uint256 _blocktimestamp,
-        uint256 _purchaseIncentiveAmount
+    event RewardDistributionChanged(
+        uint256 toLP,
+        uint256 toLottery,
+        uint256 toEmergency
     );
 
-    event SendPurchaseIncentive(address _userAddress, uint256 _amount);
-    event SetFrozenTime(uint256 _newFrozenTime);
+    event FrozenTimeChanged(uint256 _newFrozenTime);
+
     event PremiumDistributed(
         uint256 _premiumToEmergency,
         uint256 _premiumToLottery
