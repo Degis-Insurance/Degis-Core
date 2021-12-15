@@ -20,14 +20,14 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
     address[] public burnerList;
     mapping(address => bool) public isBurner;
 
-    event MinterAdded(address _newMinter);
-    event MinterRemoved(address _oldMinter);
+    event MinterAdded(address newMinter);
+    event MinterRemoved(address oldMinter);
 
-    event BurnerAdded(address _newBurner);
-    event BurnerRemoved(address _oldBurner);
+    event BurnerAdded(address newBurner);
+    event BurnerRemoved(address oldBurner);
 
-    event Mint(address indexed _account, uint256 _amount);
-    event Burn(address indexed _account, uint256 _amount);
+    event Mint(address indexed account, uint256 amount);
+    event Burn(address indexed account, uint256 amount);
 
     constructor(string memory name, string memory symbol)
         ERC20(name, symbol)

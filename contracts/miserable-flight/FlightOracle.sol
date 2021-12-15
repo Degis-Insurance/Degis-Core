@@ -3,6 +3,7 @@ pragma solidity ^0.8.4;
 
 import "@chainlink/contracts/src/v0.8/ChainlinkClient.sol";
 import "./interfaces/IPolicyFlow.sol";
+import "../utils/Ownable.sol";
 
 /**
  * @title  Flight Oracle
@@ -10,17 +11,31 @@ import "./interfaces/IPolicyFlow.sol";
  *         Called by policyFlow contract and send the request to chainlink node.
  *         After receiving the result, call the policyFlow contract to do the settlement.
  * @dev    Remember to set the url, oracleAddress and jobId
+ *         If there are multiple oracle providers in the future, this contract may need to be updated.
  */
-contract FlightOracle is ChainlinkClient {
+contract FlightOracle is ChainlinkClient, Ownable {
     using Chainlink for Chainlink.Request;
-
-    address public owner;
 
     IPolicyFlow public policyFlow;
 
-    address private oracleAddress;
-    bytes32 private jobId;
+    address public oracleAddress;
+    bytes32 public jobId;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    event OracleAddressChanged(address newOracle);
+    event JobIdChanged(bytes32 newJobId);
+    event PolicyFlowChanged(address newPolicyFlow);
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Need the address of LINK token on specific network
+     */
     constructor(address _policyFlow, address _link) {
         policyFlow = IPolicyFlow(_policyFlow);
 
@@ -30,12 +45,6 @@ contract FlightOracle is ChainlinkClient {
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    // Only the owner can call some functions
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only the owner can call this function");
-        _;
-    }
 
     // Only the policyFlow can call some functions
     modifier onlyPolicyFlow() {
@@ -68,6 +77,7 @@ contract FlightOracle is ChainlinkClient {
      */
     function setOracleAddress(address _newOracle) external onlyOwner {
         oracleAddress = _newOracle;
+        emit OracleAddressChanged(_newOracle);
     }
 
     /**
@@ -75,6 +85,7 @@ contract FlightOracle is ChainlinkClient {
      */
     function setJobId(bytes32 _newJobId) external onlyOwner {
         jobId = _newJobId;
+        emit JobIdChanged(_newJobId);
     }
 
     /**
@@ -82,6 +93,7 @@ contract FlightOracle is ChainlinkClient {
      */
     function setPolicyFlow(address _policyFlow) external onlyOwner {
         policyFlow = IPolicyFlow(_policyFlow);
+        emit PolicyFlowChanged(_policyFlow);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -103,6 +115,11 @@ contract FlightOracle is ChainlinkClient {
         string memory _path,
         int256 _times
     ) public onlyPolicyFlow returns (bytes32) {
+        require(
+            oracleAddress != address(0) && jobId != 0,
+            "Please first set the oracle address & jobId"
+        );
+
         Chainlink.Request memory req = buildChainlinkRequest(
             jobId,
             address(this),

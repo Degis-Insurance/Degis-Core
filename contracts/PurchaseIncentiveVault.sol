@@ -57,12 +57,9 @@ contract PurchaseInventiveVault is Ownable {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event DegisPerRoundChanged(uint256 _oldPerRound, uint256 _newPerRound);
-    event DistributionIntervalChanged(
-        uint256 _oldInterval,
-        uint256 _newInterval
-    );
-    event RewardClaimed(address _userAddress, uint256 _userReward);
+    event DegisPerRoundChanged(uint256 oldPerRound, uint256 newPerRound);
+    event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
+    event RewardClaimed(address userAddress, uint256 userReward);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
