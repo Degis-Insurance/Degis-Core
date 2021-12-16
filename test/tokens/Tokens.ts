@@ -5,7 +5,7 @@ import {
   BuyerToken,
   DegisToken,
   DegisToken__factory,
-} from "../typechain";
+} from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("DegisToken", function () {
