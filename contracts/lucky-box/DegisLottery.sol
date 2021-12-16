@@ -111,6 +111,9 @@ contract DegisLottery is Ownable {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Get a lottery's information
+     */
     function getLotteryInfo(uint256 _lotteryId)
         external
         view
@@ -119,6 +122,9 @@ contract DegisLottery is Ownable {
         return lotteryList[_lotteryId];
     }
 
+    /**
+     * @notice Get all lotteries' information
+     */
     function getAllLotteryInfo() external view returns (LotteryInfo[] memory) {
         LotteryInfo[] memory allLotteries = new LotteryInfo[](currentLotteryId);
         for (uint256 i = 1; i <= currentLotteryId; i++) {
@@ -127,6 +133,9 @@ contract DegisLottery is Ownable {
         return allLotteries;
     }
 
+    /**
+     * @notice Get a ticket's information
+     */
     function getTicketInfo(uint256 _ticketId)
         external
         view
