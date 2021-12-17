@@ -99,6 +99,19 @@ contract PolicyCore is Ownable {
     event LotteryChanged(address newLotteryAddress);
     event EmergencyPoolChanged(address newEmergencyPool);
 
+    event PolicyTokenDeployed(
+        string tokenName,
+        address tokenAddress,
+        uint256 deadline,
+        uint256 settleTimestamp
+    );
+
+    event PoolDeployed(
+        address poolAddress,
+        address policyTokenAddress,
+        address stablecoin
+    );
+
     event FinalResultSettled(
         string _policyTokenName,
         int256 price,
@@ -380,6 +393,13 @@ contract PolicyCore is Ownable {
         // Push the policytokenName into the list
         allPolicyTokens.push(policyTokenName);
 
+        emit PolicyTokenDeployed(
+            _tokenName,
+            policyTokenAddress,
+            _deadline,
+            _settleTimestamp
+        );
+
         // You can not get the return value from outside, but keep it here.
         return policyTokenAddress;
     }
@@ -413,6 +433,8 @@ contract PolicyCore is Ownable {
 
         // Record the mapping
         whichStablecoin[policyTokenAddress] = _stablecoin;
+
+        emit PoolDeployed(poolAddress, policyTokenAddress, _stablecoin);
 
         return poolAddress;
     }
