@@ -11,6 +11,8 @@ import "./interfaces/IPolicyCore.sol";
 
 import "../libraries/StringsUtils.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Naughty Factory
  * @dev Factory contract to deploy new pools periodically
@@ -37,7 +39,7 @@ contract NaughtyFactory {
     // Address of policyCore
     address public policyCore;
 
-    // INIT_CODE_HASH, may be used in frontend
+    // INIT_CODE_HASH for NaughtyPair, may be used in frontend
     bytes32 public constant INIT_CODE_HASH =
         keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
 
@@ -172,6 +174,12 @@ contract NaughtyFactory {
 
         bytes memory bytecode = getPolicyTokenBytecode(_policyTokenName);
 
+        bytes32 test = keccak256(abi.encodePacked(bytecode));
+
+        // console.logBytes(bytecode);
+        console.logBytes32(salt);
+        console.logBytes32(test);
+
         address _policTokenAddress = _deploy(bytecode, salt);
 
         allTokens.push(_policTokenAddress);
@@ -205,7 +213,7 @@ contract NaughtyFactory {
      * @param _tokenName: Name of policyToken
      */
     function getPolicyTokenBytecode(string memory _tokenName)
-        internal
+        public
         view
         returns (bytes memory)
     {

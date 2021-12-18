@@ -394,7 +394,7 @@ contract PolicyCore is Ownable {
         allPolicyTokens.push(policyTokenName);
 
         emit PolicyTokenDeployed(
-            _tokenName,
+            policyTokenName,
             policyTokenAddress,
             _deadline,
             _settleTimestamp
