@@ -301,7 +301,7 @@ contract PolicyCore is Ownable {
      * @param _coinAddress Address of the stablecoin
      * @return Whether it is a supported stablecoin
      */
-    // DONE:If we still need this function (√)
+    // FIXME:If we still need this function (√)
     function isStablecoinAddress(address _coinAddress)
         external
         view
@@ -372,7 +372,7 @@ contract PolicyCore is Ownable {
      *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
-     * @param _strikePrice Strike price of the policy
+     * @param _strikePrice Strike price of the policy (have not been transferred with 1e18)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      * @return policyTokenAddress The address of the policy token just deployed
@@ -398,7 +398,7 @@ contract PolicyCore is Ownable {
         policyTokenInfoMapping[policyTokenName] = PolicyTokenInfo(
             policyTokenAddress,
             _isCall,
-            _strikePrice / 1e18,
+            _strikePrice,
             _deadline,
             _settleTimestamp
         );
@@ -860,6 +860,7 @@ contract PolicyCore is Ownable {
      * @param _isCall The policy is higher or lower
      * @param _round Round of the policy (e.g. 202101)
      */
+    // FIXME: can not handle price < 1
     function _generateName(
         string memory _tokenName,
         uint256 _strikePrice,

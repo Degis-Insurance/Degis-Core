@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
+import "../libraries/SafePRBMath.sol";
 
 /**
  * @title  Purchase Incentive Vault
@@ -15,6 +16,7 @@ import "../utils/Ownable.sol";
  */
 contract PurchaseInventiveVault is Ownable {
     using SafeERC20 for IBuyerToken;
+    using SafePRBMath for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -198,7 +200,7 @@ contract PurchaseInventiveVault is Ownable {
         );
 
         uint256 totalShares = sharesInRound[currentRound];
-        uint256 degisPerShare = (degisPerRound * 1e18) / totalShares;
+        uint256 degisPerShare = degisPerRound.div(totalShares);
 
         uint256 length = getTotalUsersInRound(currentRound);
 
@@ -275,9 +277,7 @@ contract PurchaseInventiveVault is Ownable {
 
             if (userShares != 0) {
                 // Update the pending reward of a user
-                userRewards[userAddress] +=
-                    (userShares * _degisPerShare) /
-                    1e18;
+                userRewards[userAddress] += userShares.mul(_degisPerShare);
                 delete userSharesInRound[userAddress][_round];
             } else continue;
         }
