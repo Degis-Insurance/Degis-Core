@@ -15,7 +15,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { defaultAbiCoder, keccak256, solidityPack } from "ethers/lib/utils";
 
-describe("Policy Core", function () {
+describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
@@ -23,9 +23,9 @@ describe("Policy Core", function () {
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
 
   let dev_account: SignerWithAddress,
+    stablecoin: SignerWithAddress,
     user1: SignerWithAddress,
-    user2: SignerWithAddress,
-    user3: SignerWithAddress;
+    user2: SignerWithAddress;
 
   beforeEach(async function () {
     MockUSD = await ethers.getContractFactory("MockUSD");
@@ -43,7 +43,7 @@ describe("Policy Core", function () {
     );
     await core.deployed();
 
-    [dev_account, user1, user2, user3] = await ethers.getSigners();
+    [dev_account, stablecoin, user1, user2] = await ethers.getSigners();
   });
 
   describe("Deployment", function () {
@@ -87,7 +87,7 @@ describe("Policy Core", function () {
   });
 
   describe("Deploy tokens and pools", function () {
-    it("should get the correct address", async function () {
+    it("should be able to set the policyCore address", async function () {
       await factory.setPolicyCoreAddress(core.address);
       expect(await factory.policyCore()).to.equal(core.address);
     });
@@ -143,6 +143,13 @@ describe("Policy Core", function () {
       )
         .to.emit(core, "PolicyTokenDeployed")
         .withArgs("BTC_24000_L_2112", address, deadline, settleTimestamp);
+
+      const policyTokenInfo = await core.policyTokenInfoMapping(
+        policyTokenName
+      );
+      expect(policyTokenInfo.policyTokenAddress).to.equal(address);
     });
+
+    it("should be able to deploy a new pool and get the correct address", async function () {});
   });
 });
