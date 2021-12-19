@@ -131,12 +131,7 @@ contract NaughtyFactory {
         address _policyTokenAddress,
         address _stablecoin,
         uint256 _deadline
-    ) public returns (address) {
-        require(
-            IPolicyCore(policyCore).supportedStablecoin(_stablecoin) == true,
-            "You give the wrong order of policyToken and stablecoin"
-        );
-
+    ) external returns (address) {
         bytes memory bytecode = type(NaughtyPair).creationCode;
 
         bytes32 salt = keccak256(
@@ -173,12 +168,6 @@ contract NaughtyFactory {
         bytes32 salt = keccak256(abi.encodePacked(_policyTokenName));
 
         bytes memory bytecode = getPolicyTokenBytecode(_policyTokenName);
-
-        bytes32 test = keccak256(abi.encodePacked(bytecode));
-
-        // console.logBytes(bytecode);
-        console.logBytes32(salt);
-        console.logBytes32(test);
 
         address _policTokenAddress = _deploy(bytecode, salt);
 

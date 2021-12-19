@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { FDPolicyToken, FDPolicyToken__factory } from "../typechain";
+import { FDPolicyToken, FDPolicyToken__factory } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Flight Delay Policy Token", function () {

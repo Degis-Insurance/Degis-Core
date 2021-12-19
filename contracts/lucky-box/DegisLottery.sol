@@ -5,11 +5,13 @@ import "../utils/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "../libraries/SafePRBMath.sol";
 
 import "./interfaces/IRandomNumberGenerator.sol";
 
-contract DegisLottery is Ownable {
+contract DegisLottery is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
 
@@ -158,7 +160,10 @@ contract DegisLottery is Ownable {
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function buyTickets(uint32[] calldata _ticketNumbers) external {
+    function buyTickets(uint32[] calldata _ticketNumbers)
+        external
+        nonReentrant
+    {
         // Gas saving
         // Note: CALLDATALOAD 3 gas, CALLDATASIZE 2 gas, MLOAD & MSTORE 3 gas
         uint256 ticketAmount = _ticketNumbers.length;
@@ -245,7 +250,10 @@ contract DegisLottery is Ownable {
 
     function closeLottery(uint256 _lotteryId) external {}
 
-    function injectFunds(uint256 _lotteryId, uint256 _amount) external {}
+    function injectFunds(uint256 _lotteryId, uint256 _amount)
+        external
+        nonReentrant
+    {}
 
     function drawFinalNumber(uint256 _lotteryId, bool _autoInjection)
         external

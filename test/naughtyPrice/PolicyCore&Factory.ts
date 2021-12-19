@@ -6,14 +6,21 @@ import {
   MockUSD__factory,
   MockUSD,
   NaughtyFactory__factory,
-  PriceGetter__factory,
   NaughtyFactory,
+  PriceGetter__factory,
   PriceGetter,
   NPPolicyToken,
   NPPolicyToken__factory,
+  NaughtyPair__factory,
+  NaughtyPair,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { defaultAbiCoder, keccak256, solidityPack } from "ethers/lib/utils";
+import {
+  defaultAbiCoder,
+  keccak256,
+  solidityKeccak256,
+  solidityPack,
+} from "ethers/lib/utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
@@ -21,11 +28,14 @@ describe("Policy Core and Naughty Factory", function () {
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
   let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
+  let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
 
   let dev_account: SignerWithAddress,
     stablecoin: SignerWithAddress,
     user1: SignerWithAddress,
     user2: SignerWithAddress;
+
+  let time: number, now: number;
 
   beforeEach(async function () {
     MockUSD = await ethers.getContractFactory("MockUSD");
@@ -43,7 +53,12 @@ describe("Policy Core and Naughty Factory", function () {
     );
     await core.deployed();
 
+    await factory.setPolicyCoreAddress(core.address);
+
     [dev_account, stablecoin, user1, user2] = await ethers.getSigners();
+
+    time = new Date().getTime();
+    now = Math.floor(time / 1000);
   });
 
   describe("Deployment", function () {
@@ -63,19 +78,19 @@ describe("Policy Core and Naughty Factory", function () {
 
   describe("Owner Functions", function () {
     it("should be able to add a new stablecoin", async function () {
-      await expect(core.addStablecoin(user1.address))
+      await expect(core.addStablecoin(stablecoin.address))
         .to.emit(core, "NewStablecoinAdded")
-        .withArgs(user1.address);
+        .withArgs(stablecoin.address);
 
-      expect(await core.supportedStablecoin(user1.address)).to.equal(true);
+      expect(await core.supportedStablecoin(stablecoin.address)).to.equal(true);
     });
 
     it("should be able to set a new lottery", async function () {
-      await expect(core.setLottery(user1.address))
+      await expect(core.setLottery(stablecoin.address))
         .to.emit(core, "LotteryChanged")
-        .withArgs(user1.address);
+        .withArgs(stablecoin.address);
 
-      expect(await core.lottery()).to.equal(user1.address);
+      expect(await core.lottery()).to.equal(stablecoin.address);
     });
 
     it("should be able to set a new emergencyPool", async function () {
@@ -92,7 +107,6 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await factory.policyCore()).to.equal(core.address);
     });
     it("should be able to deploy a new policy token and get the correct address", async function () {
-      await factory.setPolicyCoreAddress(core.address);
       NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
       const policyTokenName = "BTC_24000_L_2112";
@@ -115,10 +129,7 @@ describe("Policy Core and Naughty Factory", function () {
 
       const INIT_CODE_HASH = keccak256(bytecode2);
 
-      const salt = ethers.utils.solidityKeccak256(
-        ["string"],
-        [policyTokenName]
-      );
+      const salt = solidityKeccak256(["string"], [policyTokenName]);
 
       const address = ethers.utils.getCreate2Address(
         factory.address,
@@ -126,11 +137,8 @@ describe("Policy Core and Naughty Factory", function () {
         INIT_CODE_HASH
       );
 
-      const time = new Date().getTime();
-      const now = Math.floor(time / 1000);
       const deadline = now + 30;
       const settleTimestamp = now + 60;
-
       await expect(
         core.deployPolicyToken(
           "BTC",
@@ -150,6 +158,105 @@ describe("Policy Core and Naughty Factory", function () {
       expect(policyTokenInfo.policyTokenAddress).to.equal(address);
     });
 
-    it("should be able to deploy a new pool and get the correct address", async function () {});
+    it("should be able to deploy a new pool and get the correct address", async function () {
+      // Preset1: Add the stablecoin (we use default mockUSD here)
+      // Preset2: Deploy a policy token
+
+      const deadline = now + 30;
+      const settleTimestamp = now + 60;
+      await core.deployPolicyToken(
+        "BTC",
+        false,
+        ethers.utils.parseUnits("24000"),
+        2112,
+        ethers.BigNumber.from(deadline),
+        ethers.BigNumber.from(settleTimestamp)
+      );
+
+      // Calculate the address
+      const policyTokenName = "BTC_24000_L_2112";
+
+      const policyTokenInfo = await core.policyTokenInfoMapping(
+        policyTokenName
+      );
+      const policyTokenAddress = policyTokenInfo.policyTokenAddress;
+
+      NaughtyPair = await ethers.getContractFactory("NaughtyPair");
+      const INIT_CODE_HASH = keccak256(NaughtyPair.bytecode);
+
+      const salt = solidityKeccak256(
+        ["string", "string"],
+        [policyTokenAddress.toLowerCase(), usd.address.toLowerCase()]
+      );
+
+      const poolAddress = ethers.utils.getCreate2Address(
+        factory.address,
+        salt,
+        INIT_CODE_HASH
+      );
+
+      await expect(
+        core.deployPool(
+          policyTokenName,
+          usd.address,
+          ethers.BigNumber.from(deadline)
+        )
+      )
+        .to.emit(core, "PoolDeployed")
+        .withArgs(poolAddress, policyTokenAddress, usd.address);
+
+      const pairAddressFromFactory = await factory.getPairAddress(
+        policyTokenAddress,
+        usd.address
+      );
+      expect(pairAddressFromFactory).to.equal(poolAddress);
+    });
+  });
+  describe("Stake and Redeem policy tokens", function () {
+    it("should be able to stake usd and get policytokens", async function () {
+      const policyTokenName = "BTC_24000_L_2112";
+
+      const deadline = now + 300;
+      const settleTimestamp = now + 600;
+      await core.deployPolicyToken(
+        "BTC",
+        false,
+        ethers.utils.parseUnits("24000"),
+        2112,
+        ethers.BigNumber.from(deadline),
+        ethers.BigNumber.from(settleTimestamp)
+      );
+
+      await core.deployPool(
+        policyTokenName,
+        usd.address,
+        ethers.BigNumber.from(deadline)
+      );
+
+      await usd.approve(core.address, ethers.utils.parseUnits("10000"), {
+        from: dev_account.address,
+      });
+
+      await core.deposit(
+        policyTokenName,
+        usd.address,
+        ethers.utils.parseUnits("10000")
+      );
+
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        ethers.utils.parseUnits("90000")
+      );
+
+      NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
+      const policyTokenInfo = await core.policyTokenInfoMapping(
+        policyTokenName
+      );
+      const policyTokenInstance = NPPolicyToken.attach(
+        policyTokenInfo.policyTokenAddress
+      );
+      expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
+        ethers.utils.parseUnits("10000")
+      );
+    });
   });
 });

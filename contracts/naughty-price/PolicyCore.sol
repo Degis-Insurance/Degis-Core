@@ -112,6 +112,21 @@ contract PolicyCore is Ownable {
         address stablecoin
     );
 
+    event Deposit(
+        address userAddress,
+        string policyTokenName,
+        address stablecoin,
+        uint256 amount
+    );
+
+    event DelegateDeposit(
+        address payerAddress,
+        address userAddress,
+        string policyTokenName,
+        address stablecoin,
+        uint256 amount
+    );
+
     event FinalResultSettled(
         string _policyTokenName,
         int256 price,
@@ -279,10 +294,14 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Check if this is a stablecoin address supported, used in naughtyFactory
+     * @dev The getter function is not automatically generated in interfaces,
+     *      so we still need this function.
+     *      If we want to generate a function in the interface to read public variables,
+     *      it need to be without "view".
      * @param _coinAddress Address of the stablecoin
      * @return Whether it is a supported stablecoin
      */
-    // TODO:If we still need this function
+    // DONE:If we still need this function (√)
     function isStablecoinAddress(address _coinAddress)
         external
         view
@@ -365,7 +384,7 @@ contract PolicyCore is Ownable {
         uint256 _round,
         uint256 _deadline,
         uint256 _settleTimestamp
-    ) public onlyOwner returns (address) {
+    ) external onlyOwner returns (address) {
         string memory policyTokenName = _generateName(
             _tokenName,
             _strikePrice,
@@ -416,7 +435,7 @@ contract PolicyCore is Ownable {
         address _stablecoin,
         uint256 _poolDeadline
     )
-        public
+        external
         onlyOwner
         validStablecoin(_stablecoin)
         deployedPolicy(_policyTokenName)
@@ -449,7 +468,7 @@ contract PolicyCore is Ownable {
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount
-    ) public beforeDeadline(_policyTokenName) {
+    ) external beforeDeadline(_policyTokenName) {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if the user gives the right stablecoin
@@ -460,11 +479,20 @@ contract PolicyCore is Ownable {
 
         // Check if the user has enough balance
         require(
-            IERC20(_stablecoin).balanceOf(msg.sender) >= _amount,
+            IERC20(_stablecoin).balanceOf(_msgSender()) >= _amount,
             "User's stablecoin balance not sufficient"
         );
 
-        _mintPolicyToken(policyTokenAddress, _stablecoin, _amount, msg.sender);
+        // Transfer stablecoins to this contract
+        IERC20(_stablecoin).safeTransferFrom(
+            _msgSender(),
+            address(this),
+            _amount
+        );
+
+        _mintPolicyToken(policyTokenAddress, _amount, msg.sender);
+
+        emit Deposit(_msgSender(), _policyTokenName, _stablecoin, _amount);
     }
 
     /**
@@ -494,11 +522,21 @@ contract PolicyCore is Ownable {
             "User's stablecoin balance not sufficient"
         );
 
-        _mintPolicyToken(
-            policyTokenAddress,
+        // Transfer stablecoins to this contract
+        IERC20(_stablecoin).safeTransferFrom(
+            _msgSender(),
+            address(this),
+            _amount
+        );
+
+        _mintPolicyToken(policyTokenAddress, _amount, _userAddress);
+
+        emit DelegateDeposit(
+            _msgSender(),
+            _userAddress,
+            _policyTokenName,
             _stablecoin,
-            _amount,
-            _userAddress
+            _amount
         );
     }
 
@@ -751,23 +789,15 @@ contract PolicyCore is Ownable {
      * @notice Mint Policy Token 1:1 USD
      *         The policy token need to be deployed first!
      * @param _policyTokenAddress Address of the policy token
-     * @param _stablecoin Address of the stablecoin
      * @param _amount Amount to mint
+     * @param _userAddress Address to receive the policy token
      */
     function _mintPolicyToken(
         address _policyTokenAddress,
-        address _stablecoin,
         uint256 _amount,
         address _userAddress
     ) internal {
         INPPolicyToken policyToken = INPPolicyToken(_policyTokenAddress);
-
-        // Transfer stablecoins to this contract
-        IERC20(_stablecoin).safeTransferFrom(
-            _userAddress,
-            address(this),
-            _amount
-        );
 
         // Mint new policy tokens
         policyToken.mint(_userAddress, _amount);

@@ -174,7 +174,7 @@ library NaughtyLibrary {
         view
         returns (bool)
     {
-        return IPolicyCore(_policyCore).supportedStablecoin(_coinAddress);
+        return IPolicyCore(_policyCore).isStablecoinAddress(_coinAddress);
     }
 
     /**
