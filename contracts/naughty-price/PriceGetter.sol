@@ -15,9 +15,9 @@ contract PriceGetter is Ownable {
     mapping(string => AggregatorV3Interface) internal priceFeed;
     mapping(string => address) currentPriceFeed;
 
-    event SetPriceFeed(string _tokenName, address _feedAddress);
+    event PriceFeedChanged(string tokenName, address feedAddress);
 
-    event GetLatestPrice(
+    event LatestPriceGet(
         uint80 roundID,
         int256 price,
         uint256 startedAt,
@@ -81,7 +81,7 @@ contract PriceGetter is Ownable {
         view
         returns (address)
     {
-        return currentPriceFeed[_tokenName];
+        return address(priceFeed[_tokenName]);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -101,7 +101,7 @@ contract PriceGetter is Ownable {
         priceFeed[_tokenName] = AggregatorV3Interface(_feedAddress);
         currentPriceFeed[_tokenName] = _feedAddress;
 
-        emit SetPriceFeed(_tokenName, _feedAddress);
+        emit PriceFeedChanged(_tokenName, _feedAddress);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -122,7 +122,7 @@ contract PriceGetter is Ownable {
             uint80 answeredInRound
         ) = priceFeed[_tokenName].latestRoundData();
 
-        emit GetLatestPrice(
+        emit LatestPriceGet(
             roundID,
             price,
             startedAt,
