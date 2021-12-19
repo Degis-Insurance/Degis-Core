@@ -363,7 +363,7 @@ contract InsurancePool is
      * @param _premium Premium of the policy
      * @param _payoff Max payoff of the policy
      * @param _realPayoff Real payoff of the policy
-     * @param _userAddress: Address of the policy claimer
+     * @param _userAddress Address of the policy claimer
      */
     function payClaim(
         uint256 _premium,
