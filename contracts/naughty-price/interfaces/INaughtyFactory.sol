@@ -2,12 +2,6 @@
 pragma solidity ^0.8.4;
 
 interface INaughtyFactory {
-    
-
-    function getAllTokens() external view returns (address[] memory);
-
-    function getAllPairs() external view returns (address[] memory);
-
     function getPairAddress(address _tokenAddress1, address _tokenAddress2)
         external
         view

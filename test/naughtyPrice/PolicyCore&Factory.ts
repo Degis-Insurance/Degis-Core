@@ -45,6 +45,8 @@ describe("Policy Core and Naughty Factory", function () {
     PriceGetter = await ethers.getContractFactory("PriceGetter");
     priceGetter = await PriceGetter.deploy();
 
+    NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
+
     PolicyCore = await ethers.getContractFactory("PolicyCore");
     core = await PolicyCore.deploy(
       usd.address,
@@ -106,10 +108,50 @@ describe("Policy Core and Naughty Factory", function () {
       await factory.setPolicyCoreAddress(core.address);
       expect(await factory.policyCore()).to.equal(core.address);
     });
-    it("should be able to deploy a new policy token and get the correct address", async function () {
-      NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
-      const policyTokenName = "BTC_24000_L_2112";
+    it("should be able to generate correct names with decimals", async function () {
+      const policyTokenName = "BTC_5.5_L_2112";
+
+      const token_init = defaultAbiCoder.encode(
+        ["string", "string", "address"],
+        [policyTokenName, policyTokenName, core.address]
+      );
+
+      // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
+      const bytecode = solidityPack(
+        ["bytes", "bytes"],
+        [NPPolicyToken.bytecode, token_init]
+      );
+
+      const INIT_CODE_HASH = keccak256(bytecode);
+      const salt = solidityKeccak256(["string"], [policyTokenName]);
+
+      const address = ethers.utils.getCreate2Address(
+        factory.address,
+        salt,
+        INIT_CODE_HASH
+      );
+
+      const deadline = now + 30;
+      const settleTimestamp = now + 60;
+
+      await expect(
+        core.deployPolicyToken(
+          "BTC",
+          false,
+          1,
+          ethers.utils.parseUnits("5.5"),
+          2112,
+          ethers.BigNumber.from(deadline),
+          ethers.BigNumber.from(settleTimestamp)
+        )
+      )
+        .to.emit(core, "PolicyTokenDeployed")
+        .withArgs(policyTokenName, address, deadline, settleTimestamp);
+    });
+
+    it("should be able to deploy a new policy token and get the correct address", async function () {
+      const policyTokenName = "BTC_24000.0_L_2112";
 
       // Type 1 (If you want to use this function, please change the visibility)
       const bytecode1 = await factory.getPolicyTokenBytecode(policyTokenName);
@@ -143,6 +185,7 @@ describe("Policy Core and Naughty Factory", function () {
         core.deployPolicyToken(
           "BTC",
           false,
+          0,
           ethers.utils.parseUnits("24000"),
           2112,
           ethers.BigNumber.from(deadline),
@@ -150,7 +193,7 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs("BTC_24000_L_2112", address, deadline, settleTimestamp);
+        .withArgs(policyTokenName, address, deadline, settleTimestamp);
 
       const policyTokenInfo = await core.policyTokenInfoMapping(
         policyTokenName
@@ -161,12 +204,12 @@ describe("Policy Core and Naughty Factory", function () {
     it("should be able to deploy a new pool and get the correct address", async function () {
       // Preset1: Add the stablecoin (we use default mockUSD here)
       // Preset2: Deploy a policy token
-
       const deadline = now + 30;
       const settleTimestamp = now + 60;
       await core.deployPolicyToken(
         "BTC",
         false,
+        0,
         ethers.utils.parseUnits("24000"),
         2112,
         ethers.BigNumber.from(deadline),
@@ -174,7 +217,7 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       // Calculate the address
-      const policyTokenName = "BTC_24000_L_2112";
+      const policyTokenName = "BTC_24000.0_L_2112";
 
       const policyTokenInfo = await core.policyTokenInfoMapping(
         policyTokenName
@@ -214,13 +257,14 @@ describe("Policy Core and Naughty Factory", function () {
   });
   describe("Stake and Redeem policy tokens", function () {
     it("should be able to stake usd and get policytokens", async function () {
-      const policyTokenName = "BTC_24000_L_2112";
+      const policyTokenName = "BTC_24000.0_L_2112";
 
       const deadline = now + 300;
       const settleTimestamp = now + 600;
       await core.deployPolicyToken(
         "BTC",
         false,
+        0,
         ethers.utils.parseUnits("24000"),
         2112,
         ethers.BigNumber.from(deadline),
@@ -247,7 +291,6 @@ describe("Policy Core and Naughty Factory", function () {
         ethers.utils.parseUnits("90000")
       );
 
-      NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
       const policyTokenInfo = await core.policyTokenInfoMapping(
         policyTokenName
       );

@@ -160,7 +160,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function buyTickets(uint32[] calldata _ticketNumbers)
+    function buyTickets(uint32[] calldata _ticketNumbers, uint256[] calldata _ticketAmounts)
         external
         nonReentrant
     {

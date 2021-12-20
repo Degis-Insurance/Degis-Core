@@ -29,10 +29,10 @@ contract NaughtyFactory {
     mapping(address => mapping(address => address)) getPair;
 
     // Store all the pairs' addresses
-    address[] allPairs;
+    address[] public allPairs;
 
     // Store all policy tokens' addresses
-    address[] allTokens;
+    address[] public allTokens;
 
     uint256 public _nextId;
 
@@ -40,7 +40,7 @@ contract NaughtyFactory {
     address public policyCore;
 
     // INIT_CODE_HASH for NaughtyPair, may be used in frontend
-    bytes32 public constant INIT_CODE_HASH =
+    bytes32 public constant PAIR_INIT_CODE_HASH =
         keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
 
     // ---------------------------------------------------------------------------------------- //
@@ -60,23 +60,28 @@ contract NaughtyFactory {
      * @notice Next token to be deployed
      * @return Latest token address
      */
-    function getLatestTokenAddress() public view returns (address) {
+    function getLatestTokenAddress() external view returns (address) {
         uint256 currentToken = _nextId - 1;
         return allTokens[currentToken];
     }
 
     /**
-     * @notice Get all pair addresses
+     * @notice Get the INIT_CODE_HASH for policy tokens with parameters
+     * @param _policyTokenName Name of the policy token to be deployed
      */
-    function getAllPairs() external view returns (address[] memory) {
-        return allPairs;
-    }
-
-    /**
-     * @notice Get all token addresses
-     */
-    function getAllTokens() external view returns (address[] memory) {
-        return allTokens;
+    function getInitCodeHashForPolicyToken(string memory _policyTokenName)
+        external
+        view
+        returns (bytes32)
+    {
+        bytes memory bytecode = type(NPPolicyToken).creationCode;
+        return
+            keccak256(
+                abi.encodePacked(
+                    bytecode,
+                    abi.encode(_policyTokenName, _policyTokenName, policyCore)
+                )
+            );
     }
 
     /**

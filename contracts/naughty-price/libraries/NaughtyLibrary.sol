@@ -116,7 +116,7 @@ library NaughtyLibrary {
         address factory,
         address tokenA,
         address tokenB
-    ) public view returns (uint112 reserveA, uint112 reserveB) {
+    ) internal view returns (uint112 reserveA, uint112 reserveB) {
         address pairAddress = INaughtyFactory(factory).getPairAddress(
             tokenA,
             tokenB
@@ -136,7 +136,7 @@ library NaughtyLibrary {
         address factory,
         address tokenA,
         address tokenB
-    ) external view returns (address) {
+    ) internal view returns (address) {
         address pairAddress = INaughtyFactory(factory).getPairAddress(
             tokenA,
             tokenB
@@ -170,11 +170,11 @@ library NaughtyLibrary {
      * @return isStablecoin Whether this token is a stablecoin
      */
     function checkStablecoin(address _policyCore, address _coinAddress)
-        public
+        internal
         view
         returns (bool)
     {
-        return IPolicyCore(_policyCore).isStablecoinAddress(_coinAddress);
+        return IPolicyCore(_policyCore).supportedStablecoin(_coinAddress);
     }
 
     /**
@@ -192,7 +192,7 @@ library NaughtyLibrary {
         address _stablecoin,
         uint256 _amount,
         address _userAddress
-    ) public {
+    ) internal {
         // Find the policy token name
         string memory policyTokenName = IPolicyCore(_policyCore)
             .findNamebyAddress(_policyTokenAddress);

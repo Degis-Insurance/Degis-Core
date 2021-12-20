@@ -45,14 +45,6 @@ interface IPolicyCore {
         view
         returns (uint256 _quota);
 
-    /**
-     * @dev The getter function are not available for interfaces
-     */
-    function isStablecoinAddress(address _coinAddress)
-        external
-        view
-        returns (bool);
-
     function supportedStablecoin(address _coinAddress)
         external
         view

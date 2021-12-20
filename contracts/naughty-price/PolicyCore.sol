@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../libraries/StringsUtils.sol";
+import "../libraries/SafePRBMath.sol";
 
 import "../utils/Ownable.sol";
 
@@ -37,6 +38,7 @@ import "./interfaces/INPPolicyToken.sol";
 
 contract PolicyCore is Ownable {
     using StringsUtils for uint256;
+    using SafePRBMath for uint256;
     using SafeERC20 for IERC20;
 
     // Factory contract, responsible for deploying new contracts
@@ -57,6 +59,7 @@ contract PolicyCore is Ownable {
     struct PolicyTokenInfo {
         address policyTokenAddress;
         bool isCall;
+        uint256 decimals;
         uint256 strikePrice;
         uint256 deadline;
         uint256 settleTimestamp;
@@ -293,24 +296,6 @@ contract PolicyCore is Ownable {
     }
 
     /**
-     * @notice Check if this is a stablecoin address supported, used in naughtyFactory
-     * @dev The getter function is not automatically generated in interfaces,
-     *      so we still need this function.
-     *      If we want to generate a function in the interface to read public variables,
-     *      it need to be without "view".
-     * @param _coinAddress Address of the stablecoin
-     * @return Whether it is a supported stablecoin
-     */
-    // FIXME:If we still need this function (√)
-    function isStablecoinAddress(address _coinAddress)
-        external
-        view
-        returns (bool)
-    {
-        return supportedStablecoin[_coinAddress];
-    }
-
-    /**
      * @notice Check a user's quota for a certain policy token
      * @param _userAddress Address of the user to be checked
      * @param _policyTokenAddress Address of the policy token
@@ -372,6 +357,7 @@ contract PolicyCore is Ownable {
      *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
+     * @param _decimals Decimals of this token's price (0~18)
      * @param _strikePrice Strike price of the policy (have not been transferred with 1e18)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
@@ -380,13 +366,16 @@ contract PolicyCore is Ownable {
     function deployPolicyToken(
         string memory _tokenName,
         bool _isCall,
+        uint256 _decimals,
         uint256 _strikePrice,
         uint256 _round,
         uint256 _deadline,
         uint256 _settleTimestamp
     ) external onlyOwner returns (address) {
+        require(_decimals <= 18, "Too many decimals");
         string memory policyTokenName = _generateName(
             _tokenName,
+            _decimals,
             _strikePrice,
             _isCall,
             _round
@@ -398,6 +387,7 @@ contract PolicyCore is Ownable {
         policyTokenInfoMapping[policyTokenName] = PolicyTokenInfo(
             policyTokenAddress,
             _isCall,
+            _decimals,
             _strikePrice,
             _deadline,
             _settleTimestamp
@@ -861,21 +851,28 @@ contract PolicyCore is Ownable {
      * @param _round Round of the policy (e.g. 202101)
      */
     // FIXME: can not handle price < 1
+    // tag: handling this problem
     function _generateName(
         string memory _tokenName,
+        uint256 _decimals,
         uint256 _strikePrice,
         bool _isCall,
         uint256 _round
     ) internal pure returns (string memory) {
-        string memory call = _isCall ? "H" : "L";
-        uint256 _price = _strikePrice / 1e18;
+        string memory direction = _isCall ? "H" : "L";
+
+        uint256 intPart = _strikePrice / 1e18;
+        uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
+
         string memory name = string(
             abi.encodePacked(
                 _tokenName,
                 "_",
-                _price.uintToString(),
+                intPart.uintToString(),
+                ".",
+                decimalPart.uintToString(),
                 "_",
-                call,
+                direction,
                 "_",
                 _round.uintToString()
             )
