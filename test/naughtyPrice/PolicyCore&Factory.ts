@@ -18,6 +18,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
   keccak256,
+  parseUnits,
   solidityKeccak256,
   solidityPack,
 } from "ethers/lib/utils";
@@ -35,7 +36,7 @@ describe("Policy Core and Naughty Factory", function () {
     user1: SignerWithAddress,
     user2: SignerWithAddress;
 
-  let time: number, now: number;
+  let time: number, now: number, deadline: number, settleTimestamp: number;
 
   beforeEach(async function () {
     MockUSD = await ethers.getContractFactory("MockUSD");
@@ -61,6 +62,8 @@ describe("Policy Core and Naughty Factory", function () {
 
     time = new Date().getTime();
     now = Math.floor(time / 1000);
+    deadline = now + 300;
+    settleTimestamp = now + 600;
   });
 
   describe("Deployment", function () {
@@ -140,7 +143,7 @@ describe("Policy Core and Naughty Factory", function () {
           "BTC",
           false,
           1,
-          ethers.utils.parseUnits("5.5"),
+          parseUnits("5.5"),
           2112,
           ethers.BigNumber.from(deadline),
           ethers.BigNumber.from(settleTimestamp)
@@ -179,14 +182,12 @@ describe("Policy Core and Naughty Factory", function () {
         INIT_CODE_HASH
       );
 
-      const deadline = now + 30;
-      const settleTimestamp = now + 60;
       await expect(
         core.deployPolicyToken(
           "BTC",
           false,
           0,
-          ethers.utils.parseUnits("24000"),
+          parseUnits("24000"),
           2112,
           ethers.BigNumber.from(deadline),
           ethers.BigNumber.from(settleTimestamp)
@@ -204,13 +205,11 @@ describe("Policy Core and Naughty Factory", function () {
     it("should be able to deploy a new pool and get the correct address", async function () {
       // Preset1: Add the stablecoin (we use default mockUSD here)
       // Preset2: Deploy a policy token
-      const deadline = now + 30;
-      const settleTimestamp = now + 60;
       await core.deployPolicyToken(
         "BTC",
         false,
         0,
-        ethers.utils.parseUnits("24000"),
+        parseUnits("24000"),
         2112,
         ethers.BigNumber.from(deadline),
         ethers.BigNumber.from(settleTimestamp)
@@ -256,49 +255,60 @@ describe("Policy Core and Naughty Factory", function () {
     });
   });
   describe("Stake and Redeem policy tokens", function () {
-    it("should be able to stake usd and get policytokens", async function () {
-      const policyTokenName = "BTC_24000.0_L_2112";
-
-      const deadline = now + 300;
-      const settleTimestamp = now + 600;
+    let policyTokenName: string,
+      policyTokenInfo,
+      policyTokenInstance: NPPolicyToken;
+    beforeEach(async function () {
+      policyTokenName = "BTC_24000.0_L_2112";
       await core.deployPolicyToken(
         "BTC",
         false,
         0,
-        ethers.utils.parseUnits("24000"),
+        parseUnits("24000"),
         2112,
         ethers.BigNumber.from(deadline),
         ethers.BigNumber.from(settleTimestamp)
       );
-
       await core.deployPool(
         policyTokenName,
         usd.address,
         ethers.BigNumber.from(deadline)
       );
 
-      await usd.approve(core.address, ethers.utils.parseUnits("10000"), {
+      policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
+      policyTokenInstance = NPPolicyToken.attach(
+        policyTokenInfo.policyTokenAddress
+      );
+    });
+    it("should be able to stake usd and get policytokens", async function () {
+      await usd.approve(core.address, parseUnits("10000"), {
         from: dev_account.address,
       });
 
-      await core.deposit(
-        policyTokenName,
-        usd.address,
-        ethers.utils.parseUnits("10000")
-      );
+      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
 
       expect(await usd.balanceOf(dev_account.address)).to.equal(
-        ethers.utils.parseUnits("90000")
+        parseUnits("90000")
       );
 
-      const policyTokenInfo = await core.policyTokenInfoMapping(
-        policyTokenName
-      );
-      const policyTokenInstance = NPPolicyToken.attach(
-        policyTokenInfo.policyTokenAddress
-      );
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
-        ethers.utils.parseUnits("10000")
+        parseUnits("10000")
+      );
+    });
+
+    it("should be able to redeem usd with policy tokens", async function () {
+      await usd.approve(core.address, parseUnits("10000"));
+      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
+
+      await policyTokenInstance.approve(core.address, parseUnits("5000"));
+      await core.redeem(policyTokenName, usd.address, parseUnits("5000"));
+
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        parseUnits("95000")
+      );
+
+      expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
+        parseUnits("5000")
       );
     });
   });
