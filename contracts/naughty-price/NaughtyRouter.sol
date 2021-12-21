@@ -20,6 +20,10 @@ contract NaughtyRouter is Ownable {
     using SafeERC20 for IERC20;
     using SafeERC20 for INaughtyPair;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Some other contracts
     address public factory;
     address public policyCore;

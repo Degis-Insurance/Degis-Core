@@ -12,6 +12,10 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *         That is an ERC721 NFT and this is an ERC20 token.
  */
 contract NPPolicyToken is ERC20 {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     address public minter;
 
     event Mint(address account, uint256 amount);

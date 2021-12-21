@@ -32,11 +32,12 @@ describe("PriceGetter", function () {
 
   describe("Owner Functions", function () {
     it("should be able to add new price feed", async function () {
+      const decimals = 8;
       await expect(
-        priceGetter.setPriceFeed("Test Token", priceFeedTest.address, 8)
+        priceGetter.setPriceFeed("Test Token", priceFeedTest.address, decimals)
       )
         .to.emit(priceGetter, "PriceFeedChanged")
-        .withArgs("Test Token", priceFeedTest.address);
+        .withArgs("Test Token", priceFeedTest.address, decimals);
 
       expect(
         (await priceGetter.priceFeedInfo("Test Token")).priceFeedAddress

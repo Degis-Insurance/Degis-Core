@@ -25,6 +25,10 @@ import "hardhat/console.sol";
 contract NaughtyFactory {
     using StringsUtils for address;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // PolicyToken Address => StableCoin Address => Pool Address
     mapping(address => mapping(address => address)) getPair;
 

@@ -20,6 +20,10 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // naughtyFactory contract address
     address public factory;
 

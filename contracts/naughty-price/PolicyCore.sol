@@ -41,6 +41,10 @@ contract PolicyCore is Ownable {
     using SafePRBMath for uint256;
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // Factory contract, responsible for deploying new contracts
     INaughtyFactory public factory;
 
