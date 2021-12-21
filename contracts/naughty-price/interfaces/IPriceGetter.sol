@@ -10,5 +10,7 @@ interface IPriceGetter {
     function setPriceFeed(string memory _tokenName, address _feedAddress)
         external;
 
-    function getLatestPrice(string memory _tokenName) external returns (int256);
+    function getLatestPrice(string memory _tokenName)
+        external
+        returns (uint256 _price);
 }

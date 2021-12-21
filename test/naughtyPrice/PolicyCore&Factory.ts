@@ -34,7 +34,7 @@ describe("Policy Core and Naughty Factory", function () {
   let dev_account: SignerWithAddress,
     stablecoin: SignerWithAddress,
     user1: SignerWithAddress,
-    user2: SignerWithAddress;
+    emergencyPool: SignerWithAddress;
 
   let time: number, now: number, deadline: number, settleTimestamp: number;
 
@@ -58,7 +58,7 @@ describe("Policy Core and Naughty Factory", function () {
 
     await factory.setPolicyCoreAddress(core.address);
 
-    [dev_account, stablecoin, user1, user2] = await ethers.getSigners();
+    [dev_account, stablecoin, user1, emergencyPool] = await ethers.getSigners();
 
     time = new Date().getTime();
     now = Math.floor(time / 1000);
@@ -99,10 +99,10 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to set a new emergencyPool", async function () {
-      await expect(core.setEmergencyPool(user2.address))
+      await expect(core.setEmergencyPool(emergencyPool.address))
         .to.emit(core, "EmergencyPoolChanged")
-        .withArgs(user2.address);
-      expect(await core.emergencyPool()).to.equal(user2.address);
+        .withArgs(emergencyPool.address);
+      expect(await core.emergencyPool()).to.equal(emergencyPool.address);
     });
   });
 
@@ -113,7 +113,7 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to generate correct names with decimals", async function () {
-      const policyTokenName = "BTC_5.5_L_2112";
+      const policyTokenName = "BTC_5.5656_L_2112";
 
       const token_init = defaultAbiCoder.encode(
         ["string", "string", "address"],
@@ -135,15 +135,12 @@ describe("Policy Core and Naughty Factory", function () {
         INIT_CODE_HASH
       );
 
-      const deadline = now + 30;
-      const settleTimestamp = now + 60;
-
       await expect(
         core.deployPolicyToken(
           "BTC",
           false,
-          1,
-          parseUnits("5.5"),
+          4,
+          parseUnits("5.5656"),
           2112,
           ethers.BigNumber.from(deadline),
           ethers.BigNumber.from(settleTimestamp)

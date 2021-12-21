@@ -9,13 +9,24 @@ import "../utils/Ownable.sol";
  * @notice This is the contract for getting price feed from chainlink.
  *         The contract will keep a record from tokenName => priceFeed Address.
  *         Got the sponsorship and collaboration with Chainlink.
+ * @dev    The price from chainlink priceFeed has different decimals, be careful.
  */
 contract PriceGetter is Ownable {
+    struct PriceFeedInfo {
+        address priceFeedAddress;
+        uint256 decimals;
+    }
     // Use token name (string) as the mapping key
-    mapping(string => AggregatorV3Interface) internal priceFeed;
-    mapping(string => address) currentPriceFeed;
+    mapping(string => PriceFeedInfo) public priceFeedInfo;
 
-    event PriceFeedChanged(string tokenName, address feedAddress);
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+    event PriceFeedChanged(
+        string tokenName,
+        address feedAddress,
+        uint256 decimals
+    );
 
     event LatestPriceGet(
         uint80 roundID,
@@ -31,28 +42,20 @@ contract PriceGetter is Ownable {
     constructor() {
         // At first, launch three kind of pools
 
-        // This is the rinkeby eth price feed
-        // priceFeed["ETH"] = AggregatorV3Interface(
-        //     0x8A753747A1Fa494EC906cE90E9f37563A8AF630e
-        // );
-        // currentPriceFeed["ETH"] = 0x8A753747A1Fa494EC906cE90E9f37563A8AF630e;
-
-        // priceFeed["BTC"] = AggregatorV3Interface(
-        //     0xECe365B379E1dD183B20fc5f022230C044d51404
-        // );
-        // currentPriceFeed["BTC"] = 0xECe365B379E1dD183B20fc5f022230C044d51404;
-
         // Uncomment below when launched on Avalanche Fuji
-        priceFeed["AVAX"] = AggregatorV3Interface(
-            0x5498BB86BC934c8D34FDA08E81D444153d0D06aD
+        priceFeedInfo["AVAX"] = PriceFeedInfo(
+            0x5498BB86BC934c8D34FDA08E81D444153d0D06aD,
+            8
         );
 
-        priceFeed["ETH"] = AggregatorV3Interface(
-            0x86d67c3D38D2bCeE722E601025C25a575021c6EA
+        priceFeedInfo["ETH"] = PriceFeedInfo(
+            0x86d67c3D38D2bCeE722E601025C25a575021c6EA,
+            8
         );
 
-        priceFeed["BTC"] = AggregatorV3Interface(
-            0x31CF013A08c6Ac228C94551d535d5BAfE19c602a
+        priceFeedInfo["BTC"] = PriceFeedInfo(
+            0x31CF013A08c6Ac228C94551d535d5BAfE19c602a,
+            8
         );
     }
 
@@ -72,18 +75,6 @@ contract PriceGetter is Ownable {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @notice Get the price feed address of a token
-     * @param _tokenName Name of the strike token
-     */
-    function getPriceFeedAddress(string memory _tokenName)
-        public
-        view
-        returns (address)
-    {
-        return address(priceFeed[_tokenName]);
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -92,16 +83,17 @@ contract PriceGetter is Ownable {
      * @notice Set a price feed oracle address for a token
      * @param _tokenName Address of the token
      * @param _feedAddress Price feed oracle address
+     * @param _decimals Decimals of this price feed service
      */
-    function setPriceFeed(string memory _tokenName, address _feedAddress)
-        public
-        onlyOwner
-        notZeroAddress(_feedAddress)
-    {
-        priceFeed[_tokenName] = AggregatorV3Interface(_feedAddress);
-        currentPriceFeed[_tokenName] = _feedAddress;
+    function setPriceFeed(
+        string memory _tokenName,
+        address _feedAddress,
+        uint256 _decimals
+    ) public onlyOwner notZeroAddress(_feedAddress) {
+        require(_decimals <= 18, "Too many decimals");
+        priceFeedInfo[_tokenName] = PriceFeedInfo(_feedAddress, _decimals);
 
-        emit PriceFeedChanged(_tokenName, _feedAddress);
+        emit PriceFeedChanged(_tokenName, _feedAddress, _decimals);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -113,14 +105,19 @@ contract PriceGetter is Ownable {
      * @param _tokenName Address of the token
      * @return price The latest price
      */
-    function getLatestPrice(string memory _tokenName) public returns (int256) {
+    function getLatestPrice(string memory _tokenName) public returns (uint256) {
+        PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenName];
+
         (
             uint80 roundID,
             int256 price,
             uint256 startedAt,
             uint256 timeStamp,
             uint80 answeredInRound
-        ) = priceFeed[_tokenName].latestRoundData();
+        ) = AggregatorV3Interface(priceFeed.priceFeedAddress).latestRoundData();
+
+        // require(price > 0, "Only accept price that > 0");
+        if (price < 0) price = 0;
 
         emit LatestPriceGet(
             roundID,
@@ -129,6 +126,8 @@ contract PriceGetter is Ownable {
             timeStamp,
             answeredInRound
         );
-        return price;
+        uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+
+        return finalPrice;
     }
 }

@@ -88,7 +88,7 @@ contract PolicyCore is Ownable {
     mapping(address => address[]) public allDepositors;
 
     struct SettlementInfo {
-        int256 price;
+        uint256 price;
         bool isHappened;
         bool alreadySettled;
     }
@@ -132,7 +132,7 @@ contract PolicyCore is Ownable {
 
     event FinalResultSettled(
         string _policyTokenName,
-        int256 price,
+        uint256 price,
         bool isHappened
     );
     event NewStablecoinAdded(address _newStablecoin);
@@ -667,18 +667,17 @@ contract PolicyCore is Ownable {
         string memory originalTokenName = policyTokenToOriginal[
             policyTokenAddress
         ];
-        int256 price = IPriceGetter(priceGetter).getLatestPrice(
+
+        uint256 price = IPriceGetter(priceGetter).getLatestPrice(
             originalTokenName
         );
 
-        // The price feed must return valid values
-        require(price > 0, "Settle failed, price can not be <= 0");
         result.price = price;
 
         // Get the final result
-        bool situationT1 = (uint256(price) >= policyTokenInfo.strikePrice) &&
+        bool situationT1 = (price >= policyTokenInfo.strikePrice) &&
             policyTokenInfo.isCall;
-        bool situationT2 = (uint256(price) <= policyTokenInfo.strikePrice) &&
+        bool situationT2 = (price <= policyTokenInfo.strikePrice) &&
             !policyTokenInfo.isCall;
 
         result.isHappened = (situationT1 || situationT2) ? true : false;
