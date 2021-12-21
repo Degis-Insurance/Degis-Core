@@ -24,23 +24,23 @@ describe("PriceGetter", function () {
     });
 
     it("should set some price feeds at the beginning", async function () {
-      expect(await priceGetter.getPriceFeedAddress("AVAX")).to.equal(
-        "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD"
-      );
+      expect(
+        (await priceGetter.priceFeedInfo("AVAX")).priceFeedAddress
+      ).to.equal("0x5498BB86BC934c8D34FDA08E81D444153d0D06aD");
     });
   });
 
   describe("Owner Functions", function () {
     it("should be able to add new price feed", async function () {
       await expect(
-        priceGetter.setPriceFeed("Test Token", priceFeedTest.address)
+        priceGetter.setPriceFeed("Test Token", priceFeedTest.address, 8)
       )
         .to.emit(priceGetter, "PriceFeedChanged")
         .withArgs("Test Token", priceFeedTest.address);
 
-      expect(await priceGetter.getPriceFeedAddress("Test Token")).to.equal(
-        priceFeedTest.address
-      );
+      expect(
+        (await priceGetter.priceFeedInfo("Test Token")).priceFeedAddress
+      ).to.equal(priceFeedTest.address);
     });
   });
 });

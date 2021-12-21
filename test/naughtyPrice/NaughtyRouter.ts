@@ -10,9 +10,9 @@ describe("Naughty Router", function () {
     suer2: SignerWithAddress;
 
   beforeEach(async function () {
-    NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
-    router = await NaughtyRouter.deploy();
-    await router.deployed();
+    // NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
+    // router = await NaughtyRouter.deploy();
+    // await router.deployed();
   });
 
   describe("Add and Remove Liquidity", function () {

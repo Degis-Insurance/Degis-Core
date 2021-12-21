@@ -253,7 +253,7 @@ describe("Policy Core and Naughty Factory", function () {
   });
   describe("Stake and Redeem policy tokens", function () {
     let policyTokenName: string,
-      policyTokenInfo,
+      policyTokenInfo: any,
       policyTokenInstance: NPPolicyToken;
     beforeEach(async function () {
       policyTokenName = "BTC_24000.0_L_2112";
@@ -278,19 +278,40 @@ describe("Policy Core and Naughty Factory", function () {
       );
     });
     it("should be able to stake usd and get policytokens", async function () {
+      // dev_account deposit
       await usd.approve(core.address, parseUnits("10000"), {
         from: dev_account.address,
       });
-
       await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
 
+      // user1 deposit
+      await usd.mint(user1.address, parseUnits("500"));
+      await usd.connect(user1).approve(core.address, parseUnits("200"));
+      await core
+        .connect(user1)
+        .deposit(policyTokenName, usd.address, parseUnits("200"));
+
+      // Check dev_account's balance
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         parseUnits("90000")
       );
-
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
         parseUnits("10000")
       );
+
+      // Check user1's balance
+      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("300"));
+      expect(await policyTokenInstance.balanceOf(user1.address)).to.equal(
+        parseUnits("200")
+      );
+
+      // get allDepositors
+      expect(
+        await core.allDepositors(policyTokenInfo.policyTokenAddress, 0)
+      ).to.equal(dev_account.address);
+      expect(
+        await core.allDepositors(policyTokenInfo.policyTokenAddress, 1)
+      ).to.equal(user1.address);
     });
 
     it("should be able to redeem usd with policy tokens", async function () {
