@@ -40,6 +40,8 @@ describe("Policy Core and Naughty Factory", function () {
   let time: number, now: number, deadline: number, settleTimestamp: number;
 
   beforeEach(async function () {
+    [dev_account, stablecoin, user1, emergencyPool] = await ethers.getSigners();
+
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
@@ -56,10 +58,9 @@ describe("Policy Core and Naughty Factory", function () {
       priceGetter.address
     );
     await core.deployed();
+    await factory.deployed();
 
     await factory.setPolicyCoreAddress(core.address);
-
-    [dev_account, stablecoin, user1, emergencyPool] = await ethers.getSigners();
 
     time = new Date().getTime();
     now = Math.floor(time / 1000);
@@ -105,14 +106,14 @@ describe("Policy Core and Naughty Factory", function () {
         .withArgs(emergencyPool.address);
       expect(await core.emergencyPool()).to.equal(emergencyPool.address);
     });
-  });
 
-  describe("Deploy tokens and pools", function () {
-    it("should be able to set the policyCore address", async function () {
+    it("should be able to set the core address in factory", async function () {
       await factory.setPolicyCoreAddress(core.address);
       expect(await factory.policyCore()).to.equal(core.address);
     });
+  });
 
+  describe("Deploy tokens and pools", function () {
     it("should be able to generate correct names with decimals", async function () {
       const policyTokenName = "BTC_5.5656_L_2112";
 

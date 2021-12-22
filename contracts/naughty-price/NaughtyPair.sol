@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/INaughtyFactory.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Naughty Pair
  * @notice This is the contract for the naughtyPrice swapping pair.
@@ -161,6 +163,8 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
                 amount1.mul(_totalSupply).div(_reserve1)
             );
         }
+        console.log(liquidity);
+
         require(liquidity > 0, "insufficient liquidity minted");
         _mint(to, liquidity);
 

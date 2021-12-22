@@ -5,6 +5,8 @@ import "../interfaces/INaughtyPair.sol";
 import "../interfaces/INaughtyFactory.sol";
 import "../interfaces/IPolicyCore.sol";
 
+import "hardhat/console.sol";
+
 library NaughtyLibrary {
     /**
      * @notice Used when swap exact tokens for tokens (in is fixed)
@@ -121,6 +123,9 @@ library NaughtyLibrary {
             tokenA,
             tokenB
         );
+
+        console.log("Pair Address");
+        console.log(pairAddress);
 
         // (Policy token reserve, stablecoin reserve)
         (reserveA, reserveB) = INaughtyPair(pairAddress).getReserves();

@@ -29,6 +29,28 @@ contract NaughtyRouter is Ownable {
     address public policyCore;
     address public buyerToken;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    event LiquidityAdded(
+        address indexed pairAddress,
+        uint256 amountA,
+        uint256 amountB,
+        uint256 liquidity
+    );
+
+    event LiquidityRemoved(
+        address indexed pairAddress,
+        uint256 amountA,
+        uint256 amountB,
+        uint256 liquidity
+    );
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor(address _factory, address _buyerToken) {
         factory = _factory;
         buyerToken = _buyerToken;
@@ -55,7 +77,7 @@ contract NaughtyRouter is Ownable {
      * @notice Set the address of policyCore
      * @param _coreAddress Address of new policyCore
      */
-    function setPolicyCore(address _coreAddress) public onlyOwner {
+    function setPolicyCore(address _coreAddress) external onlyOwner {
         policyCore = _coreAddress;
     }
 
@@ -63,7 +85,7 @@ contract NaughtyRouter is Ownable {
      * @notice Set the address of buyer token
      * @param _buyerToken Address of new buyer token
      */
-    function setBuyerToken(address _buyerToken) public onlyOwner {
+    function setBuyerToken(address _buyerToken) external onlyOwner {
         buyerToken = _buyerToken;
     }
 
@@ -178,6 +200,8 @@ contract NaughtyRouter is Ownable {
         transferHelper(_tokenB, msg.sender, pair, amountB);
 
         liquidity = INaughtyPair(pair).mint(_to);
+
+        emit LiquidityAdded(pair, amountA, amountB, liquidity);
     }
 
     /**
@@ -214,6 +238,8 @@ contract NaughtyRouter is Ownable {
 
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
+
+        emit LiquidityRemoved(pair, amountA, amountB, _liquidity);
     }
 
     /**
