@@ -124,9 +124,6 @@ library NaughtyLibrary {
             tokenB
         );
 
-        console.log("Pair Address");
-        console.log(pairAddress);
-
         // (Policy token reserve, stablecoin reserve)
         (reserveA, reserveB) = INaughtyPair(pairAddress).getReserves();
     }
@@ -182,31 +179,5 @@ library NaughtyLibrary {
         return IPolicyCore(_policyCore).supportedStablecoin(_coinAddress);
     }
 
-    /**
-     * @notice Used when users only provide stablecoins and want to mint & add liquidity in one step
-     * @dev Need have approval before
-     * @param _policyCore Address of the policyCore contract
-     * @param _policyTokenAddress Address of the policy token
-     * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount to be used for minting policy tokens
-     * @param _userAddress The user's address
-     */
-    function mintPolicyTokensForUser(
-        address _policyCore,
-        address _policyTokenAddress,
-        address _stablecoin,
-        uint256 _amount,
-        address _userAddress
-    ) internal {
-        // Find the policy token name
-        string memory policyTokenName = IPolicyCore(_policyCore)
-            .findNamebyAddress(_policyTokenAddress);
-
-        IPolicyCore(_policyCore).delegateDeposit(
-            policyTokenName,
-            _stablecoin,
-            _amount,
-            _userAddress
-        );
-    }
+    
 }

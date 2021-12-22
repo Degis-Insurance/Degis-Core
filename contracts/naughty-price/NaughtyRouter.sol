@@ -8,6 +8,7 @@ import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/INPPolicyToken.sol";
 
 import "../utils/Ownable.sol";
+import "../libraries/SafePRBMath.sol";
 
 /**
  * @title  NaughtyRouter
@@ -19,6 +20,7 @@ import "../utils/Ownable.sol";
 contract NaughtyRouter is Ownable {
     using SafeERC20 for IERC20;
     using SafeERC20 for INaughtyPair;
+    using SafePRBMath for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -112,39 +114,34 @@ contract NaughtyRouter is Ownable {
     ) external beforeDeadline(_deadline) {
         require(_minRatio <= 100, "Minimum ratio can not exceed 100");
 
-        bool isStablecoin = NaughtyLibrary.checkStablecoin(policyCore, _tokenB);
-        require(isStablecoin, "please put stablecoin as tokenB parameter");
+        require(_checkStablecoin(_tokenB), "Please put stablecoin as tokenB");
 
-        (uint256 reserveA, uint256 reserveB) = NaughtyLibrary.getReserves(
-            factory,
-            _tokenA,
-            _tokenB
+        (uint256 reserveA, uint256 reserveB) = _getReserves(_tokenA, _tokenB);
+
+        require(reserveA > 0 && reserveB > 0, "No tokens in the pool");
+
+        uint256 _amountADesired = _amountUSD.mul(reserveA).div(
+            reserveA + reserveB
         );
-
-        uint256 _amountADesired = (_amountUSD * reserveA) /
-            (reserveA + reserveB);
-        uint256 _amountBDesired = (_amountUSD * reserveB) /
-            (reserveA + reserveB);
+        uint256 _amountBDesired = _amountUSD.mul(reserveB).div(
+            reserveA + reserveB
+        );
 
         // Mint _amountADesired policy tokens for users
-        NaughtyLibrary.mintPolicyTokensForUser(
-            policyCore,
-            _tokenA,
-            _tokenB,
-            _amountADesired,
-            msg.sender
-        );
+        mintPolicyTokensForUser(_tokenA, _tokenB, _amountADesired, msg.sender);
 
-        addLiquidity(
-            _tokenA,
-            _tokenB,
-            _amountADesired,
-            _amountBDesired,
-            (_amountADesired * _minRatio) / 100,
-            (_amountBDesired * _minRatio) / 100,
-            _to,
-            _deadline
-        );
+        {
+            addLiquidity(
+                _tokenA,
+                _tokenB,
+                _amountADesired,
+                _amountBDesired,
+                _amountADesired.mul(_minRatio).div(100),
+                _amountBDesired.mul(_minRatio).div(100),
+                _to,
+                _deadline
+            );
+        }
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -229,12 +226,15 @@ contract NaughtyRouter is Ownable {
         beforeDeadline(_deadline)
         returns (uint256 amountA, uint256 amountB)
     {
-        address pair = NaughtyLibrary.getPairAddress(factory, _tokenA, _tokenB);
+        address pair = _getPairAddress(_tokenA, _tokenB);
 
         INaughtyPair(pair).safeTransferFrom(msg.sender, pair, _liquidity); // send liquidity to pair
 
         // Amount0: insurance token
         (amountA, amountB) = INaughtyPair(pair).burn(_to);
+
+        console.log("Amount A", amountA);
+        console.log("Amount B", amountB);
 
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
@@ -260,19 +260,13 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountIn) {
-        address pair = NaughtyLibrary.getPairAddress(
-            factory,
-            _tokenIn,
-            _tokenOut
-        );
-        // Each pool has a deadline
-        uint256 poolDeadline = INaughtyPair(pair).deadline();
+        address pair = _getPairAddress(_tokenIn, _tokenOut);
         require(
-            block.timestamp <= poolDeadline,
+            block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
         );
 
-        bool isBuying = NaughtyLibrary.checkStablecoin(policyCore, _tokenIn);
+        bool isBuying = _checkStablecoin(_tokenIn);
 
         // Get how many tokens should be put in (the order depends on isBuying)
         amountIn = NaughtyLibrary.getAmountIn(
@@ -307,20 +301,14 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountOut) {
-        address pair = NaughtyLibrary.getPairAddress(
-            factory,
-            _tokenIn,
-            _tokenOut
-        );
-        // Each pool has a deadline
-        uint256 poolDeadline = INaughtyPair(pair).deadline();
+        address pair = _getPairAddress(_tokenIn, _tokenOut);
         require(
-            block.timestamp <= poolDeadline,
+            block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
         );
 
         // Check if the tokenIn is stablecoin
-        bool isBuying = NaughtyLibrary.checkStablecoin(policyCore, _tokenIn);
+        bool isBuying = _checkStablecoin(_tokenIn);
 
         // Get how many tokens should be given out (the order depends on isBuying)
         amountOut = NaughtyLibrary.getAmountOut(
@@ -356,14 +344,14 @@ contract NaughtyRouter is Ownable {
         uint256 _amountAMin,
         uint256 _amountBMin
     ) private view returns (uint256 amountA, uint256 amountB) {
-        bool isStablecoin = NaughtyLibrary.checkStablecoin(policyCore, _tokenB);
-        require(isStablecoin, "please put stablecoin as tokenB parameter");
+        require(_checkStablecoin(_tokenB), "Please put stablecoin as tokenB");
 
         (uint256 reserveA, uint256 reserveB) = NaughtyLibrary.getReserves(
             factory,
             _tokenA,
             _tokenB
         );
+
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (_amountADesired, _amountBDesired);
         } else {
@@ -434,5 +422,76 @@ contract NaughtyRouter is Ownable {
         uint256 amountBOut = _isBuying ? 0 : _amountOut;
 
         INaughtyPair(_pair).swap(amountAOut, amountBOut, _to);
+    }
+
+    /**
+     * @notice Used when users only provide stablecoins and want to mint & add liquidity in one step
+     * @dev Need have approval before
+     * @param _policyTokenAddress Address of the policy token
+     * @param _stablecoin Address of the stablecoin
+     * @param _amount Amount to be used for minting policy tokens
+     * @param _userAddress The user's address
+     */
+    function mintPolicyTokensForUser(
+        address _policyTokenAddress,
+        address _stablecoin,
+        uint256 _amount,
+        address _userAddress
+    ) internal {
+        // Find the policy token name
+        string memory policyTokenName = IPolicyCore(policyCore)
+            .findNamebyAddress(_policyTokenAddress);
+
+        IPolicyCore(policyCore).delegateDeposit(
+            policyTokenName,
+            _stablecoin,
+            _amount,
+            _userAddress
+        );
+    }
+
+    function _checkStablecoin(address _tokenAddress)
+        internal
+        view
+        returns (bool)
+    {
+        return IPolicyCore(policyCore).supportedStablecoin(_tokenAddress);
+    }
+
+    /**
+     * @notice Fetche the reserves for a pair
+     * @dev You need to sort the token order by yourself!
+     *      No matter your input order, the return value will always start with policy token reserve.
+     */
+    function _getReserves(address tokenA, address tokenB)
+        internal
+        view
+        returns (uint112 reserveA, uint112 reserveB)
+    {
+        address pairAddress = INaughtyFactory(factory).getPairAddress(
+            tokenA,
+            tokenB
+        );
+
+        // (Policy token reserve, stablecoin reserve)
+        (reserveA, reserveB) = INaughtyPair(pairAddress).getReserves();
+    }
+
+    /**
+     * @notice Get pair address
+     * @param tokenA TokenA address
+     * @param tokenB TokenB address
+     */
+    function _getPairAddress(address tokenA, address tokenB)
+        internal
+        view
+        returns (address)
+    {
+        address pairAddress = INaughtyFactory(factory).getPairAddress(
+            tokenA,
+            tokenB
+        );
+
+        return pairAddress;
     }
 }

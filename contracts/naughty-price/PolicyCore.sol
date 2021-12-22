@@ -54,8 +54,11 @@ contract PolicyCore is Ownable {
     // Lottery address
     address public lottery;
 
-    // Emergency pool address
+    // Emergency pool contract address
     address public emergencyPool;
+
+    // Naughty Router contract address
+    address public naughtyRouter;
 
     // Current distribution index
     uint256 public currentDistributionIndex;
@@ -105,6 +108,7 @@ contract PolicyCore is Ownable {
 
     event LotteryChanged(address newLotteryAddress);
     event EmergencyPoolChanged(address newEmergencyPool);
+    event NaughtyRouterChanged(address newRouter);
 
     event PolicyTokenDeployed(
         string tokenName,
@@ -351,6 +355,11 @@ contract PolicyCore is Ownable {
         emit EmergencyPoolChanged(_emergencyPool);
     }
 
+    function setNaughtyRouter(address _router) external onlyOwner {
+        naughtyRouter = _router;
+        emit NaughtyRouterChanged(_router);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -502,6 +511,11 @@ contract PolicyCore is Ownable {
         uint256 _amount,
         address _userAddress
     ) external beforeDeadline(_policyTokenName) {
+        require(
+            _msgSender() == naughtyRouter,
+            "Only the router contract can delegate"
+        );
+
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if the user gives the right stablecoin
@@ -518,7 +532,7 @@ contract PolicyCore is Ownable {
 
         // Transfer stablecoins to this contract
         IERC20(_stablecoin).safeTransferFrom(
-            _msgSender(),
+            _userAddress,
             address(this),
             _amount
         );

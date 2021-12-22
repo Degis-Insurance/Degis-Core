@@ -6,6 +6,8 @@ import "../libraries/SafePRBMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "../utils/ReentrancyGuard.sol";
+
 import "./interfaces/INaughtyFactory.sol";
 
 import "hardhat/console.sol";
@@ -18,7 +20,7 @@ import "hardhat/console.sol";
  *         Token0 will be policy tokens and token1 will be stablecoins.
  *         The swaps are only availale before the deadline.
  */
-contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
+contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
 
@@ -65,16 +67,6 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
 
     constructor() {
         factory = msg.sender; // deployed by factory contract
-    }
-
-    /**
-     * @notice Check Unlock? => Lock => Function => Unlock
-     */
-    modifier lock() {
-        require(unlocked == true, "LOCKED");
-        unlocked = false;
-        _;
-        unlocked = true;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -144,7 +136,11 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
      * @param to The user address
      * @return liquidity The LP token amount
      */
-    function mint(address to) external returns (uint256 liquidity) {
+    function mint(address to)
+        external
+        nonReentrant
+        returns (uint256 liquidity)
+    {
         (uint112 _reserve0, uint112 _reserve1) = getReserves(); // gas savings
 
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance after deposit
@@ -181,7 +177,7 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
      */
     function burn(address _to)
         external
-        lock
+        nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
         // (uint112 _reserve0, uint112 _reserve1) = getReserves(); // gas savings
@@ -189,9 +185,17 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
         uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
 
-        uint256 liquidity = balanceOf(address(this)); // lp token balance
+        console.log("balance0", balance0);
+        console.log("balance1", balance1);
+
+        uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY; // lp token balance
+
+        console.log("liquidity", liquidity);
 
         uint256 _totalSupply = totalSupply(); // gas savings
+
+        console.log("total supply", _totalSupply);
+
         // How many tokens to be sent back
         amount0 = liquidity.mul(balance0).div(_totalSupply);
         amount1 = liquidity.mul(balance1).div(_totalSupply);
@@ -222,7 +226,7 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
         uint256 _amount0Out,
         uint256 _amount1Out,
         address _to
-    ) external beforeDeadline lock {
+    ) external beforeDeadline nonReentrant {
         require(
             _amount0Out > 0 || _amount1Out > 0,
             "Output amount need to be >0"
@@ -280,6 +284,16 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
         );
     }
 
+    /**
+     * @notice Syncrinize the status of this pool
+     */
+    function sync() external nonReentrant {
+        _update(
+            IERC20(token0).balanceOf(address(this)),
+            IERC20(token1).balanceOf(address(this))
+        );
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ********************************** Internal Functions ********************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -297,16 +311,6 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP") {
         reserve1 = uint112(balance1);
 
         emit ReserveUpdated(reserve0, reserve1);
-    }
-
-    /**
-     * @notice Syncrinize the status of this pool
-     */
-    function sync() external lock {
-        _update(
-            IERC20(token0).balanceOf(address(this)),
-            IERC20(token1).balanceOf(address(this))
-        );
     }
 
     /**

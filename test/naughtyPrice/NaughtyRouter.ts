@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
   BuyerToken,
@@ -104,13 +104,13 @@ describe("Naughty Router", function () {
       policyTokenInfo.policyTokenAddress,
       usd.address
     );
+
+    await usd.approve(core.address, parseUnits("10000"));
+    await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
   });
 
-  describe("Add and Remove Liquidity", function () {
-    it("should be able to add liquidity and get lp tokens", async function () {
-      await usd.approve(core.address, parseUnits("10000"));
-      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
-
+  describe("Basic modifier", function () {
+    it("should be reverted when pass the deadline of a single transaction", async function () {
       await policyToken.approve(router.address, parseUnits("100"));
       await usd.approve(router.address, parseUnits("100"));
 
@@ -123,7 +123,27 @@ describe("Naughty Router", function () {
           parseUnits("80"),
           parseUnits("80"),
           dev_account.address,
-          now + 30
+          now - 30
+        )
+      ).to.be.revertedWith("expired transaction");
+    });
+  });
+
+  describe("Add and Remove Liquidity", function () {
+    it("should be able to add liquidity and get lp tokens", async function () {
+      await policyToken.approve(router.address, parseUnits("100"));
+      await usd.approve(router.address, parseUnits("100"));
+
+      await expect(
+        router.addLiquidity(
+          policyTokenInfo.policyTokenAddress,
+          usd.address,
+          parseUnits("100"),
+          parseUnits("100"),
+          parseUnits("80"),
+          parseUnits("80"),
+          dev_account.address,
+          now + 500
         )
       )
         .to.emit(router, "LiquidityAdded")
@@ -135,9 +155,101 @@ describe("Naughty Router", function () {
         );
     });
 
-    it("should be able to remove liquidty from the pool", async function () {});
+    it("should be able to remove liquidty from the pool", async function () {
+      await policyToken.approve(router.address, parseUnits("200"));
+      await usd.approve(router.address, parseUnits("200"));
 
-    it("should be able to add liquidity only with stablecoins", async function () {});
+      await router.addLiquidity(
+        policyTokenInfo.policyTokenAddress,
+        usd.address,
+        parseUnits("100"),
+        parseUnits("100"),
+        parseUnits("80"),
+        parseUnits("80"),
+        dev_account.address,
+        now + 500
+      );
+
+      await router.addLiquidity(
+        policyTokenInfo.policyTokenAddress,
+        usd.address,
+        parseUnits("100"),
+        parseUnits("100"),
+        parseUnits("80"),
+        parseUnits("80"),
+        dev_account.address,
+        now + 900
+      );
+
+      const NaughtyPair = await ethers.getContractFactory("NaughtyPair");
+      const pair = NaughtyPair.attach(pairAddress);
+      await pair.approve(router.address, parseUnits("10"));
+
+      await expect(
+        router.removeLiquidity(
+          policyTokenInfo.policyTokenAddress,
+          usd.address,
+          parseUnits("10"),
+          parseUnits("8"),
+          parseUnits("8"),
+          dev_account.address,
+          now + 1500
+        )
+      )
+        .to.emit(router, "LiquidityRemoved")
+        .withArgs(
+          pairAddress,
+          parseUnits("10"),
+          parseUnits("10"),
+          parseUnits("10")
+        );
+    });
+
+    it("should be able to add liquidity only with stablecoins", async function () {
+      await core.setNaughtyRouter(router.address);
+
+      await policyToken.approve(router.address, parseUnits("10000"));
+      await usd.approve(router.address, parseUnits("10000"));
+      await usd.approve(core.address, parseUnits("10000"));
+
+      const ba1 = await usd.balanceOf(dev_account.address);
+      const ba2 = await policyToken.balanceOf(dev_account.address);
+      console.log("ba1", formatEther(ba1));
+      console.log("ba2", formatEther(ba2));
+
+      await expect(
+        router.addLiquidityWithUSD(
+          policyTokenInfo.policyTokenAddress,
+          usd.address,
+          parseUnits("100"),
+          dev_account.address,
+          80,
+          now + 500
+        )
+      ).to.be.revertedWith("No tokens in the pool");
+
+      await router.addLiquidity(
+        policyTokenInfo.policyTokenAddress,
+        usd.address,
+        parseUnits("100"),
+        parseUnits("100"),
+        parseUnits("80"),
+        parseUnits("80"),
+        dev_account.address,
+        now + 500
+      );
+
+      await expect(
+        router.addLiquidityWithUSD(
+          policyTokenInfo.policyTokenAddress,
+          usd.address,
+          parseUnits("100"),
+          dev_account.address,
+          80,
+          now + 500
+        )
+      ).to.emit(router, "LiquidityAdded");
+    });
   });
 
   describe("Swap Tokens", function () {
