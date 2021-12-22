@@ -1,5 +1,5 @@
 import hre from "hardhat";
-import { loadInstance } from "./loadInstance";
+import { _loadInstance } from "./loadInstance";
 
 const networkName = hre.network.name;
 const chainId = hre.network.config.chainId;
@@ -8,10 +8,9 @@ async function main() {
   console.log("Current network:", networkName);
   console.log("Current chain id:", chainId);
   // Get the contract instances
-  const { Greeter } = await loadInstance();
+  const Greeter = await _loadInstance("Greeter");
 
   // We get the contract to deploy
-
   const greeter = await Greeter.deploy("Hello, Hardhat!");
 
   await greeter.deployed();

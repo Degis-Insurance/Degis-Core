@@ -14,7 +14,7 @@ import "../libraries/SafePRBMath.sol";
  *         About every 24 hours, the reward will be calculated to users' account.
  *         After disrtribution, users' reward balance will update but they still need to manually claim the reward.
  */
-contract PurchaseInventiveVault is Ownable {
+contract PurchaseIncentiveVault is Ownable {
     using SafeERC20 for IBuyerToken;
     using SafePRBMath for uint256;
 

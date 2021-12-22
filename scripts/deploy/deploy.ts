@@ -1,6 +1,12 @@
 import hre from "hardhat";
-import { loadInstance } from "./loadInstance";
-import { readAddressList, storeAddressList } from "./contractAddress";
+import {
+  loadInstance,
+  loadInstance_Tokens,
+  _loadInstance,
+  _loadMultipleInstance,
+} from "../loadInstance";
+import { readAddressList, storeAddressList } from "../contractAddress";
+import { ContractFactory } from "ethers";
 
 const networkName = hre.network.name;
 
@@ -11,28 +17,29 @@ async function main() {
   console.log("Deploying to nerwork:", networkName);
 
   // Get the contract instances
-  const { Greeter, MockUSD, DegisToken, BuyerToken, PurchaseIncentiveVault } =
-    await loadInstance();
+  const { MockUSD, BuyerToken, DegisToken } = await loadInstance_Tokens();
+
+  const [PurchaseIncentiveVault] = await _loadMultipleInstance([
+    "PurchaseIncentiveVault",
+  ]);
 
   // We get the contract to deploy
   const usd = await MockUSD.deploy();
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+
   const degis = await DegisToken.deploy();
   const buyerToken = await BuyerToken.deploy();
 
   await usd.deployed();
-  await greeter.deployed();
   await degis.deployed();
   await buyerToken.deployed();
 
   console.log("MockUSD deployed to:", usd.address);
-  console.log("Greeter deployed to:", greeter.address);
   console.log("DegisToken deployed to:", degis.address);
   console.log("BuyerToken deployed to:", buyerToken.address);
 
-  addressList[networkName].DegisToken = degis.address;
-  addressList[networkName].BuyerToken = buyerToken.address;
-  addressList[networkName].MockUSD = usd.address;
+  // addressList[networkName].DegisToken = degis.address;
+  // addressList[networkName].BuyerToken = buyerToken.address;
+  // addressList[networkName].MockUSD = usd.address;
 
   const vault = await PurchaseIncentiveVault.deploy(
     buyerToken.address,
@@ -40,9 +47,13 @@ async function main() {
   );
   await vault.deployed();
   console.log("PurchaseIncentiveVault deployed to:", vault.address);
-  addressList[networkName].PurchaseIncentiveVault = vault.address;
+  // addressList[networkName].PurchaseIncentiveVault = vault.address;
 
   storeAddressList(addressList);
+}
+
+export async function _deployInstance(contractInstance: ContractFactory) {
+  await contractInstance.deploy();
 }
 
 main()

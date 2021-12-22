@@ -63,7 +63,7 @@ contract PolicyCore is Ownable {
     struct PolicyTokenInfo {
         address policyTokenAddress;
         bool isCall;
-        uint256 decimals;
+        uint256 decimals; // decimals of the oracle pricefeed
         uint256 strikePrice;
         uint256 deadline;
         uint256 settleTimestamp;
@@ -74,7 +74,7 @@ contract PolicyCore is Ownable {
     mapping(address => string) public policyTokenAddressToName;
 
     // Policy token name list
-    string[] allPolicyTokens;
+    string[] public allPolicyTokens;
 
     // Stablecoin address => Supported or not
     mapping(address => bool) public supportedStablecoin;
@@ -263,7 +263,7 @@ contract PolicyCore is Ownable {
      * @param _policyTokenName Name of the policy token (e.g. "AVAX30L202103")
      * @return policyTokenAddress Address of the policy token
      */
-    // FIXME: not needed
+    // Note: not really needed
     function findAddressbyName(string memory _policyTokenName)
         public
         view
@@ -277,7 +277,7 @@ contract PolicyCore is Ownable {
      * @param _policyTokenAddress Address of the policy token
      * @return policyTokenName Name of the policy token
      */
-    // FIXME: not needed
+    // Note: not really needed
     function findNamebyAddress(address _policyTokenAddress)
         public
         view

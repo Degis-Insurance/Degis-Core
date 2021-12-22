@@ -17,6 +17,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
+  getCreate2Address,
   keccak256,
   parseUnits,
   solidityKeccak256,
@@ -90,7 +91,7 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await core.supportedStablecoin(stablecoin.address)).to.equal(true);
     });
 
-    it("should be able to set a new lottery", async function () {
+    it("should be able to set a new lottery address", async function () {
       await expect(core.setLottery(stablecoin.address))
         .to.emit(core, "LotteryChanged")
         .withArgs(stablecoin.address);
@@ -127,13 +128,10 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       const INIT_CODE_HASH = keccak256(bytecode);
+
       const salt = solidityKeccak256(["string"], [policyTokenName]);
 
-      const address = ethers.utils.getCreate2Address(
-        factory.address,
-        salt,
-        INIT_CODE_HASH
-      );
+      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
       await expect(
         core.deployPolicyToken(
@@ -173,11 +171,7 @@ describe("Policy Core and Naughty Factory", function () {
 
       const salt = solidityKeccak256(["string"], [policyTokenName]);
 
-      const address = ethers.utils.getCreate2Address(
-        factory.address,
-        salt,
-        INIT_CODE_HASH
-      );
+      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
       await expect(
         core.deployPolicyToken(
@@ -193,10 +187,18 @@ describe("Policy Core and Naughty Factory", function () {
         .to.emit(core, "PolicyTokenDeployed")
         .withArgs(policyTokenName, address, deadline, settleTimestamp);
 
+      // Get address from name
       const policyTokenInfo = await core.policyTokenInfoMapping(
         policyTokenName
       );
       expect(policyTokenInfo.policyTokenAddress).to.equal(address);
+
+      // Get name from address
+      expect(await core.policyTokenAddressToName(address)).to.equal(
+        policyTokenName
+      );
+
+      expect(await core.allPolicyTokens(0)).to.equal(policyTokenName);
     });
 
     it("should be able to deploy a new pool and get the correct address", async function () {
@@ -228,7 +230,7 @@ describe("Policy Core and Naughty Factory", function () {
         [policyTokenAddress.toLowerCase(), usd.address.toLowerCase()]
       );
 
-      const poolAddress = ethers.utils.getCreate2Address(
+      const poolAddress = getCreate2Address(
         factory.address,
         salt,
         INIT_CODE_HASH
