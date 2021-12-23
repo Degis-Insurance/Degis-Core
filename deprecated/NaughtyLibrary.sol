@@ -178,6 +178,4 @@ library NaughtyLibrary {
     {
         return IPolicyCore(_policyCore).supportedStablecoin(_coinAddress);
     }
-
-    
 }
