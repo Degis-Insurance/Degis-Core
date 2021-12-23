@@ -3,9 +3,12 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./libraries/NaughtyLibrary.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
+
 import "./interfaces/INPPolicyToken.sol";
+import "./interfaces/INaughtyPair.sol";
+import "./interfaces/INaughtyFactory.sol";
+import "./interfaces/IPolicyCore.sol";
 
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
@@ -191,7 +194,7 @@ contract NaughtyRouter is Ownable {
             );
         }
 
-        address pair = NaughtyLibrary.getPairAddress(factory, _tokenA, _tokenB);
+        address pair = _getPairAddress(_tokenA, _tokenB);
 
         transferHelper(_tokenA, msg.sender, pair, amountA);
         transferHelper(_tokenB, msg.sender, pair, amountB);
@@ -233,9 +236,6 @@ contract NaughtyRouter is Ownable {
         // Amount0: insurance token
         (amountA, amountB) = INaughtyPair(pair).burn(_to);
 
-        console.log("Amount A", amountA);
-        console.log("Amount B", amountB);
-
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
 
@@ -269,13 +269,7 @@ contract NaughtyRouter is Ownable {
         bool isBuying = _checkStablecoin(_tokenIn);
 
         // Get how many tokens should be put in (the order depends on isBuying)
-        amountIn = NaughtyLibrary.getAmountIn(
-            factory,
-            isBuying,
-            _amountOut,
-            _tokenIn,
-            _tokenOut
-        );
+        amountIn = _getAmountIn(isBuying, _amountOut, _tokenIn, _tokenOut);
         require(amountIn <= _amountInMax, "excessive input amount");
 
         transferHelper(_tokenIn, msg.sender, pair, amountIn);
@@ -311,13 +305,7 @@ contract NaughtyRouter is Ownable {
         bool isBuying = _checkStablecoin(_tokenIn);
 
         // Get how many tokens should be given out (the order depends on isBuying)
-        amountOut = NaughtyLibrary.getAmountOut(
-            factory,
-            isBuying,
-            _amountIn,
-            _tokenIn,
-            _tokenOut
-        );
+        amountOut = _getAmountOut(isBuying, _amountIn, _tokenIn, _tokenOut);
         require(amountOut >= _amountOutMin, "excessive output amount");
 
         transferHelper(_tokenIn, msg.sender, pair, _amountIn);
@@ -346,16 +334,12 @@ contract NaughtyRouter is Ownable {
     ) private view returns (uint256 amountA, uint256 amountB) {
         require(_checkStablecoin(_tokenB), "Please put stablecoin as tokenB");
 
-        (uint256 reserveA, uint256 reserveB) = NaughtyLibrary.getReserves(
-            factory,
-            _tokenA,
-            _tokenB
-        );
+        (uint256 reserveA, uint256 reserveB) = _getReserves(_tokenA, _tokenB);
 
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (_amountADesired, _amountBDesired);
         } else {
-            uint256 amountBOptimal = NaughtyLibrary.quote(
+            uint256 amountBOptimal = _quote(
                 _amountADesired,
                 reserveA,
                 reserveB
@@ -364,7 +348,7 @@ contract NaughtyRouter is Ownable {
                 require(amountBOptimal >= _amountBMin, "INSUFFICIENT_B_AMOUNT");
                 (amountA, amountB) = (_amountADesired, amountBOptimal);
             } else {
-                uint256 amountAOptimal = NaughtyLibrary.quote(
+                uint256 amountAOptimal = _quote(
                     _amountBDesired,
                     reserveB,
                     reserveA
@@ -493,5 +477,89 @@ contract NaughtyRouter is Ownable {
         );
 
         return pairAddress;
+    }
+
+    /**
+     * @notice Used when swap exact tokens for tokens (in is fixed)
+     * @param isBuying Whether the user is buying policy tokens
+     * @param _amountIn Amount of tokens put in
+     * @param _tokenIn Address of the input token
+     * @param _tokenOut Address of the output token
+     */
+    function _getAmountOut(
+        bool isBuying,
+        uint256 _amountIn,
+        address _tokenIn,
+        address _tokenOut
+    ) internal view returns (uint256 amountOut) {
+        (uint256 reserveA, uint256 reserveB) = _getReserves(
+            _tokenIn,
+            _tokenOut
+        );
+
+        // If tokenIn is stablecoin (isBuying), then tokeIn should be tokenB
+        // Get the right order
+        (uint256 reserveIn, uint256 reserveOut) = isBuying
+            ? (reserveB, reserveA)
+            : (reserveA, reserveB);
+
+        require(_amountIn > 0, "insufficient input amount");
+        require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
+
+        uint256 amountInWithFee = _amountIn * 980;
+        uint256 numerator = amountInWithFee.mul(reserveOut);
+        uint256 denominator = reserveIn * 1000 + amountInWithFee;
+
+        amountOut = numerator.div(denominator);
+    }
+
+    /**
+     * @notice Used when swap tokens for exact tokens (out is fixed)
+     * @param isBuying Whether the user is buying policy tokens
+     * @param _amountOut Amount of tokens given out
+     * @param _tokenIn Address of the input token
+     * @param _tokenOut Address of the output token
+     */
+    function _getAmountIn(
+        bool isBuying,
+        uint256 _amountOut,
+        address _tokenIn,
+        address _tokenOut
+    ) internal view returns (uint256 amountIn) {
+        (uint256 reserveA, uint256 reserveB) = _getReserves(
+            _tokenIn,
+            _tokenOut
+        );
+        // If tokenIn is stablecoin (isBuying), then tokeIn should be tokenB
+        // Get the right order
+        (uint256 reserveIn, uint256 reserveOut) = isBuying
+            ? (reserveB, reserveA)
+            : (reserveA, reserveB);
+
+        require(_amountOut > 0, "insufficient output amount");
+        require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
+
+        uint256 numerator = reserveIn.mul(_amountOut) * 1000;
+        uint256 denominator = (reserveOut - _amountOut) * 980;
+
+        amountIn = numerator.div(denominator) + 1;
+    }
+
+    /**
+     * @notice Given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
+     * @dev Used when add or remove liquidity
+     * @param _amountA Amount of tokenA ( can be policytoken or stablecoin)
+     * @param _reserveA Reserve of tokenA
+     * @param _reserveB Reserve of tokenB
+     */
+    function _quote(
+        uint256 _amountA,
+        uint256 _reserveA,
+        uint256 _reserveB
+    ) internal pure returns (uint256 amountB) {
+        require(_amountA > 0, "insufficient amount");
+        require(_reserveA > 0 && _reserveB > 0, "insufficient liquidity");
+
+        amountB = _amountA.mul(_reserveB).div(_reserveA);
     }
 }
