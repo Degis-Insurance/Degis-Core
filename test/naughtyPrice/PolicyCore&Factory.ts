@@ -64,8 +64,8 @@ describe("Policy Core and Naughty Factory", function () {
 
     time = new Date().getTime();
     now = Math.floor(time / 1000);
-    deadline = now + 300;
-    settleTimestamp = now + 600;
+    deadline = now + 3000;
+    settleTimestamp = now + 6000;
   });
 
   describe("Deployment", function () {

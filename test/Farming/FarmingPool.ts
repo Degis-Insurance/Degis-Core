@@ -88,7 +88,7 @@ describe("Farming Pool", function () {
       const blockNumBefore = await ethers.provider.getBlockNumber();
 
       await expect(pool.setDegisReward(poolId, 0, false))
-        .to.emit(pool, "StopFarmingPool")
+        .to.emit(pool, "FarmingPoolStopped")
         .withArgs(poolId, blockNumBefore + 1);
     });
   });
@@ -192,7 +192,7 @@ describe("Farming Pool", function () {
       const blockNumBefore = await ethers.provider.getBlockNumber();
 
       await expect(pool.setDegisReward(1, 0, true))
-        .to.emit(pool, "StopFarmingPools")
+        .to.emit(pool, "FarmingPoolStopped")
         .withArgs(1, blockNumBefore + 1);
     });
 

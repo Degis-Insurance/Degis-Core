@@ -345,16 +345,28 @@ contract PolicyCore is Ownable {
         emit NewStablecoinAdded(_newStablecoin);
     }
 
+    /**
+     * @notice Change the address of lottery
+     * @param _lotteryAddress Address of the new lottery
+     */
     function setLottery(address _lotteryAddress) external onlyOwner {
         lottery = _lotteryAddress;
         emit LotteryChanged(_lotteryAddress);
     }
 
+    /**
+     * @notice Change the address of emergency pool
+     * @param _emergencyPool Address of the new emergencyPool
+     */
     function setEmergencyPool(address _emergencyPool) external onlyOwner {
         emergencyPool = _emergencyPool;
         emit EmergencyPoolChanged(_emergencyPool);
     }
 
+    /**
+     * @notice Change the address of naughty router
+     * @param _router Address of the new naughty router
+     */
     function setNaughtyRouter(address _router) external onlyOwner {
         naughtyRouter = _router;
         emit NaughtyRouterChanged(_router);
@@ -500,6 +512,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Delegate deposit (deposit and mint for other addresses)
+     * @dev Only called by the router contract
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the sable coin
      * @param _amount Amount of stablecoin (also the amount of policy tokens)
@@ -863,12 +876,11 @@ contract PolicyCore is Ownable {
     /**
      * @notice Generate the policy token name
      * @param _tokenName Name of the token
+     * @param _decimals Decimals of the name generation (0,1=>1)
      * @param _strikePrice Strike price of the policy
-     * @param _isCall The policy is higher or lower
-     * @param _round Round of the policy (e.g. 202101)
+     * @param _isCall The policy's payoff is triggered when higher or lower
+     * @param _round Round of the policy (e.g. 2112, 2201)
      */
-    // FIXME: can not handle price < 1
-    // tag: handling this problem
     function _generateName(
         string memory _tokenName,
         uint256 _decimals,
