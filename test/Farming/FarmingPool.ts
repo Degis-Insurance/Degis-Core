@@ -8,6 +8,7 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseUnits } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
 
 describe("Farming Pool", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;
@@ -55,6 +56,38 @@ describe("Farming Pool", function () {
       await expect(pool.add(lptoken1.address, parseUnits("5"), false))
         .to.emit(pool, "NewPoolAdded")
         .withArgs(lptoken1.address, parseUnits("5"));
+
+      await expect(pool.add(lptoken2.address, parseUnits("5"), false))
+        .to.emit(pool, "NewPoolAdded")
+        .withArgs(lptoken2.address, parseUnits("5"));
+
+      const nextPoolId = await pool._nextPoolId();
+      expect(await pool.poolMapping(lptoken1.address)).to.equal(
+        nextPoolId.sub(2)
+      );
+      expect(await pool.poolMapping(lptoken2.address)).to.equal(
+        nextPoolId.sub(1)
+      );
+    });
+
+    it("should not be able to add two same pools", async function () {
+      await pool.add(lptoken1.address, parseUnits("5"), false);
+
+      await expect(
+        pool.add(lptoken1.address, parseUnits("5"), false)
+      ).to.be.revertedWith("This lptoken is already in the farming pool");
+    });
+
+    it("should be able to stop a existing pool", async function () {
+      await pool.add(lptoken1.address, parseUnits("5"), false);
+
+      const poolId = await pool.poolMapping(lptoken1.address);
+
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+
+      await expect(pool.setDegisReward(poolId, 0, false))
+        .to.emit(pool, "StopFarmingPool")
+        .withArgs(poolId, blockNumBefore + 1);
     });
   });
 

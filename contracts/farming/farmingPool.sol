@@ -190,9 +190,10 @@ contract FarmingPool is Ownable {
         bool _withUpdate
     ) public notZeroAddress(_lpToken) onlyOwner {
         // Check if already exists, if the poolId is 0, that means not in the pool
-        bool isInPool = _alreadyInPool(_lpToken);
-
-        require(isInPool, "This lptoken is already in the farming pool");
+        require(
+            !_alreadyInPool(_lpToken),
+            "This lptoken is already in the farming pool"
+        );
 
         if (_withUpdate) {
             massUpdatePools();
