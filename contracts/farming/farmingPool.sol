@@ -62,7 +62,7 @@ contract FarmingPool is Ownable {
     );
     event NewPoolAdded(address lpToken, uint256 degisPerBlock);
     event RestartFarmingPool(uint256 poolId, uint256 blockNumber);
-    event StopFarmingPool(uint256 poolId, uint256 blockNumber);
+    event FarmingPoolStopped(uint256 poolId, uint256 blockNumber);
     event PoolUpdated(uint256 poolId);
 
     // ---------------------------------------------------------------------------------------- //
@@ -222,6 +222,20 @@ contract FarmingPool is Ownable {
         emit NewPoolAdded(_lpToken, _degisPerBlock);
     }
 
+    function stop(uint256 _poolId, bool _withUpdate) public {
+        require(
+            poolList[_poolId].lastRewardBlock != 0,
+            "no such pool, your poolId may be wrong"
+        );
+        if (_withUpdate) {
+            massUpdatePools();
+        }
+        isFarming[_poolId] = false;
+
+        delete poolList[_poolId];
+        emit FarmingPoolStopped(_poolId, block.number);
+    }
+
     /**
      * @notice Update the degisPerBlock for a specific pool (set to 0 to stop farming)
      * @param _poolId Id of the farming pool
@@ -248,10 +262,10 @@ contract FarmingPool is Ownable {
         }
 
         if (_degisPerBlock == 0) {
-            isFarming[_poolId] = false;
-            emit StopFarmingPool(_poolId, block.number);
+            stop(_poolId, _withUpdate);
+        } else {
+            poolList[_poolId].degisPerBlock = _degisPerBlock;
         }
-        poolList[_poolId].degisPerBlock = _degisPerBlock;
     }
 
     /**
@@ -260,10 +274,7 @@ contract FarmingPool is Ownable {
      * @param _amount Staking amount
      */
     function stake(uint256 _poolId, uint256 _amount) public {
-        require(
-            _amount > 0,
-            "Do not stake 0, you can use harvest for your reward"
-        );
+        require(_amount > 0, "Can not stake zero");
 
         PoolInfo storage pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][_msgSender()];

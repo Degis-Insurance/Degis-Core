@@ -5,6 +5,8 @@ import {
   DegisToken__factory,
   FarmingPool,
   FarmingPool__factory,
+  MockUSD,
+  MockUSD__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseUnits } from "ethers/lib/utils";
@@ -13,14 +15,12 @@ import { BigNumber } from "ethers";
 describe("Farming Pool", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;
   let DegisToken: DegisToken__factory, degis: DegisToken;
+  let MockUSD: MockUSD__factory, usd: MockUSD, usd_2: MockUSD;
 
-  let dev_account: SignerWithAddress,
-    lptoken1: SignerWithAddress,
-    lptoken2: SignerWithAddress,
-    policyflow: SignerWithAddress;
+  let dev_account: SignerWithAddress, user1: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account, lptoken1, lptoken2, policyflow] = await ethers.getSigners();
+    [dev_account, user1] = await ethers.getSigners();
 
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
@@ -28,7 +28,13 @@ describe("Farming Pool", function () {
     FarmingPool = await ethers.getContractFactory("FarmingPool");
     pool = await FarmingPool.deploy(degis.address);
 
+    MockUSD = await ethers.getContractFactory("MockUSD");
+    usd = await MockUSD.deploy();
+    usd_2 = await MockUSD.deploy();
+
     await pool.deployed();
+
+    await degis.addMinter(pool.address);
   });
 
   describe("Deployment", function () {
@@ -52,36 +58,32 @@ describe("Farming Pool", function () {
         .withArgs(60000);
     });
 
-    it("should be able to add a new pool", async function () {
-      await expect(pool.add(lptoken1.address, parseUnits("5"), false))
+    it("should be able to add new pools", async function () {
+      await expect(pool.add(usd.address, parseUnits("5"), false))
         .to.emit(pool, "NewPoolAdded")
-        .withArgs(lptoken1.address, parseUnits("5"));
+        .withArgs(usd.address, parseUnits("5"));
 
-      await expect(pool.add(lptoken2.address, parseUnits("5"), false))
+      await expect(pool.add(usd_2.address, parseUnits("5"), false))
         .to.emit(pool, "NewPoolAdded")
-        .withArgs(lptoken2.address, parseUnits("5"));
+        .withArgs(usd_2.address, parseUnits("5"));
 
       const nextPoolId = await pool._nextPoolId();
-      expect(await pool.poolMapping(lptoken1.address)).to.equal(
-        nextPoolId.sub(2)
-      );
-      expect(await pool.poolMapping(lptoken2.address)).to.equal(
-        nextPoolId.sub(1)
-      );
+      expect(await pool.poolMapping(usd.address)).to.equal(nextPoolId.sub(2));
+      expect(await pool.poolMapping(usd_2.address)).to.equal(nextPoolId.sub(1));
     });
 
     it("should not be able to add two same pools", async function () {
-      await pool.add(lptoken1.address, parseUnits("5"), false);
+      await pool.add(usd.address, parseUnits("5"), false);
 
       await expect(
-        pool.add(lptoken1.address, parseUnits("5"), false)
+        pool.add(usd.address, parseUnits("5"), false)
       ).to.be.revertedWith("This lptoken is already in the farming pool");
     });
 
     it("should be able to stop a existing pool", async function () {
-      await pool.add(lptoken1.address, parseUnits("5"), false);
+      await pool.add(usd.address, parseUnits("5"), false);
 
-      const poolId = await pool.poolMapping(lptoken1.address);
+      const poolId = await pool.poolMapping(usd.address);
 
       const blockNumBefore = await ethers.provider.getBlockNumber();
 
@@ -91,5 +93,121 @@ describe("Farming Pool", function () {
     });
   });
 
-  describe("User Functions: Deposit, Redeem and Harvest", function () {});
+  describe("User Functions: Deposit, Redeem and Harvest", function () {
+    beforeEach(async function () {
+      await pool.add(usd.address, parseUnits("5"), false);
+    });
+
+    it("should be able to deposit lptokens", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await expect(pool.stake(1, parseUnits("100")))
+        .to.emit(pool, "Stake")
+        .withArgs(dev_account.address, 1, parseUnits("100"));
+    });
+
+    it("should be able to get correct farming rewards", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, parseUnits("100"));
+
+      await mineBlocks(5);
+
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        parseUnits("25")
+      );
+    });
+
+    it("should be able to get correct rewards when withdraw", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, parseUnits("100"));
+
+      await expect(pool.withdraw(1, parseUnits("50")))
+        .to.emit(pool, "Withdraw")
+        .withArgs(dev_account.address, 1, parseUnits("50"));
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("5")
+      );
+    });
+
+    it("should be able to get correct rewards when second deposit", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, parseUnits("100"));
+
+      await expect(pool.stake(1, parseUnits("50")))
+        .to.emit(pool, "Stake")
+        .withArgs(dev_account.address, 1, parseUnits("50"));
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("5")
+      );
+    });
+
+    it("should be able to get correct rewards when harvest for self", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, parseUnits("100"));
+
+      await mineBlocks(5);
+
+      expect(await pool.harvest(1, dev_account.address))
+        .to.emit(pool, "Harvest")
+        .withArgs(
+          dev_account.address,
+          dev_account.address,
+          1,
+          parseUnits("30")
+        );
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("30")
+      );
+    });
+
+    it("should be able to get correct rewards when harvest for another account", async function () {
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, parseUnits("100"));
+
+      await mineBlocks(5);
+
+      expect(await pool.harvest(1, user1.address))
+        .to.emit(pool, "Harvest")
+        .withArgs(dev_account.address, user1.address, 1, parseUnits("30"));
+
+      expect(await degis.balanceOf(user1.address)).to.equal(parseUnits("30"));
+    });
+  });
+
+  describe("Pool Update", function () {
+    it("should be able to update the pools when add a new pool", async function () {
+      await pool.add(usd.address, parseUnits("5"), false);
+
+      await expect(pool.add(usd_2.address, parseUnits("5"), true))
+        .to.emit(pool, "NewPoolAdded")
+        .withArgs(usd_2.address, parseUnits("5"));
+    });
+
+    it("should be able to update the pools when stop a pool", async function () {
+      await pool.add(usd.address, parseUnits("5"), false);
+      await pool.add(usd_2.address, parseUnits("5"), true);
+
+      await mineBlocks(5);
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+
+      await expect(pool.setDegisReward(1, 0, true))
+        .to.emit(pool, "StopFarmingPools")
+        .withArgs(1, blockNumBefore + 1);
+    });
+
+    it("should be able to manually mass update the pools", async function () {
+      await pool.massUpdatePools();
+    });
+  });
 });
+
+async function mineBlocks(blockNumber: number) {
+  while (blockNumber > 0) {
+    blockNumber--;
+    await hre.network.provider.request({
+      method: "evm_mine",
+      params: [],
+    });
+  }
+}

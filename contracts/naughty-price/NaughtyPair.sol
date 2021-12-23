@@ -159,7 +159,6 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
                 amount1.mul(_totalSupply).div(_reserve1)
             );
         }
-        console.log(liquidity);
 
         require(liquidity > 0, "insufficient liquidity minted");
         _mint(to, liquidity);
@@ -185,16 +184,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
         uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
 
-        console.log("balance0", balance0);
-        console.log("balance1", balance1);
-
         uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY; // lp token balance
 
-        console.log("liquidity", liquidity);
-
         uint256 _totalSupply = totalSupply(); // gas savings
-
-        console.log("total supply", _totalSupply);
 
         // How many tokens to be sent back
         amount0 = liquidity.mul(balance0).div(_totalSupply);
