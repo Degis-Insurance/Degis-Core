@@ -51,19 +51,19 @@ contract FarmingPool is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    event Stake(address _staker, uint256 _poolId, uint256 _amount);
-    event Withdraw(address _staker, uint256 _poolId, uint256 _amount);
+    event StartBlockChanged(uint256 startBlock);
+    event Stake(address staker, uint256 poolId, uint256 amount);
+    event Withdraw(address staker, uint256 poolId, uint256 amount);
     event Harvest(
-        address _staker,
-        address _rewardReceiver,
-        uint256 _poolId,
-        uint256 _pendingReward
+        address staker,
+        address rewardReceiver,
+        uint256 poolId,
+        uint256 pendingReward
     );
-    event NewPoolAdded(address _lpToken);
-    event RestartFarmingPool(uint256 _poolId, uint256 _blockNumber);
-    event StopFarmingPool(uint256 _poolId, uint256 _blockNumber);
-    event PoolUpdated(uint256 _poolId);
+    event NewPoolAdded(address lpToken, uint256 degisPerBlock);
+    event RestartFarmingPool(uint256 poolId, uint256 blockNumber);
+    event StopFarmingPool(uint256 poolId, uint256 blockNumber);
+    event PoolUpdated(uint256 poolId);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -171,6 +171,7 @@ contract FarmingPool is Ownable {
      */
     function setStartBlock(uint256 _startBlock) external onlyOwner {
         startBlock = _startBlock;
+        emit StartBlockChanged(_startBlock);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -217,7 +218,7 @@ contract FarmingPool is Ownable {
 
         _nextPoolId += 1;
 
-        emit NewPoolAdded(_lpToken);
+        emit NewPoolAdded(_lpToken, _degisPerBlock);
     }
 
     /**
