@@ -71,8 +71,8 @@ describe("Naughty Router", function () {
 
     time = new Date().getTime();
     now = Math.floor(time / 1000);
-    deadline = now + 300;
-    settleTimestamp = now + 600;
+    deadline = now + 3000;
+    settleTimestamp = now + 6000;
     policyTokenName = "BTC_24000.0_L_2112";
     await core.deployPolicyToken(
       "BTC",
@@ -211,11 +211,6 @@ describe("Naughty Router", function () {
       await policyToken.approve(router.address, parseUnits("10000"));
       await usd.approve(router.address, parseUnits("10000"));
       await usd.approve(core.address, parseUnits("10000"));
-
-      const ba1 = await usd.balanceOf(dev_account.address);
-      const ba2 = await policyToken.balanceOf(dev_account.address);
-      console.log("ba1", formatEther(ba1));
-      console.log("ba2", formatEther(ba2));
 
       await expect(
         router.addLiquidityWithUSD(

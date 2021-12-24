@@ -9,7 +9,8 @@ import {
   PurchaseIncentiveVault__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { parseUnits } from "ethers/lib/utils";
+import { parseEther, parseUnits } from "ethers/lib/utils";
+import { timeStamp } from "console";
 
 describe("Purcahse Incentive Vault", function () {
   let PurchaseIncentiveVault: PurchaseIncentiveVault__factory,
@@ -43,11 +44,17 @@ describe("Purcahse Incentive Vault", function () {
     initBlockNumber = await ethers.provider.getBlockNumber();
 
     await vault.deployed();
-    await buyerToken.approve(vault.address, parseUnits("1000"));
+
     await buyerToken.addBurner(vault.address);
     await degis.addMinter(vault.address);
 
     await buyerToken.mintBuyerToken(dev_account.address, parseUnits("1000"));
+    await buyerToken.mintBuyerToken(user1.address, parseUnits("1000"));
+
+    await buyerToken.approve(vault.address, parseUnits("100000"));
+    await buyerToken
+      .connect(user1)
+      .approve(vault.address, parseUnits("100000"));
     currentRound = (await vault.currentRound()).toNumber();
   });
 
@@ -81,8 +88,39 @@ describe("Purcahse Incentive Vault", function () {
   });
 
   describe("Settle the Reward", function () {
-    it("should be able to settle correctly", async function () {});
+    beforeEach(async function () {
+      await vault.setDegisPerRound(parseUnits("4"));
+      await vault.setDistributionInterval(1);
+    });
 
-    it("should be able to claim by user himself", async function () {});
+    it("should be able to settle correctly", async function () {
+      await vault.stake(parseUnits("1"));
+      await vault.connect(user1).stake(parseUnits("3"));
+      await vault.settleCurrentRound();
+
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
+
+      const blockNumber = await ethers.provider.getBlockNumber();
+      expect(await vault.lastDistributionBlock()).to.equal(blockNumber);
+    });
+
+    it("should be able to claim by user himself", async function () {
+      const times = 20;
+      for (let i = 0; i < times; i++) {
+        await vault.stake(parseUnits("1"));
+        await vault.connect(user1).stake(parseUnits("3"));
+        await vault.settleCurrentRound();
+      }
+
+      await vault.claimOwnReward();
+      await vault.connect(user1).claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits(times.toString())
+      );
+      expect(await degis.balanceOf(user1.address)).to.equal(
+        parseUnits((3 * times).toString())
+      );
+    });
   });
 });

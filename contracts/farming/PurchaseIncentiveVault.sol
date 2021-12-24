@@ -180,6 +180,9 @@ contract PurchaseIncentiveVault is Ownable {
 
         userSharesInRound[_msgSender()][currentRound] += _amount;
 
+        if (userInfo[_msgSender()].pendingRounds.length == 0)
+            userInfo[_msgSender()].lastRewardRound = currentRound;
+
         userInfo[_msgSender()].pendingRounds.push(currentRound);
 
         roundInfo[currentRound].shares += _amount;
@@ -200,10 +203,6 @@ contract PurchaseIncentiveVault is Ownable {
 
         buyerToken.safeTransfer(_msgSender(), _amount);
 
-        if (userSharesInRound[_msgSender()][currentRound] == 0) {
-            delete userSharesInRound[_msgSender()][currentRound];
-        }
-
         userSharesInRound[_msgSender()][currentRound] -= _amount;
 
         userInfo[_msgSender()].pendingRounds.pop();
@@ -213,6 +212,9 @@ contract PurchaseIncentiveVault is Ownable {
         emit Redeem(_msgSender(), currentRound, _amount);
     }
 
+    /**
+     * @notice Setttle the current round
+     */
     function settleCurrentRound() external onlyOwner {
         RoundInfo storage info = roundInfo[currentRound];
         require(info.hasDistributed == false, "Already distributed this round");
@@ -221,12 +223,17 @@ contract PurchaseIncentiveVault is Ownable {
 
         info.degisPerShare = degisPerRound.div(totalShares);
         info.hasDistributed = true;
+
+        currentRound += 1;
+        lastDistributionBlock = block.number;
     }
 
     function claimOwnReward() external {
         UserInfo memory user = userInfo[_msgSender()];
 
-        require(user.lastRewardRound != 0, "You have no shares ever");
+        console.log("last reward round", user.lastRewardRound);
+
+        require(user.pendingRounds.length != 0, "You have no shares ever");
 
         uint256 length = user.pendingRounds.length;
         uint256 startIndex = user.lastRewardRound;
@@ -236,8 +243,12 @@ contract PurchaseIncentiveVault is Ownable {
         }
 
         uint256 gas_before = gasleft();
+        console.log("gas before", gas_before);
 
         uint256 pendingReward;
+
+        console.log("start index", startIndex);
+        console.log("length", length);
 
         for (uint256 i = startIndex; i < length; i++) {
             uint256 round = user.pendingRounds[i];
@@ -245,13 +256,15 @@ contract PurchaseIncentiveVault is Ownable {
             pendingReward += roundInfo[round].degisPerShare.mul(
                 userSharesInRound[_msgSender()][round]
             );
+            console.log(roundInfo[round].degisPerShare);
         }
 
         uint256 gas_after = gasleft();
+        console.log("gas after", gas_after);
 
         degis.mintDegis(_msgSender(), pendingReward);
 
-        console.log("Gas Used:", gas_after - gas_before);
+        console.log("Gas Used:", gas_before - gas_after);
     }
 
     // /**
