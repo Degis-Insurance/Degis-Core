@@ -121,6 +121,36 @@ describe("Purcahse Incentive Vault", function () {
       expect(await degis.balanceOf(user1.address)).to.equal(
         parseUnits((3 * times).toString())
       );
+
+      for (let i = 0; i < times; i++) {
+        await vault.stake(parseUnits("1"));
+        await vault.connect(user1).stake(parseUnits("3"));
+        await vault.settleCurrentRound();
+      }
+      await vault.claimOwnReward();
+      await vault.connect(user1).claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits((times * 2).toString())
+      );
+      expect(await degis.balanceOf(user1.address)).to.equal(
+        parseUnits((6 * times).toString())
+      );
+    });
+
+    it("should be able to check the pending reward", async function () {
+      const times = 20;
+      for (let i = 0; i < times; i++) {
+        await vault.stake(parseUnits("1"));
+        await vault.connect(user1).stake(parseUnits("3"));
+        await vault.settleCurrentRound();
+      }
+      expect(await vault.pendingReward()).to.equal(
+        parseUnits(times.toString())
+      );
+      expect(await vault.connect(user1).pendingReward()).to.equal(
+        parseUnits((3 * times).toString())
+      );
     });
   });
 });

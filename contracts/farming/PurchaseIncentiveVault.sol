@@ -139,6 +139,28 @@ contract PurchaseIncentiveVault is Ownable {
         return userSharesInRound[_userAddress][currentRound];
     }
 
+    /**
+     * @notice Get a user's pending reward
+     * @return userPendingReward User's pending reward
+     */
+    function pendingReward() public view returns (uint256) {
+        UserInfo memory user = userInfo[_msgSender()];
+
+        uint256 length = user.pendingRounds.length - user.lastRewardRound;
+        uint256 startIndex = user.lastRewardRound;
+
+        uint256 userPendingReward;
+        for (uint256 i = startIndex; i < startIndex + length; i++) {
+            uint256 round = user.pendingRounds[i];
+
+            userPendingReward += roundInfo[round].degisPerShare.mul(
+                userSharesInRound[_msgSender()][round]
+            );
+        }
+
+        return userPendingReward;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -228,41 +250,42 @@ contract PurchaseIncentiveVault is Ownable {
         lastDistributionBlock = block.number;
     }
 
+    /**
+     * @notice User can claim his own reward
+     */
     function claimOwnReward() external {
         UserInfo memory user = userInfo[_msgSender()];
 
-        console.log("last reward round", user.lastRewardRound);
-
         require(user.pendingRounds.length != 0, "You have no shares ever");
 
-        uint256 length = user.pendingRounds.length;
+        uint256 length = user.pendingRounds.length - user.lastRewardRound;
         uint256 startIndex = user.lastRewardRound;
         if (length > MAX_ROUND) {
             length = MAX_ROUND;
-            user.lastRewardRound = user.pendingRounds[MAX_ROUND];
-        }
+
+            userInfo[_msgSender()].lastRewardRound = user.pendingRounds[
+                MAX_ROUND
+            ];
+        } else
+            userInfo[_msgSender()].lastRewardRound =
+                user.pendingRounds[length - 1] +
+                1;
 
         uint256 gas_before = gasleft();
-        console.log("gas before", gas_before);
 
-        uint256 pendingReward;
+        uint256 userPendingReward;
 
-        console.log("start index", startIndex);
-        console.log("length", length);
-
-        for (uint256 i = startIndex; i < length; i++) {
+        for (uint256 i = startIndex; i < startIndex + length; i++) {
             uint256 round = user.pendingRounds[i];
 
-            pendingReward += roundInfo[round].degisPerShare.mul(
+            userPendingReward += roundInfo[round].degisPerShare.mul(
                 userSharesInRound[_msgSender()][round]
             );
-            console.log(roundInfo[round].degisPerShare);
         }
 
         uint256 gas_after = gasleft();
-        console.log("gas after", gas_after);
 
-        degis.mintDegis(_msgSender(), pendingReward);
+        degis.mintDegis(_msgSender(), userPendingReward);
 
         console.log("Gas Used:", gas_before - gas_after);
     }
@@ -324,20 +347,20 @@ contract PurchaseIncentiveVault is Ownable {
     //     }
     // }
 
-    /**
-     * @notice Users need to claim their overall rewards
-     */
-    function claimReward() external {
-        uint256 userReward = userRewards[_msgSender()];
+    // /**
+    //  * @notice Users need to claim their overall rewards
+    //  */
+    // function claimReward() external {
+    //     uint256 userReward = userRewards[_msgSender()];
 
-        require(userReward > 0, "You do not have any rewards to claim");
+    //     require(userReward > 0, "You do not have any rewards to claim");
 
-        degis.mintDegis(_msgSender(), userReward);
+    //     degis.mintDegis(_msgSender(), userReward);
 
-        delete userRewards[_msgSender()];
+    //     delete userRewards[_msgSender()];
 
-        emit RewardClaimed(_msgSender(), userReward);
-    }
+    //     emit RewardClaimed(_msgSender(), userReward);
+    // }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
