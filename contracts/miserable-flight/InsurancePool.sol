@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "../libraries/SafePRBMath.sol";
 
-import "../tokens/interfaces/IDegisToken.sol";
 import "../lucky-box/interfaces/IDegisLottery.sol";
 
 import "../utils/OwnableWithoutContext.sol";
@@ -31,7 +30,6 @@ contract InsurancePool is
     // *********************************** Other Contracts ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    IDegisToken public degis;
     IERC20 public USDT;
     IDegisLottery public degisLottery;
 
@@ -41,13 +39,11 @@ contract InsurancePool is
 
     /**
      * @notice Constructor function
-     * @param _degisToken Degis token address
      * @param _emergencyPool Emergency pool address
      * @param _degisLottery Lottery address
      * @param _usdtAddress USDT address
      */
     constructor(
-        address _degisToken,
         address _emergencyPool,
         address _degisLottery,
         address _usdtAddress
@@ -59,7 +55,6 @@ contract InsurancePool is
 
         emergencyPool = _emergencyPool;
 
-        degis = IDegisToken(_degisToken);
         USDT = IERC20(_usdtAddress);
 
         degisLottery = IDegisLottery(_degisLottery);
@@ -68,6 +63,8 @@ contract InsurancePool is
         rewardDistribution[0] = 50;
         rewardDistribution[1] = 40;
         rewardDistribution[2] = 10;
+
+        frozenTime = 7 days;
     }
 
     // ---------------------------------------------------------------------------------------- //
