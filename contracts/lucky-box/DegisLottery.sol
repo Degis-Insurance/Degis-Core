@@ -34,7 +34,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     uint256 public maxTicketsPerTx = 50;
 
     IERC20 public degis;
-    IERC20 public USDC;
+    IERC20 public USD;
 
     enum Status {
         Pending,
@@ -86,6 +86,8 @@ contract DegisLottery is Ownable, ReentrancyGuard {
 
     event EmergencyWithdraw(address indexed tokenAddress, uint256 amount);
 
+    event LotteryFundInjection(uint256 lotteryId, uint256 amount);
+
     /**
      * @notice Constructor function
      * @dev RandomNumberGenerator must be deployed prior to this contract
@@ -99,7 +101,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
         address _randomGeneratorAddress
     ) {
         degis = IERC20(_degisTokenAddress);
-        USDC = IERC20(_usdcTokenAddress);
+        USD = IERC20(_usdcTokenAddress);
         randomGenerator = IRandomNumberGenerator(_randomGeneratorAddress);
 
         // Initializes the bracketCalculator, constant numbers
@@ -107,6 +109,12 @@ contract DegisLottery is Ownable, ReentrancyGuard {
         _bracketCalculator[1] = 11;
         _bracketCalculator[2] = 111;
         _bracketCalculator[3] = 1111;
+    }
+
+    modifier notContract() {
+        require(!_isContract(msg.sender), "Contract not allowed");
+        require(msg.sender == tx.origin, "Proxy contract not allowed");
+        _;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -160,14 +168,19 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function buyTickets(uint32[] calldata _ticketNumbers, uint256[] calldata _ticketAmounts)
-        external
-        nonReentrant
-    {
+    function buyTickets(
+        uint32[] calldata _ticketNumbers,
+        uint256[] calldata _ticketAmounts
+    ) external nonReentrant {
         // Gas saving
         // Note: CALLDATALOAD 3 gas, CALLDATASIZE 2 gas, MLOAD & MSTORE 3 gas
         uint256 ticketAmount = _ticketNumbers.length;
         require(ticketAmount != 0, "No tickets are being bought");
+
+        require(
+            ticketAmount == _ticketAmounts.length,
+            "length of ticket number and amount are different"
+        );
 
         require(
             ticketAmount <= maxTicketsPerTx,
@@ -250,10 +263,24 @@ contract DegisLottery is Ownable, ReentrancyGuard {
 
     function closeLottery(uint256 _lotteryId) external {}
 
-    function injectFunds(uint256 _lotteryId, uint256 _amount)
-        external
-        nonReentrant
-    {}
+    function injectFunds(uint256 _amount) external nonReentrant {
+        require(
+            lotteryList[currentLotteryId].status == Status.Open,
+            "Current lottery round is not open"
+        );
+
+        USD.safeTransferFrom(_msgSender(), address(this), _amount);
+
+        lotteryList[currentLotteryId].pendingReward += _amount;
+
+        require(
+            lotteryList[currentLotteryId].pendingReward <=
+                USD.balanceOf(address(this)),
+            "the amount is wrong"
+        );
+
+        emit LotteryFundInjection(currentLotteryId, _amount);
+    }
 
     function drawFinalNumber(uint256 _lotteryId, bool _autoInjection)
         external
@@ -268,12 +295,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
             "Can not withdraw degis tokens"
         );
 
-        require(
-            IERC20(_tokenAddress).balanceOf(address(this)) >= _amount,
-            "Withdraw amount exceeds balance"
-        );
-
-        USDC.safeTransfer(owner(), _amount);
+        IERC20(_tokenAddress).safeTransfer(owner(), _amount);
 
         emit EmergencyWithdraw(_tokenAddress, _amount);
     }
@@ -281,4 +303,15 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Check if an address is a contract
+     */
+    function _isContract(address _addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
+    }
 }

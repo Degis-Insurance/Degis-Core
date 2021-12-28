@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../libraries/SafePRBMath.sol";
 
@@ -21,7 +22,8 @@ import "./abstracts/InsurancePoolStore.sol";
 contract InsurancePool is
     ERC20("Degis FlightDelay LPToken", "DLP"),
     InsurancePoolStore,
-    OwnableWithoutContext
+    OwnableWithoutContext,
+    ReentrancyGuard
 {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
@@ -137,20 +139,6 @@ contract InsurancePool is
     }
 
     /**
-     * @notice Get the user's locked balance
-     * @param _userAddress User's address
-     * @return _locked User's locked balance (as the locked ratio)
-     */
-    function getLockedFor(address _userAddress)
-        public
-        view
-        returns (uint256 _locked)
-    {
-        uint256 userBalance = getUserBalance(_userAddress);
-        _locked = lockedRatio.mul(userBalance);
-    }
-
-    /**
      * @notice Check the conditions when receive new buying request
      * @param _payoff Payoff of the policy to be bought
      * @return Whether there is enough capacity in the pool for this payoff
@@ -181,7 +169,7 @@ contract InsurancePool is
         notZeroAddress(_policyFlowAddress)
     {
         policyFlow = _policyFlowAddress;
-        emit PolicyFlowSet(_policyFlowAddress);
+        emit PolicyFlowChanged(_policyFlowAddress);
     }
 
     /**
@@ -224,19 +212,19 @@ contract InsurancePool is
 
     /**
      * @notice LPs stake assets into the pool
-     * @param _userAddress Address of the user, can be another user's address
      * @param _amount The amount that the user want to stake
      */
-    function stake(address _userAddress, uint256 _amount)
+    function stake(uint256 _amount)
         external
-        notZeroAddress(_userAddress)
+        notZeroAddress(_msgSender())
+        nonReentrant
     {
         require(
-            IERC20(USDT).balanceOf(msg.sender) >= _amount && _amount > 0,
+            IERC20(USDT).balanceOf(_msgSender()) >= _amount && _amount > 0,
             "You do not have enough USD or input 0 amount"
         );
 
-        _deposit(_userAddress, _amount);
+        _deposit(_msgSender(), _amount);
     }
 
     /**
@@ -246,10 +234,11 @@ contract InsurancePool is
      */
     function unstake(uint256 _amount)
         external
-        notZeroAddress(msg.sender)
-        afterFrozenTime(msg.sender)
+        notZeroAddress(_msgSender())
+        afterFrozenTime(_msgSender())
+        nonReentrant
     {
-        address _userAddress = msg.sender;
+        address _userAddress = _msgSender();
 
         uint256 userBalance = getUserBalance(_userAddress);
         require(
@@ -279,10 +268,11 @@ contract InsurancePool is
      */
     function unstakeMax()
         external
-        notZeroAddress(msg.sender)
-        afterFrozenTime(msg.sender)
+        notZeroAddress(_msgSender())
+        afterFrozenTime(_msgSender())
+        nonReentrant
     {
-        address _userAddress = msg.sender;
+        address _userAddress = _msgSender();
 
         uint256 userBalance = getUserBalance(_userAddress);
 
@@ -321,7 +311,7 @@ contract InsurancePool is
         availableCapacity -= _payoff;
 
         // Update lockedRatio
-        lockedRatio = lockedBalance.div(totalStakingBalance);
+        _updateLockedRatio();
 
         // Remember approval
         USDT.safeTransferFrom(_userAddress, address(this), _premium);
@@ -485,10 +475,10 @@ contract InsurancePool is
         realStakingBalance += _amount;
         availableCapacity += amountWithFactor;
 
-        lockedRatio = lockedBalance.div(totalStakingBalance);
+        _updateLockedRatio();
 
         // msg.sender always pays
-        USDT.safeTransferFrom(msg.sender, address(this), _amount);
+        USDT.safeTransferFrom(_userAddress, address(this), _amount);
 
         // LP Token number need to be newly minted
         uint256 lp_num = _amount.div(LPValue);
@@ -512,7 +502,7 @@ contract InsurancePool is
         realStakingBalance -= _amount;
         availableCapacity -= amountWithFactor;
 
-        lockedRatio = lockedBalance.div(totalStakingBalance);
+        _updateLockedRatio();
 
         USDT.safeTransfer(_userAddress, _amount);
 
@@ -552,6 +542,14 @@ contract InsurancePool is
         uint256 totalBalance = IERC20(USDT).balanceOf(address(this));
 
         LPValue = (totalBalance - activePremiums).div(totalLP);
+    }
+
+    /**
+     * @notice Update the pool's locked ratio
+     */
+    function _updateLockedRatio() internal {
+        if (lockedBalance == 0) lockedRatio = 0;
+        else lockedRatio = lockedBalance.div(totalStakingBalance);
     }
 
     /**

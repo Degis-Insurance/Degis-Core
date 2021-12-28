@@ -59,7 +59,7 @@ abstract contract InsurancePoolStore {
 
     event CollateralFactorChanged(uint256 oldFactor, uint256 newFactor);
 
-    event PolicyFlowSet(address policyFlowAddress);
+    event PolicyFlowChanged(address policyFlowAddress);
 
     event BuyNewPolicy(
         address indexed userAddress,
