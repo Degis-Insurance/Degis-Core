@@ -16,9 +16,8 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     IERC20 public USDToken;
     IRandomNumberGenerator public randomGenerator;
 
-    address public injectorAddress;
     address public operatorAddress;
-    address public treasuryAddress;
+    
 
     struct Tickets {
         mapping(uint256 => uint256) ticketsWeight;
@@ -34,8 +33,10 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     struct Lottery {
         Status status;
+        
         uint256 startTime;
         uint256 endTime;
+
         uint256[4] stageProportion;
         uint256[4] stageReward;
         uint256[4] stageAmount;
@@ -49,15 +50,19 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     // pool
     uint256 public pendingAwardsToNextLottery;
     uint256 public constant TICKET_PRICE = 10 ether;
+
     Tickets poolTickets;
+
     mapping(uint256 => Lottery) public lotteries;
+
     uint256 public currentLotteryId; // Total Rounds
-    uint256 public currentTicketId; // Total Tickets
 
     // user
     mapping(address => Tickets) usersTickets;
+
     mapping(address => uint256) public usersStartLotteryId;
     mapping(address => uint256) public usersTotalRewards;
+
     mapping(address => mapping(uint256 => uint256)) public usersRewards;
     // only user address
     modifier notContract() {
@@ -71,13 +76,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         _;
     }
 
-    modifier onlyOwnerOrInjector() {
-        require(
-            (msg.sender == owner()) || (msg.sender == injectorAddress),
-            "Not owner or injector"
-        );
-        _;
-    }
     event TicketsPurchase(
         address indexed buyer,
         uint256 indexed lotteryId,
@@ -109,9 +107,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     event LotteryInjection(uint256 indexed lotteryId, uint256 injectedAmount);
     event NewRandomGenerator(address indexed randomGenerator);
     event NewOperatorAndTreasuryAndInjectorAddresses(
-        address operator,
-        address treasury,
-        address injector
+        address operator
     );
     event AdminTokenRecovery(address token, uint256 amount);
 
@@ -137,26 +133,17 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      * @notice Set operator, treasury, and injector addresses
      * @dev Only callable by the owner
      * @param _operatorAddress address of the operator
-     * @param _treasuryAddress address of the treasury
-     * @param _injectorAddress address of the injector
      */
-    function setOperatorAndTreasuryAndInjectorAddresses(
-        address _operatorAddress,
-        address _treasuryAddress,
-        address _injectorAddress
+    function setOperatorAddresses(
+        address _operatorAddress
+        
     ) external onlyOwner {
         require(_operatorAddress != address(0), "Cannot be zero address");
-        require(_treasuryAddress != address(0), "Cannot be zero address");
-        require(_injectorAddress != address(0), "Cannot be zero address");
 
         operatorAddress = _operatorAddress;
-        treasuryAddress = _treasuryAddress;
-        injectorAddress = _injectorAddress;
-
+       
         emit NewOperatorAndTreasuryAndInjectorAddresses(
-            _operatorAddress,
-            _treasuryAddress,
-            _injectorAddress
+            _operatorAddress
         );
     }
     
@@ -175,6 +162,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             _ticketNumbers.length == _ticketAmounts.length,
             "The length of ticket numbers and amounts are different"
         );
+
         require(
             lotteries[currentLotteryId].status == Status.Open,
             "Sorry, current lottery is not open"
@@ -189,7 +177,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         }
 
         uint256 currentWeight = getCurrentWeight();
+
         uint256 totalAmount = 0;
+
         for (uint256 i = 0; i < _ticketNumbers.length; i++) {
             _buyTicket(
                 poolTickets,
@@ -222,11 +212,11 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      */
     function redeemTickets(uint256[] calldata _ticketNumbers)
         external
-        
         notContract
         nonReentrant
     {
         require(_ticketNumbers.length != 0, "No tickets are being redeem");
+
         require(
             lotteries[currentLotteryId].status == Status.Open,
             "Sorry, current lottery is not open"
@@ -266,7 +256,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         }
         
         require(totalAmount != 0, "No tickets are being bought");
+
         DEGToken.safeTransfer(address(msg.sender), totalAmount * TICKET_PRICE);
+
         emit TicketsRedeem(msg.sender, currentLotteryId, totalAmount);
     }
 
@@ -284,7 +276,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             (currentLotteryId == 0) ||
                 (lotteries[currentLotteryId].status == Status.Claimable),
             "Not time to start lottery"
-        );
+        );  
 
         require(
             (_stageProportion[0] +
@@ -402,25 +394,37 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         );
 
         // Get the final lucky numbers from randomGenerator
-        uint256 finalNumber = randomGenerator.viewRandomResult();
+        uint256 finalNumber = randomGenerator.getRandomResult();
 
         uint256 lastAmount = 0;
         uint256 lastWeight = 0;
+
         for (uint256 j = 0; j < 4; j++) {
             uint256 i = 3 - j;
+
             uint256 hashNumber = _hashNumber(finalNumber, i);
+
             lotteries[currentLotteryId].stageAmount[i] = poolTickets.ticketsAmount[hashNumber] - lastAmount;
             lastAmount = poolTickets.ticketsAmount[hashNumber];
+
+
             lotteries[currentLotteryId].stageWeight[i] = poolTickets.ticketsWeight[hashNumber] - lastWeight;
             lastWeight = poolTickets.ticketsWeight[hashNumber];
+
+
             if(lotteries[currentLotteryId].stageAmount[i] == 0)
                 lotteries[currentLotteryId].stageReward[i] = 0;
+            
             else
                 lotteries[currentLotteryId].stageReward[i] = lotteries[currentLotteryId].stageProportion[i] * lotteries[currentLotteryId].injectedAwards / 10000;
+            
+            
             lotteries[currentLotteryId].pendingAwards += lotteries[currentLotteryId].stageReward[i];
         }
+
         pendingAwardsToNextLottery = lotteries[currentLotteryId].injectedAwards - lotteries[currentLotteryId].pendingAwards;
 
+        // allpending + injectedAwards <=
         require(
             _calculateTotalAwards() <= USDToken.balanceOf(address(this)),
             "USD not balance"
@@ -429,6 +433,8 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         // Update internal statuses for this lottery round
         lotteries[currentLotteryId].finalNumber = finalNumber;
         lotteries[currentLotteryId].status = Status.Claimable;
+
+        // update allpending
 
         emit LotteryNumberDrawn(
             currentLotteryId,
@@ -460,6 +466,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
                 award += lotteries[_lotteryId].stageReward[i] * weight / lotteries[_lotteryId].stageWeight[i];
             }
         }
+        
         return award;
     }
 
@@ -470,7 +477,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      */
     function receiveAwards(uint256 _lotteryId)
         public
-        
         notContract
     {
         require(
@@ -490,10 +496,13 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             uint256 award = receiveAward(i, msg.sender);
             awards += award;
             lotteries[i].pendingAwards -= award;
+
             usersRewards[msg.sender][i] = award;
             usersTotalRewards[msg.sender] += award;
         }
         usersStartLotteryId[msg.sender] = _lotteryId + 1;
+
+        // allpending -= awards
 
         // require(awards != 0, "no awards");
 
@@ -598,7 +607,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     /**
      * @notice View user tickets info
      */
-    function viewUserTicketsInfo(address user,uint256 st, uint256 nd, uint256 position) external view returns (uint256 [] memory, uint256 [] memory, uint256 [] memory) {
+    function viewUserTicketsInfo(address user,uint256 st, uint256 nd, uint256 position) 
+    external view returns (uint256 [] memory, uint256 [] memory, uint256 [] memory) {
+
         uint256[] memory ticketsNumber=new uint256[](nd-st+1);
         uint256[] memory ticketsAmount=new uint256[](nd-st+1);
         uint256[] memory ticketsWeight=new uint256[](nd-st+1);
@@ -622,10 +633,13 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         return usersTickets[user].ticketsWeight[hashNumber];
     }
 
-    function viewUserAllTicketsInfo(address user, uint256 maxAmount) external view returns (uint256 [] memory, uint256 [] memory, uint256 [] memory, uint256) {
+    function viewUserAllTicketsInfo(address user, uint256 maxAmount) 
+            external view returns (uint256 [] memory, uint256 [] memory, uint256 [] memory, uint256) {
+
         uint256[] memory ticketsNumber=new uint256[](maxAmount);
         uint256[] memory ticketsAmount=new uint256[](maxAmount);
         uint256[] memory ticketsWeight=new uint256[](maxAmount);
+
         uint256 amount = 0;
         uint256 number = 0;
         uint256 i0 = 0;

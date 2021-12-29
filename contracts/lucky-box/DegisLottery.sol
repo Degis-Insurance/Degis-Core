@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "../utils/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
-
 import "./interfaces/IRandomNumberGenerator.sol";
 
 contract DegisLottery is Ownable, ReentrancyGuard {
@@ -17,19 +15,16 @@ contract DegisLottery is Ownable, ReentrancyGuard {
 
     IRandomNumberGenerator randomGenerator;
 
-    address public injectorAddress;
     address public operatorAddress;
-    address public treasuryAddress;
 
     uint256 public currentLotteryId;
 
     uint256 public currentTicketId;
 
-    uint256 public MIN_LENGTH = 1 hours;
-    uint256 public MAX_LENGTH = 60 days;
+    uint256 public TICKET_PRICE = 10 ether;
 
-    uint32 public constant MAX_TICKET_NUMBER = 19999;
-    uint32 public constant MIN_TICKET_NUMBER = 10000;
+    uint256 public constant MAX_TICKET_NUMBER = 19999;
+    uint256 public constant MIN_TICKET_NUMBER = 10000;
 
     uint256 public maxTicketsPerTx = 50;
 
@@ -45,13 +40,13 @@ contract DegisLottery is Ownable, ReentrancyGuard {
 
     struct LotteryInfo {
         Status status;
-        uint256 lotteryId;
         uint256 startTime;
         uint256 endTime;
-        uint256 ticketPrice;
         uint256[4] rewardsBreakdown;
-        uint256[4] rewardPerTicket;
-        uint256 rewardAmount;
+        uint256[4] rewardsPerLevel;
+        uint256[4] ticketAmount;
+        uint256[4] ticketWeight;
+        uint256 totalReward;
         uint256 pendingReward;
         uint32 finalNumber;
     }
@@ -76,6 +71,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     mapping(uint32 => uint32) private _bracketCalculator;
 
     event RandomGeneratorChanged(address oldGenerator, address newGenerator);
+    event OperatorAddressChanged(address newOperator);
 
     event TicketsPurchased(
         address buyerAddress,
@@ -164,22 +160,34 @@ contract DegisLottery is Ownable, ReentrancyGuard {
         emit RandomGeneratorChanged(oldGenerator, _randomGenerator);
     }
 
+    /**
+     * @notice Set a new operator addresses
+     * @dev Only callable by the owner
+     * @param _operatorAddress address of the operator
+     */
+    function setOperatorAddresses(address _operatorAddress) external onlyOwner {
+        require(_operatorAddress != address(0), "Cannot be zero address");
+
+        operatorAddress = _operatorAddress;
+
+        emit OperatorAddressChanged(_operatorAddress);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
     function buyTickets(
-        uint32[] calldata _ticketNumbers,
+        uint256[] calldata _ticketNumbers,
         uint256[] calldata _ticketAmounts
     ) external nonReentrant {
-        // Gas saving
         // Note: CALLDATALOAD 3 gas, CALLDATASIZE 2 gas, MLOAD & MSTORE 3 gas
         uint256 ticketAmount = _ticketNumbers.length;
         require(ticketAmount != 0, "No tickets are being bought");
 
         require(
             ticketAmount == _ticketAmounts.length,
-            "length of ticket number and amount are different"
+            "Length of ticket number and amount are different"
         );
 
         require(
@@ -192,34 +200,19 @@ contract DegisLottery is Ownable, ReentrancyGuard {
             "Current lottery is not open"
         );
 
-        uint256 degisAmountToPay = lotteryList[currentLotteryId].ticketPrice *
-            ticketAmount;
+        uint256 degisAmountToPay = TICKET_PRICE * ticketAmount;
 
         degis.safeTransferFrom(_msgSender(), address(this), degisAmountToPay);
 
         uint256 startTicketId = currentTicketId;
 
         for (uint256 i = 0; i < ticketAmount; i++) {
-            uint32 number = _ticketNumbers[i];
+            uint256 number = _ticketNumbers[i];
 
             require(
                 number >= MIN_TICKET_NUMBER && number <= MAX_TICKET_NUMBER,
                 "Ticket number is out of range"
             );
-
-            // Used when drawing prizes
-            certainTicketAmountPerLotteryId[currentLotteryId][
-                1 + (number % 10)
-            ]++;
-            certainTicketAmountPerLotteryId[currentLotteryId][
-                11 + (number % 100)
-            ]++;
-            certainTicketAmountPerLotteryId[currentLotteryId][
-                111 + (number % 1000)
-            ]++;
-            certainTicketAmountPerLotteryId[currentLotteryId][
-                1111 + (number % 10000)
-            ]++;
 
             // Update user's record
             userTickets[_msgSender()].push(currentTicketId);
@@ -230,8 +223,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
                 owner: _msgSender(),
                 buyLotteryId: currentLotteryId,
                 isRedeemed: false,
-                redeemLotteryId: 0,
-                price: lotteryList[currentLotteryId].ticketPrice
+                redeemLotteryId: 0
             });
 
             // Increase the global ticket id
@@ -257,8 +249,7 @@ contract DegisLottery is Ownable, ReentrancyGuard {
     function startLottery(
         uint256 _endTime,
         uint256 _ticketPrice,
-        uint256[4] calldata _rewardsBreakdown,
-        uint256 _treasuryFee
+        uint256[4] calldata _rewardsBreakdown
     ) external {}
 
     function closeLottery(uint256 _lotteryId) external {}

@@ -11,7 +11,7 @@ import "../tokens/interfaces/IDegisToken.sol";
 
 /**
  * @title  Farming Pool
- * @notice This contract is for LPToken mining on Degis.
+ * @notice This contract is for LPToken mining on Degis
  * @dev    The pool id starts from 1 not 0
  */
 contract FarmingPool is Ownable {
