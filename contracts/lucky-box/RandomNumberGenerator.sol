@@ -19,6 +19,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
     bytes32 public latestRequestId;
     uint32 public randomResult;
     uint256 public fee;
+
     uint256 public latestLotteryId;
 
     /**

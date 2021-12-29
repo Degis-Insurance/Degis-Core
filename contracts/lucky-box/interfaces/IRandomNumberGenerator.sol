@@ -12,5 +12,5 @@ interface IRandomNumberGenerator {
      */
     function getRandomResult() external view returns (uint32);
 
-    function viewLatestLotteryId() external view returns (uint256);
+    function latestLotteryId() external view returns (uint256);
 }
