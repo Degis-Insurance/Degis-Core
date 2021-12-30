@@ -96,7 +96,5 @@ describe("Insurance Pool for Flight Delay", function () {
         .to.emit(pool, "Unstake")
         .withArgs(dev_account.address, parseUnits("100"));
     });
-
-    it("should be ")
   });
 });
