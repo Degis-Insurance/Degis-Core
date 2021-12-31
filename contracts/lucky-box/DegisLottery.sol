@@ -51,7 +51,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     }
     mapping(uint256 => LotteryInfo) public lotteries;
 
-    // pool
     uint256 public pendingRewardsToNextLottery;
 
     uint256 public allPendingRewards;
@@ -333,7 +332,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
         require(
             lotteries[currentLotteryId].status == Status.Open,
-            "Sorry, current lottery is not open"
+            "Current lottery is not open"
         );
 
         if (userCheckPoint[_msgSender()] == 0) {
@@ -415,7 +414,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
                 ticketWight
             );
             _redeemTicket(
-                usersTickets[msg.sender],
+                usersTickets[_msgSender()],
                 _ticketNumbers[i],
                 ticketAmount,
                 ticketWight
@@ -425,9 +424,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
         require(totalAmount != 0, "No tickets are being bought");
 
-        DEGToken.safeTransfer(address(msg.sender), totalAmount * TICKET_PRICE);
+        DEGToken.safeTransfer(_msgSender(), totalAmount * TICKET_PRICE);
 
-        emit TicketsRedeem(msg.sender, currentLotteryId, totalAmount);
+        emit TicketsRedeem(_msgSender(), currentLotteryId, totalAmount);
     }
 
     /**

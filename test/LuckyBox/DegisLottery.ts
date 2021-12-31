@@ -100,6 +100,14 @@ describe("Degis Lottery", function () {
         .withArgs(currentLotteryId.add(1), ts + 1, now + 600, 0);
     });
 
+    it("should not be able to buy tickets before start", async function () {
+      await expect(lottery.buyTickets([1234], [1])).to.be.revertedWith(
+        "Current lottery is not open"
+      );
+    });
+
+    it("should not be able to buy ti");
+
     it("should be able to buy tickets", async function () {
       await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
       const currentLotteryId = await lottery.currentLotteryId();
@@ -107,6 +115,26 @@ describe("Degis Lottery", function () {
       await expect(lottery.buyTickets([1234, 1235, 1236], [1, 1, 2]))
         .to.emit(lottery, "TicketsPurchase")
         .withArgs(dev_account.address, currentLotteryId, 4);
+
+      const userTicketInfo = await lottery.viewUserAllTicketsInfo(
+        dev_account.address,
+        3
+      );
+
+      console.log("user ticket numbers:", userTicketInfo[0]);
+      console.log("user ticket amounts:", userTicketInfo[1]);
+      console.log("user ticket weights:", userTicketInfo[2]);
+    });
+
+    it("should be able to redeem tickets", async function () {
+      await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
+      const currentLotteryId = await lottery.currentLotteryId();
+
+      await lottery.buyTickets([1234, 1235], [1, 2]);
+
+      await expect(lottery.redeemTickets([1234]))
+        .to.emit(lottery, "TicketsRedeem")
+        .withArgs(dev_account.address, currentLotteryId, 1);
     });
   });
 });
