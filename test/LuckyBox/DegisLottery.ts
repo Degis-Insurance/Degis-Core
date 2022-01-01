@@ -59,6 +59,11 @@ describe("Degis Lottery", function () {
       usd.address,
       rand.address
     );
+
+    await rand.setLotteryAddress(lottery.address);
+
+    await degis.mintDegis(dev_account.address, parseUnits("10000"));
+    await degis.approve(lottery.address, parseUnits("10000"));
   });
 
   describe("Deployment", function () {
@@ -85,9 +90,6 @@ describe("Degis Lottery", function () {
     beforeEach(async function () {
       time = new Date().getTime();
       now = Math.floor(time / 1000);
-
-      await degis.mintDegis(dev_account.address, parseUnits("10000"));
-      await degis.approve(lottery.address, parseUnits("10000"));
     });
 
     it("should be able to start a lottery", async function () {
@@ -105,13 +107,27 @@ describe("Degis Lottery", function () {
         "Current lottery is not open"
       );
     });
+  });
 
-    it("should not be able to buy ti");
+  describe("Functions after starting a lottery", function () {
+    let time: number, now: number;
+    let currentLotteryId: number;
+    beforeEach(async function () {
+      time = new Date().getTime();
+      now = Math.floor(time / 1000);
+
+      await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
+
+      currentLotteryId = (await lottery.currentLotteryId()).toNumber();
+    });
+
+    it("should not be able to buy tickets with wrong parameters", async function () {
+      await expect(lottery.buyTickets([1234, 1232], [1])).to.be.revertedWith(
+        "Different lengths"
+      );
+    });
 
     it("should be able to buy tickets", async function () {
-      await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
-      const currentLotteryId = await lottery.currentLotteryId();
-
       await expect(lottery.buyTickets([1234, 1235, 1236], [1, 1, 2]))
         .to.emit(lottery, "TicketsPurchase")
         .withArgs(dev_account.address, currentLotteryId, 4);
@@ -127,14 +143,31 @@ describe("Degis Lottery", function () {
     });
 
     it("should be able to redeem tickets", async function () {
-      await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
-      const currentLotteryId = await lottery.currentLotteryId();
-
       await lottery.buyTickets([1234, 1235], [1, 2]);
 
       await expect(lottery.redeemTickets([1234]))
         .to.emit(lottery, "TicketsRedeem")
         .withArgs(dev_account.address, currentLotteryId, 1);
+
+      const userTicketInfo = await lottery.viewUserAllTicketsInfo(
+        dev_account.address,
+        3
+      );
+      console.log("user ticket numbers:", userTicketInfo[0]);
+    });
+
+    it("should be able to inject funds", async function () {
+      await usd.approve(lottery.address, parseUnits("1000"));
+      await lottery.injectFunds(parseUnits("100"));
+
+      const lotteryInfo = await lottery.lotteries(currentLotteryId);
+      expect(lotteryInfo.injectedRewards).to.equal(parseUnits("100"));
+    });
+
+    it("should be able to stop a lottery", async function () {
+      await expect(lottery.closeLottery())
+        .to.emit(lottery, "LotteryClose")
+        .withArgs(currentLotteryId);
     });
   });
 });

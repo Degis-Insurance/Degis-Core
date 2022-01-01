@@ -103,7 +103,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
 
         // latestRequestId = requestRandomness(keyHash, fee);
 
-        latestLotteryId = IDegisLottery(DegisLottery).viewCurrentLotteryId();
+        latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 
     function _rand(string memory input) internal pure returns (uint256) {
@@ -124,6 +124,6 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
     {
         require(latestRequestId == requestId, "Wrong requestId");
         randomResult = uint32(10000 + (randomness % 10000));
-        latestLotteryId = IDegisLottery(DegisLottery).viewCurrentLotteryId();
+        latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 }

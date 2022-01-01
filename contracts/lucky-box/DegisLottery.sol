@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./interfaces/IDegisLottery.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 
 contract DegisLottery is ReentrancyGuard, Ownable {
@@ -51,7 +50,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     }
     mapping(uint256 => LotteryInfo) public lotteries;
 
-    uint256 public pendingRewardsToNextLottery;
+    uint256 public RewardsToNextLottery;
 
     uint256 public allPendingRewards;
 
@@ -279,11 +278,11 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             stageReward: [uint256(0), uint256(0), uint256(0), uint256(0)],
             stageAmount: [uint256(0), uint256(0), uint256(0), uint256(0)],
             stageWeight: [uint256(0), uint256(0), uint256(0), uint256(0)],
-            injectedRewards: pendingRewardsToNextLottery,
+            injectedRewards: RewardsToNextLottery,
             pendingRewards: 0,
             finalNumber: 0
         });
-        pendingRewardsToNextLottery = 0;
+        RewardsToNextLottery = 0;
 
         emit LotteryOpen(
             currentLotteryId,
@@ -435,16 +434,14 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      * @dev Callable by owner(incentive) or injector address(insurancePool income)
             First transfer USD and then call this function to record
      */
-    function injectFunds(uint256 _amount) external onlyOperator {
-        require(
-            lotteries[currentLotteryId].status == Status.Open,
-            "the lottery round is not open, choose the right round"
-        );
-
+    function injectFunds(uint256 _amount) external onlyOperator nonReentrant {
         USDToken.safeTransferFrom(_msgSender(), address(this), _amount);
 
-        lotteries[currentLotteryId].injectedRewards += _amount;
+        if (lotteries[currentLotteryId].status == Status.Open) {
+            lotteries[currentLotteryId].injectedRewards += _amount;
+        } else RewardsToNextLottery += _amount;
 
+        // tag: This place may need change
         require(
             allPendingRewards + lotteries[currentLotteryId].injectedRewards <=
                 USDToken.balanceOf(address(this)),
@@ -477,6 +474,8 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
         LotteryInfo storage currentLottery = lotteries[currentLotteryId];
 
+        uint256 tempPendingRewards = 0;
+
         for (uint256 j = 0; j < 4; j++) {
             uint256 i = 3 - j;
 
@@ -500,10 +499,11 @@ contract DegisLottery is ReentrancyGuard, Ownable {
                         currentLottery.injectedRewards) /
                     10000;
 
-            currentLottery.pendingRewards += currentLottery.stageReward[i];
+            tempPendingRewards += currentLottery.stageReward[i];
         }
+        currentLottery.pendingRewards += tempPendingRewards;
 
-        pendingRewardsToNextLottery =
+        RewardsToNextLottery =
             currentLottery.injectedRewards -
             currentLottery.pendingRewards;
 
@@ -532,7 +532,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      * @param _lotteryId lottery id
      * @param user user address
      */
-    function receiveAward(uint256 _lotteryId, address user)
+    function receiveRward(uint256 _lotteryId, address user)
         public
         view
         returns (uint256)
@@ -575,7 +575,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         uint256 awards = 0;
 
         for (uint256 i = userCheckPoint[msg.sender]; i <= _lotteryId; i++) {
-            uint256 award = receiveAward(i, msg.sender);
+            uint256 award = receiveRward(i, msg.sender);
             awards += award;
             lotteries[i].pendingRewards -= award;
 
@@ -584,7 +584,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         }
         userCheckPoint[msg.sender] = _lotteryId + 1;
 
-        // allpending -= awards
+        allPendingRewards -= awards;
 
         // require(awards != 0, "no awards");
 
@@ -803,7 +803,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
                 userRewards[i - st] = usersRewards[user][i];
             } else {
                 userDrawed[i - st] = 0;
-                userRewards[i - st] = receiveAward(i, user);
+                userRewards[i - st] = receiveRward(i, user);
             }
         }
         return (lotteryIds, userRewards, userDrawed);
