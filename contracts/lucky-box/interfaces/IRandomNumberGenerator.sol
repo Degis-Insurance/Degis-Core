@@ -3,14 +3,11 @@ pragma solidity ^0.8.4;
 
 interface IRandomNumberGenerator {
     /**
-     * @notice Requests randomness from a user-provided seed
+     * @notice Views random result
      */
     function getRandomNumber() external;
 
-    /**
-     * @notice Views random result
-     */
-    function getRandomResult() external view returns (uint32);
+    function randomResult() external view returns (uint32);
 
     function latestLotteryId() external view returns (uint256);
 }

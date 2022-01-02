@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 
+import "hardhat/console.sol";
+
 contract DegisLottery is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
@@ -44,7 +46,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         uint256[4] stageReward;
         uint256[4] stageAmount;
         uint256[4] stageWeight;
-        uint256 injectedRewards;
+        uint256 totalRewards;
         uint256 pendingRewards;
         uint256 finalNumber;
     }
@@ -79,7 +81,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         uint256 indexed lotteryId,
         uint256 startTime,
         uint256 endTime,
-        uint256 injectedAmount
+        uint256 totalRewards
     );
     event LotteryNumberDrawn(
         uint256 indexed lotteryId,
@@ -92,14 +94,16 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         uint256 amount,
         uint256 indexed lotteryId
     );
+
     event LotteryClose(uint256 indexed lotteryId);
+
     event LotteryFundInjection(
         uint256 indexed lotteryId,
         uint256 injectedAmount
     );
-    event NewRandomGenerator(address indexed randomGenerator);
+    event RandomNumberGeneratorChanged(address randomGenerator);
     event OperatorAddressChanged(address operator);
-    event AdminTokenRecovery(address token, uint256 amount);
+    event AdminTokenRecovery(address indexed token, uint256 amount);
 
     /**
      * @notice Constructor function
@@ -240,6 +244,20 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         emit OperatorAddressChanged(_operatorAddress);
     }
 
+    function setRandomNumberGenerator(address _randomNumberGenerator)
+        external
+        onlyOwner
+    {
+        require(
+            _randomNumberGenerator != address(0),
+            "Can not be zero address"
+        );
+
+        randomGenerator = IRandomNumberGenerator(_randomNumberGenerator);
+
+        emit RandomNumberGeneratorChanged(_randomNumberGenerator);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -278,7 +296,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             stageReward: [uint256(0), uint256(0), uint256(0), uint256(0)],
             stageAmount: [uint256(0), uint256(0), uint256(0), uint256(0)],
             stageWeight: [uint256(0), uint256(0), uint256(0), uint256(0)],
-            injectedRewards: RewardsToNextLottery,
+            totalRewards: RewardsToNextLottery,
             pendingRewards: 0,
             finalNumber: 0
         });
@@ -288,7 +306,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             currentLotteryId,
             lotteries[currentLotteryId].startTime,
             lotteries[currentLotteryId].endTime,
-            lotteries[currentLotteryId].injectedRewards
+            lotteries[currentLotteryId].totalRewards
         );
     }
 
@@ -438,12 +456,12 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         USDToken.safeTransferFrom(_msgSender(), address(this), _amount);
 
         if (lotteries[currentLotteryId].status == Status.Open) {
-            lotteries[currentLotteryId].injectedRewards += _amount;
+            lotteries[currentLotteryId].totalRewards += _amount;
         } else RewardsToNextLottery += _amount;
 
         // tag: This place may need change
         require(
-            allPendingRewards + lotteries[currentLotteryId].injectedRewards <=
+            allPendingRewards + lotteries[currentLotteryId].totalRewards <=
                 USDToken.balanceOf(address(this)),
             "Wrong USD amount"
         );
@@ -467,7 +485,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         );
 
         // Get the final lucky numbers from randomGenerator
-        uint256 finalNumber = randomGenerator.getRandomResult();
+        uint256 finalNumber = randomGenerator.randomResult();
+
+        console.log(finalNumber);
 
         uint256 lastAmount = 0;
         uint256 lastWeight = 0;
@@ -496,7 +516,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             else
                 currentLottery.stageReward[i] =
                     (currentLottery.stageProportion[i] *
-                        currentLottery.injectedRewards) /
+                        currentLottery.totalRewards) /
                     10000;
 
             tempPendingRewards += currentLottery.stageReward[i];
@@ -504,11 +524,11 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         currentLottery.pendingRewards += tempPendingRewards;
 
         RewardsToNextLottery =
-            currentLottery.injectedRewards -
+            currentLottery.totalRewards -
             currentLottery.pendingRewards;
 
         require(
-            allPendingRewards + currentLottery.injectedRewards <=
+            allPendingRewards + currentLottery.totalRewards <=
                 USDToken.balanceOf(address(this)),
             "Wrong USD amount"
         );

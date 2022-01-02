@@ -17,7 +17,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
 
     bytes32 public keyHash;
     bytes32 public latestRequestId;
-    uint32 public randomResult;
+    uint256 public randomResult;
     uint256 public fee;
 
     uint256 public latestLotteryId;
@@ -98,7 +98,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         string memory randInput = string(
             abi.encodePacked((block.timestamp).uintToString(), address(this))
         );
-        randomResult = uint32(10000 + (_rand(randInput) % 10000));
+        randomResult = _rand(randInput) % 10000;
         //*********************************//
 
         // latestRequestId = requestRandomness(keyHash, fee);
@@ -123,7 +123,8 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         override
     {
         require(latestRequestId == requestId, "Wrong requestId");
-        randomResult = uint32(10000 + (randomness % 10000));
+        randomResult = randomness % 10000;
+        
         latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 }

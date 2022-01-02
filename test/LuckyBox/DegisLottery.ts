@@ -71,6 +71,12 @@ describe("Degis Lottery", function () {
       expect(await lottery.owner()).to.equal(dev_account.address);
     });
 
+    it("should not have an operator at the beginning", async function () {
+      expect(await lottery.operatorAddress()).to.equal(
+        ethers.constants.AddressZero
+      );
+    });
+
     it("should have the correct round weight at first", async function () {
       expect(await lottery.getCurrentRoundWeight()).to.equal(2000000);
     });
@@ -158,16 +164,87 @@ describe("Degis Lottery", function () {
 
     it("should be able to inject funds", async function () {
       await usd.approve(lottery.address, parseUnits("1000"));
-      await lottery.injectFunds(parseUnits("100"));
+      await expect(lottery.injectFunds(parseUnits("100")))
+        .to.emit(lottery, "LotteryFundInjection")
+        .withArgs(currentLotteryId, parseUnits("100"));
 
       const lotteryInfo = await lottery.lotteries(currentLotteryId);
-      expect(lotteryInfo.injectedRewards).to.equal(parseUnits("100"));
+      expect(lotteryInfo.totalRewards).to.equal(parseUnits("100"));
     });
 
     it("should be able to stop a lottery", async function () {
       await expect(lottery.closeLottery())
         .to.emit(lottery, "LotteryClose")
         .withArgs(currentLotteryId);
+
+      const currentLottery = await lottery.lotteries(currentLotteryId);
+
+      // Status 2: Closed
+      expect(currentLottery.status).to.equal(2);
+
+      const blockNumberBefore = await ethers.provider.getBlockNumber();
+      const ts = (await ethers.provider.getBlock(blockNumberBefore)).timestamp;
+
+      expect(currentLottery.endTime).to.equal(ts);
+    });
+
+    it("should be able to draw the final number and make the lottery claimable", async function () {
+      await lottery.closeLottery();
+      const finalNumber = await rand.randomResult();
+
+      await expect(lottery.drawLottery())
+        .to.emit(lottery, "LotteryNumberDrawn")
+        .withArgs(currentLotteryId, finalNumber, 0);
+    });
+
+    it("should be able to inject funds when not open", async function () {
+      await lottery.closeLottery();
+
+      await usd.approve(lottery.address, parseUnits("1000"));
+      await expect(lottery.injectFunds(parseUnits("100")))
+        .to.emit(lottery, "LotteryFundInjection")
+        .withArgs(currentLotteryId, parseUnits("100"));
+
+      await lottery.drawLottery();
+
+      await expect(lottery.injectFunds(parseUnits("100")))
+        .to.emit(lottery, "LotteryFundInjection")
+        .withArgs(currentLotteryId, parseUnits("100"));
+    });
+  });
+
+  describe("View Functions", function () {
+    let time: number, now: number;
+    let currentLotteryId: number;
+    beforeEach(async function () {
+      time = new Date().getTime();
+      now = Math.floor(time / 1000);
+
+      await degis.mintDegis(user1.address, parseUnits("10000"));
+      await degis.connect(user1).approve(lottery.address, parseUnits("10000"));
+
+      // Start a lottery
+      await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
+
+      // Buy tickets
+      await lottery.buyTickets([1234, 1235], [1, 2]);
+      await lottery.connect(user1).buyTickets([1234, 1235], [3, 6]);
+
+      // Inject funds
+      await usd.approve(lottery.address, parseUnits("1000"));
+      await lottery.injectFunds(parseUnits("100"));
+
+      currentLotteryId = (await lottery.currentLotteryId()).toNumber();
+    });
+
+    it("should be able to view a user's ticket info", async function () {
+      const userTicketInfo = await lottery.viewUserAllTicketsInfo(
+        dev_account.address,
+        10
+      );
+
+      expect(userTicketInfo[0][0]).to.equal(1234);
+      expect(userTicketInfo[0][1]).to.equal(1235);
     });
   });
 });
