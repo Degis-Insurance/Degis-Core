@@ -1,5 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
@@ -246,5 +247,29 @@ describe("Degis Lottery", function () {
       expect(userTicketInfo[0][0]).to.equal(1234);
       expect(userTicketInfo[0][1]).to.equal(1235);
     });
+
+    it("should be able to get pool tickets info", async function () {
+      const poolTicketInfo = await lottery.getPoolTicketsInfo(1234, 1235, 0);
+
+      let poolTicketInfoToNumber: [number[], number[]] = [[], []];
+
+      poolTicketInfoToNumber[0] = arrayToNumber(poolTicketInfo[0]);
+      poolTicketInfoToNumber[1] = arrayToNumber(poolTicketInfo[1]);
+
+      expect(poolTicketInfoToNumber[0][0]).to.equal(1234);
+      expect(poolTicketInfoToNumber[0][1]).to.equal(1235);
+
+      expect(poolTicketInfoToNumber[1][0]).to.equal(4);
+      expect(poolTicketInfoToNumber[1][1]).to.equal(8);
+    });
   });
 });
+
+function arrayToNumber(inputArray: BigNumber[]): number[] {
+  let outputArray: number[] = [];
+  inputArray.forEach((item, key) => {
+    outputArray[key] = item.toNumber();
+  });
+
+  return outputArray;
+}

@@ -150,9 +150,10 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     /**
      * @notice Get pool tickets info
+     * @dev May be a huge number, avoid reading this frequently
      * @param _startIndex Start number
      * @param _stopIndex Stop number
-     * @param _position Which level to check (0, 1, 2, 3)
+     * @param _position Which level to check (0, 1, 2, 3), use 0 to check the 4-digit number
      */
     function getPoolTicketsInfo(
         uint256 _startIndex,
@@ -794,8 +795,8 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     function viewUserRewardsInfo(
         address user,
-        uint256 st,
-        uint256 nd
+        uint256 _startRound,
+        uint256 _endRound
     )
         external
         view
@@ -805,25 +806,35 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             uint256[] memory
         )
     {
-        require(st <= nd, "end lottery smaller than start lottery");
-        require(nd <= currentLotteryId, "end lottery not open");
         require(
-            lotteries[nd].status == Status.Claimable,
+            _startRound <= _endRound,
+            "End lottery smaller than start lottery"
+        );
+        require(_endRound <= currentLotteryId, "End lottery round not open");
+
+        require(
+            lotteries[_endRound].status == Status.Claimable,
             "this round of lottery are not ready for claiming"
         );
 
-        uint256[] memory lotteryIds = new uint256[](nd - st + 1);
-        uint256[] memory userRewards = new uint256[](nd - st + 1);
-        uint256[] memory userDrawed = new uint256[](nd - st + 1);
+        uint256[] memory lotteryIds = new uint256[](
+            _endRound - _startRound + 1
+        );
+        uint256[] memory userRewards = new uint256[](
+            _endRound - _startRound + 1
+        );
+        uint256[] memory userDrawed = new uint256[](
+            _endRound - _startRound + 1
+        );
         uint256 userStartLotteryId = userCheckPoint[user];
-        for (uint256 i = st; i <= nd; i++) {
-            lotteryIds[i - st] = i;
+        for (uint256 i = _startRound; i <= _endRound; i++) {
+            lotteryIds[i - _startRound] = i;
             if (i < userStartLotteryId) {
-                userDrawed[i - st] = 1;
-                userRewards[i - st] = usersRewards[user][i];
+                userDrawed[i - _startRound] = 1;
+                userRewards[i - _startRound] = usersRewards[user][i];
             } else {
-                userDrawed[i - st] = 0;
-                userRewards[i - st] = receiveRward(i, user);
+                userDrawed[i - _startRound] = 0;
+                userRewards[i - _startRound] = receiveRward(i, user);
             }
         }
         return (lotteryIds, userRewards, userDrawed);
