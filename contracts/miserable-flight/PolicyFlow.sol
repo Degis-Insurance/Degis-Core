@@ -170,9 +170,9 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice Change the oracle address
      * @param _oracleAddress New oracle address
      */
-    // function setFlightOracle(address _oracleAddress) external onlyOwner {
-    //     flightOracle = IFlightOracle(_oracleAddress);
-    // }
+    function setFlightOracle(address _oracleAddress) external onlyOwner {
+        flightOracle = IFlightOracle(_oracleAddress);
+    }
 
     /**
      * @notice Set a new url
