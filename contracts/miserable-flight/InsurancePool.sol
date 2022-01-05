@@ -527,7 +527,6 @@ contract InsurancePool is
         USDT.safeTransfer(emergencyPool, premiumToEmergency);
 
         // Transfer some reward to lottery
-        uint256 currentLotteryId = degisLottery.currentLotteryId();
         degisLottery.injectFunds(premiumToLottery);
 
         emit PremiumDistributed(premiumToEmergency, premiumToLottery);

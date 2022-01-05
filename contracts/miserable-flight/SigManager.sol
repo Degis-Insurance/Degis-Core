@@ -130,7 +130,7 @@ contract SigManager is Ownable {
         address signer = hashData.toEthSignedMessageHash().recover(signature);
         require(
             _isValidSigner[signer],
-            "Can only submitted by authorized signer"
+            "Can only be submitted by authorized signer"
         );
     }
 }

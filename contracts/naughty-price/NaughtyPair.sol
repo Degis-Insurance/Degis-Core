@@ -44,8 +44,15 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     // Every pool will have a deadline
     uint256 public deadline;
 
+    // Fee Rate, given to LP holders (0 ~ 1000)
+    uint256 public feeRate;
+
     // Minimum liquidity locked
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event ReserveUpdated(uint256 reserve0, uint256 reserve1);
     event Swap(
@@ -95,16 +102,20 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     function initialize(
         address _token0,
         address _token1,
-        uint256 _deadline
+        uint256 _deadline,
+        uint256 _feeRate
     ) external {
         require(
             msg.sender == factory,
             "can only be initialized by the factory contract"
         );
+        require(_feeRate <= 1000, "feeRate over 1.0");
 
         token0 = _token0;
         token1 = _token1;
         deadline = _deadline; // deadline for the whole pool after which no swap will be allowed
+
+        feeRate = _feeRate;
     }
 
     // ---------------------------------------------------------------------------------------- //

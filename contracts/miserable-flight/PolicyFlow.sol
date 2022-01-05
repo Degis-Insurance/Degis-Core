@@ -42,6 +42,11 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+    event FeeChanged(uint256 newFee);
+    event MaxPayoffChanged(uint256 newMaxPayoff);
+    event MinTimeBeforeDepartureChanged(uint256 newMinTime);
+    event FlightOracleChanged(address newOracle);
+    event OracleUrlChanged(string newUrl);
 
     event NewPolicyApplication(uint256 _policyID, address indexed _userAddress);
     event PolicySold(uint256 _policyID, address indexed _userAddress);
@@ -145,6 +150,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      */
     function changeFee(uint256 _fee) external onlyOwner {
         fee = _fee;
+        emit FeeChanged(_fee);
     }
 
     /**
@@ -153,6 +159,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      */
     function changeMaxPayoff(uint256 _newMaxPayoff) external onlyOwner {
         MAX_PAYOFF = _newMaxPayoff;
+        emit MaxPayoffChanged(_newMaxPayoff);
     }
 
     /**
@@ -164,6 +171,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         onlyOwner
     {
         MIN_TIME_BEFORE_DEPARTURE = _newMinTime;
+        emit MinTimeBeforeDepartureChanged(_newMinTime);
     }
 
     /**
@@ -172,6 +180,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      */
     function setFlightOracle(address _oracleAddress) external onlyOwner {
         flightOracle = IFlightOracle(_oracleAddress);
+        emit FlightOracleChanged(_oracleAddress);
     }
 
     /**
@@ -179,6 +188,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      */
     function setURL(string memory _url) external onlyOwner {
         FLIGHT_STATUS_URL = _url;
+        emit OracleUrlChanged(_url);
     }
 
     /**

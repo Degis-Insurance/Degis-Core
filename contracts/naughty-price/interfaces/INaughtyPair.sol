@@ -10,6 +10,8 @@ interface INaughtyPair is IERC20 {
 
     function token1() external view returns (address);
 
+    function feeRate() external view returns (uint256);
+
     function deadline() external view returns (uint256);
 
     function getReserves()
@@ -32,6 +34,7 @@ interface INaughtyPair is IERC20 {
     function initialize(
         address _token0,
         address _token1,
-        uint256 _deadline
+        uint256 _deadline,
+        uint256 _feeRate
     ) external;
 }

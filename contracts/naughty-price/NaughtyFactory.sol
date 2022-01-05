@@ -132,14 +132,17 @@ contract NaughtyFactory {
     /**
      * @notice After deploy the policytoken and get the address,
      *         we deploy the policyToken - stablecoin pool contract
-     * @param _policyTokenAddress: Address of policy token
-     * @param _stablecoin: Address of the stable coin
+     * @param _policyTokenAddress Address of policy token
+     * @param _stablecoin Address of the stable coin
+     * @param _deadline Deadline of the pool
+     * @param _feeRate Fee rate given to LP holders
      * @return Address of the pool
      */
     function deployPool(
         address _policyTokenAddress,
         address _stablecoin,
-        uint256 _deadline
+        uint256 _deadline,
+        uint256 _feeRate
     ) external returns (address) {
         bytes memory bytecode = type(NaughtyPair).creationCode;
 
@@ -155,7 +158,8 @@ contract NaughtyFactory {
         INaughtyPair(_poolAddress).initialize(
             _policyTokenAddress,
             _stablecoin,
-            _deadline
+            _deadline,
+            _feeRate
         );
 
         getPair[_policyTokenAddress][_stablecoin] = _poolAddress;
@@ -167,7 +171,7 @@ contract NaughtyFactory {
 
     /**
      * @notice For each round we need to first create the policytoken(ERC20)
-     * @param _policyTokenName: Name of the policyToken
+     * @param _policyTokenName Name of the policyToken
      * @return PolicyToken address
      */
     function deployPolicyToken(string memory _policyTokenName)
@@ -208,7 +212,7 @@ contract NaughtyFactory {
 
     /**
      * @notice Get the policyToken bytecode (with parameters)
-     * @param _tokenName: Name of policyToken
+     * @param _tokenName Name of policyToken
      */
     function getPolicyTokenBytecode(string memory _tokenName)
         public

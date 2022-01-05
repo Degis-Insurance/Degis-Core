@@ -131,7 +131,12 @@ contract NaughtyRouter is Ownable {
         );
 
         // Mint _amountADesired policy tokens for users
-        mintPolicyTokensForUser(_tokenA, _tokenB, _amountADesired, msg.sender);
+        mintPolicyTokensForUser(
+            _tokenA,
+            _tokenB,
+            _amountADesired,
+            _msgSender()
+        );
 
         {
             addLiquidity(
@@ -196,8 +201,8 @@ contract NaughtyRouter is Ownable {
 
         address pair = _getPairAddress(_tokenA, _tokenB);
 
-        transferHelper(_tokenA, msg.sender, pair, amountA);
-        transferHelper(_tokenB, msg.sender, pair, amountB);
+        transferHelper(_tokenA, _msgSender(), pair, amountA);
+        transferHelper(_tokenB, _msgSender(), pair, amountB);
 
         liquidity = INaughtyPair(pair).mint(_to);
 
@@ -231,7 +236,7 @@ contract NaughtyRouter is Ownable {
     {
         address pair = _getPairAddress(_tokenA, _tokenB);
 
-        INaughtyPair(pair).safeTransferFrom(msg.sender, pair, _liquidity); // send liquidity to pair
+        INaughtyPair(pair).safeTransferFrom(_msgSender(), pair, _liquidity); // send liquidity to pair
 
         // Amount0: insurance token
         (amountA, amountB) = INaughtyPair(pair).burn(_to);
@@ -268,11 +273,20 @@ contract NaughtyRouter is Ownable {
 
         bool isBuying = _checkStablecoin(_tokenIn);
 
+        uint256 feeRate = INaughtyPair(pair).feeRate();
+
         // Get how many tokens should be put in (the order depends on isBuying)
-        amountIn = _getAmountIn(isBuying, _amountOut, _tokenIn, _tokenOut);
+        amountIn = _getAmountIn(
+            isBuying,
+            _amountOut,
+            _tokenIn,
+            _tokenOut,
+            feeRate
+        );
+
         require(amountIn <= _amountInMax, "excessive input amount");
 
-        transferHelper(_tokenIn, msg.sender, pair, amountIn);
+        transferHelper(_tokenIn, _msgSender(), pair, amountIn);
 
         _swap(pair, amountIn, _amountOut, isBuying, _to);
     }
@@ -304,11 +318,19 @@ contract NaughtyRouter is Ownable {
         // Check if the tokenIn is stablecoin
         bool isBuying = _checkStablecoin(_tokenIn);
 
+        uint256 feeRate = INaughtyPair(pair).feeRate();
+
         // Get how many tokens should be given out (the order depends on isBuying)
-        amountOut = _getAmountOut(isBuying, _amountIn, _tokenIn, _tokenOut);
+        amountOut = _getAmountOut(
+            isBuying,
+            _amountIn,
+            _tokenIn,
+            _tokenOut,
+            feeRate
+        );
         require(amountOut >= _amountOutMin, "excessive output amount");
 
-        transferHelper(_tokenIn, msg.sender, pair, _amountIn);
+        transferHelper(_tokenIn, _msgSender(), pair, _amountIn);
 
         _swap(pair, _amountIn, amountOut, isBuying, _to);
     }
@@ -397,7 +419,7 @@ contract NaughtyRouter is Ownable {
     ) internal {
         // Only give buyer tokens when this is a purchase
         if (_isBuying) {
-            IBuyerToken(buyerToken).mintBuyerToken(msg.sender, _amountIn);
+            IBuyerToken(buyerToken).mintBuyerToken(_msgSender(), _amountIn);
         }
 
         // If the user is buying policies => amount1Out = 0
@@ -490,7 +512,8 @@ contract NaughtyRouter is Ownable {
         bool isBuying,
         uint256 _amountIn,
         address _tokenIn,
-        address _tokenOut
+        address _tokenOut,
+        uint256 _feeRate
     ) internal view returns (uint256 amountOut) {
         (uint256 reserveA, uint256 reserveB) = _getReserves(
             _tokenIn,
@@ -506,7 +529,7 @@ contract NaughtyRouter is Ownable {
         require(_amountIn > 0, "insufficient input amount");
         require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
 
-        uint256 amountInWithFee = _amountIn * 980;
+        uint256 amountInWithFee = _amountIn * (1000 - _feeRate);
         uint256 numerator = amountInWithFee.mul(reserveOut);
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
 
@@ -524,7 +547,8 @@ contract NaughtyRouter is Ownable {
         bool isBuying,
         uint256 _amountOut,
         address _tokenIn,
-        address _tokenOut
+        address _tokenOut,
+        uint256 _feeRate
     ) internal view returns (uint256 amountIn) {
         (uint256 reserveA, uint256 reserveB) = _getReserves(
             _tokenIn,
@@ -540,7 +564,7 @@ contract NaughtyRouter is Ownable {
         require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
 
         uint256 numerator = reserveIn.mul(_amountOut) * 1000;
-        uint256 denominator = (reserveOut - _amountOut) * 980;
+        uint256 denominator = (reserveOut - _amountOut) * (1000 - _feeRate);
 
         amountIn = numerator.div(denominator) + 1;
     }
