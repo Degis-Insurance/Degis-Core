@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.0 (utils/Context.sol)
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.10;
 
 /**
  * @dev Provides information about the current execution context, including the

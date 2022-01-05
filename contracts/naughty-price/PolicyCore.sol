@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -443,12 +443,14 @@ contract PolicyCore is Ownable {
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stable coin
      * @param _poolDeadline Swapping deadline of the pool
+     * @param _feeRate Fee rate given to LP holders
      * @return poolAddress The address of the pool just deployed
      */
     function deployPool(
         string memory _policyTokenName,
         address _stablecoin,
-        uint256 _poolDeadline
+        uint256 _poolDeadline,
+        uint256 _feeRate
     )
         external
         onlyOwner
@@ -462,7 +464,8 @@ contract PolicyCore is Ownable {
         address poolAddress = factory.deployPool(
             policyTokenAddress,
             _stablecoin,
-            _poolDeadline
+            _poolDeadline,
+            _feeRate
         );
 
         // Record the mapping

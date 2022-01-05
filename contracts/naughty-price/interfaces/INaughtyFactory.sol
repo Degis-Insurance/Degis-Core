@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.10;
 
 interface INaughtyFactory {
     function getPairAddress(address _tokenAddress1, address _tokenAddress2)
@@ -14,6 +14,7 @@ interface INaughtyFactory {
     function deployPool(
         address _policyTokenAddress,
         address _stablecoin,
-        uint256 _deadline
+        uint256 _deadline,
+        uint256 _feeRate
     ) external returns (address);
 }

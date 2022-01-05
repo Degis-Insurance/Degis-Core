@@ -85,7 +85,8 @@ describe("Naughty Router", function () {
     await core.deployPool(
       policyTokenName,
       usd.address,
-      ethers.BigNumber.from(deadline)
+      ethers.BigNumber.from(deadline),
+      20
     );
 
     await router.deployed();

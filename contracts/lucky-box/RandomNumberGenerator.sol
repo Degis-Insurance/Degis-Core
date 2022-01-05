@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.10;
 
 import "../utils/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
@@ -124,7 +124,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
     {
         require(latestRequestId == requestId, "Wrong requestId");
         randomResult = randomness % 10000;
-        
+
         latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 }

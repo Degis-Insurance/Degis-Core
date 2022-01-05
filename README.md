@@ -2,8 +2,75 @@
 
 **This repo is still during the migration from truffle to hardhat&ts.**
 
+Core smart contracts for Degis including:
 
-# Advanced Sample Hardhat Project
+- Degis Token & Buyer Token
+- Flight Delay Product
+- Naughty Price Product
+- Lucky Box
+- Farming & Purchase Incentive Pool
+
+## Dependencies
+
+```
+hardhat ^2.7.1
+solidity ^0.8.10
+typescript ^4.5.3
+```
+
+## Getting Started
+
+1. Install node packages
+
+   with npm:
+
+   ```
+   npm install
+   ```
+
+   with yarn:
+
+   ```
+   yarn
+   ```
+
+2. Compile smart contracts
+
+   ```
+   npx hardhat compile
+   ```
+
+   or:
+
+   ```
+   yarn compile
+   ```
+
+3. Running tests with hardhat network
+
+   ```
+   npx hardhat test
+   ```
+
+   or:
+
+   ```
+   yarn test
+   ```
+
+4. Deploy to the blockchain
+
+   ```
+   npx hardhar run scripts/deploy/deploy.ts --network {{network name}}
+   ```
+
+   or:
+
+   ```
+   yarn deploy --network {{network name}}
+   ```
+
+## Advanced Sample Hardhat Project
 
 This project demonstrates an advanced Hardhat use case, integrating other tools commonly used alongside Hardhat in the ecosystem.
 

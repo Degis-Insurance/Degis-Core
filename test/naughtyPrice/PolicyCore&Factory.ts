@@ -241,7 +241,8 @@ describe("Policy Core and Naughty Factory", function () {
         core.deployPool(
           policyTokenName,
           usd.address,
-          ethers.BigNumber.from(deadline)
+          ethers.BigNumber.from(deadline),
+          20
         )
       )
         .to.emit(core, "PoolDeployed")
@@ -272,7 +273,8 @@ describe("Policy Core and Naughty Factory", function () {
       await core.deployPool(
         policyTokenName,
         usd.address,
-        ethers.BigNumber.from(deadline)
+        ethers.BigNumber.from(deadline),
+        20
       );
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
