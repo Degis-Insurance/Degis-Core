@@ -7,6 +7,8 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "hardhat-deploy";
+import "hardhat-docgen";
 
 dotenv.config();
 
@@ -38,6 +40,17 @@ const config: HardhatUserConfig = {
       },
     },
   },
+
+  namedAccounts: {
+    deployer: {
+      default: 0,
+      1: 0,
+      rinkeby: "0x32eB34d060c12aD0491d260c436d30e5fB13a8Cd",
+      fuji: 0,
+      avax: 0,
+    },
+  },
+
   networks: {
     hardhat: {
       // forking: {
@@ -73,6 +86,11 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  docgen: {
+    path: "./docs2",
+    clear: true,
+    runOnCompile: true,
   },
 };
 

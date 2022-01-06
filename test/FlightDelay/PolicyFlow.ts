@@ -41,6 +41,7 @@ describe("Policy Flow", function () {
 
     SigManager = await ethers.getContractFactory("SigManager");
     sig = await SigManager.deploy();
+    await sig.addSigner(dev_account.address);
 
     InsurancePool = await ethers.getContractFactory("InsurancePool");
     pool = await InsurancePool.deploy(
@@ -122,5 +123,44 @@ describe("Policy Flow", function () {
         .to.emit(flow, "OracleUrlChanged")
         .withArgs("google.com");
     });
+
+    it("should be able to change the delay threshold", async function () {
+      await expect(flow.setDelayThreshold(15, 150))
+        .to.emit(flow, "DelayThresholdChanged")
+        .withArgs(15, 150);
+    });
+  });
+
+  describe("Main Functions", function () {
+    let productId: number;
+    let flightNumber: string;
+    let time: number, now: number;
+
+    beforeEach(async function () {
+      productId = 0;
+      flightNumber = "AQ1299";
+      time = new Date().getTime();
+      now = Math.floor(time / 1000);
+    });
+
+    it("should be able to buy a policy", async function () {
+      let signature: string;
+      signature = sign();
+
+      await flow.newApplication(
+        productId,
+        flightNumber,
+        parseUnits("10"),
+        ethers.BigNumber.from(now + 48 * 3600),
+        ethers.BigNumber.from(now + 50 * 3600),
+        now + 600,
+        signature
+      );
+    });
   });
 });
+
+function sign(): string {
+  return "1";
+  console.log("I am signing a message");
+}

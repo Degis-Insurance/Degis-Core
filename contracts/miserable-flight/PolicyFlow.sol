@@ -47,6 +47,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     event MinTimeBeforeDepartureChanged(uint256 newMinTime);
     event FlightOracleChanged(address newOracle);
     event OracleUrlChanged(string newUrl);
+    event DelayThresholdChanged(uint256 _thresholdMin, uint256 _thresholdMax);
 
     event NewPolicyApplication(uint256 _policyID, address indexed _userAddress);
     event PolicySold(uint256 _policyID, address indexed _userAddress);
@@ -55,7 +56,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     event PolicyExpired(uint256 _policyID, address indexed _userAddress);
     event FulfilledOracleRequest(uint256 _policyId, bytes32 _requestId);
     event PolicyOwnerTransfer(uint256 indexed _tokenId, address _newOwner);
-    event DelayThresholdSet(uint256 _thresholdMin, uint256 _thresholdMax);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -202,7 +202,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     {
         DELAY_THRESHOLD_MIN = _thresholdMin;
         DELAY_THRESHOLD_MAX = _thresholdMax;
-        emit DelayThresholdSet(_thresholdMin, _thresholdMax);
+        emit DelayThresholdChanged(_thresholdMin, _thresholdMax);
     }
 
     // ---------------------------------------------------------------------------------------- //
