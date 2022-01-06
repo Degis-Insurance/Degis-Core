@@ -40,7 +40,7 @@ interface IPolicyCore {
 
     function getAllTokens() external view returns (PolicyTokenInfo[] memory);
 
-    function checkUserQuota(address _userAddress, address _policyTokenAddress)
+    function checkUserQuota(address _user, address _policyTokenAddress)
         external
         view
         returns (uint256 _quota);
@@ -81,7 +81,7 @@ interface IPolicyCore {
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount,
-        address _userAddress
+        address _user
     ) external;
 
     function redeem(

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 interface IFarmingPool {
-    function pendingDegis(uint256 _poolId, address _userAddress)
+    function pendingDegis(uint256 _poolId, address _user)
         external
         returns (uint256);
 

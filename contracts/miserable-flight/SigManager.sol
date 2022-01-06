@@ -106,14 +106,14 @@ contract SigManager is Ownable {
      * @notice Check signature when buying a new policy (avoid arbitrary premium amount)
      * @param signature 65 bytes array: [[v (1)], [r (32)], [s (32)]]
      * @param _flightNumber Flight number
-     * @param _userAddress User address
+     * @param _user User address
      * @param _premium Policy premium
      * @param _deadline Deadline of a policy
      */
     function checkSignature(
         bytes calldata signature,
         string memory _flightNumber,
-        address _userAddress,
+        address _user,
         uint256 _premium,
         uint256 _deadline
     ) external view {
@@ -122,7 +122,7 @@ contract SigManager is Ownable {
             abi.encodePacked(
                 _SUBMIT_APPLICATION_TYPEHASH,
                 hashedFlightNumber,
-                _userAddress,
+                _user,
                 _premium,
                 _deadline
             )

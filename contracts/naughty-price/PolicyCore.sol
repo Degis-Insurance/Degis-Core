@@ -305,16 +305,16 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Check a user's quota for a certain policy token
-     * @param _userAddress Address of the user to be checked
+     * @param _user Address of the user to be checked
      * @param _policyTokenAddress Address of the policy token
      * @return _quota User's quota result
      */
-    function checkUserQuota(address _userAddress, address _policyTokenAddress)
+    function checkUserQuota(address _user, address _policyTokenAddress)
         external
         view
         returns (uint256 _quota)
     {
-        _quota = userQuota[_userAddress][_policyTokenAddress];
+        _quota = userQuota[_user][_policyTokenAddress];
     }
 
     /**
@@ -519,13 +519,13 @@ contract PolicyCore is Ownable {
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the sable coin
      * @param _amount Amount of stablecoin (also the amount of policy tokens)
-     * @param _userAddress Address to receive the policy tokens
+     * @param _user Address to receive the policy tokens
      */
     function delegateDeposit(
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount,
-        address _userAddress
+        address _user
     ) external beforeDeadline(_policyTokenName) {
         require(
             _msgSender() == naughtyRouter,
@@ -542,22 +542,22 @@ contract PolicyCore is Ownable {
 
         // Check if the user has enough balance
         require(
-            IERC20(_stablecoin).balanceOf(_userAddress) >= _amount,
+            IERC20(_stablecoin).balanceOf(_user) >= _amount,
             "User's stablecoin balance not sufficient"
         );
 
         // Transfer stablecoins to this contract
         IERC20(_stablecoin).safeTransferFrom(
-            _userAddress,
+            _user,
             address(this),
             _amount
         );
 
-        _mintPolicyToken(policyTokenAddress, _amount, _userAddress);
+        _mintPolicyToken(policyTokenAddress, _amount, _user);
 
         emit DelegateDeposit(
             _msgSender(),
-            _userAddress,
+            _user,
             _policyTokenName,
             _stablecoin,
             _amount
@@ -813,25 +813,25 @@ contract PolicyCore is Ownable {
      *         The policy token need to be deployed first!
      * @param _policyTokenAddress Address of the policy token
      * @param _amount Amount to mint
-     * @param _userAddress Address to receive the policy token
+     * @param _user Address to receive the policy token
      */
     function _mintPolicyToken(
         address _policyTokenAddress,
         uint256 _amount,
-        address _userAddress
+        address _user
     ) internal {
         INPPolicyToken policyToken = INPPolicyToken(_policyTokenAddress);
 
         // Mint new policy tokens
-        policyToken.mint(_userAddress, _amount);
+        policyToken.mint(_user, _amount);
 
         // If this is the first deposit, store the user address
-        if (userQuota[_userAddress][_policyTokenAddress] == 0) {
-            allDepositors[_policyTokenAddress].push(_userAddress);
+        if (userQuota[_user][_policyTokenAddress] == 0) {
+            allDepositors[_policyTokenAddress].push(_user);
         }
 
         // Update the user quota
-        userQuota[_userAddress][_policyTokenAddress] += _amount;
+        userQuota[_user][_policyTokenAddress] += _amount;
     }
 
     /**

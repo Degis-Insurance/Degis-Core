@@ -47,15 +47,15 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     event MinTimeBeforeDepartureChanged(uint256 newMinTime);
     event FlightOracleChanged(address newOracle);
     event OracleUrlChanged(string newUrl);
-    event DelayThresholdChanged(uint256 _thresholdMin, uint256 _thresholdMax);
+    event DelayThresholdChanged(uint256 thresholdMin, uint256 thresholdMax);
 
-    event NewPolicyApplication(uint256 _policyID, address indexed _userAddress);
-    event PolicySold(uint256 _policyID, address indexed _userAddress);
-    event PolicyDeclined(uint256 _policyID, address indexed _userAddress);
-    event PolicyClaimed(uint256 _policyID, address indexed _userAddress);
-    event PolicyExpired(uint256 _policyID, address indexed _userAddress);
-    event FulfilledOracleRequest(uint256 _policyId, bytes32 _requestId);
-    event PolicyOwnerTransfer(uint256 indexed _tokenId, address _newOwner);
+    event NewPolicyApplication(uint256 _policyID, address indexed user);
+    event PolicySold(uint256 policyID, address indexed user);
+    event PolicyDeclined(uint256 policyID, address indexed user);
+    event PolicyClaimed(uint256 policyID, address indexed user);
+    event PolicyExpired(uint256 policyID, address indexed user);
+    event FulfilledOracleRequest(uint256 policyId, bytes32 requestId);
+    event PolicyOwnerTransfer(uint256 indexed tokenId, address newOwner);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -91,21 +91,21 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
     /**
      * @notice Show a user's policies (all)
-     * @param _userAddress User's address
+     * @param _user User's address
      * @return userPolicies User's all policy details
      */
-    function viewUserPolicy(address _userAddress)
+    function viewUserPolicy(address _user)
         external
         view
         returns (PolicyInfo[] memory)
     {
-        uint256 userPolicyAmount = userPolicyList[_userAddress].length;
+        uint256 userPolicyAmount = userPolicyList[_user].length;
         require(userPolicyAmount > 0, "No policy for this user");
 
         PolicyInfo[] memory result = new PolicyInfo[](userPolicyAmount);
 
         for (uint256 i = 0; i < userPolicyAmount; i++) {
-            uint256 policyId = userPolicyList[_userAddress][i];
+            uint256 policyId = userPolicyList[_user][i];
 
             result[i] = policyList[policyId];
         }
@@ -433,27 +433,27 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     /**
      * @notice check the policy and then determine whether we can afford it
      * @param _payoff the payoff of the policy sold
-     * @param _userAddress user's address
+     * @param _user user's address
      * @param _policyId the unique policy ID
      */
     function _policyCheck(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress,
+        address _user,
         uint256 _policyId
     ) internal {
         // Whether there are enough capacity in the pool
         bool _isAccepted = insurancePool.checkCapacity(_payoff);
 
         if (_isAccepted) {
-            insurancePool.updateWhenBuy(_premium, _payoff, _userAddress);
+            insurancePool.updateWhenBuy(_premium, _payoff, _user);
             policyList[_policyId].status = PolicyStatus.SOLD;
-            emit PolicySold(_policyId, _userAddress);
+            emit PolicySold(_policyId, _user);
 
-            policyToken.mintPolicyToken(_userAddress);
+            policyToken.mintPolicyToken(_user);
         } else {
             policyList[_policyId].status = PolicyStatus.DECLINED;
-            emit PolicyDeclined(_policyId, _userAddress);
+            emit PolicyDeclined(_policyId, _user);
             revert("not sufficient capacity in the insurance pool");
         }
     }
@@ -462,36 +462,36 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice update the policy when it is expired
      * @param _premium the premium of the policy sold
      * @param _payoff the payoff of the policy sold
-     * @param _userAddress user's address
+     * @param _user user's address
      * @param _policyId the unique policy ID
      */
     function policyExpired(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress,
+        address _user,
         uint256 _policyId
     ) internal {
-        insurancePool.updateWhenExpire(_premium, _payoff, _userAddress);
+        insurancePool.updateWhenExpire(_premium, _payoff, _user);
         policyList[_policyId].status = PolicyStatus.EXPIRED;
-        emit PolicyExpired(_policyId, _userAddress);
+        emit PolicyExpired(_policyId, _user);
     }
 
     /**
      * @notice Update the policy when it is claimed
      * @param _premium Premium of the policy sold
      * @param _payoff Payoff of the policy sold
-     * @param _userAddress User's address
+     * @param _user User's address
      * @param _policyId The unique policy ID
      */
     function _policyClaimed(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress,
+        address _user,
         uint256 _policyId
     ) internal {
-        insurancePool.payClaim(_premium, MAX_PAYOFF, _payoff, _userAddress);
+        insurancePool.payClaim(_premium, MAX_PAYOFF, _payoff, _user);
         policyList[_policyId].status = PolicyStatus.CLAIMED;
-        emit PolicyClaimed(_policyId, _userAddress);
+        emit PolicyClaimed(_policyId, _user);
     }
 
     /**

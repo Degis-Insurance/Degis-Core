@@ -8,12 +8,12 @@ interface IInsurancePool {
 
     function getPoolUnlocked() external view returns (uint256);
 
-    function getUnlockedFor(address _userAddress)
+    function getUnlockedFor(address _user)
         external
         view
         returns (uint256);
 
-    function getLockedFor(address _userAddress) external view returns (uint256);
+    function getLockedFor(address _user) external view returns (uint256);
 
     function checkCapacity(uint256 _payoff) external view returns (bool);
 
@@ -33,7 +33,7 @@ interface IInsurancePool {
 
     // main functions
 
-    function stake(address _userAddress, uint256 _amount) external;
+    function stake(address _user, uint256 _amount) external;
 
     function unstake(uint256 _amount) external;
 
@@ -42,23 +42,23 @@ interface IInsurancePool {
     function updateWhenBuy(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress
+        address _user
     ) external;
 
     function updateWhenExpire(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress
+        address _user
     ) external;
 
     function payClaim(
         uint256 _premium,
         uint256 _payoff,
         uint256 _realPayoff,
-        address _userAddress
+        address _user
     ) external;
 
-    function revertUnstakeRequest(address _userAddress) external;
+    function revertUnstakeRequest(address _user) external;
 
-    function revertAllUnstakeRequest(address _userAddress) external;
+    function revertAllUnstakeRequest(address _user) external;
 }

@@ -95,9 +95,9 @@ contract InsurancePool is
     /**
      * @notice There is a frozen time for unstaking
      */
-    modifier afterFrozenTime(address _userAddress) {
+    modifier afterFrozenTime(address _user) {
         require(
-            block.timestamp >= userInfo[_userAddress].depositTime + frozenTime,
+            block.timestamp >= userInfo[_user].depositTime + frozenTime,
             "Can not withdraw until the fronzen time"
         );
         _;
@@ -110,29 +110,29 @@ contract InsurancePool is
     /**
      * @notice Get the real balance: LPValue * LP_Num
      * @dev Used in many places so give it a seperate function
-     * @param _userAddress User's address
+     * @param _user User's address
      * @return _userBalance Real balance of this user
      */
-    function getUserBalance(address _userAddress)
+    function getUserBalance(address _user)
         public
         view
         returns (uint256 _userBalance)
     {
-        uint256 lp_num = balanceOf(_userAddress);
+        uint256 lp_num = balanceOf(_user);
         _userBalance = lp_num.mul(LPValue);
     }
 
     /**
      * @notice Get the balance that one user(LP) can unlock
-     * @param _userAddress User's address
+     * @param _user User's address
      * @return _unlockedAmount Unlocked amount of the pool
      */
-    function getUnlockedFor(address _userAddress)
+    function getUnlockedFor(address _user)
         public
         view
         returns (uint256 _unlockedAmount)
     {
-        uint256 userBalance = getUserBalance(_userAddress);
+        uint256 userBalance = getUserBalance(_user);
         _unlockedAmount = availableCapacity >= userBalance
             ? userBalance
             : availableCapacity;
@@ -238,9 +238,9 @@ contract InsurancePool is
         afterFrozenTime(_msgSender())
         nonReentrant
     {
-        address _userAddress = _msgSender();
+        address _user = _msgSender();
 
-        uint256 userBalance = getUserBalance(_userAddress);
+        uint256 userBalance = getUserBalance(_user);
         require(
             _amount <= userBalance && _amount > 0,
             "Not enough balance to be unlocked or your withdraw amount is 0"
@@ -252,15 +252,15 @@ contract InsurancePool is
         // Will jump this part when the pool has enough liquidity
         if (_amount > unlocked) {
             uint256 remainingURequest = _amount - unlocked;
-            unstakeRequests[_userAddress].push(
+            unstakeRequests[_user].push(
                 UnstakeRequest(remainingURequest, 0, false)
             );
-            unstakeQueue.push(_userAddress);
+            unstakeQueue.push(_user);
             unstakeAmount = unlocked; // only withdraw the unlocked value
-            userInfo[_userAddress].pendingBalance += remainingURequest;
+            userInfo[_user].pendingBalance += remainingURequest;
         }
 
-        _withdraw(_userAddress, unstakeAmount);
+        _withdraw(_user, unstakeAmount);
     }
 
     /**
@@ -272,9 +272,9 @@ contract InsurancePool is
         afterFrozenTime(_msgSender())
         nonReentrant
     {
-        address _userAddress = _msgSender();
+        address _user = _msgSender();
 
-        uint256 userBalance = getUserBalance(_userAddress);
+        uint256 userBalance = getUserBalance(_user);
 
         uint256 unlocked = totalStakingBalance - lockedBalance;
         uint256 unstakeAmount = userBalance;
@@ -282,15 +282,15 @@ contract InsurancePool is
         // Will jump this part when the pool has enough liquidity
         if (userBalance > unlocked) {
             uint256 remainingURequest = userBalance - unlocked;
-            unstakeRequests[_userAddress].push(
+            unstakeRequests[_user].push(
                 UnstakeRequest(remainingURequest, 0, false)
             );
-            unstakeQueue.push(_userAddress);
+            unstakeQueue.push(_user);
             unstakeAmount = unlocked; // only withdraw the unlocked value
-            userInfo[_userAddress].pendingBalance += remainingURequest;
+            userInfo[_user].pendingBalance += remainingURequest;
         }
 
-        _withdraw(_userAddress, unstakeAmount);
+        _withdraw(_user, unstakeAmount);
     }
 
     /**
@@ -298,12 +298,12 @@ contract InsurancePool is
      * @dev Capacity check is done before calling this function
      * @param _premium Policy's premium
      * @param _payoff Policy's payoff (max payoff)
-     * @param _userAddress Address of the buyer
+     * @param _user Address of the buyer
      */
     function updateWhenBuy(
         uint256 _premium,
         uint256 _payoff,
-        address _userAddress
+        address _user
     ) external onlyPolicyFlow {
         // Update pool status
         lockedBalance += _payoff;
@@ -314,9 +314,9 @@ contract InsurancePool is
         _updateLockedRatio();
 
         // Remember approval
-        USDT.safeTransferFrom(_userAddress, address(this), _premium);
+        USDT.safeTransferFrom(_user, address(this), _premium);
 
-        emit BuyNewPolicy(_userAddress, _premium, _payoff);
+        emit BuyNewPolicy(_user, _premium, _payoff);
     }
 
     /**
@@ -350,14 +350,14 @@ contract InsurancePool is
      * @param _premium Premium of the policy
      * @param _payoff Max payoff of the policy
      * @param _realPayoff Real payoff of the policy
-     * @param _userAddress Address of the policy claimer
+     * @param _user Address of the policy claimer
      */
     function payClaim(
         uint256 _premium,
         uint256 _payoff,
         uint256 _realPayoff,
-        address _userAddress
-    ) external onlyPolicyFlow notZeroAddress(_userAddress) {
+        address _user
+    ) external onlyPolicyFlow notZeroAddress(_user) {
         // Update the pool status
         lockedBalance -= _payoff;
         totalStakingBalance -= _realPayoff;
@@ -368,25 +368,25 @@ contract InsurancePool is
         _distributePremium(_premium);
 
         // Pay the claim
-        USDT.safeTransfer(_userAddress, _realPayoff);
+        USDT.safeTransfer(_user, _realPayoff);
 
         _updateLPValue();
     }
 
     /**
      * @notice revert the last unstake request for a user
-     * @param _userAddress user's address
+     * @param _user user's address
      */
-    function revertUnstakeRequest(address _userAddress)
+    function revertUnstakeRequest(address _user)
         public
-        notZeroAddress(_userAddress)
+        notZeroAddress(_user)
     {
         require(
-            _msgSender() == _userAddress || _msgSender() == owner(),
+            _msgSender() == _user || _msgSender() == owner(),
             "Only the owner or the user himself can revert"
         );
 
-        UnstakeRequest[] storage userRequests = unstakeRequests[_userAddress];
+        UnstakeRequest[] storage userRequests = unstakeRequests[_user];
         require(
             userRequests.length > 0,
             "this user has no pending unstake request"
@@ -397,35 +397,35 @@ contract InsurancePool is
             userRequests[index].fulfilledAmount;
 
         realStakingBalance += remainingRequest;
-        userInfo[_userAddress].pendingBalance -= remainingRequest;
+        userInfo[_user].pendingBalance -= remainingRequest;
 
-        _removeOneRequest(_userAddress);
+        _removeOneRequest(_user);
     }
 
     /**
      * @notice revert all unstake requests for a user
-     * @param _userAddress user's address
+     * @param _user user's address
      */
-    function revertAllUnstakeRequest(address _userAddress)
+    function revertAllUnstakeRequest(address _user)
         public
-        notZeroAddress(_userAddress)
+        notZeroAddress(_user)
     {
         require(
-            _msgSender() == _userAddress || _msgSender() == owner(),
+            _msgSender() == _user || _msgSender() == owner(),
             "Only the owner or the user himself can revert"
         );
 
-        UnstakeRequest[] storage userRequests = unstakeRequests[_userAddress];
+        UnstakeRequest[] storage userRequests = unstakeRequests[_user];
         require(
             userRequests.length > 0,
             "this user has no pending unstake request"
         );
-        _removeAllRequest(_userAddress);
-        delete unstakeRequests[_userAddress];
+        _removeAllRequest(_user);
+        delete unstakeRequests[_user];
 
-        uint256 remainingRequest = userInfo[_userAddress].pendingBalance;
+        uint256 remainingRequest = userInfo[_user].pendingBalance;
         realStakingBalance += remainingRequest;
-        userInfo[_userAddress].pendingBalance = 0;
+        userInfo[_user].pendingBalance = 0;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -434,23 +434,23 @@ contract InsurancePool is
 
     /**
      * @notice Remove all unstake requests for a user
-     * @param _userAddress User's address
+     * @param _user User's address
      */
-    function _removeAllRequest(address _userAddress) internal {
-        for (uint256 i = 0; i < unstakeRequests[_userAddress].length; i += 1) {
-            _removeOneRequest(_userAddress);
+    function _removeAllRequest(address _user) internal {
+        for (uint256 i = 0; i < unstakeRequests[_user].length; i += 1) {
+            _removeOneRequest(_user);
         }
     }
 
     /**
      * @notice Remove one(the latest) unstake requests for a user
-     * @param _userAddress User's address
+     * @param _user User's address
      */
-    function _removeOneRequest(address _userAddress) internal {
+    function _removeOneRequest(address _user) internal {
         uint256 index = unstakeQueue.length - 1;
 
         while (index >= 0) {
-            if (unstakeQueue[index] == _userAddress) break;
+            if (unstakeQueue[index] == _user) break;
             index -= 1;
         }
 
@@ -464,10 +464,10 @@ contract InsurancePool is
     /**
      * @notice Finish the deposit process
      * @dev LPValue will not change during deposit
-     * @param _userAddress Address of the user who deposits
+     * @param _user Address of the user who deposits
      * @param _amount Amount he deposits
      */
-    function _deposit(address _userAddress, uint256 _amount) internal {
+    function _deposit(address _user, uint256 _amount) internal {
         uint256 amountWithFactor = _amount.mul(collateralFactor);
 
         // Update the pool's status
@@ -478,24 +478,24 @@ contract InsurancePool is
         _updateLockedRatio();
 
         // msg.sender always pays
-        USDT.safeTransferFrom(_userAddress, address(this), _amount);
+        USDT.safeTransferFrom(_user, address(this), _amount);
 
         // LP Token number need to be newly minted
         uint256 lp_num = _amount.div(LPValue);
-        _mint(_userAddress, lp_num);
+        _mint(_user, lp_num);
 
-        userInfo[_userAddress].depositTime = block.timestamp;
+        userInfo[_user].depositTime = block.timestamp;
 
-        emit Stake(_userAddress, _amount);
+        emit Stake(_user, _amount);
     }
 
     /**
      * @notice _withdraw: finish the withdraw action, only when meeting the conditions
      * @dev LPValue will not change during withdraw
-     * @param _userAddress address of the user who withdraws
+     * @param _user address of the user who withdraws
      * @param _amount the amount he withdraws
      */
-    function _withdraw(address _userAddress, uint256 _amount) internal {
+    function _withdraw(address _user, uint256 _amount) internal {
         uint256 amountWithFactor = _amount.mul(collateralFactor);
         // Update the pool's status
         totalStakingBalance -= _amount;
@@ -504,12 +504,12 @@ contract InsurancePool is
 
         _updateLockedRatio();
 
-        USDT.safeTransfer(_userAddress, _amount);
+        USDT.safeTransfer(_user, _amount);
 
         uint256 lp_num = _amount.div(LPValue);
-        _burn(_userAddress, lp_num);
+        _burn(_user, lp_num);
 
-        emit Unstake(_userAddress, _amount);
+        emit Unstake(_user, _amount);
     }
 
     /**

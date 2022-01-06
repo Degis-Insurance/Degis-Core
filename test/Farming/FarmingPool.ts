@@ -70,6 +70,10 @@ describe("Farming Pool", function () {
       const nextPoolId = await pool._nextPoolId();
       expect(await pool.poolMapping(usd.address)).to.equal(nextPoolId.sub(2));
       expect(await pool.poolMapping(usd_2.address)).to.equal(nextPoolId.sub(1));
+
+      const poolList = await pool.getPoolList();
+      expect(poolList[1].lpToken).to.equal(usd.address);
+      expect(poolList[2].lpToken).to.equal(usd_2.address);
     });
 
     it("should not be able to add two same pools", async function () {

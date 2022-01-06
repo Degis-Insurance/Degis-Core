@@ -3,6 +3,8 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
 import "../libraries/SafePRBMath.sol";
 
 import "../utils/Ownable.sol";
@@ -14,7 +16,7 @@ import "../tokens/interfaces/IDegisToken.sol";
  * @notice This contract is for LPToken mining on Degis
  * @dev    The pool id starts from 1 not 0
  */
-contract FarmingPool is Ownable {
+contract FarmingPool is Ownable, ReentrancyGuard {
     using SafePRBMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IDegisToken;
@@ -105,26 +107,31 @@ contract FarmingPool is Ownable {
     /**
      * @notice Check the amount of pending degis reward
      * @param _poolId PoolId of this farming pool
-     * @param _userAddress User address
+     * @param _user User address
      * @return pendingDegisAmount Amount of pending degis
      */
-    function pendingDegis(uint256 _poolId, address _userAddress)
+    function pendingDegis(uint256 _poolId, address _user)
         external
         view
-        notZeroAddress(_userAddress)
+        notZeroAddress(_user)
         returns (uint256)
     {
-        PoolInfo storage poolInfo = poolList[_poolId];
+        PoolInfo memory poolInfo = poolList[_poolId];
 
-        if (block.number < poolInfo.lastRewardBlock) return 0;
+        if (
+            poolInfo.lastRewardBlock == 0 ||
+            block.number < poolInfo.lastRewardBlock ||
+            block.number < startBlock
+        ) return 0;
 
-        UserInfo storage user = userInfo[_poolId][_userAddress];
+        UserInfo memory user = userInfo[_poolId][_user];
 
         uint256 lp_balance = IERC20(poolInfo.lpToken).balanceOf(address(this));
 
         uint256 accDegisPerShare = poolInfo.accDegisPerShare;
 
-        if (lp_balance > 0) {
+        if (lp_balance == 0) return 0;
+        else {
             // Deigs amount given to this pool
             uint256 blocks = block.number - poolInfo.lastRewardBlock;
             uint256 degisReward = poolInfo.degisPerBlock * blocks;
@@ -135,8 +142,6 @@ contract FarmingPool is Ownable {
             uint256 pending = user.stakingBalance.mul(accDegisPerShare) -
                 user.rewardDebt;
             return pending;
-        } else {
-            return 0;
         }
     }
 
@@ -150,15 +155,15 @@ contract FarmingPool is Ownable {
     /**
      * @notice Get user balance
      * @param _poolId Id of the pool
-     * @param _userAddress Address of the user
+     * @param _user Address of the user
      * @return _balance User's balance (lpToken)
      */
-    function getUserBalance(uint256 _poolId, address _userAddress)
+    function getUserBalance(uint256 _poolId, address _user)
         external
         view
         returns (uint256 _balance)
     {
-        return userInfo[_poolId][_userAddress].stakingBalance;
+        return userInfo[_poolId][_user].stakingBalance;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -223,13 +228,11 @@ contract FarmingPool is Ownable {
     }
 
     function stop(uint256 _poolId, bool _withUpdate) public {
-        require(
-            poolList[_poolId].lastRewardBlock != 0,
-            "no such pool, your poolId may be wrong"
-        );
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        require(poolList[_poolId].lastRewardBlock != 0, "Pool not exists");
+
+        if (_withUpdate) massUpdatePools();
+        else updatePool(_poolId);
+
         isFarming[_poolId] = false;
 
         delete poolList[_poolId];
@@ -248,13 +251,10 @@ contract FarmingPool is Ownable {
         bool _withUpdate
     ) public onlyOwner {
         // Ensure there already exists this pool
-        require(
-            poolList[_poolId].lastRewardBlock != 0,
-            "no such pool, your poolId may be wrong"
-        );
-        if (_withUpdate) {
-            massUpdatePools();
-        }
+        require(poolList[_poolId].lastRewardBlock != 0, "Pool not exists");
+
+        if (_withUpdate) massUpdatePools();
+        else updatePool(_poolId);
 
         if (isFarming[_poolId] == false && _degisPerBlock > 0) {
             isFarming[_poolId] = true;
@@ -273,7 +273,7 @@ contract FarmingPool is Ownable {
      * @param _poolId Id of the farming pool
      * @param _amount Staking amount
      */
-    function stake(uint256 _poolId, uint256 _amount) public {
+    function stake(uint256 _poolId, uint256 _amount) public nonReentrant {
         require(_amount > 0, "Can not stake zero");
 
         PoolInfo storage pool = poolList[_poolId];
@@ -291,7 +291,7 @@ contract FarmingPool is Ownable {
 
         // Transfer the lptoken into farming pool
         IERC20(pool.lpToken).safeTransferFrom(
-            address(_msgSender()),
+            _msgSender(),
             address(this),
             _amount
         );
@@ -307,7 +307,9 @@ contract FarmingPool is Ownable {
      * @param _poolId Id of the farming pool
      * @param _amount Amount of lp tokens to withdraw
      */
-    function withdraw(uint256 _poolId, uint256 _amount) public {
+    function withdraw(uint256 _poolId, uint256 _amount) public nonReentrant {
+        require(_amount > 0, "Zero amount");
+
         PoolInfo storage pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][_msgSender()];
 
@@ -337,12 +339,11 @@ contract FarmingPool is Ownable {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
+        pool.lastRewardBlock = block.number;
 
         uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(this));
-        if (lpSupply == 0) {
-            pool.lastRewardBlock = block.number;
-            return;
-        }
+
+        if (lpSupply == 0) return;
 
         uint256 blocks = block.number - pool.lastRewardBlock;
         uint256 degisReward = blocks * pool.degisPerBlock;
@@ -351,7 +352,6 @@ contract FarmingPool is Ownable {
         degis.mintDegis(address(this), degisReward);
 
         pool.accDegisPerShare += degisReward.div(lpSupply);
-        pool.lastRewardBlock = block.number;
 
         emit PoolUpdated(_poolId);
     }

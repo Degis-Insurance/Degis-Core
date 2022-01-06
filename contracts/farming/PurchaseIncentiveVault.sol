@@ -133,10 +133,10 @@ contract PurchaseIncentiveVault is Ownable {
 
     /**
      * @notice Get your shares in the current round
-     * @param _userAddress Address of the user
+     * @param _user Address of the user
      */
-    function getUserShares(address _userAddress) public view returns (uint256) {
-        return userSharesInRound[_userAddress][currentRound];
+    function getUserShares(address _user) public view returns (uint256) {
+        return userSharesInRound[_user][currentRound];
     }
 
     /**

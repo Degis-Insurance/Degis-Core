@@ -436,13 +436,13 @@ contract NaughtyRouter is Ownable {
      * @param _policyTokenAddress Address of the policy token
      * @param _stablecoin Address of the stablecoin
      * @param _amount Amount to be used for minting policy tokens
-     * @param _userAddress The user's address
+     * @param _user The user's address
      */
     function mintPolicyTokensForUser(
         address _policyTokenAddress,
         address _stablecoin,
         uint256 _amount,
-        address _userAddress
+        address _user
     ) internal {
         // Find the policy token name
         string memory policyTokenName = IPolicyCore(policyCore)
@@ -452,7 +452,7 @@ contract NaughtyRouter is Ownable {
             policyTokenName,
             _stablecoin,
             _amount,
-            _userAddress
+            _user
         );
     }
 
