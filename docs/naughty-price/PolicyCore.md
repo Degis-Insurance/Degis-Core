@@ -95,7 +95,7 @@ Find the token information by its name
 ### checkUserQuota
 ```solidity
   function checkUserQuota(
-    address _userAddress,
+    address _user,
     address _policyTokenAddress
   ) external returns (uint256 _quota)
 ```
@@ -105,7 +105,7 @@ Check a user's quota for a certain policy token
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | Address of the user to be checked
+|`_user` | address | Address of the user to be checked
 |`_policyTokenAddress` | address | Address of the policy token
 
 #### Return Values:
@@ -216,7 +216,8 @@ Only the owner can deploy new policy token
   function deployPool(
     string _policyTokenName,
     address _stablecoin,
-    uint256 _poolDeadline
+    uint256 _poolDeadline,
+    uint256 _feeRate
   ) external returns (address)
 ```
 Deploy a new pair (pool)
@@ -228,6 +229,7 @@ Deploy a new pair (pool)
 |`_policyTokenName` | string | Name of the policy token
 |`_stablecoin` | address | Address of the stable coin
 |`_poolDeadline` | uint256 | Swapping deadline of the pool
+|`_feeRate` | uint256 | Fee rate given to LP holders
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -257,7 +259,7 @@ Deposit stablecoins and get policy tokens
     string _policyTokenName,
     address _stablecoin,
     uint256 _amount,
-    address _userAddress
+    address _user
   ) external
 ```
 Delegate deposit (deposit and mint for other addresses)
@@ -270,7 +272,7 @@ Only called by the router contract
 |`_policyTokenName` | string | Name of the policy token
 |`_stablecoin` | address | Address of the sable coin
 |`_amount` | uint256 | Amount of stablecoin (also the amount of policy tokens)
-|`_userAddress` | address | Address to receive the policy tokens
+|`_user` | address | Address to receive the policy tokens
 
 ### redeem
 ```solidity
@@ -383,7 +385,7 @@ Finish settlement process
   function _mintPolicyToken(
     address _policyTokenAddress,
     uint256 _amount,
-    address _userAddress
+    address _user
   ) internal
 ```
 Mint Policy Token 1:1 USD
@@ -395,7 +397,7 @@ Mint Policy Token 1:1 USD
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenAddress` | address | Address of the policy token
 |`_amount` | uint256 | Amount to mint
-|`_userAddress` | address | Address to receive the policy token
+|`_user` | address | Address to receive the policy token
 
 ### _redeemPolicyToken
 ```solidity

@@ -14,7 +14,7 @@
 ### viewUserPolicy
 ```solidity
   function viewUserPolicy(
-    address _userAddress
+    address _user
   ) external returns (struct IPolicyStruct.PolicyInfo[])
 ```
 Show a user's policies (all)
@@ -23,7 +23,7 @@ Show a user's policies (all)
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -226,7 +226,7 @@ Do the final settlement, called by FlightOracle contract
 ```solidity
   function _policyCheck(
     uint256 _payoff,
-    uint256 _userAddress,
+    uint256 _user,
     address _policyId
   ) internal
 ```
@@ -237,7 +237,7 @@ check the policy and then determine whether we can afford it
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_payoff` | uint256 | the payoff of the policy sold
-|`_userAddress` | uint256 | user's address
+|`_user` | uint256 | user's address
 |`_policyId` | address | the unique policy ID
 
 ### policyExpired
@@ -245,7 +245,7 @@ check the policy and then determine whether we can afford it
   function policyExpired(
     uint256 _premium,
     uint256 _payoff,
-    address _userAddress,
+    address _user,
     uint256 _policyId
   ) internal
 ```
@@ -257,7 +257,7 @@ update the policy when it is expired
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_premium` | uint256 | the premium of the policy sold
 |`_payoff` | uint256 | the payoff of the policy sold
-|`_userAddress` | address | user's address
+|`_user` | address | user's address
 |`_policyId` | uint256 | the unique policy ID
 
 ### _policyClaimed
@@ -265,7 +265,7 @@ update the policy when it is expired
   function _policyClaimed(
     uint256 _premium,
     uint256 _payoff,
-    address _userAddress,
+    address _user,
     uint256 _policyId
   ) internal
 ```
@@ -277,7 +277,7 @@ Update the policy when it is claimed
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_premium` | uint256 | Premium of the policy sold
 |`_payoff` | uint256 | Payoff of the policy sold
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 |`_policyId` | uint256 | The unique policy ID
 
 ### calcPayoff
@@ -361,6 +361,14 @@ Check whether the signature is valid
 
 
 
+### DelayThresholdChanged
+```solidity
+  event DelayThresholdChanged(
+  )
+```
+
+
+
 ### NewPolicyApplication
 ```solidity
   event NewPolicyApplication(
@@ -412,14 +420,6 @@ Check whether the signature is valid
 ### PolicyOwnerTransfer
 ```solidity
   event PolicyOwnerTransfer(
-  )
-```
-
-
-
-### DelayThresholdSet
-```solidity
-  event DelayThresholdSet(
   )
 ```
 

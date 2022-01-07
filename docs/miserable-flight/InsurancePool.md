@@ -24,7 +24,7 @@ Constructor function
 ### getUserBalance
 ```solidity
   function getUserBalance(
-    address _userAddress
+    address _user
   ) public returns (uint256 _userBalance)
 ```
 Get the real balance: LPValue * LP_Num
@@ -34,7 +34,7 @@ Used in many places so give it a seperate function
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -43,7 +43,7 @@ Used in many places so give it a seperate function
 ### getUnlockedFor
 ```solidity
   function getUnlockedFor(
-    address _userAddress
+    address _user
   ) public returns (uint256 _unlockedAmount)
 ```
 Get the balance that one user(LP) can unlock
@@ -52,7 +52,7 @@ Get the balance that one user(LP) can unlock
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -170,7 +170,7 @@ Unstake the max amount of a user
   function updateWhenBuy(
     uint256 _premium,
     uint256 _payoff,
-    address _userAddress
+    address _user
   ) external
 ```
 Update the pool variables when buying policies
@@ -182,7 +182,7 @@ Capacity check is done before calling this function
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_premium` | uint256 | Policy's premium
 |`_payoff` | uint256 | Policy's payoff (max payoff)
-|`_userAddress` | address | Address of the buyer
+|`_user` | address | Address of the buyer
 
 ### updateWhenExpire
 ```solidity
@@ -206,7 +206,7 @@ Update the status when a policy expires
     uint256 _premium,
     uint256 _payoff,
     uint256 _realPayoff,
-    address _userAddress
+    address _user
   ) external
 ```
 Pay a claim
@@ -218,12 +218,12 @@ Pay a claim
 |`_premium` | uint256 | Premium of the policy
 |`_payoff` | uint256 | Max payoff of the policy
 |`_realPayoff` | uint256 | Real payoff of the policy
-|`_userAddress` | address | Address of the policy claimer
+|`_user` | address | Address of the policy claimer
 
 ### revertUnstakeRequest
 ```solidity
   function revertUnstakeRequest(
-    address _userAddress
+    address _user
   ) public
 ```
 revert the last unstake request for a user
@@ -232,12 +232,12 @@ revert the last unstake request for a user
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | user's address
+|`_user` | address | user's address
 
 ### revertAllUnstakeRequest
 ```solidity
   function revertAllUnstakeRequest(
-    address _userAddress
+    address _user
   ) public
 ```
 revert all unstake requests for a user
@@ -246,12 +246,12 @@ revert all unstake requests for a user
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | user's address
+|`_user` | address | user's address
 
 ### _removeAllRequest
 ```solidity
   function _removeAllRequest(
-    address _userAddress
+    address _user
   ) internal
 ```
 Remove all unstake requests for a user
@@ -260,12 +260,12 @@ Remove all unstake requests for a user
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 
 ### _removeOneRequest
 ```solidity
   function _removeOneRequest(
-    address _userAddress
+    address _user
   ) internal
 ```
 Remove one(the latest) unstake requests for a user
@@ -274,12 +274,12 @@ Remove one(the latest) unstake requests for a user
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | User's address
+|`_user` | address | User's address
 
 ### _deposit
 ```solidity
   function _deposit(
-    address _userAddress,
+    address _user,
     uint256 _amount
   ) internal
 ```
@@ -290,13 +290,13 @@ LPValue will not change during deposit
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | Address of the user who deposits
+|`_user` | address | Address of the user who deposits
 |`_amount` | uint256 | Amount he deposits
 
 ### _withdraw
 ```solidity
   function _withdraw(
-    address _userAddress,
+    address _user,
     uint256 _amount
   ) internal
 ```
@@ -307,7 +307,7 @@ LPValue will not change during withdraw
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | address of the user who withdraws
+|`_user` | address | address of the user who withdraws
 |`_amount` | uint256 | the amount he withdraws
 
 ### _distributePremium

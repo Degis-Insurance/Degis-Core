@@ -1,6 +1,12 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { parseUnits } from "ethers/lib/utils";
+import {
+  arrayify,
+  keccak256,
+  parseUnits,
+  solidityKeccak256,
+  toUtf8Bytes,
+} from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
   BuyerToken,
@@ -41,7 +47,6 @@ describe("Policy Flow", function () {
 
     SigManager = await ethers.getContractFactory("SigManager");
     sig = await SigManager.deploy();
-    await sig.addSigner(dev_account.address);
 
     InsurancePool = await ethers.getContractFactory("InsurancePool");
     pool = await InsurancePool.deploy(
@@ -69,6 +74,13 @@ describe("Policy Flow", function () {
     oracle = await FlightOracle.deploy(flow.address, link_mainnet);
 
     await flow.deployed();
+
+    // Preparations:
+    await usd.approve(pool.address, parseUnits("10000"));
+    await pool.stake(parseUnits("1000"));
+    await pool.setPolicyFlow(flow.address);
+    await policyToken.updatePolicyFlow(flow.address);
+    await buyerToken.addMinter(flow.address);
   });
 
   describe("Deployment", function () {
@@ -144,8 +156,35 @@ describe("Policy Flow", function () {
     });
 
     it("should be able to buy a policy", async function () {
-      let signature: string;
-      signature = sign();
+      await sig.addSigner(dev_account.address);
+
+      const _SUBMIT_CLAIM_TYPEHASH = keccak256(
+        toUtf8Bytes("5G is great, physical lab is difficult to find")
+      );
+      const flightNumber = "AQ1299";
+
+      const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
+
+      const premium = parseUnits("10");
+
+      const deadline = now + 3000;
+
+      const hasedInfo = solidityKeccak256(
+        ["bytes", "bytes", "address", "uint256", "uint256"],
+        [
+          _SUBMIT_CLAIM_TYPEHASH,
+          hashedFlightNumber,
+          dev_account.address,
+          premium.toString(),
+          deadline,
+        ]
+      );
+
+      console.log("hashed info:", hasedInfo);
+
+      const signature = await dev_account.signMessage(arrayify(hasedInfo));
+
+      console.log("signature", signature);
 
       await flow.newApplication(
         productId,
@@ -153,14 +192,9 @@ describe("Policy Flow", function () {
         parseUnits("10"),
         ethers.BigNumber.from(now + 48 * 3600),
         ethers.BigNumber.from(now + 50 * 3600),
-        now + 600,
+        deadline,
         signature
       );
     });
   });
 });
-
-function sign(): string {
-  return "1";
-  console.log("I am signing a message");
-}

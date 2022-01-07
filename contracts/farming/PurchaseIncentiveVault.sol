@@ -271,8 +271,6 @@ contract PurchaseIncentiveVault is Ownable {
                 user.pendingRounds[length - 1] +
                 1;
 
-        uint256 gas_before = gasleft();
-
         uint256 userPendingReward;
 
         for (uint256 i = startIndex; i < startIndex + length; i++) {
@@ -283,11 +281,7 @@ contract PurchaseIncentiveVault is Ownable {
             );
         }
 
-        uint256 gas_after = gasleft();
-
         degis.mintDegis(_msgSender(), userPendingReward);
-
-        console.log("Gas Used:", gas_before - gas_after);
     }
 
     // /**

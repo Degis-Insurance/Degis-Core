@@ -16,7 +16,7 @@ This contract is for LPToken mining on Degis
 ```solidity
   function pendingDegis(
     uint256 _poolId,
-    address _userAddress
+    address _user
   ) external returns (uint256)
 ```
 Check the amount of pending degis reward
@@ -26,7 +26,7 @@ Check the amount of pending degis reward
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_poolId` | uint256 | PoolId of this farming pool
-|`_userAddress` | address | User address
+|`_user` | address | User address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -45,7 +45,7 @@ Get the total pool list
 ```solidity
   function getUserBalance(
     uint256 _poolId,
-    address _userAddress
+    address _user
   ) external returns (uint256 _balance)
 ```
 Get user balance
@@ -55,7 +55,7 @@ Get user balance
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_poolId` | uint256 | Id of the pool
-|`_userAddress` | address | Address of the user
+|`_user` | address | Address of the user
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -210,9 +210,9 @@ This can be written as a modifier, I just want to test the error form
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`_isInPool`| bool | Wether this lp already in pool
-### safeDegisTransfer
+### _safeDegisTransfer
 ```solidity
-  function safeDegisTransfer(
+  function _safeDegisTransfer(
     address _to,
     uint256 _amount
   ) internal

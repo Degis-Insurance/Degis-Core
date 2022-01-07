@@ -235,7 +235,7 @@ Finish swap process
     address _policyTokenAddress,
     address _stablecoin,
     uint256 _amount,
-    address _userAddress
+    address _user
   ) internal
 ```
 Used when users only provide stablecoins and want to mint & add liquidity in one step
@@ -248,7 +248,7 @@ Need have approval before
 |`_policyTokenAddress` | address | Address of the policy token
 |`_stablecoin` | address | Address of the stablecoin
 |`_amount` | uint256 | Amount to be used for minting policy tokens
-|`_userAddress` | address | The user's address
+|`_user` | address | The user's address
 
 ### _checkStablecoin
 ```solidity

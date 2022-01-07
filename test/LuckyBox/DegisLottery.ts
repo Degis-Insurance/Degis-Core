@@ -126,9 +126,9 @@ describe("Degis Lottery", function () {
         3
       );
 
-      console.log("user ticket numbers:", userTicketInfo[0]);
-      console.log("user ticket amounts:", userTicketInfo[1]);
-      console.log("user ticket weights:", userTicketInfo[2]);
+      // console.log("user ticket numbers:", userTicketInfo[0]);
+      // console.log("user ticket amounts:", userTicketInfo[1]);
+      // console.log("user ticket weights:", userTicketInfo[2]);
     });
 
     it("should be able to redeem tickets", async function () {
@@ -142,7 +142,7 @@ describe("Degis Lottery", function () {
         dev_account.address,
         3
       );
-      console.log("user ticket numbers:", userTicketInfo[0]);
+      // console.log("user ticket numbers:", userTicketInfo[0]);
     });
 
     it("should be able to inject funds", async function () {

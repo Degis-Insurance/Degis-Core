@@ -10,6 +10,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../libraries/SafePRBMath.sol";
 
+import "hardhat/console.sol";
+
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
@@ -111,8 +113,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         if (block.number < lastRewardBlock || block.number < startBlock)
             return 0;
 
-        uint256 blocks = block.number - startBlock;
-        uint256 degisReward = blocks.mul(degisPerBlock);
+        uint256 blocks = block.number - lastRewardBlock;
+        uint256 degisReward = blocks * degisPerBlock;
 
         // recalculated value for `yieldRewardsPerWeight`
         uint256 newDegisPerWeight = rewardToWeight(degisReward, totalWeight) +
@@ -169,12 +171,18 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function harvest() external {
         updatePool();
 
+        UserInfo storage user = users[msg.sender];
+
         // calculate pending yield rewards, this value will be returned
         uint256 _pendingReward = _pendingRewards(msg.sender);
+
+        console.log(_pendingReward);
 
         if (_pendingReward == 0) return;
 
         _safeDegisTransfer(msg.sender, _pendingReward);
+
+        user.rewardDebts = weightToReward(user.totalWeight, accDegisPerWeight);
 
         emit Harvest(msg.sender, _pendingReward);
     }
@@ -182,17 +190,25 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function updatePool() public {
         if (block.number < lastRewardBlock || block.number < startBlock) return;
 
-        lastRewardBlock = block.number;
-
         uint256 balance = IERC20(poolToken).balanceOf(address(this));
 
         if (balance == 0) {
+            lastRewardBlock = block.number;
             return;
         }
 
-        uint256 blocks = block.number - startBlock;
-        uint256 degisReward = blocks.mul(degisPerBlock);
+        uint256 blocks = block.number - lastRewardBlock;
+        console.log(blocks);
+
+        uint256 degisReward = blocks * degisPerBlock;
+
+        console.log("degis reward:", degisReward);
+
+        IStakingPoolFactory(factory).mintReward(address(this), degisReward);
+
         accDegisPerWeight += rewardToWeight(degisReward, totalWeight);
+
+        lastRewardBlock = block.number;
     }
 
     function _stake(
@@ -207,6 +223,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
                     _lockUntil - block.timestamp <= 365 days),
             "Invalid lock interval"
         );
+
+        updatePool();
 
         UserInfo storage user = users[_user];
 
@@ -280,10 +298,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         // recalculate deposit weight
         uint256 previousWeight = stakeDeposit.weight;
 
-        uint256 newWeight = (((stakeDeposit.lockedUntil -
-            stakeDeposit.lockedFrom) * WEIGHT_MULTIPLIER) /
-            365 days +
-            WEIGHT_MULTIPLIER) * (stakeDeposit.tokenAmount - _amount);
+        uint256 newWeight = timeToWeight(
+            stakeDeposit.lockedUntil - stakeDeposit.lockedFrom
+        ) * (stakeDeposit.tokenAmount - _amount);
 
         // update the deposit, or delete it if its depleted
         if (stakeDeposit.tokenAmount - _amount == 0) {

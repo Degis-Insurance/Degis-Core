@@ -4,6 +4,8 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "../utils/Ownable.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Signature Manager
  * @notice Signature is used when submitting new applications.
@@ -117,7 +119,10 @@ contract SigManager is Ownable {
         uint256 _premium,
         uint256 _deadline
     ) external view {
+        console.log("signature");
+        console.logBytes(signature);
         bytes32 hashedFlightNumber = keccak256(bytes(_flightNumber));
+
         bytes32 hashData = keccak256(
             abi.encodePacked(
                 _SUBMIT_APPLICATION_TYPEHASH,
@@ -128,6 +133,10 @@ contract SigManager is Ownable {
             )
         );
         address signer = hashData.toEthSignedMessageHash().recover(signature);
+        console.logBytes32(hashData);
+        console.log("SIgner:");
+        console.log(signer);
+
         require(
             _isValidSigner[signer],
             "Can only be submitted by authorized signer"

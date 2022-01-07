@@ -278,7 +278,7 @@ describe("Naughty Router", function () {
       );
 
       const bal = await usd.balanceOf(dev_account.address);
-      console.log(ethers.utils.formatEther(bal));
+      // console.log(ethers.utils.formatEther(bal));
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         parseUnits("89901")
       );

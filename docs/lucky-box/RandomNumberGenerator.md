@@ -5,8 +5,8 @@
 ### constructor
 ```solidity
   function constructor(
-    address address,
-    address address
+    address _vrfCoordinator,
+    address _linkToken
   ) public
 ```
 Constructor
@@ -18,8 +18,8 @@ https://docs.chain.link/docs/vrf-contracts/
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`address` | address | of the VRF coordinator
-|`address` | address | of the LINK token
+|`_vrfCoordinator` | address | address of the VRF coordinator
+|`_linkToken` | address | address of the LINK token
 
 ### setFee
 ```solidity

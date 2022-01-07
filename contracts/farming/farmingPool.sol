@@ -11,6 +11,8 @@ import "../utils/Ownable.sol";
 
 import "../tokens/interfaces/IDegisToken.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Farming Pool
  * @notice This contract is for LPToken mining on Degis
@@ -339,11 +341,13 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
-        pool.lastRewardBlock = block.number;
 
         uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(this));
 
-        if (lpSupply == 0) return;
+        if (lpSupply == 0) {
+            pool.lastRewardBlock = block.number;
+            return;
+        }
 
         uint256 blocks = block.number - pool.lastRewardBlock;
         uint256 degisReward = blocks * pool.degisPerBlock;
@@ -352,6 +356,8 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         degis.mintDegis(address(this), degisReward);
 
         pool.accDegisPerShare += degisReward.div(lpSupply);
+
+        pool.lastRewardBlock = block.number;
 
         emit PoolUpdated(_poolId);
     }

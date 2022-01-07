@@ -488,8 +488,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         // Get the final lucky numbers from randomGenerator
         uint256 finalNumber = randomGenerator.randomResult();
 
-        console.log(finalNumber);
-
         uint256 lastAmount = 0;
         uint256 lastWeight = 0;
 

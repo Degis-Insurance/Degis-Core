@@ -56,7 +56,7 @@ Check whether the address is a valid signer
   function checkSignature(
     bytes signature,
     string _flightNumber,
-    address _userAddress,
+    address _user,
     uint256 _premium,
     uint256 _deadline
   ) external
@@ -69,7 +69,7 @@ Check signature when buying a new policy (avoid arbitrary premium amount)
 | :--- | :--- | :------------------------------------------------------------------- |
 |`signature` | bytes | 65 bytes array: [[v (1)], [r (32)], [s (32)]]
 |`_flightNumber` | string | Flight number
-|`_userAddress` | address | User address
+|`_user` | address | User address
 |`_premium` | uint256 | Policy premium
 |`_deadline` | uint256 | Deadline of a policy
 

@@ -10,7 +10,6 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseUnits } from "ethers/lib/utils";
-import { BigNumber } from "ethers";
 
 describe("Farming Pool", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;

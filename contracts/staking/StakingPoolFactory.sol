@@ -40,7 +40,7 @@ contract StakingPoolFactory is Ownable {
      * @dev Fired in createPool() and registerPool()
      *
      * @param by who deploys a new pool
-     * @param poolToken pool token address (like ILV)
+     * @param poolToken pool token address 
      * @param poolAddress deployed pool instance address
      * @param degisPerBlock pool weight
      * @param isFlashPool flag indicating if pool is a flash pool
@@ -123,7 +123,7 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @dev Creates a staking pool and registers it within the factory
-     * @param poolToken pool token address (like ILV, or ILV/ETH pair)
+     * @param poolToken pool token address 
      * @param startBlock init block to be used for the pool created
      * @param degisPerBlock weight of the pool to be created
      */

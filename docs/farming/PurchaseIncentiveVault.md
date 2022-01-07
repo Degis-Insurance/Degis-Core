@@ -35,7 +35,7 @@ Get the amount of users in _round, used for distribution
 ### getUserShares
 ```solidity
   function getUserShares(
-    address _userAddress
+    address _user
   ) public returns (uint256)
 ```
 Get your shares in the current round
@@ -44,7 +44,7 @@ Get your shares in the current round
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_userAddress` | address | Address of the user
+|`_user` | address | Address of the user
 
 ### pendingReward
 ```solidity
