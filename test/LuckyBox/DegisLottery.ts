@@ -12,18 +12,15 @@ import {
   MockUSD__factory,
   RandomNumberGenerator,
   RandomNumberGenerator__factory,
-  VRFCoordinatorMock,
-  VRFCoordinatorMock__factory,
+  VRFMock,
+  VRFMock__factory,
 } from "../../typechain";
 
 describe("Degis Lottery", function () {
   let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
-  let RandomNumberGenerator: RandomNumberGenerator__factory,
-    rand: RandomNumberGenerator;
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let MockUSD: MockUSD__factory, usd: MockUSD;
-  let VRFCoordinatorMock: VRFCoordinatorMock__factory,
-    mockVRF: VRFCoordinatorMock;
+  let VRFMock: VRFMock__factory, rand: VRFMock;
 
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
 
@@ -36,23 +33,8 @@ describe("Degis Lottery", function () {
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
 
-    VRFCoordinatorMock = await ethers.getContractFactory("VRFCoordinatorMock");
-    mockVRF = await VRFCoordinatorMock.deploy(usd.address);
-
-    RandomNumberGenerator = await ethers.getContractFactory(
-      "RandomNumberGenerator"
-    );
-
-    const link_mainnet = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
-    const vrf_mainnet = "0xf0d54349aDdcf704F77AE15b96510dEA15cb7952";
-    const keyhash_mainnet =
-      "0xAA77729D3466CA35AE8D28B3BBAC7CC36A5031EFDC430821C02BC31A238AF445";
-    // Mock chainlink vrf
-    rand = await RandomNumberGenerator.deploy(
-      vrf_mainnet,
-      link_mainnet,
-      keyhash_mainnet
-    );
+    VRFMock = await ethers.getContractFactory("VRFMock");
+    rand = await VRFMock.deploy();
 
     DegisLottery = await ethers.getContractFactory("DegisLottery");
     lottery = await DegisLottery.deploy(

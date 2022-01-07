@@ -19,9 +19,9 @@ interface IPool {
         // @dev stake weight
         uint256 weight;
         // @dev locking period - from
-        uint64 lockedFrom;
+        uint256 lockedFrom;
         // @dev locking period - until
-        uint64 lockedUntil;
+        uint256 lockedUntil;
     }
 
     // for the rest of the functions see Soldoc in IlluviumPoolBase
@@ -32,13 +32,15 @@ interface IPool {
 
     function isFlashPool() external view returns (bool);
 
+    function startBlock() external view returns (uint256);
+
     function degisPerBlock() external view returns (uint256);
 
     function totalWeight() external view returns (uint256);
 
     function accDegisPerWeight() external view returns (uint256);
 
-    function pendingRewards() external view returns (uint256);
+    function pendingRewards(address _user) external view returns (uint256);
 
-    function setDegisPerBlock() external;
+    function setDegisPerBlock(uint256 _degisPerBlock) external;
 }

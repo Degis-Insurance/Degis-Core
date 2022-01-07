@@ -5,7 +5,9 @@ import "../utils/Ownable.sol";
 
 import "./interfaces/IPool.sol";
 
-import "./abstracts/BasePool.sol";
+import "./CoreStakingPool.sol";
+
+import "../tokens/interfaces/IDegisToken.sol";
 
 contract StakingPoolFactory is Ownable {
     /// @dev Auxiliary data structure used only in getPoolData() view function
@@ -14,18 +16,15 @@ contract StakingPoolFactory is Ownable {
         address poolToken;
         // @dev pool address
         address poolAddress;
+        // @dev start block
+        uint256 startBlock;
         // @dev pool weight
         uint256 degisPerBlock;
         // @dev flash pool flag
         bool isFlashPool;
     }
 
-    uint256 public totalDegisPerBlock;
-
-    /**
-     * @dev After endBlock all staking rewards will be stopped
-     */
-    uint256 public endBlock;
+    address public degisToken;
 
     /// @dev Pool token address  => pool address
     mapping(address => address) public pools;
@@ -33,34 +32,25 @@ contract StakingPoolFactory is Ownable {
     /// @dev Keeps track of registered pool addresses, pool address -> whether exists
     mapping(address => bool) public poolExists;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @dev Fired in createPool() and registerPool()
      *
-     * @param _by an address which executed an action
+     * @param by who deploys a new pool
      * @param poolToken pool token address (like ILV)
      * @param poolAddress deployed pool instance address
-     * @param weight pool weight
+     * @param degisPerBlock pool weight
      * @param isFlashPool flag indicating if pool is a flash pool
      */
     event PoolRegistered(
-        address indexed _by,
+        address indexed by,
         address indexed poolToken,
         address indexed poolAddress,
-        uint64 weight,
+        uint256 degisPerBlock,
         bool isFlashPool
-    );
-
-    /**
-     * @dev Fired in changePoolWeight()
-     *
-     * @param _by an address which executed an action
-     * @param poolAddress deployed pool instance address
-     * @param weight new pool weight
-     */
-    event WeightUpdated(
-        address indexed _by,
-        address indexed poolAddress,
-        uint32 weight
     );
 
     event DegisPerBlockChanged(address pool, uint256 degisPerBlock);
@@ -70,18 +60,13 @@ contract StakingPoolFactory is Ownable {
      *
      * @param _degisToken Degis token address
      */
-    constructor(
-        address _degisToken,
-        uint256 _initBlock,
-        uint256 _endBlock
-    ) {
-        require(
-            _endBlock > _initBlock,
-            "invalid end block: must be greater than init block"
-        );
-
-        endBlock = _endBlock;
+    constructor(address _degisToken) {
+        degisToken = _degisToken;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     function getPoolAddress(address poolToken) external view returns (address) {
         return pools[poolToken];
@@ -102,6 +87,7 @@ contract StakingPoolFactory is Ownable {
         // via the pool interface (IPool)
         address poolToken = IPool(poolAddr).poolToken();
         bool isFlashPool = IPool(poolAddr).isFlashPool();
+        uint256 startBlock = IPool(poolAddr).startBlock();
         uint256 degisPerBlock = IPool(poolAddr).degisPerBlock();
 
         // create the in-memory structure and return it
@@ -109,42 +95,72 @@ contract StakingPoolFactory is Ownable {
             PoolData({
                 poolToken: poolToken,
                 poolAddress: poolAddr,
+                startBlock: startBlock,
                 degisPerBlock: degisPerBlock,
                 isFlashPool: isFlashPool
             });
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
-     * @dev Creates a core pool (IlluviumCorePool) and registers it within the factory
-     *
-     * @dev Can be executed by the pool factory owner only
-     *
+     * @notice Set degis per block
+     */
+    function setDegisPerBlock(address _pool, uint256 _degisPerBlock)
+        external
+        onlyOwner
+    {
+        BasePool(_pool).setDegisPerBlock(_degisPerBlock);
+
+        emit DegisPerBlockChanged(_pool, _degisPerBlock);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @dev Creates a staking pool and registers it within the factory
      * @param poolToken pool token address (like ILV, or ILV/ETH pair)
-     * @param initBlock init block to be used for the pool created
-     * @param weight weight of the pool to be created
+     * @param startBlock init block to be used for the pool created
+     * @param degisPerBlock weight of the pool to be created
      */
     function createPool(
         address poolToken,
-        uint64 initBlock,
-        uint32 weight
-    ) external virtual onlyOwner {
+        uint256 startBlock,
+        uint256 degisPerBlock,
+        bool isFlashPool
+    ) external onlyOwner {
         // create/deploy new core pool instance
-        IPool pool = new BasePool(degisToken, poolToken, address(this));
+        IPool pool = new CoreStakingPool(
+            degisToken,
+            poolToken,
+            address(this),
+            startBlock,
+            degisPerBlock,
+            isFlashPool
+        );
 
         // register it within a factory
         registerPool(address(pool));
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @notice Register a deployed pool instance within the factory
      * @param _poolAddr Address of the already deployed pool instance
      */
-    function registerPool(address _poolAddr) public onlyOwner {
+    function registerPool(address _poolAddr) internal {
         // read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(_poolAddr).poolToken();
         bool isFlashPool = IPool(_poolAddr).isFlashPool();
-        uint32 weight = IPool(_poolAddr).weight();
+        uint256 degisPerBlock = IPool(_poolAddr).degisPerBlock();
 
         // ensure that the pool is not already registered within the factory
         require(
@@ -162,18 +178,9 @@ contract StakingPoolFactory is Ownable {
             msg.sender,
             poolToken,
             _poolAddr,
-            weight,
+            degisPerBlock,
             isFlashPool
         );
-    }
-
-    /**
-     * @notice Set degis per block
-     */
-    function setDegisPerBlock(address _pool, uint256 _degisPerBlock) external {
-        BasePool(_pool).setDegisPerBlock(_degisPerBlock);
-
-        emit DegisPerBlockChanged(_pool, _degisPerBlock);
     }
 
     /**
@@ -184,9 +191,9 @@ contract StakingPoolFactory is Ownable {
      */
     function mintReward(address _to, uint256 _amount) external {
         // verify that sender is a pool registered withing the factory
-        require(poolExists[msg.sender], "access denied");
+        require(poolExists[msg.sender], "Only called from pool");
 
         // mint degis tokens as required
-        degis.mintDegis(_to, _amount);
+        IDegisToken(degisToken).mintDegis(_to, _amount);
     }
 }

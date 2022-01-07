@@ -27,8 +27,8 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
      * @dev RandomNumberGenerator must be deployed before the lottery.
      * Once the lottery contract is deployed, setLotteryAddress must be called.
      * https://docs.chain.link/docs/vrf-contracts/
-     * @param _vrfCoordinator: address of the VRF coordinator
-     * @param _linkToken: address of the LINK token
+     * @param _vrfCoordinator address of the VRF coordinator
+     * @param _linkToken address of the LINK token
      */
     constructor(
         address _vrfCoordinator,
@@ -77,7 +77,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         external
         onlyOwner
     {
-        IERC20(_tokenAddress).safeTransfer(address(msg.sender), _tokenAmount);
+        IERC20(_tokenAddress).safeTransfer(_msgSender(), _tokenAmount);
     }
 
     // ---------------------------------------------------------------------------------------- //

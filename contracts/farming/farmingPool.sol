@@ -286,7 +286,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
             uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
                 user.rewardDebt;
 
-            safeDegisTransfer(_msgSender(), pending);
+            _safeDegisTransfer(_msgSender(), pending);
         }
 
         // Transfer the lptoken into farming pool
@@ -320,7 +320,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
             user.rewardDebt;
 
-        safeDegisTransfer(_msgSender(), pending);
+        _safeDegisTransfer(_msgSender(), pending);
 
         user.stakingBalance -= _amount;
         user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
@@ -416,7 +416,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @param _to User's address
      * @param _amount Amount to transfer
      */
-    function safeDegisTransfer(address _to, uint256 _amount) internal {
+    function _safeDegisTransfer(address _to, uint256 _amount) internal {
         uint256 totalDegis = degis.balanceOf(address(this));
         if (_amount > totalDegis) {
             degis.transfer(_to, totalDegis);

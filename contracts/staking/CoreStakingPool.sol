@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "../utils/Ownable.sol";
 import "./abstracts/BasePool.sol";
 
-contract DegisStaking is Ownable, BasePool {
+contract CoreStakingPool is Ownable, BasePool {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -12,8 +12,20 @@ contract DegisStaking is Ownable, BasePool {
     constructor(
         address _degisToken,
         address _poolToken,
-        address _factory
-    ) BasePool(_degisToken, _poolToken, _factory) {}
+        address _factory,
+        uint256 _startBlock,
+        uint256 _degisPerBlock,
+        bool _isFlashPool
+    )
+        BasePool(
+            _degisToken,
+            _poolToken,
+            _factory,
+            _startBlock,
+            _degisPerBlock,
+            _isFlashPool
+        )
+    {}
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
@@ -26,7 +38,7 @@ contract DegisStaking is Ownable, BasePool {
         address _user,
         uint256 _amount,
         uint256 _lockUntil
-    ) internal {
+    ) internal override {
         super._stake(_user, _amount, _lockUntil);
     }
 
@@ -34,11 +46,11 @@ contract DegisStaking is Ownable, BasePool {
      *
      */
     function _unstake(
-        _user,
-        _depositId,
-        _amount
-    ) internal {
-        UserInfo storage user = users[_user];
+        address _user,
+        uint256 _depositId,
+        uint256 _amount
+    ) internal override {
+        UserInfo storage user = users[_msgSender()];
         Deposit memory stakeDeposit = user.deposits[_depositId];
         require(
             stakeDeposit.lockedFrom == 0 ||

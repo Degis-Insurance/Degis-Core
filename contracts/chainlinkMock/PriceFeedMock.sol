@@ -1,23 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "../utils/Ownable.sol";
+import "../libraries/StringsUtils.sol";
 
-/**
- * @title  Price Getter
- * @notice This is the contract for getting price feed from chainlink.
- *         The contract will keep a record from tokenName => priceFeed Address.
- *         Got the sponsorship and collaboration with Chainlink.
- * @dev    The price from chainlink priceFeed has different decimals, be careful.
- */
-contract PriceGetter is Ownable {
+contract PriceFeedMock is Ownable {
+    using StringsUtils for uint256;
+
     struct PriceFeedInfo {
         address priceFeedAddress;
         uint256 decimals;
     }
     // Use token name (string) as the mapping key
     mapping(string => PriceFeedInfo) public priceFeedInfo;
+
+    uint256 public roundId;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -28,13 +25,7 @@ contract PriceGetter is Ownable {
         uint256 decimals
     );
 
-    event LatestPriceGet(
-        uint80 roundID,
-        int256 price,
-        uint256 startedAt,
-        uint256 timeStamp,
-        uint80 answeredInRound
-    );
+    event LatestPriceGet(uint256 roundID, uint256 price);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -76,10 +67,6 @@ contract PriceGetter is Ownable {
     }
 
     // ---------------------------------------------------------------------------------------- //
-    // ************************************ View Functions ************************************ //
-    // ---------------------------------------------------------------------------------------- //
-
-    // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
@@ -112,26 +99,24 @@ contract PriceGetter is Ownable {
     function getLatestPrice(string memory _tokenName) public returns (uint256) {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenName];
 
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(priceFeed.priceFeedAddress).latestRoundData();
+        string memory randInput = string(
+            abi.encodePacked((block.timestamp).uintToString(), address(this))
+        );
+        uint256 price = _rand(randInput) % 10000;
 
         // require(price > 0, "Only accept price that > 0");
         if (price < 0) price = 0;
 
-        emit LatestPriceGet(
-            roundID,
-            price,
-            startedAt,
-            timeStamp,
-            answeredInRound
-        );
+        emit LatestPriceGet(roundId, price);
+
+        roundId += 1;
+
         uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
 
         return finalPrice;
+    }
+
+    function _rand(string memory input) internal pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(input)));
     }
 }
