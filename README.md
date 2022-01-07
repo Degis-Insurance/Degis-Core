@@ -2,6 +2,8 @@
 
 **This repo is still during the migration from truffle to hardhat&ts.**
 
+- Audit Snapshot time: Jan 7 10:23
+
 Core smart contracts for Degis including:
 
 - Degis Token & Buyer Token
