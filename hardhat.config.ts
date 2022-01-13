@@ -9,6 +9,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-deploy";
 import "hardhat-docgen";
+import "hardhat-abi-exporter";
 
 dotenv.config();
 
@@ -91,6 +92,14 @@ const config: HardhatUserConfig = {
     path: "./docs2",
     clear: true,
     runOnCompile: true,
+  },
+  abiExporter: {
+    path: "./data/abi",
+    runOnCompile: true,
+    clear: true,
+    flat: true,
+    spacing: 2,
+    pretty: true,
   },
 };
 

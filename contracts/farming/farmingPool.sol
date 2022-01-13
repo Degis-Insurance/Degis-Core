@@ -64,6 +64,11 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         uint256 poolId,
         uint256 pendingReward
     );
+    event HarvestAndCompound(
+        address staker,
+        uint256 poolId,
+        uint256 pendingReward
+    );
     event NewPoolAdded(address lpToken, uint256 degisPerBlock);
     event RestartFarmingPool(uint256 poolId, uint256 blockNumber);
     event FarmingPoolStopped(uint256 poolId, uint256 blockNumber);
@@ -367,7 +372,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @param _poolId: Id of the farming pool
      * @param _to Receiver of degis rewards.
      */
-    function harvest(uint256 _poolId, address _to) public {
+    function harvest(uint256 _poolId, address _to) public nonReentrant {
         updatePool(_poolId);
         PoolInfo memory pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][_msgSender()];
@@ -384,6 +389,23 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         }
 
         emit Harvest(_msgSender(), _to, _poolId, pendingReward);
+    }
+
+    function harvestAndCompound(uint256 _poolId) public nonReentrant {
+        updatePool(_poolId);
+
+        PoolInfo memory pool = poolList[_poolId];
+        UserInfo storage user = userInfo[_poolId][_msgSender()];
+
+        uint256 pendingReward = user.stakingBalance.mul(pool.accDegisPerShare) -
+            user.rewardDebt;
+
+        if (pendingReward == 0) return;
+
+        user.stakingBalance += pendingReward;
+        user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
+
+        emit HarvestAndCompound(_msgSender(), _poolId, pendingReward);
     }
 
     /**
