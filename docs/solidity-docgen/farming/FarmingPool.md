@@ -182,6 +182,15 @@ Harvest the degis reward and can be sent to another address
 |`Id` | uint256 | of the farming pool
 |`_to` | address | Receiver of degis rewards.
 
+### harvestAndCompound
+```solidity
+  function harvestAndCompound(
+  ) public
+```
+
+
+
+
 ### massUpdatePools
 ```solidity
   function massUpdatePools(
@@ -254,6 +263,14 @@ Safe degis transfer (check if the pool has enough DEGIS token)
 ### Harvest
 ```solidity
   event Harvest(
+  )
+```
+
+
+
+### HarvestAndCompound
+```solidity
+  event HarvestAndCompound(
   )
 ```
 

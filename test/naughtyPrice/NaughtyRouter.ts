@@ -1,7 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
-import { formatEther, parseUnits } from "ethers/lib/utils";
+import { parseUnits } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
   BuyerToken,
@@ -78,14 +78,14 @@ describe("Naughty Router", function () {
       0,
       parseUnits("24000"),
       2112,
-      ethers.BigNumber.from(deadline),
-      ethers.BigNumber.from(settleTimestamp)
+      BigNumber.from(deadline),
+      BigNumber.from(settleTimestamp)
     );
 
     await core.deployPool(
       policyTokenName,
       usd.address,
-      ethers.BigNumber.from(deadline),
+      BigNumber.from(deadline),
       20
     );
 

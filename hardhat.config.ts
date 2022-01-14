@@ -89,12 +89,12 @@ const config: HardhatUserConfig = {
     apiKey: process.env.ETHERSCAN_API_KEY,
   },
   docgen: {
-    path: "./docs2",
+    path: "./docs/hardhat-docgen",
     clear: true,
     runOnCompile: true,
   },
   abiExporter: {
-    path: "./data/abi",
+    path: "./abi",
     runOnCompile: true,
     clear: true,
     flat: true,
