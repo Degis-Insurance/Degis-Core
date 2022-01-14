@@ -16,6 +16,8 @@ import {
   VRFMock__factory,
 } from "../../typechain";
 
+import { getNow } from "../utils";
+
 describe("Degis Lottery", function () {
   let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
   let DegisToken: DegisToken__factory, degis: DegisToken;
@@ -74,11 +76,10 @@ describe("Degis Lottery", function () {
   });
 
   describe("Main Functions", function () {
-    let time: number, now: number;
+    let now: number;
 
     beforeEach(async function () {
-      time = new Date().getTime();
-      now = Math.floor(time / 1000);
+      now = getNow();
     });
 
     it("should be able to start a lottery", async function () {
@@ -99,11 +100,10 @@ describe("Degis Lottery", function () {
   });
 
   describe("Functions after starting a lottery", function () {
-    let time: number, now: number;
+    let now: number;
     let currentLotteryId: number;
     beforeEach(async function () {
-      time = new Date().getTime();
-      now = Math.floor(time / 1000);
+      now = getNow();
 
       await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
 
@@ -197,11 +197,10 @@ describe("Degis Lottery", function () {
   });
 
   describe("View Functions", function () {
-    let time: number, now: number;
+    let now: number;
     let currentLotteryId: number;
     beforeEach(async function () {
-      time = new Date().getTime();
-      now = Math.floor(time / 1000);
+      now = getNow();
 
       await degis.mintDegis(user1.address, parseUnits("10000"));
       await degis.connect(user1).approve(lottery.address, parseUnits("10000"));

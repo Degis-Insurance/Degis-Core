@@ -7,7 +7,7 @@
     "compile": "npx hardhat compile",
     "test": "npx hardhat test",
     "deploy": "npx hardhat deploy",
-    "coverage": "npx hardhat coverage --testfiles 'test/**/*.ts' --network hardhat",
+    "coverage": "npx hardhat coverage --testfiles 'test/**/*.ts' --network hardhat --solcoverjs ./.solcover.js",
     "docgen": "npx solidity-docgen --solc-module solc-0.8 -t templates/ -o docs/solidity-docgen",
     "hardhat-docgen": "yarn run hardhat docgen",
     "uml-staking": "sol2uml ./contracts/staking -f png -o ./docs/uml/Staking.png"
@@ -51,7 +51,7 @@
     "sol2uml": "^1.1.29",
     "solc-0.8": "npm:solc@0.8.10",
     "solhint": "^3.3.6",
-    "solidity-coverage": "^0.7.17",
+    "solidity-coverage": "https://github.com/jbx-protocol/solidity-coverage.git#0fcd2f608c0e3e00bf66ab62c7610f5ea553fba8",
     "solidity-docgen": "^0.5.16",
     "ts-node": "^10.4.0",
     "typechain": "^5.2.0",

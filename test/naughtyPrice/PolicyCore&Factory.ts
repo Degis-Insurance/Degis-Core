@@ -24,6 +24,8 @@ import {
   solidityPack,
 } from "ethers/lib/utils";
 
+import { getNow } from "../utils";
+
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
@@ -62,10 +64,9 @@ describe("Policy Core and Naughty Factory", function () {
 
     await factory.setPolicyCoreAddress(core.address);
 
-    time = new Date().getTime();
-    now = Math.floor(time / 1000);
-    deadline = now + 3000;
-    settleTimestamp = now + 6000;
+    now = getNow();
+    deadline = now + 30000;
+    settleTimestamp = now + 60000;
   });
 
   describe("Deployment", function () {

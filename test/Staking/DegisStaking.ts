@@ -13,6 +13,8 @@ import {
   StakingPoolFactory__factory,
 } from "../../typechain";
 
+import { getNow } from "../utils";
+
 describe("Degis Staking", function () {
   let StakingPoolFactory: StakingPoolFactory__factory,
     factory: StakingPoolFactory;
@@ -104,11 +106,10 @@ describe("Degis Staking", function () {
   describe("Pool Functions", async function () {
     let poolAddress: string;
     let blockNumber: number;
-    let time: number, now: number;
+    let now: number;
 
     beforeEach(async function () {
-      time = new Date().getTime();
-      now = Math.floor(time / 1000);
+      now = getNow();
       blockNumber = await ethers.provider.getBlockNumber();
 
       await factory.createPool(

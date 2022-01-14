@@ -24,6 +24,7 @@ import {
   SigManager,
   SigManager__factory,
 } from "../../typechain";
+import { getNow } from "../utils";
 
 describe("Policy Flow", function () {
   let dev_account: SignerWithAddress,
@@ -146,13 +147,12 @@ describe("Policy Flow", function () {
   describe("Main Functions", function () {
     let productId: number;
     let flightNumber: string;
-    let time: number, now: number;
+    let now: number;
 
     beforeEach(async function () {
       productId = 0;
       flightNumber = "AQ1299";
-      time = new Date().getTime();
-      now = Math.floor(time / 1000);
+      now = getNow();
     });
 
     it("should be able to buy a policy", async function () {
@@ -167,7 +167,7 @@ describe("Policy Flow", function () {
 
       const premium = parseUnits("10");
 
-      const deadline = now + 3000;
+      const deadline = now + 30000;
 
       const hasedInfo = solidityKeccak256(
         ["bytes", "bytes", "address", "uint256", "uint256"],

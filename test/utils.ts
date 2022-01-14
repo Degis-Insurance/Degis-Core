@@ -1,5 +1,5 @@
-export const toWei = (etherAmount: number) => {
-  return ethers.utils.parseUnits(etherAmount.toString());
+export const toWei = (etherAmount: string) => {
+  return ethers.utils.parseUnits(etherAmount);
 };
 
 export const getAddressZero = () => {
@@ -31,4 +31,8 @@ export const getNow = () => {
   const time = new Date().getTime();
   const now = Math.floor(time / 1000);
   return now;
+};
+
+export const toBN = (normalNumber: number) => {
+  return ethers.utils.BigNumber.from(normalNumber);
 };
