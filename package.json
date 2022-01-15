@@ -10,10 +10,17 @@
     "coverage": "npx hardhat coverage --testfiles 'test/**/*.ts' --network hardhat --solcoverjs ./.solcover.js",
     "docgen": "npx solidity-docgen --solc-module solc-0.8 -t templates/ -o docs/solidity-docgen",
     "hardhat-docgen": "yarn run hardhat docgen",
-    "uml-staking": "sol2uml ./contracts/staking -f png -o ./docs/uml/Staking.png"
+    "uml-staking": "npx sol2uml ./contracts/staking -f png -o ./docs/uml/staking.png",
+    "uml-flight": "npx sol2uml ./contracts/miserable-flight -f png -o ./docs/uml/miserable-flight.png",
+    "uml-farming": "npx sol2uml ./contracts/farming -f png -o ./docs/uml/farming.png",
+    "uml-luckybox": "npx sol2uml ./contracts/lucky-box -f png -o ./docs/uml/lucky-box.png",
+    "uml-price": "npx sol2uml ./contracts/naughty-price -f png -o ./docs/uml/naughty-price.png"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "Degis",
+    "Smart Contracts"
+  ],
+  "author": "Eric Lee",
   "license": "ISC",
   "dependencies": {
     "@chainlink/contracts": "^0.3.0",
