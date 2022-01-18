@@ -10,6 +10,7 @@ import "solidity-coverage";
 import "hardhat-deploy";
 import "hardhat-docgen";
 import "hardhat-abi-exporter";
+import "hardhat-contract-sizer";
 
 dotenv.config();
 
@@ -32,7 +33,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 1000,
+        runs: 200,
         details: {
           yul: true,
           yulDetails: {
@@ -102,6 +103,14 @@ const config: HardhatUserConfig = {
     flat: true,
     spacing: 2,
     pretty: true,
+  },
+
+  contractSizer: {
+    alphaSort: true,
+    disambiguatePaths: false,
+    runOnCompile: true,
+    strict: false,
+    only: [],
   },
 };
 
