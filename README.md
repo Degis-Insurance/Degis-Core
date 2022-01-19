@@ -110,3 +110,9 @@ For complex constructor arguments, use scripts:
 ```
 npx hardhat verify --constructor-args scripts/verify/arguments.js DEPLOYED_CONTRACT_ADDRESS
 ```
+
+## Get the abis and addresses
+
+- Every time you deploy the contracts, the abis will be put inside **deployments** folder.
+
+- You also need to run the **getAddressList.js** to generate a separate json file containing the addresslist.
