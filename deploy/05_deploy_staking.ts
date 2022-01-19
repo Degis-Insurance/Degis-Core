@@ -13,7 +13,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const factory = await deploy("StakingPoolFactory", {
     contract: "StakingPoolFactory",
     from: deployer,
-    args: [],
+    args: [DegisToken.address],
     log: true,
   });
 
