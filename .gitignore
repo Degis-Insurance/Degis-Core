@@ -12,3 +12,5 @@ abi
 
 # VSCode-Counter
 .VSCodeCounter/
+
+.DS_Store

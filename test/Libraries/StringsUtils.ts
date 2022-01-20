@@ -13,5 +13,8 @@ describe("SafePRBMath Library", function () {
   let StringsUtilsTester: StringsUtilsTester__factory,
     tester: StringsUtilsTester;
 
-  beforeEach(async function () {});
+  beforeEach(async function () {
+    StringsUtilsTester = await ethers.getContractFactory("StringsUtilsTester");
+    tester = await StringsUtilsTester.deploy();
+  });
 });
