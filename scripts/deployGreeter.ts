@@ -13,7 +13,8 @@ async function main() {
   // We get the contract to deploy
   const greeter = await Greeter.deploy("Hello, Hardhat!");
 
-  await greeter.deployed();
+  await greeter.
+  deployed();
 
   console.log("Greeter deployed to:", greeter.address);
 }

@@ -48,10 +48,16 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: {
       default: 0,
-      1: 0,
+      localhost: 0,
       rinkeby: "0x32eB34d060c12aD0491d260c436d30e5fB13a8Cd",
       fuji: 0,
       avax: 0,
+    },
+    testAddress: {
+      default: 1,
+      localhost: 1,
+      fuji: 1,
+      avax: 1,
     },
   },
 
@@ -60,6 +66,9 @@ const config: HardhatUserConfig = {
       // forking: {
       //   url: "https://eth-mainnet.alchemyapi.io/v2/bWpjNreAv-0V7abTFwp_FTDoFYAl9JGt",
       // },
+    },
+    localhost: {
+      url: "http://127.0.0.1:8545",
     },
     rinkeby: {
       url: process.env.RINKEBY_URL || "",
