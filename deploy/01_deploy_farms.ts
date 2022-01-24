@@ -1,11 +1,10 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
-import { network } from "hardhat";
+
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const { deployments, getNamedAccounts } = hre;
+  const { deployments, getNamedAccounts, network } = hre;
   const { deploy, get } = deployments;
 
   const { deployer } = await getNamedAccounts();
