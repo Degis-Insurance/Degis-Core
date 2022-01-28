@@ -15,7 +15,8 @@
     "uml-farming": "npx sol2uml ./contracts/farming -f png -o ./docs/uml/farming.png",
     "uml-luckybox": "npx sol2uml ./contracts/lucky-box -f png -o ./docs/uml/lucky-box.png",
     "uml-price": "npx sol2uml ./contracts/naughty-price -f png -o ./docs/uml/naughty-price.png",
-    "contract-size": "yarn run hardhat size-contracts"
+    "contract-size": "yarn run hardhat size-contracts",
+    "addPool": "npx hardhat addPool"
   },
   "keywords": [
     "Degis",

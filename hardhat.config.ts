@@ -12,6 +12,9 @@ import "hardhat-docgen";
 import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 
+// tasks
+import "./tasks/farming/addPool";
+
 dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to

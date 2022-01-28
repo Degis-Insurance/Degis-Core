@@ -24,6 +24,7 @@ async function main() {
   const [dev_account] = await hre.ethers.getSigners();
   console.log("The dfault signer is: ", dev_account.address);
 
+  // Get the contract factory and instance
   const FarmingPool: FarmingPool__factory = await hre.ethers.getContractFactory(
     "FarmingPool"
   );
