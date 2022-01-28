@@ -56,6 +56,11 @@ contract NaughtyFactory {
         _;
     }
 
+    modifier onlyPolicyCore() {
+        require(msg.sender == policyCore, "Only called by policyCore contract");
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -143,7 +148,7 @@ contract NaughtyFactory {
         address _stablecoin,
         uint256 _deadline,
         uint256 _feeRate
-    ) external returns (address) {
+    ) external alreadySetPolicyCore onlyPolicyCore returns (address) {
         bytes memory bytecode = type(NaughtyPair).creationCode;
 
         bytes32 salt = keccak256(
@@ -175,7 +180,9 @@ contract NaughtyFactory {
      * @return PolicyToken address
      */
     function deployPolicyToken(string memory _policyTokenName)
-        public
+        external
+        alreadySetPolicyCore
+        onlyPolicyCore
         returns (address)
     {
         bytes32 salt = keccak256(abi.encodePacked(_policyTokenName));

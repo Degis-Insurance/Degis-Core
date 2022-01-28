@@ -14,6 +14,9 @@ import "hardhat-contract-sizer";
 
 // tasks
 import "./tasks/farming/addPool";
+import "./tasks/sig/addSigner";
+import "./tasks/naughtyPrice/deployToken";
+import "./tasks/naughtyPrice/setPolicyCore";
 
 dotenv.config();
 

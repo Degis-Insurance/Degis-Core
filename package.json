@@ -16,7 +16,10 @@
     "uml-luckybox": "npx sol2uml ./contracts/lucky-box -f png -o ./docs/uml/lucky-box.png",
     "uml-price": "npx sol2uml ./contracts/naughty-price -f png -o ./docs/uml/naughty-price.png",
     "contract-size": "yarn run hardhat size-contracts",
-    "addPool": "npx hardhat addPool"
+    "addPool": "npx hardhat addPool",
+    "addSigner": "npx hardhat addSigner",
+    "deployNPToken": "npx hardhat deployNPToken",
+    "deployNPPool": "npx hardhat deployNPPool"
   },
   "keywords": [
     "Degis",

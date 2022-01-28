@@ -10,8 +10,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 import "../../libraries/SafePRBMath.sol";
 
-import "hardhat/console.sol";
-
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
@@ -176,8 +174,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         // calculate pending yield rewards, this value will be returned
         uint256 _pendingReward = _pendingRewards(msg.sender);
 
-        console.log(_pendingReward);
-
         if (_pendingReward == 0) return;
 
         _safeDegisTransfer(msg.sender, _pendingReward);
@@ -198,11 +194,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         }
 
         uint256 blocks = block.number - lastRewardBlock;
-        console.log(blocks);
 
         uint256 degisReward = blocks * degisPerBlock;
-
-        console.log("degis reward:", degisReward);
 
         IStakingPoolFactory(factory).mintReward(address(this), degisReward);
 

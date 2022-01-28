@@ -264,7 +264,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Find the token address by its name
-     * @param _policyTokenName Name of the policy token (e.g. "AVAX30L202103")
+     * @param _policyTokenName Name of the policy token (e.g. "AVAX_30_L_2103")
      * @return policyTokenAddress Address of the policy token
      */
     // Note: not really needed
@@ -383,7 +383,7 @@ contract PolicyCore is Ownable {
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
      * @param _decimals Decimals of this token's price (0~18)
-     * @param _strikePrice Strike price of the policy (have not been transferred with 1e18)
+     * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      * @return policyTokenAddress The address of the policy token just deployed
@@ -398,6 +398,8 @@ contract PolicyCore is Ownable {
         uint256 _settleTimestamp
     ) external onlyOwner returns (address) {
         require(_decimals <= 18, "Too many decimals");
+        require(_deadline > block.timestamp, "Wrong deadline");
+
         string memory policyTokenName = _generateName(
             _tokenName,
             _decimals,
@@ -442,7 +444,7 @@ contract PolicyCore is Ownable {
      * @notice Deploy a new pair (pool)
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stable coin
-     * @param _poolDeadline Swapping deadline of the pool
+     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
      * @param _feeRate Fee rate given to LP holders
      * @return poolAddress The address of the pool just deployed
      */
@@ -458,6 +460,8 @@ contract PolicyCore is Ownable {
         deployedPolicy(_policyTokenName)
         returns (address)
     {
+        require(_poolDeadline > block.timestamp, "Wrong deadline");
+
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Deploy a new pool (policyToken <=> stablecoin)
@@ -547,11 +551,7 @@ contract PolicyCore is Ownable {
         );
 
         // Transfer stablecoins to this contract
-        IERC20(_stablecoin).safeTransferFrom(
-            _user,
-            address(this),
-            _amount
-        );
+        IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
         _mintPolicyToken(policyTokenAddress, _amount, _user);
 
@@ -890,7 +890,7 @@ contract PolicyCore is Ownable {
         uint256 _strikePrice,
         bool _isCall,
         uint256 _round
-    ) internal pure returns (string memory) {
+    ) public pure returns (string memory) {
         string memory direction = _isCall ? "H" : "L";
 
         uint256 intPart = _strikePrice / 1e18;
