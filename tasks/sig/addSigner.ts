@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
@@ -6,7 +6,7 @@ import { SigManager, SigManager__factory } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
 
 task("addSigner", "Add new signer to the sigManager")
-  .addParam("address", "The pool's address to be added")
+  .addParam("address", "The signer's address to be added", null, types.string)
   .setAction(async (taskArgs, hre) => {
     console.log("Signer address to be added:", taskArgs.address);
 

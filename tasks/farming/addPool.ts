@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
@@ -7,8 +7,8 @@ import { readAddressList } from "../../scripts/contractAddress";
 import { parseUnits } from "ethers/lib/utils";
 
 task("addPool", "Add new farming pool")
-  .addParam("address", "The pool's address to be added")
-  .addParam("reward", "Initial degis reward per block")
+  .addParam("address", "The pool's address to be added", null, types.string)
+  .addParam("reward", "Initial degis reward per block", null, types.int)
   .setAction(async (taskArgs, hre) => {
     console.log("Pool address to be added:", taskArgs.address);
 
