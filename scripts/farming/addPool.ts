@@ -34,7 +34,7 @@ async function main() {
   const lptokenAddress = addressList[network.name].InsurancePool;
 
   const tx = await farmingPool.add(lptokenAddress, parseUnits("10"), false);
-  console.log(await tx.wait());
+  console.log("tx details:",await tx.wait());
 }
 
 main()

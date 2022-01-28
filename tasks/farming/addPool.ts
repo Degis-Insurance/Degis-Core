@@ -35,5 +35,5 @@ task("addPool", "Add new farming pool")
       parseUnits(taskArgs.reward),
       false
     );
-    console.log(await tx.wait());
+    console.log("tx details:",await tx.wait());
   });

@@ -1,0 +1,19 @@
+{
+	"fuji": {},
+	"avax": {},
+	"localhost": {
+		"ETH_40000.0_H_2202": {
+			"address": "0x8Ba95966877988Ef579Adf3e8fcc192456aC747E",
+			"stablecoinAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+			"poolDeadline": "1643688000",
+			"feeRate": 2
+		},
+		"ETH_4000.0_H_2202": {
+			"address": "0x5676fcd7F7D78c8917932CE38fF245edDaCcEC1B",
+			"stablecoinAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+			"poolDeadline": "1643688000",
+			"feeRate": 2
+		}
+	},
+	"rinkeby": {}
+}

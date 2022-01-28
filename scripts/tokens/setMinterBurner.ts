@@ -30,7 +30,7 @@ async function main() {
   const tx_1 = await degisToken.addMinter(
     addressList[network.name].FarmingPool
   );
-  console.log(await tx_1.wait());
+  console.log("tx details:",await tx_1.wait());
 
   const tx_2 = await degisToken.addMinter(
     addressList[network.name].PurchaseIncentiveVault

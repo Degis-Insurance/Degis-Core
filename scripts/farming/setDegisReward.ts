@@ -36,7 +36,7 @@ async function main() {
   const degisPerBlock = parseUnits("5");
 
   const tx = await farmingPool.setDegisReward(poolId, degisPerBlock, false);
-  console.log(await tx.wait());
+  console.log("tx details:", await tx.wait());
 }
 
 main()

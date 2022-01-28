@@ -30,5 +30,5 @@ task("addSigner", "Add new signer to the sigManager")
     const sigManager: SigManager = SigManager.attach(sigManagerAddress);
 
     const tx = await sigManager.addSigner(taskArgs.address);
-    console.log(await tx.wait());
+    console.log("tx details:",await tx.wait());
   });

@@ -66,7 +66,7 @@ task("deployNPToken", "Deploy a new naughty price token")
       hre.ethers.BigNumber.from(taskArgs.deadline),
       hre.ethers.BigNumber.from(taskArgs.settletime)
     );
-    console.log(await tx.wait());
+    console.log("tx details:",await tx.wait());
 
     // Check the result
     const policyTokenAddress = await core.findAddressbyName(policyTokenName);
