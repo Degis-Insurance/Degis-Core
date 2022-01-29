@@ -17,8 +17,11 @@ import "./tasks/farming/addPool";
 import "./tasks/sig/addSigner";
 import "./tasks/naughtyPrice/deployToken";
 import "./tasks/naughtyPrice/setFactory";
+import "./tasks/naughtyPrice/setCore";
 import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
+import "./tasks/tokens/addMinterBurner";
+import "./tasks/farming/settlePurchaseIncentive";
 
 dotenv.config();
 

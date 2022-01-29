@@ -24,7 +24,7 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
     const stablecoinAddress = taskArgs.stablecoin;
     const poolDeadline = taskArgs.deadline;
     const feeRate = taskArgs.fee;
-    console.log("Policy token name is:", tokenName);
+    console.log("Policy token name is: ", tokenName);
 
     // Network info
     const { network } = hre;
@@ -49,7 +49,7 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
       taskArgs.deadline,
       taskArgs.fee
     );
-    console.log("Tx details:", await tx.wait());
+    console.log("Tx details: ", await tx.wait());
 
     // Get naughty factory contract instance
     const naughtyFactoryAddress = addressList[network.name].NaughtyFactory;
@@ -66,7 +66,7 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
       policyTokenAddress,
       stablecoinAddress
     );
-    console.log("Pool address:", poolAddress);
+    console.log("Pool address from policyCore: ", poolAddress);
 
     // Store the naughty pool's info
     const poolObject = {
@@ -76,6 +76,6 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
       feeRate: feeRate,
     };
     poolList[network.name][taskArgs.name] = poolObject;
-    console.log("poolList:", poolList);
+    console.log("PoolList Object now: ", poolList);
     storeNaughtyPoolList(poolList);
   });

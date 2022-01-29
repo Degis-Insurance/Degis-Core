@@ -28,9 +28,9 @@ task(
 
   // Set
   const tx = await factory.setPolicyCoreAddress(policyCoreAddress);
-  console.log("Tx details:", await tx.wait());
+  console.log("Tx details: ", await tx.wait());
 
   // Check the result
   const coreAddress = await factory.policyCore();
-  console.log("The policy core address inside naughty factory", coreAddress);
+  console.log("The policy core address inside naughty factory: ", coreAddress);
 });

@@ -29,17 +29,17 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
 
     // Set
     const tx_setRouter = await core.setNaughtyRouter(naughtyRouterAddress);
-    console.log("Tx_setRouter details:", await tx_setRouter.wait());
+    console.log("Tx_setRouter details: ", await tx_setRouter.wait());
 
     const tx_setEmergency = await core.setEmergencyPool(emergencyPoolAddress);
-    console.log("Tx_setEmergency details", await tx_setEmergency.wait());
+    console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
 
     const tx_setLottery = await core.setLottery(lotteryAddress);
-    console.log("Tx_setLottery details", await tx_setLottery.wait());
+    console.log("Tx_setLottery details: ", await tx_setLottery.wait());
 
     // Check the result
-    console.log("Naughty router address in core", await core.naughtyRouter());
-    console.log("Degis lottery address in core", await core.lottery());
-    console.log("Emergency pool address in core", await core.emergencyPool());
+    console.log("Naughty router address in core: ", await core.naughtyRouter());
+    console.log("Degis lottery address in core: ", await core.lottery());
+    console.log("Emergency pool address in core: ", await core.emergencyPool());
   }
 );

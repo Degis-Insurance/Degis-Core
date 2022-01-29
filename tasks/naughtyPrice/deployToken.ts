@@ -70,8 +70,8 @@ task("deployNPToken", "Deploy a new naughty price token")
 
     // Check the result
     const policyTokenAddress = await core.findAddressbyName(policyTokenName);
-    console.log("Deployed policy token address:", policyTokenAddress);
+    console.log("Deployed policy token address: ", policyTokenAddress);
 
     const policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
-    console.log("Deployed policy token info:", policyTokenInfo);
+    console.log("Deployed policy token info: ", policyTokenInfo);
   });

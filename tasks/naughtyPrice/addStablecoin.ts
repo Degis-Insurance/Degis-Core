@@ -10,6 +10,7 @@ task("addStablecoin", "Set the contract addresses inside naughty factory")
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const stablecoinAddress = taskArgs.address;
+    console.log("Stablecoin address to be added: ", stablecoinAddress);
 
     // Network info
     const { network } = hre;
@@ -33,5 +34,5 @@ task("addStablecoin", "Set the contract addresses inside naughty factory")
 
     // Check the result
     const isSupported = await core.supportedStablecoin(stablecoinAddress);
-    console.log("The new stable coin supported status:", isSupported);
+    console.log("The new stable coin supported status: ", isSupported);
   });
