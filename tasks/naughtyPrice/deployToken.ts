@@ -3,8 +3,11 @@ import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
 import { PolicyCore, PolicyCore__factory } from "../../typechain";
-import { readAddressList } from "../../scripts/contractAddress";
-import { getNow } from "../../test/utils";
+import {
+  readAddressList,
+  readNaughtyTokenList,
+  storeNaughtyTokenList,
+} from "../../scripts/contractAddress";
 import { parseUnits } from "ethers/lib/utils";
 
 task("deployNPToken", "Deploy a new naughty price token")
@@ -23,6 +26,8 @@ task("deployNPToken", "Deploy a new naughty price token")
   .setAction(async (taskArgs, hre) => {
     const nameisCall = taskArgs.iscall == 1 ? "H" : "L";
     const boolisCall: boolean = taskArgs.iscall == 1 ? true : false;
+    const tokenDeadline = taskArgs.deadline;
+    const tokenSettleTime = taskArgs.deadline;
     const policyTokenName =
       taskArgs.name +
       "_" +
@@ -40,22 +45,17 @@ task("deployNPToken", "Deploy a new naughty price token")
     console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const tokenList = readNaughtyTokenList();
 
+    const policyCoreAddress = addressList[network.name].PolicyCore;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress
     );
-
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );
-
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
-
-    const now = getNow();
-    // const deadline = now + 3600 * 24 * 30;
-    // const settletime = deadline + 3600 * 24 * 7;
 
     const tx = await core.deployPolicyToken(
       taskArgs.name,
@@ -63,10 +63,10 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.decimals,
       parseUnits(taskArgs.k),
       taskArgs.round,
-      hre.ethers.BigNumber.from(taskArgs.deadline),
-      hre.ethers.BigNumber.from(taskArgs.settletime)
+      hre.ethers.BigNumber.from(tokenDeadline),
+      hre.ethers.BigNumber.from(tokenSettleTime)
     );
-    console.log("tx details:",await tx.wait());
+    console.log("tx details:", await tx.wait());
 
     // Check the result
     const policyTokenAddress = await core.findAddressbyName(policyTokenName);
@@ -74,4 +74,13 @@ task("deployNPToken", "Deploy a new naughty price token")
 
     const policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
     console.log("Deployed policy token info: ", policyTokenInfo);
+
+    // Store the token info
+    const tokenObject = {
+      address: policyTokenAddress,
+      deadline: tokenDeadline,
+      settleTime: tokenSettleTime,
+    };
+    tokenList[network.name][policyTokenName] = tokenObject;
+    storeNaughtyTokenList(tokenList);
   });

@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
-
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/INaughtyPair.sol";
-
 import "./interfaces/IPolicyCore.sol";
-
 import "../libraries/StringsUtils.sol";
-
 import "hardhat/console.sol";
 
 /**
@@ -51,11 +46,18 @@ contract NaughtyFactory {
     // *************************************** Modifiers ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Ensure the policyCore address is already set
+     * @dev The naughty pair token may not have minter without this modifier
+     */
     modifier alreadySetPolicyCore() {
         require(policyCore != address(0), "Please set the policyCore address");
         _;
     }
 
+    /**
+     * @notice Only called by policyCore contract
+     */
     modifier onlyPolicyCore() {
         require(msg.sender == policyCore, "Only called by policyCore contract");
         _;
@@ -219,6 +221,7 @@ contract NaughtyFactory {
 
     /**
      * @notice Get the policyToken bytecode (with parameters)
+     * @dev It is public for test convinience
      * @param _tokenName Name of policyToken
      */
     function getPolicyTokenBytecode(string memory _tokenName)

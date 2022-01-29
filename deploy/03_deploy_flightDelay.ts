@@ -65,6 +65,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
+
+  // Run some afterwards tasks
+  await hre.run("setFDPolicyFlow");
+  await hre.run("setFDPolicyToken");
+  await hre.run("setFDOracle");
 };
 
 func.tags = ["FlightDelay"];

@@ -16,7 +16,7 @@ import "hardhat-contract-sizer";
 import "./tasks/farming/farmingPool";
 import "./tasks/farming/purchaseIncentive";
 
-import "./tasks/sig/addSigner";
+import "./tasks/misrableFlight/addSigner";
 
 import "./tasks/misrableFlight/setAddress";
 import "./tasks/naughtyPrice/setAddress";
@@ -28,7 +28,7 @@ import "./tasks/naughtyPrice/addStablecoin";
 
 import "./tasks/tokens/addMinterBurner";
 
-import "./tasks/staking/setReward";
+import "./tasks/staking/stakingPoolFactory";
 
 dotenv.config();
 

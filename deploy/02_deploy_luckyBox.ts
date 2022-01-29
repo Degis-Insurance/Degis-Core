@@ -43,6 +43,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
+
+  // Run some afterwars tasks
+  await hre.run("setLottery");
+  await hre.run("setRandGenerator")
 };
 
 func.tags = ["Lottery"];

@@ -37,10 +37,10 @@ contract StakingPoolFactory is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @dev Fired in createPool() and registerPool()
+     * @dev Fired in createPool() and _registerPool()
      *
      * @param by who deploys a new pool
-     * @param poolToken pool token address 
+     * @param poolToken pool token address
      * @param poolAddress deployed pool instance address
      * @param degisPerBlock pool weight
      * @param isFlashPool flag indicating if pool is a flash pool
@@ -53,6 +53,9 @@ contract StakingPoolFactory is Ownable {
         bool isFlashPool
     );
 
+    /**
+     * @notice Change the degis reward for pool
+     */
     event DegisPerBlockChanged(address pool, uint256 degisPerBlock);
 
     /**
@@ -107,6 +110,8 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Set degis per block
+     * @param _pool Address of the staking pool
+     * @param _degisPerBlock Degis reward per block
      */
     function setDegisPerBlock(address _pool, uint256 _degisPerBlock)
         external
@@ -123,9 +128,10 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @dev Creates a staking pool and registers it within the factory
-     * @param poolToken pool token address 
+     * @param poolToken pool token address
      * @param startBlock init block to be used for the pool created
      * @param degisPerBlock weight of the pool to be created
+     * @param isFlashPool Whether it is a flash pool
      */
     function createPool(
         address poolToken,
@@ -144,7 +150,7 @@ contract StakingPoolFactory is Ownable {
         );
 
         // register it within a factory
-        registerPool(address(pool));
+        _registerPool(address(pool));
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -155,7 +161,7 @@ contract StakingPoolFactory is Ownable {
      * @notice Register a deployed pool instance within the factory
      * @param _poolAddr Address of the already deployed pool instance
      */
-    function registerPool(address _poolAddr) internal {
+    function _registerPool(address _poolAddr) internal {
         // read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(_poolAddr).poolToken();

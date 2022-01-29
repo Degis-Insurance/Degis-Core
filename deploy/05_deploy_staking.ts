@@ -24,22 +24,22 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].StakingPoolFactory = factory.address;
 
-  const blockNumber = await ethers.provider.getBlockNumber();
+  // const blockNumber = await ethers.provider.getBlockNumber();
 
-  const pool = await deploy("CoreStakingPool", {
-    contract: "CoreStakingPool",
-    from: deployer,
-    args: [
-      DegisToken.address,
-      DegisToken.address,
-      factory.address,
-      blockNumber + 4000,
-      parseUnits("20"),
-      false,
-    ],
-    log: true,
-  });
-  addressList[network.name].CoreStakingPool = pool.address;
+  // const pool = await deploy("CoreStakingPool", {
+  //   contract: "CoreStakingPool",
+  //   from: deployer,
+  //   args: [
+  //     DegisToken.address,
+  //     DegisToken.address,
+  //     factory.address,
+  //     blockNumber + 4000,
+  //     parseUnits("20"),
+  //     false,
+  //   ],
+  //   log: true,
+  // });
+  // addressList[network.name].CoreStakingPool = pool.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);

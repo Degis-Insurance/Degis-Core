@@ -21,6 +21,14 @@ export const storeNaughtyPoolList = function (poolList: object) {
   fs.writeFileSync("NPPool.json", JSON.stringify(poolList, null, "\t"));
 };
 
+export const readNaughtyTokenList = function () {
+  return JSON.parse(fs.readFileSync("NPToken.json", "utf-8"));
+};
+
+export const storeNaughtyTokenList = function (tokenList: object) {
+  fs.writeFileSync("NPToken.json", JSON.stringify(tokenList, null, "\t"));
+};
+
 export const getLinkAddress = function (networkName: string) {
   const linkAddress = {
     avax: "0x5947BB275c521040051D82396192181b413227A3",

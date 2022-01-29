@@ -71,7 +71,8 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
 
     // Store the naughty pool's info
     const poolObject = {
-      address: poolAddress,
+      poolAddress: poolAddress,
+      policyTokenAddress: policyTokenAddress,
       stablecoinAddress: stablecoinAddress,
       poolDeadline: poolDeadline,
       feeRate: feeRate,

@@ -52,6 +52,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
+  await hre.run("setNPFactory");
+  await hre.run("setNPRouter");
   await hre.run("setNPCore");
 };
 

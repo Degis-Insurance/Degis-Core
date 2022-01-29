@@ -39,6 +39,6 @@ contract StringsUtilsTester {
         pure
         returns (string memory)
     {
-        return StringsUtils.uintToHexString(value);
+        return StringsUtils.uintToHexString(value, length);
     }
 }
