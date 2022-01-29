@@ -1,13 +1,16 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
-import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import {
+  readAddressList,
+  storeAddressList,
+  getLinkAddress,
+} from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy, get } = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
-
 
   const { deployer } = await getNamedAccounts();
 
@@ -47,8 +50,18 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     contract: "PolicyFlow",
     from: deployer,
     args: [pool.address, policyToken.address, sig.address, BuyerToken.address],
+    log: true,
   });
   addressList[network.name].PolicyFlow = flow.address;
+
+  const linkAddress = getLinkAddress(network.name);
+  const oracle = await deploy("FlightOracle", {
+    contract: "FlightOracle",
+    from: deployer,
+    args: [flow.address, linkAddress],
+    log: true,
+  });
+  addressList[network.name].FlightOracle = oracle.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);

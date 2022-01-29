@@ -6,7 +6,7 @@ import { readAddressList } from "../../scripts/contractAddress";
 import { PolicyFlow, PolicyFlow__factory } from "../../typechain";
 
 task(
-  "setPolicyFlow",
+  "setFDPolicyFlow",
   "Set the contract addresses inside policy flow"
 ).setAction(async (_, hre) => {
   const { network } = hre;
