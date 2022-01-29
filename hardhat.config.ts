@@ -13,24 +13,21 @@ import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 
 // tasks
-import "./tasks/farming/addPool";
+import "./tasks/farming/farmingPool";
+import "./tasks/farming/purchaseIncentive";
+
 import "./tasks/sig/addSigner";
-import "./tasks/misrableFlight/setPolicyFlow";
-import "./tasks/misrableFlight/setOracle";
-import "./tasks/misrableFlight/setPolicyToken";
+
+import "./tasks/misrableFlight/setAddress";
+import "./tasks/naughtyPrice/setAddress";
+import "./tasks/lucky/setAddress";
+
 import "./tasks/naughtyPrice/deployToken";
-import "./tasks/naughtyPrice/setFactory";
-import "./tasks/naughtyPrice/setCore";
-import "./tasks/naughtyPrice/setRouter";
 import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
+
 import "./tasks/tokens/addMinterBurner";
-import "./tasks/farming/settlePurchaseIncentive";
-import "./tasks/farming/setStartBlock";
-import "./tasks/farming/setDegisReward";
-import "./tasks/farming/setVault";
-import "./tasks/lucky/setLottery";
-import "./tasks/lucky/setRand";
+
 import "./tasks/staking/setReward";
 
 dotenv.config();
