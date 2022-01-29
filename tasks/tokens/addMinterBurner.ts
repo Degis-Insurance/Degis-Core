@@ -40,21 +40,34 @@ task("addMinterBurner", "Add minter for degis/buyer tokens").setAction(
     const buyerToken: BuyerToken = BuyerToken.attach(buyerTokenAddress);
 
     // Add minter for degis token
-    const tx_1 = await degis.addMinter(farmingPoolAddress);
-    console.log(await tx_1.wait());
+    const isAlready_1 = await degis.isMinter(farmingPoolAddress);
+    if (!isAlready_1) {
+      const tx_1 = await degis.addMinter(farmingPoolAddress);
+      console.log(await tx_1.wait());
+    }
 
-    const tx_2 = await degis.addMinter(vaultAddress);
-    console.log(await tx_2.wait());
-
+    const isAlready_2 = await degis.isMinter(vaultAddress);
+    if (!isAlready_2) {
+      const tx_2 = await degis.addMinter(vaultAddress);
+      console.log(await tx_2.wait());
+    }
     // Add minter for buyer token
-    const tx_3 = await buyerToken.addMinter(naughtyRouterAddress);
-    console.log(await tx_3.wait());
+    const isAlready_3 = await buyerToken.isMinter(naughtyRouterAddress);
+    if (!isAlready_3) {
+      const tx_3 = await buyerToken.addMinter(naughtyRouterAddress);
+      console.log(await tx_3.wait());
+    }
 
-    const tx_4 = await buyerToken.addMinter(policyFlowAddress);
-    console.log(await tx_4.wait());
-
+    const isAlready_4 = await buyerToken.isMinter(policyFlowAddress);
+    if (!isAlready_4) {
+      const tx_4 = await buyerToken.addMinter(policyFlowAddress);
+      console.log(await tx_4.wait());
+    }
     // Add burner for buyer token
-    const tx_5 = await buyerToken.addBurner(vaultAddress);
-    console.log(await tx_5.wait());
+    const isAlready_5 = await buyerToken.isBurner(vaultAddress);
+    if (!isAlready_5) {
+      const tx_5 = await buyerToken.addBurner(vaultAddress);
+      console.log(await tx_5.wait());
+    }
   }
 );

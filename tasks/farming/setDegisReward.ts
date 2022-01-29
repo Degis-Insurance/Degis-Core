@@ -4,16 +4,17 @@ import "@nomiclabs/hardhat-ethers";
 
 import { FarmingPool, FarmingPool__factory } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
 
-task("addPool", "Add new farming pool")
-  .addParam("address", "The pool's address to be added", null, types.string)
-  .addParam("reward", "Initial degis reward per block", null, types.int)
+task("setDegisReward", "Set the degis reward of a farming pool")
+  .addParam("id", "Pool id", null, types.int)
+  .addParam("reward", "Degis reward per block", null, types.int)
   .setAction(async (taskArgs, hre) => {
-    const lptokenAddress = taskArgs.address;
+    // Get the args
+    const poolId = taskArgs.id;
     const degisPerBlock = taskArgs.reward;
-    console.log("Pool address to be added: ", lptokenAddress);
-    console.log("Reward speed: ", degisPerBlock, "degis/block");
+    console.log("Pool id to be set: ", poolId);
+    console.log("New reward speed: ", degisPerBlock, "degis/block");
 
     const { network } = hre;
 
@@ -33,15 +34,18 @@ task("addPool", "Add new farming pool")
       await hre.ethers.getContractFactory("FarmingPool");
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
-    const tx = await farmingPool.add(
-      lptokenAddress,
+    // Set the start block
+    const tx = await farmingPool.setDegisReward(
+      poolId,
       parseUnits(degisPerBlock.toString()),
       false
     );
-    console.log("tx details: ", await tx.wait());
+    console.log("Tx details: ", await tx.wait());
 
     // Check the result
-    const poolId = await farmingPool.poolMapping(lptokenAddress);
     const poolInfo = await farmingPool.poolList(poolId);
-    console.log("Pool info: ", poolInfo);
+    console.log(
+      "Degis reward after set: ",
+      formatEther(poolInfo.degisPerBlock)
+    );
   });

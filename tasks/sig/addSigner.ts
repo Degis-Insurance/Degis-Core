@@ -8,7 +8,8 @@ import { readAddressList } from "../../scripts/contractAddress";
 task("addSigner", "Add new signer to the sigManager")
   .addParam("address", "The signer's address to be added", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    console.log("Signer address to be added: ", taskArgs.address);
+    const newSigner = taskArgs.address;
+    console.log("Signer address to be added: ", newSigner);
 
     const { network } = hre;
 
@@ -29,6 +30,10 @@ task("addSigner", "Add new signer to the sigManager")
     );
     const sigManager: SigManager = SigManager.attach(sigManagerAddress);
 
-    const tx = await sigManager.addSigner(taskArgs.address);
-    console.log("Tx details: ",await tx.wait());
+    const tx = await sigManager.addSigner(newSigner);
+    console.log("Tx details: ", await tx.wait());
+
+    // Check the result
+    const isSigner = await sigManager.isValidSigner(newSigner);
+    console.log("Is the new signer valid?: ", isSigner);
   });

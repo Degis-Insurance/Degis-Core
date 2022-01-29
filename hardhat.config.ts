@@ -22,6 +22,9 @@ import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/farming/settlePurchaseIncentive";
+import "./tasks/farming/setStartBlock";
+import "./tasks/farming/setDegisReward";
+import "./tasks/lucky/setLottery";
 
 dotenv.config();
 
