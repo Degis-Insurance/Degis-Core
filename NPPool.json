@@ -1,32 +1,21 @@
 {
 	"fuji": {
 		"ETH_3600.0_H_2201": {
-			"address": "0x1bB99Bf420375F2b81EEd8D7282eb273E1B2d60f",
-			"stablecoinAddress": "0x047501B01905773e2A8366D069B2274C351c981B",
+			"poolAddress": "0x9FCE1E172CAF89fdC6AEe0A24Bf429147b506714",
+			"policyTokenAddress": "0x3bd4A19e276A69a61fC5811C91786E48B16c4918",
+			"stablecoinAddress": "0x23aEc9D01ae13692B0E5a93A1fA2839102C1CDD8",
 			"poolDeadline": "1643688000",
-			"feeRate": 2
+			"feeRate": 4
 		},
 		"ETH_1200.0_L_2201": {
-			"address": "0x5852E1236845b5121E827F00Ad10882e1aeB35Ff",
-			"stablecoinAddress": "0x047501B01905773e2A8366D069B2274C351c981B",
+			"poolAddress": "0xAECAE35121015837bAb159E0769057c4eAD0eFB2",
+			"policyTokenAddress": "0x773C6f5B29A20015200f60d368dD9A8a04630a36",
+			"stablecoinAddress": "0x23aEc9D01ae13692B0E5a93A1fA2839102C1CDD8",
 			"poolDeadline": "1643688000",
-			"feeRate": 2
+			"feeRate": 4
 		}
 	},
 	"avax": {},
-	"localhost": {
-		"ETH_40000.0_H_2202": {
-			"address": "0x8Ba95966877988Ef579Adf3e8fcc192456aC747E",
-			"stablecoinAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-			"poolDeadline": "1643688000",
-			"feeRate": 2
-		},
-		"ETH_4000.0_H_2202": {
-			"address": "0x5676fcd7F7D78c8917932CE38fF245edDaCcEC1B",
-			"stablecoinAddress": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-			"poolDeadline": "1643688000",
-			"feeRate": 2
-		}
-	},
+	"localhost": {},
 	"rinkeby": {}
 }
