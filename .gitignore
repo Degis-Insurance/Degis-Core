@@ -13,8 +13,8 @@ abi
 # VSCode-Counter
 .VSCodeCounter/
 
-.DS_Store
-.DS_Store?
+**/.DS_Store
+**/.DS_Store?
 
 # local test deployments
 deployments/localhost
