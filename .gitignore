@@ -14,6 +14,7 @@ abi
 .VSCodeCounter/
 
 .DS_Store
+.DS_Store?
 
 # local test deployments
 deployments/localhost
