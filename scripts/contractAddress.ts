@@ -17,8 +17,8 @@ export const readNaughtyPoolList = function () {
   return JSON.parse(fs.readFileSync("NPPool.json", "utf-8"));
 };
 
-export const storeNaughtyPoolList = function (poolList: object) {
-  fs.writeFileSync("NPPool.json", JSON.stringify(poolList, null, "\t"));
+export const storeNaughtyPoolList = function (NPPoolList: object) {
+  fs.writeFileSync("NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
 };
 
 export const readNaughtyTokenList = function () {
@@ -27,6 +27,25 @@ export const readNaughtyTokenList = function () {
 
 export const storeNaughtyTokenList = function (tokenList: object) {
   fs.writeFileSync("NPToken.json", JSON.stringify(tokenList, null, "\t"));
+};
+
+export const readFarmingPoolList = function () {
+  return JSON.parse(fs.readFileSync("info/FarmingPool.json", "utf-8"));
+};
+
+export const storeFarmingPoolList = function (farmingPoolList: object) {
+  fs.writeFileSync(
+    "info/FarmingPool.json",
+    JSON.stringify(farmingPoolList, null, "\t")
+  );
+};
+
+export const readSignerList = function () {
+  return JSON.parse(fs.readFileSync("info/Signers.json", "utf-8"));
+};
+
+export const storeSignerList = function (signerList: object) {
+  fs.writeFileSync("info/Signers.json", JSON.stringify(signerList, null, "\t"));
 };
 
 export const getLinkAddress = function (networkName: string) {
