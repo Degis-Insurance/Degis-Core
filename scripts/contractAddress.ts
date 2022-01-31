@@ -6,27 +6,30 @@ import * as fs from "fs";
 
 export const readAddressList = function () {
   // const filePath = __dirname + "/address.json"
-  return JSON.parse(fs.readFileSync("address.json", "utf-8"));
+  return JSON.parse(fs.readFileSync("info/address.json", "utf-8"));
 };
 
 export const storeAddressList = function (addressList: object) {
-  fs.writeFileSync("address.json", JSON.stringify(addressList, null, "\t"));
+  fs.writeFileSync(
+    "info/address.json",
+    JSON.stringify(addressList, null, "\t")
+  );
 };
 
 export const readNaughtyPoolList = function () {
-  return JSON.parse(fs.readFileSync("NPPool.json", "utf-8"));
+  return JSON.parse(fs.readFileSync("info/NPPool.json", "utf-8"));
 };
 
 export const storeNaughtyPoolList = function (NPPoolList: object) {
-  fs.writeFileSync("NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
+  fs.writeFileSync("info/NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
 };
 
 export const readNaughtyTokenList = function () {
-  return JSON.parse(fs.readFileSync("NPToken.json", "utf-8"));
+  return JSON.parse(fs.readFileSync("info/NPToken.json", "utf-8"));
 };
 
 export const storeNaughtyTokenList = function (tokenList: object) {
-  fs.writeFileSync("NPToken.json", JSON.stringify(tokenList, null, "\t"));
+  fs.writeFileSync("info/NPToken.json", JSON.stringify(tokenList, null, "\t"));
 };
 
 export const readFarmingPoolList = function () {
