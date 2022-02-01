@@ -70,6 +70,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.run("setFDPolicyFlow");
   await hre.run("setFDPolicyToken");
   await hre.run("setFDOracle");
+  await hre.run("setFDInsurancePool");
 };
 
 func.tags = ["FlightDelay"];

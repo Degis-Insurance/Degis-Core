@@ -9,6 +9,16 @@
 			"address": "0x773C6f5B29A20015200f60d368dD9A8a04630a36",
 			"deadline": 1643688000,
 			"settleTime": 1643688000
+		},
+		"BTC_50000.0_H_2201": {
+			"address": "0x607541e1F9C3DC7045ce644cf8BeBc5730b83cd3",
+			"deadline": 1644130800,
+			"settleTime": 1644130800
+		},
+		"BTC_20000.0_L_2201": {
+			"address": "0xcbB676f6DB5Ea98F5f71cE3E25b4D18179FF8B1A",
+			"deadline": 1644130800,
+			"settleTime": 1644130800
 		}
 	},
 	"avax": {},

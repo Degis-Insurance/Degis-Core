@@ -13,6 +13,20 @@
 			"stablecoinAddress": "0x23aEc9D01ae13692B0E5a93A1fA2839102C1CDD8",
 			"poolDeadline": "1643688000",
 			"feeRate": 4
+		},
+		"BTC_50000.0_H_2201": {
+			"poolAddress": "0x5f6c452B5C93eF2e7887B8CBc2602501ce94d760",
+			"policyTokenAddress": "0x607541e1F9C3DC7045ce644cf8BeBc5730b83cd3",
+			"stablecoinAddress": "0x23aEc9D01ae13692B0E5a93A1fA2839102C1CDD8",
+			"poolDeadline": "1644130800",
+			"feeRate": 2
+		},
+		"BTC_20000.0_L_2201": {
+			"poolAddress": "0x12b6219721856503a9095Fe5db057f632a11d07B",
+			"policyTokenAddress": "0xcbB676f6DB5Ea98F5f71cE3E25b4D18179FF8B1A",
+			"stablecoinAddress": "0x23aEc9D01ae13692B0E5a93A1fA2839102C1CDD8",
+			"poolDeadline": "1644130800",
+			"feeRate": 2
 		}
 	},
 	"avax": {},

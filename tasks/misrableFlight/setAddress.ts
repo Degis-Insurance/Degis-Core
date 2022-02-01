@@ -10,6 +10,8 @@ import {
   FDPolicyToken__factory,
   FlightOracle,
   FlightOracle__factory,
+  InsurancePool,
+  InsurancePool__factory,
 } from "../../typechain";
 
 task(
@@ -107,4 +109,34 @@ task(
 
   const linkToken = await oracle.getChainlinkTokenAddress();
   console.log("Link token address: ", linkToken);
+});
+
+task(
+  "setFDInsurancePool",
+  "Set the contract addresses inside insurance pool"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  // Addresses to be set
+  const policyFlowAddress = addressList[network.name].PolicyFlow;
+
+  // Get insurance pool contract instance
+  const insurancePoolAddress = addressList[network.name].InsurancePool;
+  const InsurancePool: InsurancePool__factory =
+    await hre.ethers.getContractFactory("InsurancePool");
+  const pool: InsurancePool = InsurancePool.attach(insurancePoolAddress);
+
+  // Set
+  const tx = await pool.setPolicyFlow(policyFlowAddress);
+  console.log("Tx details: ", await tx.wait());
+
+  // Check the result
+  const flowAddress = await pool.policyFlow();
+  console.log("The policy flow address inside insurance pool: ", flowAddress);
 });
