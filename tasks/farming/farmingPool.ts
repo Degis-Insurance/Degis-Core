@@ -26,7 +26,7 @@ task("addFarmingPool", "Add new farming pool")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
     const farmingPoolList = readFarmingPoolList();
@@ -78,7 +78,7 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
     const farmingPoolList = readFarmingPoolList();
@@ -123,7 +123,7 @@ task("setFarmingStartBlock", "Set the start block of farming")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
     const farmingPoolAddress = addressList[network.name].FarmingPool;

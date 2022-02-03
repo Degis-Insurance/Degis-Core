@@ -46,6 +46,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // TODO: remove this after testnet v2
   await hre.run("addAllowedContracts");
+  // Run some afterwards tasks
+  await hre.run("addMinterBurner");
 };
 
 func.tags = ["Staking"];

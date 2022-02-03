@@ -14,7 +14,7 @@ task("addMinterBurner", "Add minter for degis/buyer tokens").setAction(
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
 
