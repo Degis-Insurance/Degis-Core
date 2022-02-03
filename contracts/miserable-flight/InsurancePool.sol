@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../utils/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -10,7 +11,7 @@ import "../libraries/SafePRBMath.sol";
 
 import "../lucky-box/interfaces/IDegisLottery.sol";
 
-import "../utils/OwnableWithoutContext.sol";
+// import "../utils/OwnableWithoutContext.sol";
 
 import "./abstracts/InsurancePoolStore.sol";
 
@@ -22,7 +23,7 @@ import "./abstracts/InsurancePoolStore.sol";
 contract InsurancePool is
     ERC20("Degis FlightDelay LPToken", "DLP"),
     InsurancePoolStore,
-    OwnableWithoutContext,
+    // OwnableWithoutContext,
     ReentrancyGuard
 {
     using SafeERC20 for IERC20;

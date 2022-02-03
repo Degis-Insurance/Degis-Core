@@ -37,4 +37,8 @@ interface INaughtyPair is IERC20 {
         uint256 _deadline,
         uint256 _feeRate
     ) external;
+
+    function setAllowedRecipients(address[] memory recipients) external;
+
+    function setAllowedSenders(address[] memory senders) external;
 }

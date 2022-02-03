@@ -239,4 +239,5 @@ contract NaughtyFactory {
                 abi.encode(_tokenName, _tokenName, policyCore)
             );
     }
+
 }

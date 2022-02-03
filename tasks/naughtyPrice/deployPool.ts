@@ -80,4 +80,6 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
     poolList[network.name][taskArgs.name] = poolObject;
     console.log("PoolList Object now: ", poolList);
     storeNaughtyPoolList(poolList);
+
+    await hre.run("addAllowedContractsForNP", { name: tokenName });
   });

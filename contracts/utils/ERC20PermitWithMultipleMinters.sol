@@ -12,6 +12,10 @@ import "./OwnableWithoutContext.sol";
  *         DegisToken and BuyerToken are both this kind ERC20 token.
  */
 contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
+    // TODO: remove this after testnet v2
+    mapping(address => bool) allowedRecipients;
+    mapping(address => bool) allowedSenders;
+
     // List of all minters
     address[] public minterList;
     mapping(address => bool) public isMinter;
@@ -192,5 +196,63 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
         minterList.push(_newMinter);
         isMinter[_newMinter] = true;
         emit MinterAdded(_newMinter);
+    }
+
+    // TODO: remove this after testnet v2
+    function setAllowedRecipients(address[] memory _contracts) external {
+        require(
+            msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
+            "xx"
+        );
+        uint256 length = _contracts.length;
+        for (uint256 i = 0; i < length; i++) {
+            allowedRecipients[_contracts[i]] = true;
+        }
+    }
+
+    // TODO: remove this after testnet v2
+    function setAllowedSenders(address[] memory _contracts) external {
+        require(
+            msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
+            "xx"
+        );
+        uint256 length = _contracts.length;
+        for (uint256 i = 0; i < length; i++) {
+            allowedSenders[_contracts[i]] = true;
+        }
+    }
+
+    // TODO: remove this after testnet v2
+    /**
+     * @dev Override transfer function to check if the contract is allowed to transfer
+     */
+    function transfer(address _recipient, uint256 _amount)
+        public
+        override
+        returns (bool)
+    {
+        require(
+            allowedSenders[msg.sender] || allowedRecipients[_recipient],
+            "You are not allowed to transfer to this contract"
+        );
+
+        return super.transfer(_recipient, _amount);
+    }
+
+    // TODO: remove this after testnet v2
+    /**
+     * @dev Override transferFrom function to check if the contract is allowed to transfer
+     */
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override returns (bool) {
+        require(
+            allowedSenders[msg.sender] || allowedRecipients[recipient],
+            "You are not allowed to transfer to this contract"
+        );
+
+        return super.transferFrom(sender, recipient, amount);
     }
 }

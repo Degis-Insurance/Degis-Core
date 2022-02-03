@@ -83,4 +83,6 @@ task("deployNPToken", "Deploy a new naughty price token")
     };
     tokenList[network.name][policyTokenName] = tokenObject;
     storeNaughtyTokenList(tokenList);
+
+   
   });

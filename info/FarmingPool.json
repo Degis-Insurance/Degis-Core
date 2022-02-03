@@ -1,5 +1,12 @@
 {
-  "fuji": {},
-  "avax": {},
-  "localhost": {}
+	"fuji": {
+		"1": {
+			"name": "flightdelay",
+			"address": "0xB72779007C51290A5b46B47DaF463Ef11E890cF3",
+			"poolId": 1,
+			"reward": 5
+		}
+	},
+	"avax": {},
+	"localhost": {}
 }

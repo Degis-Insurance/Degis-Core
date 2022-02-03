@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "../utils/ERC20.sol";
 
 /**
  * @notice This is the MockUSD used in testnet
@@ -9,9 +10,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *         Maximum mint amount for every single tx is 100k.
  */
 contract MockUSD is ERC20 {
-    uint256 public constant INITIAL_SUPPLY = 100000 ether;
+    uint256 public constant INITIAL_SUPPLY = 10000 ether;
 
-    uint256 public USER_CAP = 500000 ether;
+    uint256 public USER_CAP = 10000 ether;
 
     mapping(address => uint256) userHaveMinted;
     address[] allUsers;
@@ -28,10 +29,10 @@ contract MockUSD is ERC20 {
 
     // Everyone can mint, have fun for test
     function mint(address _account, uint256 _amount) public {
-        require(_amount <= 100000e18, "Please mint less than 100k every time");
+        require(_amount <= 10000e18, "Please mint less than 10k every time");
         require(
             userHaveMinted[_account] + _amount <= USER_CAP,
-            "You have minted too many usd (maximum 500k)"
+            "You have minted too many usd (maximum 10k)"
         );
 
         if (userHaveMinted[_account] == 0) allUsers.push(_account);

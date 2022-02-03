@@ -43,6 +43,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
+
+  // TODO: remove this after testnet v2
+  await hre.run("addAllowedContracts");
 };
 
 func.tags = ["Staking"];

@@ -27,6 +27,7 @@ import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
 
 import "./tasks/tokens/addMinterBurner";
+import "./tasks/tokens/allowedContracts";
 
 import "./tasks/staking/stakingPoolFactory";
 
@@ -100,6 +101,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
         count: 20,
       },
+      timeout: 1000000,
     },
     avax: {
       url: process.env.AVAX_URL || "",
@@ -125,7 +127,7 @@ const config: HardhatUserConfig = {
   },
   abiExporter: {
     path: "./abi",
-    runOnCompile: true,
+    runOnCompile: false,
     clear: true,
     flat: true,
     spacing: 2,
