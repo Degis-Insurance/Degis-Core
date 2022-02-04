@@ -5,6 +5,30 @@
 			"address": "0xB72779007C51290A5b46B47DaF463Ef11E890cF3",
 			"poolId": 1,
 			"reward": 5
+		},
+		"2": {
+			"name": "ETH_3600.0_H_2201",
+			"address": "0x4aDed69d15AA09Cb6E55fa2255031864436C8237",
+			"poolId": 2,
+			"reward": 2
+		},
+		"3": {
+			"name": "ETH_1200.0_L_2201",
+			"address": "0x6d05f7992114812040c447F77cafC42cBa0e1E4D",
+			"poolId": 3,
+			"reward": 2
+		},
+		"4": {
+			"name": "BTC_50000.0_H_2201",
+			"address": "0xA35B6178526951c536253fEfA626A42f7BC41Da9",
+			"poolId": 4,
+			"reward": 2
+		},
+		"5": {
+			"name": "BTC_20000.0_L_2201",
+			"address": "0xAD78b69924749f1dFE3E24B252705BC0a9a9132b",
+			"poolId": 5,
+			"reward": 2
 		}
 	},
 	"avax": {},
