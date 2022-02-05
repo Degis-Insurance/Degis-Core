@@ -66,6 +66,7 @@ task("addAllowedContracts", "Add allowed contracts for all tokens").setAction(
       naughtyFactoryAddress,
       emergencyPoolAddress,
     ];
+    console.log("allowedcontracts: ", allowedContracts);
 
     // Tokens to be used
     const mockUSDAddress = addressList[network.name].MockUSD;
@@ -126,6 +127,8 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
 
     const usdAddress = addressList[network.name].MockUSD;
 
+    const farmingPoolAddress = addressList[network.name].FarmingPool;
+
     const policyCoreAddress = addressList[network.name].PolicyCore;
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
@@ -159,6 +162,7 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
       naughtyRouterAddress,
       policyCoreAddress,
       naughtyFactoryAddress,
+      farmingPoolAddress,
     ];
 
     const tx_1 = await nptoken.setAllowedRecipients(allowedContracts);
