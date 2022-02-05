@@ -124,6 +124,8 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
 
     const addressList = readAddressList();
 
+    const farmingPoolAddress = addressList[network.name].FarmingPool;
+
     const usdAddress = addressList[network.name].MockUSD;
 
     const policyCoreAddress = addressList[network.name].PolicyCore;
@@ -159,6 +161,7 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
       naughtyRouterAddress,
       policyCoreAddress,
       naughtyFactoryAddress,
+      farmingPoolAddress,
     ];
 
     const tx_1 = await nptoken.setAllowedRecipients(allowedContracts);
