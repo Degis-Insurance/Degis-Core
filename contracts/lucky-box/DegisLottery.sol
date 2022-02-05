@@ -228,6 +228,32 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         return (ticketsNumber, ticketsAmount, ticketsWeight);
     }
 
+    /**
+     * @notice Get lottery stage info
+     */
+    function getLotteriesStageInfo(uint256 _lotteryId)
+        external
+        view
+        returns (
+            uint256[] memory stageProportion,
+            uint256[] memory stageReward,
+            uint256[] memory stageAmount,
+            uint256[] memory stageWeight
+        )
+    {
+        stageProportion = new uint256[](4);
+        stageReward = new uint256[](4);
+        stageAmount = new uint256[](4);
+        stageWeight = new uint256[](4);
+
+        for (uint256 i = 0; i < 4; i++) {
+            stageProportion[i] = lotteries[_lotteryId].stageProportion[i];
+            stageReward[i] = lotteries[_lotteryId].stageReward[i];
+            stageAmount[i] = lotteries[_lotteryId].stageAmount[i];
+            stageWeight[i] = lotteries[_lotteryId].stageWeight[i];
+        }
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
