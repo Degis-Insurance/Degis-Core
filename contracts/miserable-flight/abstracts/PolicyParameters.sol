@@ -11,5 +11,6 @@ abstract contract PolicyParameters {
     uint256 public DELAY_THRESHOLD_MAX = 240;
 
     // Minimum time before departure for applying
-    uint256 public MIN_TIME_BEFORE_DEPARTURE = 24 hours;
+    // TODO: internal test
+    uint256 public MIN_TIME_BEFORE_DEPARTURE = 0;
 }
