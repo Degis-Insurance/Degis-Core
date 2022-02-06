@@ -42,7 +42,7 @@ task("settleFDPolicy", "Settle a flight delay policy")
     const tx = await flow.newClaimRequest(
       policyId,
       flightNumber,
-      departureTimestamp.toString(),
+      departureTimestamp,
       path,
       forceUpdate
     );
