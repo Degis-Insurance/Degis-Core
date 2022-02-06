@@ -7,13 +7,13 @@ abstract contract InsurancePoolStore {
 
     uint256 public purchaseIncentiveAmount;
 
-    uint256 public frozenTime = 7 days; // 7 days
+    uint256 public frozenTime; // default as 7 days
 
     struct UserInfo {
         uint256 depositTime;
         uint256 pendingBalance; // the amount in the unstake queue
     }
-    mapping(address => UserInfo) userInfo;
+    mapping(address => UserInfo) public userInfo;
 
     //  of every unstake request in the queue
     struct UnstakeRequest {

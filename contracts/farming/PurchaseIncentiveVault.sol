@@ -42,9 +42,6 @@ contract PurchaseIncentiveVault is Ownable {
 
     uint256 public MAX_ROUND = 50;
 
-    // Current distribution index
-    uint256 currentDistributionIndex;
-
     struct RoundInfo {
         uint256 shares;
         address[] users;

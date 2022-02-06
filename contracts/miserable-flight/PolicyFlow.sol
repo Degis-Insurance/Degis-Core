@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
-
 import "../utils/Ownable.sol";
-
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
 import "./interfaces/IFDPolicyToken.sol";
 import "./interfaces/IFlightOracle.sol";
 import "./interfaces/IInsurancePool.sol";
-
 import "./interfaces/IPolicyStruct.sol";
 import "./abstracts/PolicyParameters.sol";
 

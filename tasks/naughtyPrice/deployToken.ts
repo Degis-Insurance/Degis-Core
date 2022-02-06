@@ -27,7 +27,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     const nameisCall = taskArgs.iscall == 1 ? "H" : "L";
     const boolisCall: boolean = taskArgs.iscall == 1 ? true : false;
     const tokenDeadline = taskArgs.deadline;
-    const tokenSettleTime = taskArgs.deadline;
+    const tokenSettleTime = taskArgs.settletime;
     const policyTokenName =
       taskArgs.name +
       "_" +
