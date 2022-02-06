@@ -1,22 +1,22 @@
 {
 	"fuji": {
 		"BTC_43575.0_H_2201": {
-			"address": "0x6BcEfD8fEb12024F76086FDeC780F4aF74f0c8fB",
+			"address": "0x2e1b69BA6C5aEd95f8BFde119708eda86E496DE7",
 			"deadline": 1644267600,
 			"settleTime": 1644267600
 		},
 		"BTC_39425.0_L_2201": {
-			"address": "0x327Cc100Dd4f2dF2E350C51Ef50277078eb2E4cb",
+			"address": "0x9D7183253068C4CD7940DddEe42C0275D11027B9",
 			"deadline": 1644267600,
 			"settleTime": 1644267600
 		},
 		"ETH_3150.0_H_2201": {
-			"address": "0xb71438FDd8a5102D30Ac714EDFa227B3488c8c9D",
+			"address": "0x14F84a7e88dEAf97fa819e0E0FB94824D61be4ef",
 			"deadline": 1644267600,
 			"settleTime": 1644267600
 		},
 		"ETH_2850.0_L_2201": {
-			"address": "0x0E13546268Ad1977fA7FC1cf8Fb574cD3863dFd8",
+			"address": "0x6F7288D85258775dEc3e80717ca5FDAbF19B021a",
 			"deadline": 1644267600,
 			"settleTime": 1644267600
 		}

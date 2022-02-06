@@ -165,17 +165,17 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
       farmingPoolAddress,
     ];
 
-    // const tx_1 = await nptoken.setAllowedRecipients(allowedContracts);
-    // console.log("Tx1 details: ", await tx_1.wait());
+    const tx_1 = await nptoken.setAllowedRecipients(allowedContracts);
+    console.log("Tx1 details: ", await tx_1.wait());
 
-    // const tx_2 = await nptoken.setAllowedSenders(allowedContracts);
-    // console.log("Tx2 details: ", await tx_2.wait());
+    const tx_2 = await nptoken.setAllowedSenders(allowedContracts);
+    console.log("Tx2 details: ", await tx_2.wait());
 
-    // const tx_3 = await nppair.setAllowedRecipients(allowedContracts);
-    // console.log("Tx3 details: ", await tx_3.wait());
+    const tx_3 = await nppair.setAllowedRecipients(allowedContracts);
+    console.log("Tx3 details: ", await tx_3.wait());
 
-    // const tx_4 = await nppair.setAllowedSenders(allowedContracts);
-    // console.log("Tx4 details: ", await tx_4.wait());
+    const tx_4 = await nppair.setAllowedSenders(allowedContracts);
+    console.log("Tx4 details: ", await tx_4.wait());
 
     // Tokens to be used
     const mockUSDAddress = addressList[network.name].MockUSD;
@@ -198,8 +198,8 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
     );
     const degis: DegisToken = DegisToken.attach(degisTokenAddress);
 
-    // const tx_5 = await usd.setAllowedRecipients(allowedContracts);
-    // console.log("Tx5 details: ", await tx_5.wait());
+    const tx_5 = await usd.setAllowedRecipients(allowedContracts);
+    console.log("Tx5 details: ", await tx_5.wait());
 
     const tx_6 = await usd.setAllowedSenders(allowedContracts);
     console.log("Tx6 details: ", await tx_6.wait());

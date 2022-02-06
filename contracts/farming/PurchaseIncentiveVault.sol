@@ -57,7 +57,7 @@ contract PurchaseIncentiveVault is Ownable {
         uint256 lastRewardRound;
         uint256[] pendingRounds;
     }
-    mapping(address => UserInfo) userInfo;
+    mapping(address => UserInfo) public userInfo;
 
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;

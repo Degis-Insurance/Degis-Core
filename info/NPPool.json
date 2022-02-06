@@ -1,31 +1,31 @@
 {
 	"fuji": {
-		"ETH_3600.0_H_2201": {
-			"poolAddress": "0x4aDed69d15AA09Cb6E55fa2255031864436C8237",
-			"policyTokenAddress": "0xFcEb5bAF8Dc3dDA88EB91e850103B057C94084Ea",
-			"stablecoinAddress": "0x64Eb41390Dd9E9fF9AD1AA19DEe897Ea5cB4c9dA",
-			"poolDeadline": "1644292800",
+		"BTC_43575.0_H_2201": {
+			"poolAddress": "0x828D377b6A38853eEbc4be1eDa3cdE59b23A2590",
+			"policyTokenAddress": "0x2e1b69BA6C5aEd95f8BFde119708eda86E496DE7",
+			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"ETH_1200.0_L_2201": {
-			"poolAddress": "0x6d05f7992114812040c447F77cafC42cBa0e1E4D",
-			"policyTokenAddress": "0x25C53ced62fB7c755DF7E84dca67EE41E383d9dE",
-			"stablecoinAddress": "0x64Eb41390Dd9E9fF9AD1AA19DEe897Ea5cB4c9dA",
-			"poolDeadline": "1644292800",
+		"BTC_39425.0_L_2201": {
+			"poolAddress": "0x38C140eb1F09B74fad21f383D5661c31BbA8e9cD",
+			"policyTokenAddress": "0x9D7183253068C4CD7940DddEe42C0275D11027B9",
+			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"BTC_50000.0_H_2201": {
-			"poolAddress": "0xA35B6178526951c536253fEfA626A42f7BC41Da9",
-			"policyTokenAddress": "0x254f2c7f033936E8d327D87a0a50ae35d0Bc3521",
-			"stablecoinAddress": "0x64Eb41390Dd9E9fF9AD1AA19DEe897Ea5cB4c9dA",
-			"poolDeadline": "1644292800",
+		"ETH_3150.0_H_2201": {
+			"poolAddress": "0x9E8621f8258386c1319d82bCAa8e12C757d38D55",
+			"policyTokenAddress": "0x14F84a7e88dEAf97fa819e0E0FB94824D61be4ef",
+			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"BTC_20000.0_L_2201": {
-			"poolAddress": "0xAD78b69924749f1dFE3E24B252705BC0a9a9132b",
-			"policyTokenAddress": "0xea25d30fF6b9F2bB6763B1434957855bFDa617BB",
-			"stablecoinAddress": "0x64Eb41390Dd9E9fF9AD1AA19DEe897Ea5cB4c9dA",
-			"poolDeadline": "1644292800",
+		"ETH_2850.0_L_2201": {
+			"poolAddress": "0xe042ee0e08cfA8b0e28ef2C63C8547c83646DfE7",
+			"policyTokenAddress": "0x6F7288D85258775dEc3e80717ca5FDAbF19B021a",
+			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+			"poolDeadline": "1644267600",
 			"feeRate": 2
 		}
 	},
