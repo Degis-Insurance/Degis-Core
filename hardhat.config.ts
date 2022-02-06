@@ -17,9 +17,10 @@ import "./tasks/farming/farmingPool";
 import "./tasks/farming/purchaseIncentive";
 
 import "./tasks/misrableFlight/addSigner";
-
+import "./tasks/misrableFlight/insurancePool";
 import "./tasks/misrableFlight/setAddress";
 import "./tasks/misrableFlight/policyFlow";
+
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/lucky/setAddress";
 
@@ -102,7 +103,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
         count: 20,
       },
-      timeout: 1000000,
+      timeout: 60000,
     },
     avax: {
       url: process.env.AVAX_URL || "",
