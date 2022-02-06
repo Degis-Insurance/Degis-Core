@@ -33,6 +33,10 @@ task("settleFDPolicy", "Settle a flight delay policy")
     );
     const flow: PolicyFlow = PolicyFlow.attach(policyFlowAddress);
 
+    const info = await flow.getPolicyInfoById(policyId);
+    console.log(info.departureTimestamp.toNumber());
+    console.log(info.buyerAddress);
+
     const tx = await flow.newClaimRequest(
       policyId,
       flightNumber,
