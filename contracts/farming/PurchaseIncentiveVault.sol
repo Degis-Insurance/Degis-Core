@@ -51,16 +51,7 @@ contract PurchaseIncentiveVault is Ownable {
         bool hasDistributed;
         uint256 degisPerShare;
     }
-    mapping(uint256 => RoundInfo) roundInfo;
-
-    // // Round number => Total shares(buyer tokens)
-    // mapping(uint256 => uint256) public sharesInRound;
-
-    // // Round number => User address list
-    // mapping(uint256 => address[]) public usersInRound;
-
-    // // Round number => Whether has been distributed
-    // mapping(uint256 => bool) public hasDistributed;
+    mapping(uint256 => RoundInfo) public roundInfo;
 
     struct UserInfo {
         uint256 lastRewardRound;

@@ -299,7 +299,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     function newClaimRequest(
         uint256 _policyId,
         string memory _flightNumber,
-        string memory _timestamp,
+        uint256 _timestamp,
         string memory _path,
         bool _forceUpdate
     ) public {

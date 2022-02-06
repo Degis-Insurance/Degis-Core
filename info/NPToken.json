@@ -1,24 +1,24 @@
 {
 	"fuji": {
-		"ETH_3600.0_H_2201": {
-			"address": "0xFcEb5bAF8Dc3dDA88EB91e850103B057C94084Ea",
-			"deadline": 1644292800,
-			"settleTime": 1644292800
+		"BTC_43575.0_H_2201": {
+			"address": "0x6BcEfD8fEb12024F76086FDeC780F4aF74f0c8fB",
+			"deadline": 1644267600,
+			"settleTime": 1644267600
 		},
-		"ETH_1200.0_L_2201": {
-			"address": "0x25C53ced62fB7c755DF7E84dca67EE41E383d9dE",
-			"deadline": 1644292800,
-			"settleTime": 1644292800
+		"BTC_39425.0_L_2201": {
+			"address": "0x327Cc100Dd4f2dF2E350C51Ef50277078eb2E4cb",
+			"deadline": 1644267600,
+			"settleTime": 1644267600
 		},
-		"BTC_50000.0_H_2201": {
-			"address": "0x254f2c7f033936E8d327D87a0a50ae35d0Bc3521",
-			"deadline": 1644292800,
-			"settleTime": 1644292800
+		"ETH_3150.0_H_2201": {
+			"address": "0xb71438FDd8a5102D30Ac714EDFa227B3488c8c9D",
+			"deadline": 1644267600,
+			"settleTime": 1644267600
 		},
-		"BTC_20000.0_L_2201": {
-			"address": "0xea25d30fF6b9F2bB6763B1434957855bFDa617BB",
-			"deadline": 1644292800,
-			"settleTime": 1644292800
+		"ETH_2850.0_L_2201": {
+			"address": "0x0E13546268Ad1977fA7FC1cf8Fb574cD3863dFd8",
+			"deadline": 1644267600,
+			"settleTime": 1644267600
 		}
 	},
 	"avax": {},
