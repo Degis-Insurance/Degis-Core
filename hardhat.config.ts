@@ -19,6 +19,7 @@ import "./tasks/farming/purchaseIncentive";
 import "./tasks/misrableFlight/addSigner";
 
 import "./tasks/misrableFlight/setAddress";
+import "./tasks/misrableFlight/policyFlow";
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/lucky/setAddress";
 
