@@ -20,6 +20,7 @@ import {
   NPPolicyToken,
   NaughtyPair__factory,
   NaughtyPair,
+  InsurancePool__factory,
 } from "../../typechain";
 
 // Allowed contracts
@@ -216,3 +217,32 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
     const tx_10 = await degis.setAllowedSenders(allowedContracts);
     console.log("Tx10 details: ", await tx_10.wait());
   });
+
+task(
+  "addAllowedContractsForFD",
+  "Add allowed contracts for flight delay pair lp tokens"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const insurancePoolAddress = addressList[network.name].InsurancePool;
+
+  const InsurancePool: InsurancePool__factory =
+    await hre.ethers.getContractFactory("InsurancePool");
+  const pool = InsurancePool.attach(insurancePoolAddress);
+
+  const farmingPoolAddress = addressList[network.name].FarmingPool;
+
+  const allowedContracts: string[] = [farmingPoolAddress, insurancePoolAddress];
+
+  const tx_1 = await pool.setAllowedRecipients(allowedContracts);
+  console.log("Tx1 details: ", await tx_1.wait());
+
+  const tx_2 = await pool.setAllowedSenders(allowedContracts);
+  console.log("Tx2 details: ", await tx_2.wait());
+});
