@@ -43,7 +43,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       address: "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
       abi: IERC20ABI,
     });
-    addressList[network.name].MockUSD =
+    addressList[network.name].USDC =
       "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664";
   } else {
     const mockUSD = await deploy("MockUSD", {
@@ -57,8 +57,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
-
-  
 };
 
 func.tags = ["Tokens"];
