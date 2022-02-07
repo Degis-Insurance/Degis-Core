@@ -2,6 +2,9 @@ import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import { readAddressList } from "../../scripts/contractAddress";
 import { PolicyFlow, PolicyFlow__factory } from "../../typechain";
+import { signNewApplication } from "../../scripts/signMessage";
+import { parseUnits } from "ethers/lib/utils";
+import { getNow } from "../../test/utils";
 // import hre from "hardhat";
 
 task("settleFDPolicy", "Settle a flight delay policy")
@@ -53,8 +56,6 @@ task("buyFDPolicy", "Buy a flight delay policy")
   .addParam("premium", "premium", null, types.int)
   .addParam("departure", "departuretimestamp", null, types.int)
   .addParam("landing", "landingtimestamp", null, types.int)
-  .addParam("deadline", "deadline", null, types.int)
-  .addParam("sig", "signature", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const productId = taskArgs.product;
@@ -62,8 +63,6 @@ task("buyFDPolicy", "Buy a flight delay policy")
     const premium = taskArgs.premium;
     const departureTimestamp = taskArgs.departure;
     const landingTimestamp = taskArgs.landing;
-    const deadline = taskArgs.deadline;
-    const sig = taskArgs.sig;
 
     const { network } = hre;
 
@@ -80,12 +79,21 @@ task("buyFDPolicy", "Buy a flight delay policy")
     );
     const flow: PolicyFlow = PolicyFlow.attach(policyFlowAddress);
 
+    // Bought for dev account
+    const sig = await signNewApplication(
+      dev_account.address,
+      flightNumber,
+      premium
+    );
+
+    const deadline = getNow() + 300;
+
     const tx = await flow.newApplication(
       productId,
       flightNumber,
-      premium,
-      departureTimestamp,
-      landingTimestamp,
+      parseUnits(premium),
+      ethers.BigNumber.from(departureTimestamp),
+      ethers.BigNumber.from(landingTimestamp),
       deadline,
       sig
     );

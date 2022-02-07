@@ -180,16 +180,16 @@ describe("Policy Flow", function () {
         ]
       );
 
-      console.log("hashed info:", hasedInfo);
+      console.log("hashed info: ", hasedInfo);
 
       const signature = await dev_account.signMessage(arrayify(hasedInfo));
 
-      console.log("signature", signature);
+      console.log("signature: ", signature);
 
       await flow.newApplication(
         productId,
         flightNumber,
-        parseUnits("10"),
+        premium,
         ethers.BigNumber.from(now + 48 * 3600),
         ethers.BigNumber.from(now + 50 * 3600),
         deadline,

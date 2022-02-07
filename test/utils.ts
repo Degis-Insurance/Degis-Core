@@ -27,6 +27,7 @@ export const mineBlocks = async (blockNumber: number) => {
   }
 };
 
+// Get the current timestamp in seconds
 export const getNow = () => {
   const time = new Date().getTime();
   const now = Math.floor(time / 1000);
