@@ -40,6 +40,9 @@ contract FlightOracle is ChainlinkClient, Ownable {
         policyFlow = IPolicyFlow(_policyFlow);
 
         setChainlinkToken(_link);
+
+        oracleAddress = 0x7D9398979267a6E050FbFDFff953Fc612A5aD4C9;
+        jobId = "bcc0a699531940479bc93cf9fa5afb3f";
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -117,7 +120,15 @@ contract FlightOracle is ChainlinkClient, Ownable {
     ) public onlyPolicyFlow returns (bytes32) {
         require(
             oracleAddress != address(0) && jobId != 0,
-            "Please first set the oracle address & jobId"
+            "Set the oracle address & jobId"
+        );
+
+        // Enough LINK token for payment
+        require(
+            LinkTokenInterface(chainlinkTokenAddress()).balanceOf(
+                address(this)
+            ) >= _payment,
+            "Insufficient LINK balance"
         );
 
         Chainlink.Request memory req = buildChainlinkRequest(

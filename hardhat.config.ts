@@ -20,6 +20,7 @@ import "./tasks/misrableFlight/addSigner";
 import "./tasks/misrableFlight/setAddress";
 import "./tasks/misrableFlight/policyFlow";
 import "./tasks/misrableFlight/insurancePool";
+import "./tasks/misrableFlight/flightOracle";
 
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/naughtyPrice/settleResult";
@@ -28,6 +29,7 @@ import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
 
 import "./tasks/lucky/setAddress";
+import "./tasks/lucky/injectFunds";
 
 import "./tasks/tokens/addMinterBurner";
 

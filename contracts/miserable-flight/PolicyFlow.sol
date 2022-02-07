@@ -8,8 +8,11 @@ import "./interfaces/IFlightOracle.sol";
 import "./interfaces/IInsurancePool.sol";
 import "./interfaces/IPolicyStruct.sol";
 import "./abstracts/PolicyParameters.sol";
+import "../libraries/StringsUtils.sol";
 
 contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
+    using StringsUtils for uint256;
+
     // Other contracts
     IBuyerToken public buyerToken;
     ISigManager public sigManager;
@@ -21,8 +24,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    string public FLIGHT_STATUS_URL =
-        "https://18.163.254.50:3207/flight_status?";
+    string public FLIGHT_STATUS_URL = "https://degis.io:3207/flight_status?";
 
     uint256 public totalPolicies;
 
@@ -68,6 +70,8 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
+
+        fee = 0.1 * 10**18;
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -145,7 +149,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice Change the oracle fee
      * @param _fee New oracle fee
      */
-    function changeFee(uint256 _fee) external onlyOwner {
+    function setFee(uint256 _fee) external onlyOwner {
         fee = _fee;
         emit FeeChanged(_fee);
     }
@@ -154,7 +158,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice Change the max payoff
      * @param _newMaxPayoff New maxpayoff amount
      */
-    function changeMaxPayoff(uint256 _newMaxPayoff) external onlyOwner {
+    function setMaxPayoff(uint256 _newMaxPayoff) external onlyOwner {
         MAX_PAYOFF = _newMaxPayoff;
         emit MaxPayoffChanged(_newMaxPayoff);
     }
@@ -163,10 +167,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice How long before departure when users can not buy new policies
      * @param _newMinTime New time set
      */
-    function changeMinTimeBeforeDeparture(uint256 _newMinTime)
-        external
-        onlyOwner
-    {
+    function setMinTimeBeforeDeparture(uint256 _newMinTime) external onlyOwner {
         MIN_TIME_BEFORE_DEPARTURE = _newMinTime;
         emit MinTimeBeforeDepartureChanged(_newMinTime);
     }
@@ -296,7 +297,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     function newClaimRequest(
         uint256 _policyId,
         string memory _flightNumber,
-        uint256 _timestamp,
+        string memory _timestamp,
         string memory _path,
         bool _forceUpdate
     ) public {
@@ -325,13 +326,14 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         require(
             keccak256(abi.encodePacked(_timestamp)) ==
                 keccak256(
-                    abi.encodePacked(policyList[_policyId].departureTimestamp)
+                    abi.encodePacked(
+                        policyList[_policyId].departureTimestamp.uintToString()
+                    )
                 ),
             "Wrong departure timestamp provided"
         );
 
         // Construct the url for oracle
-
         string memory _url = string(
             abi.encodePacked(
                 FLIGHT_STATUS_URL,
