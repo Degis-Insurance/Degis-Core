@@ -16,7 +16,7 @@ import "hardhat-contract-sizer";
 import "./tasks/farming/farmingPool";
 import "./tasks/farming/purchaseIncentive";
 
-import "./tasks/misrableFlight/addSigner";
+import "./tasks/misrableFlight/sigManager";
 import "./tasks/misrableFlight/setAddress";
 import "./tasks/misrableFlight/policyFlow";
 import "./tasks/misrableFlight/insurancePool";
@@ -29,7 +29,7 @@ import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
 
 import "./tasks/lucky/setAddress";
-import "./tasks/lucky/injectFunds";
+import "./tasks/lucky/degisLottery";
 
 import "./tasks/tokens/addMinterBurner";
 
