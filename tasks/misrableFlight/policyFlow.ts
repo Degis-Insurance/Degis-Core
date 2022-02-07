@@ -46,3 +46,48 @@ task("settleFDPolicy", "Settle a flight delay policy")
     );
     console.log("Tx details: ", await tx.wait());
   });
+
+task("buyFDPolicy", "Buy a flight delay policy")
+  .addParam("product", "productId", 0, types.int)
+  .addParam("flight", "flightnumber", null, types.string)
+  .addParam("premium", "premium", null, types.int)
+  .addParam("departure", "departuretimestamp", null, types.int)
+  .addParam("landing", "landingtimestamp", null, types.int)
+  .addParam("deadline", "deadline", null, types.int)
+  .addParam("sig", "signature", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    // Get the args
+    const productId = taskArgs.product;
+    const flightNumber = taskArgs.flight;
+    const premium = taskArgs.premium;
+    const departureTimestamp = taskArgs.departure;
+    const landingTimestamp = taskArgs.landing;
+    const deadline = taskArgs.deadline;
+    const sig = taskArgs.sig;
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    // Load contract instance
+    const policyFlowAddress = addressList[network.name].PolicyFlow;
+    const PolicyFlow: PolicyFlow__factory = await hre.ethers.getContractFactory(
+      "PolicyFlow"
+    );
+    const flow: PolicyFlow = PolicyFlow.attach(policyFlowAddress);
+
+    const tx = await flow.newApplication(
+      productId,
+      flightNumber,
+      premium,
+      departureTimestamp,
+      landingTimestamp,
+      deadline,
+      sig
+    );
+    console.log("Tx details: ", await tx.wait());
+  });
