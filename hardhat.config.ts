@@ -22,11 +22,12 @@ import "./tasks/misrableFlight/policyFlow";
 import "./tasks/misrableFlight/insurancePool";
 
 import "./tasks/naughtyPrice/setAddress";
-import "./tasks/lucky/setAddress";
-
+import "./tasks/naughtyPrice/settleResult";
 import "./tasks/naughtyPrice/deployToken";
 import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
+
+import "./tasks/lucky/setAddress";
 
 import "./tasks/tokens/addMinterBurner";
 

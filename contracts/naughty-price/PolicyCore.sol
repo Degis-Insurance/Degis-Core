@@ -28,8 +28,10 @@ import "./interfaces/INPPolicyToken.sol";
  * @dev    Most of the functions to be called from outside will use the name of policyToken
  *         rather than the address (easy to read).
  *         Other variables or functions still use address to index.
- *         The rule of policyToken naming is Original Token Name + Strike Price + Lower or Higher + Date
- *         E.g.  AVAX_30_L_2101, BTC_30000_L_2102, ETH_8000_H_2109
+ *         The rule of policyToken naming is:
+ *              Original Token Name(with decimals) + Strike Price + Lower or Higher + Date
+ *         E.g.  AVAX_30.0_L_2101, BTC_30000.0_L_2102, ETH_8000.0_H_2109
+ *         (the original name need to be the same as in the chainlink oracle)
  */
 
 contract PolicyCore is Ownable {
@@ -96,7 +98,7 @@ contract PolicyCore is Ownable {
         bool alreadySettled;
     }
     // Policy token address => Settlement result information
-    mapping(address => SettlementInfo) settleResult;
+    mapping(address => SettlementInfo) public settleResult;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
