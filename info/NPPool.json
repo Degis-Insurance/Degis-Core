@@ -27,6 +27,13 @@
 			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
 			"poolDeadline": "1644267600",
 			"feeRate": 2
+		},
+		"AVAX_100.0_H_2201": {
+			"poolAddress": "0x2326C7F693b815426d6f3F7584E179aF153B4324",
+			"policyTokenAddress": "0x597A0fA99055e3EFf3565b8B6Ef7DE6e0326F378",
+			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+			"poolDeadline": "1644203340",
+			"feeRate": 2
 		}
 	},
 	"avax": {},

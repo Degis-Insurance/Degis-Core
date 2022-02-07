@@ -22,6 +22,7 @@ import "./tasks/misrableFlight/policyFlow";
 import "./tasks/misrableFlight/insurancePool";
 
 import "./tasks/naughtyPrice/setAddress";
+import "./tasks/naughtyPrice/settle";
 import "./tasks/lucky/setAddress";
 
 import "./tasks/naughtyPrice/deployToken";
