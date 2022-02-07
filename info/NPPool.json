@@ -1,38 +1,45 @@
 {
 	"fuji": {
-		"BTC_43575.0_H_2201": {
-			"poolAddress": "0x828D377b6A38853eEbc4be1eDa3cdE59b23A2590",
-			"policyTokenAddress": "0x2e1b69BA6C5aEd95f8BFde119708eda86E496DE7",
-			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+		"BTC_44809.8_H_2201": {
+			"poolAddress": "0x77bAcd62839E0bd474D58D23624Aa7d3714B12dA",
+			"policyTokenAddress": "0x92e796c8c9c37e82F860fACdB66A4d6C16E96A0c",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
 			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"BTC_39425.0_L_2201": {
-			"poolAddress": "0x38C140eb1F09B74fad21f383D5661c31BbA8e9cD",
-			"policyTokenAddress": "0x9D7183253068C4CD7940DddEe42C0275D11027B9",
-			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+		"BTC_40542.2_L_2201": {
+			"poolAddress": "0x71926d36D00f0a12C029CC1e25652C64844D30B4",
+			"policyTokenAddress": "0xd0968f25235D082597A0c3D94005a6e9e0893F9A",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
 			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"ETH_3150.0_H_2201": {
-			"poolAddress": "0x9E8621f8258386c1319d82bCAa8e12C757d38D55",
-			"policyTokenAddress": "0x14F84a7e88dEAf97fa819e0E0FB94824D61be4ef",
-			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+		"ETH_3234.0_H_2201": {
+			"poolAddress": "0xd6FAB6B64e446bC954Ec16311E91935aff8d7f29",
+			"policyTokenAddress": "0xAf6b12a0B9392D24DDFF4EdED14b796422b35063",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
 			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"ETH_2850.0_L_2201": {
-			"poolAddress": "0xe042ee0e08cfA8b0e28ef2C63C8547c83646DfE7",
-			"policyTokenAddress": "0x6F7288D85258775dEc3e80717ca5FDAbF19B021a",
-			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
+		"ETH_2926.0_L_2201": {
+			"poolAddress": "0x2c0C1aCE9512d104cbD9Ea2F93eA23ECE513bB67",
+			"policyTokenAddress": "0xC757A273d5F40279Ace1Cb0e18B40EB81945cc28",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
 			"poolDeadline": "1644267600",
 			"feeRate": 2
 		},
-		"AVAX_100.0_H_2201": {
-			"poolAddress": "0x2326C7F693b815426d6f3F7584E179aF153B4324",
-			"policyTokenAddress": "0x597A0fA99055e3EFf3565b8B6Ef7DE6e0326F378",
-			"stablecoinAddress": "0x92c34e08BEFAa7a463f6F1494171ff82D19ef42c",
-			"poolDeadline": "1644203340",
+		"AVAX_86.1_H_2201": {
+			"poolAddress": "0x77A9155954174cBAe279d4a71493a4C045ffB89f",
+			"policyTokenAddress": "0x8EAFdf0b7234D520258019b59C6Ab03EE6166a3E",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
+			"poolDeadline": "1644267600",
+			"feeRate": 2
+		},
+		"AVAX_77.9_L_2201": {
+			"poolAddress": "0x6fbaa26eb1FE3cd0f5c5b455f30b3FEFaB9ABABC",
+			"policyTokenAddress": "0x4b22fdc72aeE6c96C19d6f6231f88de48f6337C2",
+			"stablecoinAddress": "0xAc122c26138E4Ae4fe3dACC11064978Dc4C8C7fa",
+			"poolDeadline": "1644267600",
 			"feeRate": 2
 		}
 	},

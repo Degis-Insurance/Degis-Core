@@ -71,6 +71,8 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
+
+        fee = 0.1 * 10**18;
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -299,7 +301,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     function newClaimRequest(
         uint256 _policyId,
         string memory _flightNumber,
-        uint256 _timestamp,
+        string memory _timestamp,
         string memory _path,
         bool _forceUpdate
     ) public {
@@ -325,16 +327,15 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         );
 
         // Check if the departure date is correct
-        require(
-            keccak256(abi.encodePacked(_timestamp)) ==
-                keccak256(
-                    abi.encodePacked(policyList[_policyId].departureTimestamp)
-                ),
-            "Wrong departure timestamp provided"
-        );
+        // require(
+        //     keccak256(abi.encodePacked(_timestamp)) ==
+        //         keccak256(
+        //             abi.encodePacked(policyList[_policyId].departureTimestamp)
+        //         ),
+        //     "Wrong departure timestamp provided"
+        // );
 
         // Construct the url for oracle
-
         string memory _url = string(
             abi.encodePacked(
                 FLIGHT_STATUS_URL,

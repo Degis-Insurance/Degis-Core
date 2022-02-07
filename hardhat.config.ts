@@ -20,10 +20,12 @@ import "./tasks/misrableFlight/addSigner";
 import "./tasks/misrableFlight/setAddress";
 import "./tasks/misrableFlight/policyFlow";
 import "./tasks/misrableFlight/insurancePool";
+import "./tasks/misrableFlight/flightOracle";
 
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/naughtyPrice/settle";
 import "./tasks/lucky/setAddress";
+import "./tasks/lucky/injectFunds";
 
 import "./tasks/naughtyPrice/deployToken";
 import "./tasks/naughtyPrice/deployPool";

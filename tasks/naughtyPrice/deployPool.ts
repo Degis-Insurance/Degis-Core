@@ -82,4 +82,5 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
     storeNaughtyPoolList(poolList);
 
     await hre.run("addAllowedContractsForNP", { name: tokenName });
+    await hre.run("addAllowedContractsForFD");
   });

@@ -2,26 +2,44 @@
 	"fuji": {
 		"1": {
 			"name": "flightdelay",
-			"address": "0x68a3cb5c66171913fB9fCbd05cCdE202Ea58563C",
+			"address": "0xB475c994bcFa4d1Ce9368A378B9494F9a66765De",
 			"poolId": 1,
 			"reward": 5
 		},
 		"2": {
-			"name": "BTC_43575.0_H_2201",
-			"address": "0x828D377b6A38853eEbc4be1eDa3cdE59b23A2590",
+			"name": "BTC_44809.8_H_2201",
+			"address": "0x77bAcd62839E0bd474D58D23624Aa7d3714B12dA",
 			"poolId": 2,
 			"reward": 5
 		},
 		"3": {
-			"name": "BTC_39425.0_L_2201",
-			"address": "0x38C140eb1F09B74fad21f383D5661c31BbA8e9cD",
+			"name": "BTC_40542.2_L_2201",
+			"address": "0x71926d36D00f0a12C029CC1e25652C64844D30B4",
 			"poolId": 3,
 			"reward": 5
 		},
 		"4": {
-			"name": "ETH_3150.0_H_2201",
-			"address": "0x9E8621f8258386c1319d82bCAa8e12C757d38D55",
+			"name": "ETH_3234.0_H_2201",
+			"address": "0xd6FAB6B64e446bC954Ec16311E91935aff8d7f29",
 			"poolId": 4,
+			"reward": 5
+		},
+		"5": {
+			"name": "ETH_2926.0_L_2201",
+			"address": "0x2c0C1aCE9512d104cbD9Ea2F93eA23ECE513bB67",
+			"poolId": 5,
+			"reward": 5
+		},
+		"6": {
+			"name": "AVAX_86.1_H_2201",
+			"address": "0x77A9155954174cBAe279d4a71493a4C045ffB89f",
+			"poolId": 6,
+			"reward": 5
+		},
+		"7": {
+			"name": "AVAX_77.9_L_2201",
+			"address": "0x6fbaa26eb1FE3cd0f5c5b455f30b3FEFaB9ABABC",
+			"poolId": 7,
 			"reward": 5
 		}
 	},
