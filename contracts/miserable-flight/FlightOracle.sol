@@ -40,6 +40,9 @@ contract FlightOracle is ChainlinkClient, Ownable {
         policyFlow = IPolicyFlow(_policyFlow);
 
         setChainlinkToken(_link);
+
+        oracleAddress = 0x7D9398979267a6E050FbFDFff953Fc612A5aD4C9;
+        jobId = "bcc0a699531940479bc93cf9fa5afb3f";
     }
 
     // ---------------------------------------------------------------------------------------- //

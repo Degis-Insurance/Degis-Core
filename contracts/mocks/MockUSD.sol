@@ -10,7 +10,7 @@ import "../utils/ERC20.sol";
  *         Maximum mint amount for every single tx is 100k.
  */
 contract MockUSD is ERC20 {
-    uint256 public constant INITIAL_SUPPLY = 10000 ether;
+    uint256 public constant INITIAL_SUPPLY = 1000000 ether;
 
     uint256 public USER_CAP = 10000 ether;
 
