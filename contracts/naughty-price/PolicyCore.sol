@@ -89,7 +89,8 @@ contract PolicyCore is Ownable {
     // User Address => Token Address => User Quota Amount
     mapping(address => mapping(address => uint256)) userQuota;
 
-    // Policy token address => All the depositors for this round (store all the depositors in an array)
+    // Policy token address => All the depositors for this round
+    // (store all the depositors in an array)
     mapping(address => address[]) public allDepositors;
 
     struct SettlementInfo {
