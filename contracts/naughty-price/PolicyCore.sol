@@ -82,13 +82,13 @@ contract PolicyCore is Ownable {
     mapping(address => address) public whichStablecoin;
 
     // PolicyToken => Strike Token (e.g. AVAX30L202101 address => AVAX address)
-    mapping(address => string) policyTokenToOriginal;
+    mapping(address => string) public policyTokenToOriginal;
 
     // User Address => Token Address => User Quota Amount
     mapping(address => mapping(address => uint256)) userQuota;
 
     // Policy token address => All the depositors for this round (store all the depositors in an array)
-    mapping(address => address[]) public allDepositors;
+    mapping(address => address[]) allDepositors;
 
     struct SettlementInfo {
         uint256 price;
@@ -96,7 +96,7 @@ contract PolicyCore is Ownable {
         bool alreadySettled;
     }
     // Policy token address => Settlement result information
-    mapping(address => SettlementInfo) settleResult;
+    mapping(address => SettlementInfo) public settleResult;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //

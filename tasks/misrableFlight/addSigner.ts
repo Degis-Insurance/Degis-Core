@@ -8,6 +8,8 @@ import { readAddressList } from "../../scripts/contractAddress";
 task("addSigner", "Add new signer to the sigManager")
   .addParam("address", "The signer's address to be added", null, types.string)
   .setAction(async (taskArgs, hre) => {
+    console.log("Adding new signer: \n");
+
     const newSigner = taskArgs.address;
     console.log("Signer address to be added: ", newSigner);
 

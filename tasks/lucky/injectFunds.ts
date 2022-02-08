@@ -3,7 +3,12 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { DegisLottery, DegisLottery__factory } from "../../typechain";
+import {
+  DegisLottery,
+  DegisLottery__factory,
+  MockUSD,
+  MockUSD__factory,
+} from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
 task("injectFunds", "Inject usd into degis lottery")
@@ -26,9 +31,18 @@ task("injectFunds", "Inject usd into degis lottery")
       await hre.ethers.getContractFactory("DegisLottery");
     const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
 
+    const mockusdAddress = addressList[network.name].MockUSD;
+    const MockUSD: MockUSD__factory = await hre.ethers.getContractFactory(
+      "MockUSD"
+    );
+    const usd: MockUSD = MockUSD.attach(mockusdAddress);
+
+    const tx_1 = await usd.approve(lotteryAddress, parseUnits("500000"));
+    console.log("Tx1 details: ", await tx_1.wait());
+
     // Set
-    const tx = await lottery.injectFunds(parseUnits(injectAmount));
-    console.log("Tx details:", await tx.wait());
+    const tx_2 = await lottery.injectFunds(parseUnits(injectAmount.toString()));
+    console.log("Tx2 details:", await tx_2.wait());
 
     // Check the result
     const balance = await lottery.allPendingRewards();

@@ -81,6 +81,7 @@ task(
 
 task("setNPCore", "Set the contract addresses inside policy core").setAction(
   async (_, hre) => {
+    console.log("Set the contract addresses inside policy core:\n");
     const { network } = hre;
 
     // Signers

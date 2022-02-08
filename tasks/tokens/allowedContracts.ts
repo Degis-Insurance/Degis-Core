@@ -185,7 +185,7 @@ task("addAllowedContractsForNP", "Add allowed contracts for NP pair lp tokens")
 
     // Get the contract instance
     const MockUSD: MockUSD__factory = await hre.ethers.getContractFactory(
-      "DegisToken"
+      "MockUSD"
     );
     const usd: MockUSD = MockUSD.attach(mockUSDAddress);
 
@@ -222,6 +222,8 @@ task(
   "addAllowedContractsForFD",
   "Add allowed contracts for flight delay pair lp tokens"
 ).setAction(async (_, hre) => {
+  console.log("Adding allowed contracts for flight delay lp token: \n");
+
   const { network } = hre;
 
   // Signers
