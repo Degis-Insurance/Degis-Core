@@ -107,6 +107,11 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         _;
     }
 
+    modifier stillFarming(uint256 _poolId) {
+        require(isFarming[_poolId], "Pool is not farming");
+        _;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** View Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -234,18 +239,6 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         emit NewPoolAdded(_lpToken, _degisPerBlock);
     }
 
-    function stop(uint256 _poolId, bool _withUpdate) public {
-        require(poolList[_poolId].lastRewardBlock != 0, "Pool not exists");
-
-        if (_withUpdate) massUpdatePools();
-        else updatePool(_poolId);
-
-        isFarming[_poolId] = false;
-
-        delete poolList[_poolId];
-        emit FarmingPoolStopped(_poolId, block.number);
-    }
-
     /**
      * @notice Update the degisPerBlock for a specific pool (set to 0 to stop farming)
      * @param _poolId Id of the farming pool
@@ -269,7 +262,8 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         }
 
         if (_degisPerBlock == 0) {
-            stop(_poolId, _withUpdate);
+            isFarming[_poolId] = false;
+            emit FarmingPoolStopped(_poolId, block.number);
         } else {
             poolList[_poolId].degisPerBlock = _degisPerBlock;
         }
@@ -280,7 +274,11 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @param _poolId Id of the farming pool
      * @param _amount Staking amount
      */
-    function stake(uint256 _poolId, uint256 _amount) public nonReentrant {
+    function stake(uint256 _poolId, uint256 _amount)
+        public
+        nonReentrant
+        stillFarming(_poolId)
+    {
         require(_amount > 0, "Can not stake zero");
 
         PoolInfo storage pool = poolList[_poolId];
@@ -322,7 +320,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
 
         require(user.stakingBalance >= _amount, "Not enough stakingBalance");
 
-        updatePool(_poolId);
+        if (isFarming[_poolId]) updatePool(_poolId);
 
         uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
             user.rewardDebt;
@@ -373,7 +371,8 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @param _to Receiver of degis rewards.
      */
     function harvest(uint256 _poolId, address _to) public nonReentrant {
-        updatePool(_poolId);
+        if (isFarming[_poolId]) updatePool(_poolId);
+
         PoolInfo memory pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][_msgSender()];
 
@@ -391,22 +390,6 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         emit Harvest(_msgSender(), _to, _poolId, pendingReward);
     }
 
-    function harvestAndCompound(uint256 _poolId) public nonReentrant {
-        updatePool(_poolId);
-
-        PoolInfo memory pool = poolList[_poolId];
-        UserInfo storage user = userInfo[_poolId][_msgSender()];
-
-        uint256 pendingReward = user.stakingBalance.mul(pool.accDegisPerShare) -
-            user.rewardDebt;
-
-        if (pendingReward == 0) return;
-
-        user.stakingBalance += pendingReward;
-        user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
-
-        emit HarvestAndCompound(_msgSender(), _poolId, pendingReward);
-    }
 
     /**
      * @notice Update all farming pools (except for those stopped ones)
