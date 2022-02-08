@@ -10,37 +10,37 @@
 			"name": "BTC_44809.8_H_2201",
 			"address": "0x77bAcd62839E0bd474D58D23624Aa7d3714B12dA",
 			"poolId": 2,
-			"reward": 5
+			"reward": 0
 		},
 		"3": {
 			"name": "BTC_40542.2_L_2201",
 			"address": "0x71926d36D00f0a12C029CC1e25652C64844D30B4",
 			"poolId": 3,
-			"reward": 5
+			"reward": 0
 		},
 		"4": {
 			"name": "ETH_3234.0_H_2201",
 			"address": "0xd6FAB6B64e446bC954Ec16311E91935aff8d7f29",
 			"poolId": 4,
-			"reward": 5
+			"reward": 0
 		},
 		"5": {
 			"name": "ETH_2926.0_L_2201",
 			"address": "0x2c0C1aCE9512d104cbD9Ea2F93eA23ECE513bB67",
 			"poolId": 5,
-			"reward": 5
+			"reward": 0
 		},
 		"6": {
 			"name": "AVAX_86.1_H_2201",
 			"address": "0x77A9155954174cBAe279d4a71493a4C045ffB89f",
 			"poolId": 6,
-			"reward": 5
+			"reward": 0
 		},
 		"7": {
 			"name": "AVAX_77.9_L_2201",
 			"address": "0x6fbaa26eb1FE3cd0f5c5b455f30b3FEFaB9ABABC",
 			"poolId": 7,
-			"reward": 5
+			"reward": 0
 		}
 	},
 	"avax": {},
