@@ -40,7 +40,7 @@ interface IPolicyCore {
 
     function getAllTokens() external view returns (PolicyTokenInfo[] memory);
 
-    function checkUserQuota(address _user, address _policyTokenAddress)
+    function getUserQuota(address _user, address _policyTokenAddress)
         external
         view
         returns (uint256 _quota);

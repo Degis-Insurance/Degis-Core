@@ -302,12 +302,12 @@ contract PolicyCore is Ownable {
     }
 
     /**
-     * @notice Check a user's quota for a certain policy token
+     * @notice Get a user's quota for a certain policy token
      * @param _user Address of the user to be checked
      * @param _policyTokenAddress Address of the policy token
      * @return _quota User's quota result
      */
-    function checkUserQuota(address _user, address _policyTokenAddress)
+    function getUserQuota(address _user, address _policyTokenAddress)
         external
         view
         returns (uint256 _quota)
