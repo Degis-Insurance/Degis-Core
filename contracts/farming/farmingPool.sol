@@ -365,22 +365,6 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         emit Harvest(_msgSender(), _to, _poolId, pendingReward);
     }
 
-    function harvestAndCompound(uint256 _poolId) public nonReentrant {
-        updatePool(_poolId);
-
-        PoolInfo memory pool = poolList[_poolId];
-        UserInfo storage user = userInfo[_poolId][_msgSender()];
-
-        uint256 pendingReward = user.stakingBalance.mul(pool.accDegisPerShare) -
-            user.rewardDebt;
-
-        if (pendingReward == 0) return;
-
-        user.stakingBalance += pendingReward;
-        user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
-
-        emit HarvestAndCompound(_msgSender(), _poolId, pendingReward);
-    }
 
     /**
      * @notice Update the pool's reward status

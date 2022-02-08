@@ -32,7 +32,7 @@ contract CoreStakingPool is Ownable, BasePool {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     *
+     * @notice Stake function, will call the stake in BasePool
      */
     function _stake(
         address _user,
@@ -43,7 +43,7 @@ contract CoreStakingPool is Ownable, BasePool {
     }
 
     /**
-     *
+     * @notice Unstake function, will check some conditions and call the unstake in BasePool
      */
     function _unstake(
         address _user,
