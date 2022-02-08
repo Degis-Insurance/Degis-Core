@@ -76,7 +76,7 @@ task("addAllowedContracts", "Add allowed contracts for all tokens").setAction(
 
     // Get the contract instance
     const MockUSD: MockUSD__factory = await hre.ethers.getContractFactory(
-      "DegisToken"
+      "MockUSD"
     );
     const usd: MockUSD = MockUSD.attach(mockUSDAddress);
 

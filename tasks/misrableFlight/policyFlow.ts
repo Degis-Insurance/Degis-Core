@@ -48,14 +48,14 @@ task("settleFDPolicy", "Settle a flight delay policy")
     console.log(info.flightNumber);
     console.log("delay result: ", info.delayResult.toNumber());
 
-    // const tx = await flow.newClaimRequest(
-    //   policyId,
-    //   flightNumber,
-    //   departureTimestamp,
-    //   path,
-    //   forceUpdate
-    // );
-    // console.log("Tx details: ", await tx.wait());
+    const tx = await flow.newClaimRequest(
+      policyId,
+      flightNumber,
+      departureTimestamp,
+      path,
+      forceUpdate
+    );
+    console.log("Tx details: ", await tx.wait());
   });
 
 task("buyFDPolicy", "Buy a flight delay policy")
