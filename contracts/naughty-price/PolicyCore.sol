@@ -96,7 +96,7 @@ contract PolicyCore is Ownable {
         bool alreadySettled;
     }
     // Policy token address => Settlement result information
-    mapping(address => SettlementInfo) settleResult;
+    mapping(address => SettlementInfo) public settleResult;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
