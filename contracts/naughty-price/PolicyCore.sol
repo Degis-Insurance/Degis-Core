@@ -572,8 +572,7 @@ contract PolicyCore is Ownable {
         address _stablecoin,
         uint256 _amount
     ) public enoughUSD(_stablecoin, _amount) beforeDeadline(_policyTokenName) {
-        address policyTokenAddress = policyTokenInfoMapping[_policyTokenName]
-            .policyTokenAddress;
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if the user has enough quota (quota is only for those who mint policy tokens)
         require(
@@ -625,8 +624,8 @@ contract PolicyCore is Ownable {
         uint256 amount = userQuota[msg.sender][policyTokenAddress];
         uint256 amountWithFee = (amount * 990) / 1000;
 
-        // Burn policy tokens and send back stablecoins
-        _redeemPolicyToken(policyTokenAddress, _stablecoin, amountWithFee);
+        // Send back stablecoins directly
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
         // Delete the userQuota storage
         delete userQuota[msg.sender][policyTokenAddress];
