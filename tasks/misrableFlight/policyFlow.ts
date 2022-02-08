@@ -178,11 +178,7 @@ const signNewApplication = async (
     [_SUBMIT_CLAIM_TYPEHASH, hashedFlightNumber, user, premium_format, deadline]
   );
 
-  console.log("hashed info:", hasedInfo);
-
   const signature = await dev_account.signMessage(arrayify(hasedInfo));
-
-  console.log("signature", signature);
 
   return signature;
 };

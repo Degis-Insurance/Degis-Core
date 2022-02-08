@@ -584,7 +584,15 @@ contract PolicyCore is Ownable {
             "User's quota not sufficient"
         );
 
-        _redeemPolicyToken(policyTokenAddress, _stablecoin, _amount);
+        // Enough policy tokens to burn
+        INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
+        require(
+            policyToken.balanceOf(msg.sender) >= _amount,
+            "You do not have sufficient policy tokens to redeem"
+        );
+
+        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
+        policyToken.burn(_msgSender(), _amount);
 
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
@@ -627,9 +635,16 @@ contract PolicyCore is Ownable {
         // Charge 1% Fee when redeem / claim
         uint256 amount = userQuota[msg.sender][policyTokenAddress];
         uint256 amountWithFee = (amount * 990) / 1000;
+        uint256 amountToCollect = amount - amountWithFee;
 
-        // Burn policy tokens and send back stablecoins
-        _redeemPolicyToken(policyTokenAddress, _stablecoin, amountWithFee);
+        _collectIncome(
+            _stablecoin,
+            (amountToCollect * 8) / 10,
+            amountToCollect - (amountToCollect * 8) / 10
+        );
+
+        // Send back stablecoins directly
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
         // Delete the userQuota storage
         delete userQuota[msg.sender][policyTokenAddress];
@@ -672,7 +687,9 @@ contract PolicyCore is Ownable {
         );
 
         // Burn the policy tokens and redeem payoff
-        _redeemPolicyToken(policyTokenAddress, _stablecoin, amountWithFee);
+        // Different amounts
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
+        policyToken.burn(_msgSender(), _amount);
     }
 
     /**
@@ -801,10 +818,29 @@ contract PolicyCore is Ownable {
             "Please set the lottery address"
         );
 
-        IERC20(_stablecoin).safeTransfer(lottery, feeToLottery);
-        IERC20(_stablecoin).safeTransfer(emergencyPool, feeToEmergency);
+        _collectIncome(_stablecoin, feeToLottery, feeToEmergency);
 
         emit FinishSettlementPolicies(_policyTokenAddress, _stablecoin);
+    }
+
+    /**
+     * @notice Collect the income
+     * @param _stablecoin Address of stable coin
+     * @param _amountToLottery Fee to lottery
+     * @param _amountToEmergency Fee to emergency pool
+     */
+    function _collectIncome(
+        address _stablecoin,
+        uint256 _amountToLottery,
+        uint256 _amountToEmergency
+    ) internal {
+        require(
+            lottery != address(0) && emergencyPool != address(0),
+            "Please set the lottery address"
+        );
+
+        IERC20(_stablecoin).safeTransfer(lottery, _amountToLottery);
+        IERC20(_stablecoin).safeTransfer(emergencyPool, _amountToEmergency);
     }
 
     /**
@@ -831,23 +867,6 @@ contract PolicyCore is Ownable {
 
         // Update the user quota
         userQuota[_user][_policyTokenAddress] += _amount;
-    }
-
-    /**
-     * @notice Finish the process of redeeming policy tokens
-     * @dev This internal function is used for redeeming and claiming
-     * @param _policyTokenAddress Address of policy token
-     * @param _stablecoin Address of stable coin
-     * @param _amount Amount to claim
-     */
-    function _redeemPolicyToken(
-        address _policyTokenAddress,
-        address _stablecoin,
-        uint256 _amount
-    ) internal {
-        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
-
-        INPPolicyToken(_policyTokenAddress).burn(_msgSender(), _amount);
     }
 
     /**

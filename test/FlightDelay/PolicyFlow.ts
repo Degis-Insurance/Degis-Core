@@ -91,12 +91,12 @@ describe("Policy Flow", function () {
 
     it("should have the initial flight status url", async function () {
       expect(await flow.FLIGHT_STATUS_URL()).to.equal(
-        "https://18.163.254.50:3207/flight_status?"
+        "https://degis.io:3207/flight_status?"
       );
     });
 
     it("should have the correct initial fee", async function () {
-      expect(await flow.fee()).to.equal(0);
+      expect(await flow.fee()).to.equal(parseUnits("0.1"));
     });
 
     it("should have the correct inital policy amount", async function () {
@@ -106,13 +106,13 @@ describe("Policy Flow", function () {
 
   describe("Owner Functions", function () {
     it("should be able to change the fee", async function () {
-      await expect(flow.changeFee(parseUnits("1")))
+      await expect(flow.setFee(parseUnits("1")))
         .to.emit(flow, "FeeChanged")
         .withArgs(parseUnits("1"));
     });
 
     it("should be able to change the max payoff", async function () {
-      await expect(flow.changeMaxPayoff(parseUnits("400")))
+      await expect(flow.setMaxPayoff(parseUnits("400")))
         .to.emit(flow, "MaxPayoffChanged")
         .withArgs(parseUnits("400"));
     });
@@ -120,7 +120,7 @@ describe("Policy Flow", function () {
     it("should be able to change the min departure time", async function () {
       // 2 days
       const newMinTime = 24 * 3600 * 2;
-      await expect(flow.changeMinTimeBeforeDeparture(newMinTime))
+      await expect(flow.setMinTimeBeforeDeparture(newMinTime))
         .to.emit(flow, "MinTimeBeforeDepartureChanged")
         .withArgs(newMinTime);
     });
@@ -179,8 +179,6 @@ describe("Policy Flow", function () {
           deadline,
         ]
       );
-
-      console.log("hashed info: ", hasedInfo);
 
       const signature = await dev_account.signMessage(arrayify(hasedInfo));
 

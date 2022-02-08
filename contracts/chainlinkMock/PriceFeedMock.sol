@@ -16,6 +16,8 @@ contract PriceFeedMock is Ownable {
 
     uint256 public roundId;
 
+    uint256 public result;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -92,17 +94,19 @@ contract PriceFeedMock is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
+     * @dev For test, you can set the result you want
+     */
+    function setResult(uint256 _result) public {
+        result = _result;
+    }
+
+    /**
      * @notice Get latest price of a token
      * @param _tokenName Address of the token
      * @return price The latest price
      */
     function getLatestPrice(string memory _tokenName) public returns (uint256) {
-        PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenName];
-
-        string memory randInput = string(
-            abi.encodePacked((block.timestamp).uintToString(), address(this))
-        );
-        uint256 price = _rand(randInput) % 10000;
+        uint256 price = result;
 
         // require(price > 0, "Only accept price that > 0");
         if (price < 0) price = 0;
@@ -111,12 +115,8 @@ contract PriceFeedMock is Ownable {
 
         roundId += 1;
 
-        uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+        uint256 finalPrice = uint256(price);
 
         return finalPrice;
-    }
-
-    function _rand(string memory input) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(input)));
     }
 }

@@ -13,7 +13,11 @@ import {
   StakingPoolFactory__factory,
 } from "../../typechain";
 
-import { getNow } from "../utils";
+import {
+  getLatestBlockNumber,
+  getLatestBlockTimestamp,
+  getNow,
+} from "../utils";
 
 describe("Degis Staking", function () {
   let StakingPoolFactory: StakingPoolFactory__factory,
@@ -109,8 +113,8 @@ describe("Degis Staking", function () {
     let now: number;
 
     beforeEach(async function () {
-      now = getNow();
-      blockNumber = await ethers.provider.getBlockNumber();
+      now = await getLatestBlockTimestamp(ethers.provider);
+      blockNumber = await getLatestBlockNumber(ethers.provider);
 
       await factory.createPool(
         poolToken.address,
@@ -124,18 +128,22 @@ describe("Degis Staking", function () {
       pool = CoreStakingPool.attach(poolAddress);
 
       await poolToken.approve(poolAddress, parseUnits("1000"));
+
+      await setNextBlockTime(now + 60);
     });
 
     it("should be able to stake pool tokens and harvest reward", async function () {
+      const blocknum = 5;
+
       await expect(pool.stake(parseUnits("100"), now + 6000))
         .to.emit(pool, "Stake")
         .withArgs(dev_account.address, parseUnits("100"), now + 6000);
 
-      await mineBlocks(5);
+      await mineBlocks(blocknum);
 
       await pool.harvest();
       expect(await degis.balanceOf(dev_account.address)).to.equal(
-        parseUnits("6")
+        parseUnits((blocknum + 1).toString())
       );
     });
 

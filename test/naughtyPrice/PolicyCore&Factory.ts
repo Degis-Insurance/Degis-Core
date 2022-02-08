@@ -13,10 +13,13 @@ import {
   NPPolicyToken__factory,
   NaughtyPair__factory,
   NaughtyPair,
+  PriceFeedMock__factory,
+  PriceFeedMock,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
+  formatEther,
   getCreate2Address,
   keccak256,
   parseUnits,
@@ -24,13 +27,14 @@ import {
   solidityPack,
 } from "ethers/lib/utils";
 
-import { getNow } from "../utils";
+import { getLatestBlockTimestamp, getNow } from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
   let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
+  let PriceFeedMock: PriceFeedMock__factory, priceFeedMock: PriceFeedMock;
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
   let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
 
@@ -46,10 +50,15 @@ describe("Policy Core and Naughty Factory", function () {
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
+
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
+
     PriceGetter = await ethers.getContractFactory("PriceGetter");
     priceGetter = await PriceGetter.deploy();
+
+    PriceFeedMock = await ethers.getContractFactory("PriceFeedMock");
+    priceFeedMock = await PriceFeedMock.deploy();
 
     NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
@@ -57,14 +66,17 @@ describe("Policy Core and Naughty Factory", function () {
     core = await PolicyCore.deploy(
       usd.address,
       factory.address,
-      priceGetter.address
+      priceFeedMock.address
     );
     await core.deployed();
     await factory.deployed();
 
     await factory.setPolicyCoreAddress(core.address);
 
-    now = getNow();
+    await core.setLottery(dev_account.address);
+    await core.setEmergencyPool(dev_account.address);
+
+    now = await getLatestBlockTimestamp(ethers.provider);
     deadline = now + 30000;
     settleTimestamp = now + 60000;
   });
@@ -80,7 +92,7 @@ describe("Policy Core and Naughty Factory", function () {
 
     it("should have the correct factory & priceGetter address", async function () {
       expect(await core.factory()).to.equal(factory.address);
-      expect(await core.priceGetter()).to.equal(priceGetter.address);
+      expect(await core.priceGetter()).to.equal(priceFeedMock.address);
     });
   });
 
@@ -336,4 +348,107 @@ describe("Policy Core and Naughty Factory", function () {
       );
     });
   });
+
+  describe("Settle the result and claim / redeem", function () {
+    let policyTokenName: string,
+      policyTokenInfo: any,
+      policyTokenInstance: NPPolicyToken;
+    beforeEach(async function () {
+      policyTokenName = "BTC_24000.0_L_2112";
+      await core.deployPolicyToken(
+        "BTC",
+        false,
+        0,
+        parseUnits("24000"),
+        2112,
+        ethers.BigNumber.from(deadline),
+        ethers.BigNumber.from(settleTimestamp)
+      );
+      await core.deployPool(
+        policyTokenName,
+        usd.address,
+        ethers.BigNumber.from(deadline),
+        20
+      );
+
+      policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
+      policyTokenInstance = NPPolicyToken.attach(
+        policyTokenInfo.policyTokenAddress
+      );
+
+      await usd.approve(core.address, parseUnits("10000"), {
+        from: dev_account.address,
+      });
+      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
+    });
+
+    it("should be able to settle the final result", async function () {
+      const price = parseUnits("1000");
+      const strike = policyTokenInfo.strikePrice;
+
+      const isHappened = price <= strike;
+
+      await priceFeedMock.setResult(price);
+
+      await setNextBlockTime(settleTimestamp + 1);
+
+      await expect(core.settleFinalResult(policyTokenName))
+        .to.emit(core, "FinalResultSettled")
+        .withArgs(policyTokenName, price, isHappened);
+    });
+
+    it("should be able to redeem after settlement", async function () {
+      const price = parseUnits("100000");
+
+      await priceFeedMock.setResult(price);
+
+      await setNextBlockTime(settleTimestamp + 1);
+
+      await core.settleFinalResult(policyTokenName);
+
+      await core.redeemAfterSettlement(policyTokenName, usd.address, {
+        from: dev_account.address,
+      });
+
+      expect(
+        await core.getUserQuota(
+          dev_account.address,
+          policyTokenInfo.policyTokenAddress
+        )
+      ).to.equal(0);
+    });
+
+    it("should be able to claim after settlement", async function () {
+      const price = parseUnits("1000");
+
+      await priceFeedMock.setResult(price);
+
+      await setNextBlockTime(settleTimestamp + 1);
+
+      await core.settleFinalResult(policyTokenName);
+
+      const balance = await policyTokenInstance.balanceOf(dev_account.address);
+      console.log("user policy token balance:", formatEther(balance));
+
+      await core.claim(policyTokenName, usd.address, balance, {
+        from: dev_account.address,
+      });
+
+      expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
+        0
+      );
+
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        parseUnits("99900")
+      );
+    });
+  });
 });
+
+// hre can be used in hardhat environment but not with mocha built-in test
+async function setNextBlockTime(time: number) {
+  await hre.network.provider.request({
+    method: "evm_setNextBlockTimestamp",
+    params: [time],
+  });
+}
