@@ -144,9 +144,11 @@ contract PolicyCore is Ownable {
     );
     event NewStablecoinAdded(address _newStablecoin);
 
-    event FinishSettlementPolicies(
-        address _policyTokenAddress,
-        address _stablecoin
+    event PolicyTokensSettledForUsers(
+        string policyTokenName,
+        address stablecoin,
+        uint256 startIndex,
+        uint256 stopIndex
     );
 
     // ---------------------------------------------------------------------------------------- //
@@ -784,6 +786,13 @@ contract PolicyCore is Ownable {
                 length
             );
             currentDistributionIndex = length;
+
+            emit PolicyTokensSettledForUsers(
+                _policyTokenName,
+                _stablecoin,
+                0,
+                length
+            );
         } else {
             require(
                 currentDistributionIndex == _startIndex,
@@ -796,6 +805,13 @@ contract PolicyCore is Ownable {
                 _stopIndex
             );
             currentDistributionIndex = _stopIndex;
+
+            emit PolicyTokensSettledForUsers(
+                _policyTokenName,
+                _stablecoin,
+                _startIndex,
+                _stopIndex
+            );
         }
 
         if (currentDistributionIndex == length) {

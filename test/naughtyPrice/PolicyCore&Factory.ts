@@ -420,11 +420,9 @@ describe("Policy Core and Naughty Factory", function () {
 
     it("should be able to claim after settlement", async function () {
       const price = parseUnits("1000");
-
       await priceFeedMock.setResult(price);
 
       await setNextBlockTime(settleTimestamp + 1);
-
       await core.settleFinalResult(policyTokenName);
 
       const balance = await policyTokenInstance.balanceOf(dev_account.address);
@@ -441,6 +439,118 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         parseUnits("99900")
       );
+    });
+
+    it("should be able to settle all policy tokens for users", async function () {
+      // user1 deposit
+      await usd.mint(user1.address, parseUnits("1000"));
+      await usd.connect(user1).approve(core.address, parseUnits("1000"));
+      await core
+        .connect(user1)
+        .deposit(policyTokenName, usd.address, parseUnits("1000"));
+
+      const price = parseUnits("50000");
+      await priceFeedMock.setResult(price);
+
+      await setNextBlockTime(settleTimestamp + 1);
+      await core.settleFinalResult(policyTokenName);
+
+      await expect(
+        core.settleAllPolicyTokens(policyTokenName, usd.address, 0, 0)
+      )
+        .to.emit(core, "PolicyTokensSettledForUsers")
+        .withArgs(policyTokenName, usd.address, 0, 2);
+
+      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("990"));
+    });
+  });
+
+  describe("Settle and claim with multiple active tokens", function () {
+    let policyTokenName_H: string,
+      policyTokenName_L: string,
+      policyTokenInfo_H: any,
+      policyTokenInfo_L: any,
+      policyTokenInstance_H: NPPolicyToken,
+      policyTokenInstance_L: NPPolicyToken;
+
+    beforeEach(async function () {
+      policyTokenName_H = "BTC_24000.0_H_2112";
+      policyTokenName_L = "BTC_24000.0_L_2112";
+
+      await core.deployPolicyToken(
+        "BTC",
+        true,
+        0,
+        parseUnits("24000"),
+        2112,
+        ethers.BigNumber.from(deadline),
+        ethers.BigNumber.from(settleTimestamp)
+      );
+      await core.deployPolicyToken(
+        "BTC",
+        false,
+        0,
+        parseUnits("24000"),
+        2112,
+        ethers.BigNumber.from(deadline),
+        ethers.BigNumber.from(settleTimestamp)
+      );
+
+      await core.deployPool(
+        policyTokenName_H,
+        usd.address,
+        ethers.BigNumber.from(deadline),
+        20
+      );
+      await core.deployPool(
+        policyTokenName_L,
+        usd.address,
+        ethers.BigNumber.from(deadline),
+        20
+      );
+
+      policyTokenInfo_H = await core.policyTokenInfoMapping(policyTokenName_H);
+      policyTokenInfo_L = await core.policyTokenInfoMapping(policyTokenName_L);
+
+      policyTokenInstance_H = NPPolicyToken.attach(
+        policyTokenInfo_H.policyTokenAddress
+      );
+
+      policyTokenInstance_L = NPPolicyToken.attach(
+        policyTokenInfo_L.policyTokenAddress
+      );
+
+      await usd.approve(core.address, parseUnits("20000"), {
+        from: dev_account.address,
+      });
+      await core.deposit(policyTokenName_H, usd.address, parseUnits("10000"));
+      await core.deposit(policyTokenName_L, usd.address, parseUnits("10000"));
+
+      await usd.mint(user1.address, parseUnits("20000"));
+      await usd.connect(user1).approve(core.address, parseUnits("20000"));
+      await core
+        .connect(user1)
+        .deposit(policyTokenName_H, usd.address, parseUnits("10000"));
+      await core
+        .connect(user1)
+        .deposit(policyTokenName_L, usd.address, parseUnits("10000"));
+    });
+
+    it("should be able to settle all policy tokens with multiple active tokens", async function () {
+      const price = parseUnits("50000");
+      await priceFeedMock.setResult(price);
+
+      await setNextBlockTime(settleTimestamp + 1);
+      await core.settleFinalResult(policyTokenName_L);
+
+      await expect(
+        core.settleAllPolicyTokens(policyTokenName_L, usd.address, 0, 0)
+      )
+        .to.emit(core, "PolicyTokensSettledForUsers")
+        .withArgs(policyTokenName_L, usd.address, 0, 2);
+
+      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("9900"));
+      expect(await usd.balanceOf(core.address)).to.equal(parseUnits("20000"));
     });
   });
 });

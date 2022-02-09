@@ -225,7 +225,7 @@ contract PurchaseIncentiveVault is Ownable {
     /**
      * @notice Setttle the current round
      */
-    function settleCurrentRound() external onlyOwner {
+    function settleCurrentRound() external onlyOwner hasPassedInterval {
         RoundInfo storage info = roundInfo[currentRound];
         require(info.hasDistributed == false, "Already distributed this round");
 
