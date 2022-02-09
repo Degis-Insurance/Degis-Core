@@ -150,7 +150,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice Change the oracle fee
      * @param _fee New oracle fee
      */
-    function changeFee(uint256 _fee) external onlyOwner {
+    function setFee(uint256 _fee) external onlyOwner {
         fee = _fee;
         emit FeeChanged(_fee);
     }

@@ -13,28 +13,28 @@ import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 
 // tasks
-import "./tasks/farming/farmingPool";
-import "./tasks/farming/purchaseIncentive";
+// import "./tasks/farming/farmingPool";
+// import "./tasks/farming/purchaseIncentive";
 
-import "./tasks/misrableFlight/addSigner";
-import "./tasks/misrableFlight/setAddress";
-import "./tasks/misrableFlight/policyFlow";
-import "./tasks/misrableFlight/insurancePool";
-import "./tasks/misrableFlight/flightOracle";
+// import "./tasks/misrableFlight/addSigner";
+// import "./tasks/misrableFlight/setAddress";
+// import "./tasks/misrableFlight/policyFlow";
+// import "./tasks/misrableFlight/insurancePool";
+// import "./tasks/misrableFlight/flightOracle";
 
-import "./tasks/naughtyPrice/setAddress";
-import "./tasks/naughtyPrice/settle";
-import "./tasks/lucky/setAddress";
-import "./tasks/lucky/injectFunds";
+// import "./tasks/naughtyPrice/setAddress";
+// import "./tasks/naughtyPrice/settle";
+// import "./tasks/lucky/setAddress";
+// import "./tasks/lucky/injectFunds";
 
-import "./tasks/naughtyPrice/deployToken";
-import "./tasks/naughtyPrice/deployPool";
-import "./tasks/naughtyPrice/addStablecoin";
+// import "./tasks/naughtyPrice/deployToken";
+// import "./tasks/naughtyPrice/deployPool";
+// import "./tasks/naughtyPrice/addStablecoin";
 
-import "./tasks/tokens/addMinterBurner";
-import "./tasks/tokens/allowedContracts";
+// import "./tasks/tokens/addMinterBurner";
+// import "./tasks/tokens/allowedContracts";
 
-import "./tasks/staking/stakingPoolFactory";
+// import "./tasks/staking/stakingPoolFactory";
 
 dotenv.config();
 
