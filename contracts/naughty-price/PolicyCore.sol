@@ -764,17 +764,24 @@ contract PolicyCore is Ownable {
             "Only call this function when the event does not happen"
         );
 
+        uint256 amountToCollect = 0;
+        uint256 length = allDepositors[policyTokenAddress].length;
+
         // Settle the policies in [_startIndex, _stopIndex)
         if (_startIndex == 0 && _stopIndex == 0) {
-            uint256 length = allDepositors[policyTokenAddress].length;
-            _settlePolicy(policyTokenAddress, _stablecoin, 0, length);
+            amountToCollect += _settlePolicy(
+                policyTokenAddress,
+                _stablecoin,
+                0,
+                length
+            );
             currentDistributionIndex = length;
         } else {
             require(
                 currentDistributionIndex == _startIndex,
                 "You need to start from the last distribution point"
             );
-            _settlePolicy(
+            amountToCollect += _settlePolicy(
                 policyTokenAddress,
                 _stablecoin,
                 _startIndex,
@@ -786,39 +793,17 @@ contract PolicyCore is Ownable {
         if (
             currentDistributionIndex == allDepositors[policyTokenAddress].length
         ) {
-            _finishSettlement(policyTokenAddress, _stablecoin);
+            _collectIncome(
+                _stablecoin,
+                (amountToCollect * 8) / 10,
+                amountToCollect - (amountToCollect * 8) / 10
+            );
         }
     }
 
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Finish settlement process
-     * @param _policyTokenAddress Address of the policy token
-     * @param _stablecoin Address of stable coin
-     */
-    function _finishSettlement(address _policyTokenAddress, address _stablecoin)
-        internal
-    {
-        currentDistributionIndex = 0;
-
-        uint256 balanceRemain = IERC20(_stablecoin).balanceOf(address(this));
-
-        uint256 feeToLottery = (balanceRemain * 8) / 10;
-        uint256 feeToEmergency = balanceRemain - feeToLottery;
-
-        require(
-            lottery != address(0) && emergencyPool != address(0),
-            "Please set the lottery address"
-        );
-
-        IERC20(_stablecoin).safeTransfer(lottery, feeToLottery);
-        IERC20(_stablecoin).safeTransfer(emergencyPool, feeToEmergency);
-
-        emit FinishSettlementPolicies(_policyTokenAddress, _stablecoin);
-    }
 
     /**
      * @notice Mint Policy Token 1:1 USD
@@ -858,7 +843,7 @@ contract PolicyCore is Ownable {
         address _stablecoin,
         uint256 _start,
         uint256 _stop
-    ) internal {
+    ) internal returns (uint256 amountRemaining) {
         for (uint256 i = _start; i < _stop; i++) {
             address user = allDepositors[_policyTokenAddress][i];
             uint256 amount = userQuota[user][_policyTokenAddress];
@@ -867,6 +852,8 @@ contract PolicyCore is Ownable {
             if (amountWithFee > 0) {
                 IERC20(_stablecoin).safeTransfer(user, amountWithFee);
                 delete userQuota[user][_policyTokenAddress];
+
+                amountRemaining += amount - amountWithFee;
             } else continue;
         }
     }
