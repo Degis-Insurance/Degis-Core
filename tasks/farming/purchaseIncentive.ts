@@ -40,6 +40,9 @@ task(
   const tx = await vault.settleCurrentRound();
   console.log("tx details:", await tx.wait());
 
+  const balance = await vault.pendingReward();
+  console.log("pending reward: ", balance);
+
   // Get the round after settlement
   const roundAfter = await vault.currentRound();
   console.log("Round after settlement: ", roundAfter);
@@ -92,5 +95,3 @@ task(
     const disInterval = await vault.distributionInterval();
     console.log("Distribution interval in vault: ", disInterval);
   });
-
-

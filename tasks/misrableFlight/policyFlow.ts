@@ -48,14 +48,14 @@ task("settleFDPolicy", "Settle a flight delay policy")
     console.log(info.flightNumber);
     console.log("delay result: ", info.delayResult.toNumber());
 
-    // const tx = await flow.newClaimRequest(
-    //   policyId,
-    //   flightNumber,
-    //   departureTimestamp,
-    //   path,
-    //   forceUpdate
-    // );
-    // console.log("Tx details: ", await tx.wait());
+    const tx = await flow.newClaimRequest(
+      policyId,
+      flightNumber,
+      departureTimestamp,
+      path,
+      forceUpdate
+    );
+    console.log("Tx details: ", await tx.wait());
   });
 
 task("buyFDPolicy", "Buy a flight delay policy")
@@ -167,7 +167,7 @@ task("setURL", "Change the fee of a flight delay policy").setAction(
   async (taskArgs, hre) => {
     const { network } = hre;
 
-    const url = "https://degis.io:3705/flight_status?";
+    const url = "https://testnet.degis.io:3705/flight_status?";
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
