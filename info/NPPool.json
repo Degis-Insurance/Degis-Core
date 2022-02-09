@@ -27,6 +27,34 @@
 			"stablecoinAddress": "0xdC8E687E84dfc03cd7799De4626C6a4f978d96b9",
 			"poolDeadline": "1644379200",
 			"feeRate": 2
+		},
+		"BTC_44874.0_H_2203": {
+			"poolAddress": "0xfD9ac97Dc0669F818fBE797353643ADEf36f2F89",
+			"policyTokenAddress": "0x4FE67a33B685596b99472b01A3BC49bA289bFEb5",
+			"stablecoinAddress": "0xdC8E687E84dfc03cd7799De4626C6a4f978d96b9",
+			"poolDeadline": "1644465600",
+			"feeRate": 2
+		},
+		"BTC_42260.0_L_2203": {
+			"poolAddress": "0xAb45B2284fA81a9BDd2CF7C7110F1a10eC7E7648",
+			"policyTokenAddress": "0xe897A5195b3E6dbc648F82d5f5f495fdCD347FFc",
+			"stablecoinAddress": "0xdC8E687E84dfc03cd7799De4626C6a4f978d96b9",
+			"poolDeadline": "1644465600",
+			"feeRate": 2
+		},
+		"ETH_3204.0_H_2203": {
+			"poolAddress": "0xfDe65983bf7AB3F0A07ad386e1119b5a82cE0335",
+			"policyTokenAddress": "0xc74169297c8132018624954655b06504b3920109",
+			"stablecoinAddress": "0xdC8E687E84dfc03cd7799De4626C6a4f978d96b9",
+			"poolDeadline": "1644465600",
+			"feeRate": 2
+		},
+		"ETH_3018.0_L_2203": {
+			"poolAddress": "0xA8B7BA78dA189D51807F5773509C1c04567C40A6",
+			"policyTokenAddress": "0x4FCE8C3D489daC31096f6d2eB68c44a886776d30",
+			"stablecoinAddress": "0xdC8E687E84dfc03cd7799De4626C6a4f978d96b9",
+			"poolDeadline": "1644465600",
+			"feeRate": 2
 		}
 	},
 	"avax": {},

@@ -10,24 +10,48 @@
 			"name": "BTC_46144.0_H_2202",
 			"address": "0x8731905df5dBA82012A359C32F828dfb14E17099",
 			"poolId": 2,
-			"reward": 5
+			"reward": 0
 		},
 		"3": {
 			"name": "BTC_43456.0_L_2202",
 			"address": "0x0245114d021bd10b2bFf6908A72d14D1A2922AEc",
 			"poolId": 3,
-			"reward": 5
+			"reward": 0
 		},
 		"4": {
 			"name": "ETH_3275.0_H_2202",
 			"address": "0xC3d86953db48aFD9aD853d0817fc4238C8f2D076",
 			"poolId": 4,
-			"reward": 5
+			"reward": 0
 		},
 		"5": {
 			"name": "ETH_3085.0_L_2202",
 			"address": "0x312E93429d192d4204FfE84Fc42ef5FB37e086d2",
 			"poolId": 5,
+			"reward": 0
+		},
+		"6": {
+			"name": "BTC_44874.0_H_2203",
+			"address": "0xfD9ac97Dc0669F818fBE797353643ADEf36f2F89",
+			"poolId": 6,
+			"reward": 5
+		},
+		"7": {
+			"name": "BTC_42260.0_L_2203",
+			"address": "0xAb45B2284fA81a9BDd2CF7C7110F1a10eC7E7648",
+			"poolId": 7,
+			"reward": 5
+		},
+		"8": {
+			"name": "ETH_3204.0_H_2203",
+			"address": "0xfDe65983bf7AB3F0A07ad386e1119b5a82cE0335",
+			"poolId": 8,
+			"reward": 5
+		},
+		"9": {
+			"name": "ETH_3018.0_L_2203",
+			"address": "0xA8B7BA78dA189D51807F5773509C1c04567C40A6",
+			"poolId": 9,
 			"reward": 5
 		}
 	},
