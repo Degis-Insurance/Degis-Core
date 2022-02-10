@@ -10,6 +10,7 @@ import {
   toUtf8Bytes,
 } from "ethers/lib/utils";
 import { getNow } from "../../test/utils";
+
 // import hre from "hardhat";
 
 task("settleFDPolicy", "Settle a flight delay policy")
@@ -125,7 +126,7 @@ task("changeFee", "Change the fee of a flight delay policy")
     );
     const flow: PolicyFlow = PolicyFlow.attach(policyFlowAddress);
 
-    const tx = await flow.changeFee(parseUnits(feeOracle.toString()));
+    const tx = await flow.setFee(parseUnits(feeOracle.toString()));
     console.log("Tx details: ", await tx.wait());
   });
 
