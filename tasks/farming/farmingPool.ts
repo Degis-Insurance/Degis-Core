@@ -13,7 +13,7 @@ import { parseUnits, formatEther } from "ethers/lib/utils";
 task("addFarmingPool", "Add new farming pool")
   .addParam("name", "The name of the new farming pool", "unnamed", types.string)
   .addParam("address", "The pool's address to be added", null, types.string)
-  .addParam("reward", "Initial degis reward per block", null, types.int)
+  .addParam("reward", "Initial degis reward per block", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const poolName = taskArgs.name;
     const lptokenAddress = taskArgs.address;

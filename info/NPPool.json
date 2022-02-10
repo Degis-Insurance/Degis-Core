@@ -1,6 +1,49 @@
 {
-  "fuji": {},
-  "avax": {},
-  "localhost": {},
-  "rinkeby": {}
+	"fuji": {
+		"BTC_49830.0_H_2201": {
+			"poolAddress": "0x05f4de4A7A26F1B8D100C0187d3da9B177eB73cA",
+			"policyTokenAddress": "0x70F4f81FBBB6A50Aed938bbD9670Bb7dF1D99F41",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		},
+		"BTC_40770.0_L_2201": {
+			"poolAddress": "0x9EEF7661919DA646CE1ECFb740A4545F4Be79CaE",
+			"policyTokenAddress": "0xa40028898Db9feFd9a7E139D20bfC98C2A8c4760",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		},
+		"ETH_2880.0_L_2201": {
+			"poolAddress": "0xd5D895b8F7d162D7819CaDA8604C4D9Ff212E158",
+			"policyTokenAddress": "0xD73C42f8c0A9FF038745081A76Fe1B2Bcc43aF9C",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		},
+		"ETH_3540.0_H_2201": {
+			"poolAddress": "0xA0B9d40362bA14FEf4AA97145f7cdD2DbCf6354e",
+			"policyTokenAddress": "0x6EA126Ee36741b1870E31adE1e9f1326F45206eF",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		},
+		"AVAX_101.75_H_2201": {
+			"poolAddress": "0xE66883bce4F76a2e5e3a2E0E2107a93C71DD82b2",
+			"policyTokenAddress": "0x16E23B77BD30587Fa4DF46e5e7dE116e44222451",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		},
+		"AVAX_83.25_L_2201": {
+			"poolAddress": "0x23Ec2788Ec2FbE2c308B8904E404e3d28566bA15",
+			"policyTokenAddress": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1644868800",
+			"feeRate": 2
+		}
+	},
+	"avax": {},
+	"localhost": {},
+	"rinkeby": {}
 }

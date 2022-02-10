@@ -32,6 +32,7 @@ import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/allowedContracts";
 
 import "./tasks/staking/stakingPoolFactory";
+import "./tasks/lucky/injectFunds";
 
 dotenv.config();
 
