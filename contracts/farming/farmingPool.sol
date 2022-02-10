@@ -187,6 +187,10 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @param _startBlock New start block number
      */
     function setStartBlock(uint256 _startBlock) external onlyOwner {
+        require(
+            _nextPoolId == 1,
+            "Can not set start block after adding a pool"
+        );
         startBlock = _startBlock;
         emit StartBlockChanged(_startBlock);
     }

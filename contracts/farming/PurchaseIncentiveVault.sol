@@ -190,10 +190,12 @@ contract PurchaseIncentiveVault is Ownable {
 
         userSharesInRound[_msgSender()][currentRound] += _amount;
 
-        if (userInfo[_msgSender()].pendingRounds.length == 0)
-            userInfo[_msgSender()].lastRewardRound = currentRound;
+        uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
-        userInfo[_msgSender()].pendingRounds.push(currentRound);
+        if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
+
+        if (userInfo[_msgSender()].pendingRounds[length - 1] != currentRound)
+            userInfo[_msgSender()].pendingRounds.push(currentRound);
 
         roundInfo[currentRound].shares += _amount;
 
@@ -225,7 +227,7 @@ contract PurchaseIncentiveVault is Ownable {
     /**
      * @notice Setttle the current round
      */
-    function settleCurrentRound() external onlyOwner {
+    function settleCurrentRound() external onlyOwner hasPassedInterval {
         RoundInfo storage info = roundInfo[currentRound];
         require(info.hasDistributed == false, "Already distributed this round");
 

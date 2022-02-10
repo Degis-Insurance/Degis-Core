@@ -141,10 +141,7 @@ contract PolicyCore is Ownable {
     );
     event NewStablecoinAdded(address _newStablecoin);
 
-    event FinishSettlementPolicies(
-        address _policyTokenAddress,
-        address _stablecoin
-    );
+    
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //

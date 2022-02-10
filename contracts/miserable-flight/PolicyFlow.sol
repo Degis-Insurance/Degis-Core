@@ -258,7 +258,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         );
 
         // Generate the policy
-        uint256 currentPolicyId = totalPolicies;
+        uint256 currentPolicyId = ++totalPolicies;
         policyList[currentPolicyId] = PolicyInfo(
             PRODUCT_ID,
             _msgSender(),
@@ -283,9 +283,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
         // Store the policy's total order with userAddress
         userPolicyList[msg.sender].push(totalPolicies);
-
-        // Update total policies
-        totalPolicies += 1;
 
         emit NewPolicyApplication(currentPolicyId, msg.sender);
 
