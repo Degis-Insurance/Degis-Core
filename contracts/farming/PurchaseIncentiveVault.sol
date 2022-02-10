@@ -42,9 +42,6 @@ contract PurchaseIncentiveVault is Ownable {
 
     uint256 public MAX_ROUND = 50;
 
-    // Current distribution index
-    uint256 currentDistributionIndex;
-
     struct RoundInfo {
         uint256 shares;
         address[] users;
@@ -193,11 +190,16 @@ contract PurchaseIncentiveVault is Ownable {
 
         userSharesInRound[_msgSender()][currentRound] += _amount;
 
-        if (userInfo[_msgSender()].pendingRounds.length == 0)
-            userInfo[_msgSender()].lastRewardRound = currentRound;
+        uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
-        userInfo[_msgSender()].pendingRounds.push(currentRound);
+        // Initialize the last reward round
+        if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
 
+        // Only add the round if it's not in the array
+        if (userInfo[_msgSender()].pendingRounds[length - 1] != currentRound)
+            userInfo[_msgSender()].pendingRounds.push(currentRound);
+
+        // Update the total shares
         roundInfo[currentRound].shares += _amount;
 
         emit Stake(_msgSender(), currentRound, _amount);
@@ -228,7 +230,7 @@ contract PurchaseIncentiveVault is Ownable {
     /**
      * @notice Setttle the current round
      */
-    function settleCurrentRound() external onlyOwner {
+    function settleCurrentRound() external onlyOwner hasPassedInterval {
         RoundInfo storage info = roundInfo[currentRound];
         require(info.hasDistributed == false, "Already distributed this round");
 
@@ -274,117 +276,4 @@ contract PurchaseIncentiveVault is Ownable {
 
         degis.mintDegis(_msgSender(), userPendingReward);
     }
-
-    // /**
-    //  * @notice Distribute the reward in this round, the total number depends on the blocks during this period
-    //  * @param _startIndex Distribution start index
-    //  * @param _stopIndex Distribution stop index
-    //  */
-    // function distributeReward(uint256 _startIndex, uint256 _stopIndex)
-    //     external
-    //     onlyOwner
-    //     hasPassedInterval
-    // {
-    //     require(
-    //         degisPerRound > 0,
-    //         "Currently no Degis reward, please set degisPerRound first"
-    //     );
-    //     require(
-    //         roundInfo[currentRound].hasDistributed == false,
-    //         "Current round has been distributed"
-    //     );
-
-    //     uint256 totalShares = roundInfo[currentRound].shares;
-    //     uint256 degisPerShare = degisPerRound.div(totalShares);
-
-    //     uint256 length = getTotalUsersInRound(currentRound);
-
-    //     // Distribute all at once
-    //     // Maybe not enough gas in one tx, the judgement should be done by backend)
-    //     if (_startIndex == 0 && _stopIndex == 0) {
-    //         _distributeReward(currentRound, 0, length, degisPerShare);
-    //         currentDistributionIndex = length;
-    //     }
-    //     // Distribute in a certain range (need several times distribution)
-    //     else {
-    //         // Check if you start from the last check point
-    //         require(
-    //             currentDistributionIndex == _startIndex,
-    //             "You need to start from the last distribution point"
-    //         );
-    //         // Check if the stopindex exceeds the length
-    //         _stopIndex = _stopIndex > length ? length : _stopIndex;
-
-    //         if (_stopIndex != 0) {
-    //             _distributeReward(
-    //                 currentRound,
-    //                 _startIndex,
-    //                 _stopIndex,
-    //                 degisPerShare
-    //             );
-    //         }
-
-    //         currentDistributionIndex = _stopIndex;
-    //     }
-
-    //     if (currentDistributionIndex == length) {
-    //         _finishDistribution();
-    //     }
-    // }
-
-    // /**
-    //  * @notice Users need to claim their overall rewards
-    //  */
-    // function claimReward() external {
-    //     uint256 userReward = userRewards[_msgSender()];
-
-    //     require(userReward > 0, "You do not have any rewards to claim");
-
-    //     degis.mintDegis(_msgSender(), userReward);
-
-    //     delete userRewards[_msgSender()];
-
-    //     emit RewardClaimed(_msgSender(), userReward);
-    // }
-
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
-
-    // /**
-    //  * @notice Finish the distribution process
-    //  * @param _round Distribution round
-    //  * @param _startIndex Start index
-    //  * @param _stopIndex Stop index
-    //  * @param _degisPerShare Amount of degis per share
-    //  */
-    // function _distributeReward(
-    //     uint256 _round,
-    //     uint256 _startIndex,
-    //     uint256 _stopIndex,
-    //     uint256 _degisPerShare
-    // ) internal {
-    //     for (uint256 i = _startIndex; i < _stopIndex; i++) {
-    //         address userAddress = usersInRound[_round][i];
-    //         uint256 userShares = userSharesInRound[userAddress][_round];
-
-    //         buyerToken.burnBuyerToken(address(this), userShares);
-
-    //         if (userShares != 0) {
-    //             // Update the pending reward of a user
-    //             userRewards[userAddress] += userShares.mul(_degisPerShare);
-    //             delete userSharesInRound[userAddress][_round];
-    //         } else continue;
-    //     }
-    // }
-
-    // /**
-    //  * @notice Finish the distribution process and move to next round
-    //  */
-    // function _finishDistribution() internal {
-    //     currentDistributionIndex = 0;
-    //     hasDistributed[currentRound] = true;
-    //     currentRound += 1;
-    //     lastDistributionBlock = block.number;
-    // }
 }
