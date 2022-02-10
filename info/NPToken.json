@@ -1,5 +1,36 @@
 {
-  "fuji": {},
-  "avax": {},
-  "localhost": {}
+	"fuji": {
+		"BTC_49830.0_H_2201": {
+			"address": "0x70F4f81FBBB6A50Aed938bbD9670Bb7dF1D99F41",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		},
+		"BTC_40770.0_L_2201": {
+			"address": "0xa40028898Db9feFd9a7E139D20bfC98C2A8c4760",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		},
+		"ETH_2880.0_L_2201": {
+			"address": "0xD73C42f8c0A9FF038745081A76Fe1B2Bcc43aF9C",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		},
+		"ETH_3540.0_H_2201": {
+			"address": "0x6EA126Ee36741b1870E31adE1e9f1326F45206eF",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		},
+		"AVAX_101.75_H_2201": {
+			"address": "0x16E23B77BD30587Fa4DF46e5e7dE116e44222451",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		},
+		"AVAX_83.25_L_2201": {
+			"address": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
+			"deadline": 1644868800,
+			"settleTime": 1644883200
+		}
+	},
+	"avax": {},
+	"localhost": {}
 }
