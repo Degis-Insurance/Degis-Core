@@ -16,7 +16,7 @@ import "hardhat/console.sol";
 contract SigManager is Ownable {
     using ECDSA for bytes32;
 
-    mapping(address => bool) public _isValidSigner;
+    mapping(address => bool) _isValidSigner;
 
     bytes32 public _SUBMIT_APPLICATION_TYPEHASH;
 
@@ -119,8 +119,6 @@ contract SigManager is Ownable {
         uint256 _premium,
         uint256 _deadline
     ) external view {
-        console.log("signature");
-        console.logBytes(signature);
         bytes32 hashedFlightNumber = keccak256(bytes(_flightNumber));
 
         bytes32 hashData = keccak256(
@@ -133,9 +131,6 @@ contract SigManager is Ownable {
             )
         );
         address signer = hashData.toEthSignedMessageHash().recover(signature);
-        console.logBytes32(hashData);
-        console.log("SIgner:");
-        console.log(signer);
 
         require(
             _isValidSigner[signer],

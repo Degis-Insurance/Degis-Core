@@ -70,8 +70,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
-
-        fee = 0.1 * 10**18;
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -253,7 +251,9 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         );
 
         // Generate the policy
+        // Use ++totalPolicies to keep the policyId the same as ERC721 tokenId
         uint256 currentPolicyId = ++totalPolicies;
+
         policyList[currentPolicyId] = PolicyInfo(
             PRODUCT_ID,
             _msgSender(),
@@ -284,12 +284,14 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         return currentPolicyId;
     }
 
-    /** @notice Make a claim request
-     *  @param _policyId The total order/id of the policy
-     *  @param _flightNumber The flight number
-     *  @param _timestamp The flight departure timestamp
-     *  @param _path Which data in json needs to get
-     *  @param _forceUpdate Owner can force to update
+    /**
+     * @notice Make a claim request
+     * @dev Anyone can make a new claim
+     * @param _policyId The total order/id of the policy
+     * @param _flightNumber The flight number
+     * @param _timestamp The flight departure timestamp
+     * @param _path Which data in json needs to get
+     * @param _forceUpdate Owner can force to update
      */
     function newClaimRequest(
         uint256 _policyId,

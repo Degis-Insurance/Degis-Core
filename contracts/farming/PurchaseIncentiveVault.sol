@@ -190,11 +190,16 @@ contract PurchaseIncentiveVault is Ownable {
 
         userSharesInRound[_msgSender()][currentRound] += _amount;
 
-        if (userInfo[_msgSender()].pendingRounds.length == 0)
-            userInfo[_msgSender()].lastRewardRound = currentRound;
+        uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
-        userInfo[_msgSender()].pendingRounds.push(currentRound);
+        // Initialize the last reward round
+        if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
 
+        // Only add the round if it's not in the array
+        if (userInfo[_msgSender()].pendingRounds[length - 1] != currentRound)
+            userInfo[_msgSender()].pendingRounds.push(currentRound);
+
+        // Update the total shares
         roundInfo[currentRound].shares += _amount;
 
         emit Stake(_msgSender(), currentRound, _amount);
