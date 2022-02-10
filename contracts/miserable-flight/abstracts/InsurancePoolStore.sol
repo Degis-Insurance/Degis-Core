@@ -7,7 +7,7 @@ abstract contract InsurancePoolStore {
 
     uint256 public purchaseIncentiveAmount;
 
-    uint256 public frozenTime = 7 days; // 7 days
+    uint256 public frozenTime = 12 hours; // 7 days
 
     struct UserInfo {
         uint256 depositTime;

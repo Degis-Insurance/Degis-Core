@@ -141,8 +141,6 @@ contract PolicyCore is Ownable {
     );
     event NewStablecoinAdded(address _newStablecoin);
 
-    
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -627,13 +625,13 @@ contract PolicyCore is Ownable {
 
         // Charge 1% Fee when redeem / claim
         uint256 amount = userQuota[msg.sender][policyTokenAddress];
-        uint256 amountWithFee = (amount * 990) / 1000;
+        uint256 amountWithFee = (amount * 980) / 1000;
         uint256 amountToCollect = amount - amountWithFee;
 
         _collectIncome(
             _stablecoin,
-            (amountToCollect * 8) / 10,
-            amountToCollect - (amountToCollect * 8) / 10
+            amountToCollect / 2,
+            amountToCollect - amountToCollect / 2
         );
 
         // Burn policy tokens and send back stablecoins
@@ -670,7 +668,7 @@ contract PolicyCore is Ownable {
         );
 
         // Charge 1% fee
-        uint256 amountWithFee = (_amount * 990) / 1000;
+        uint256 amountWithFee = (_amount * 980) / 1000;
 
         // Users must have enough policy tokens to claim
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
@@ -844,7 +842,7 @@ contract PolicyCore is Ownable {
         for (uint256 i = _start; i < _stop; i++) {
             address user = allDepositors[_policyTokenAddress][i];
             uint256 amount = userQuota[user][_policyTokenAddress];
-            uint256 amountWithFee = (amount * 990) / 1000;
+            uint256 amountWithFee = (amount * 980) / 1000;
 
             if (amountWithFee > 0) {
                 IERC20(_stablecoin).safeTransfer(user, amountWithFee);

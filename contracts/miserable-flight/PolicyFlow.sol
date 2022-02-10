@@ -28,7 +28,8 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    string public FLIGHT_STATUS_URL = "https://degis.io:3207/flight_status?";
+    string public FLIGHT_STATUS_URL =
+        "https://testnet.degis.io:3207/flight_status?";
 
     uint256 public totalPolicies;
 
@@ -38,7 +39,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
     mapping(address => uint256[]) userPolicyList;
 
-    mapping(bytes32 => uint256) requestList;
+    mapping(bytes32 => uint256) public requestList;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -151,7 +152,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @notice Set the oracle fee
      * @param _fee New oracle fee
      */
-    function changeFee(uint256 _fee) external onlyOwner {
+    function setFee(uint256 _fee) external onlyOwner {
         fee = _fee;
         emit FeeChanged(_fee);
     }
@@ -244,8 +245,11 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         );
 
         require(
-            _departureTimestamp >= currentTimestamp + MIN_TIME_BEFORE_DEPARTURE,
-            "It's too close to the departure time, you cannot buy this policy"
+            (_departureTimestamp >=
+                currentTimestamp + MIN_TIME_BEFORE_DEPARTURE) &&
+                (_departureTimestamp <=
+                    currentTimestamp + MAX_TIME_UNTIL_DEPARTURE),
+            "Too close or too far from departure time"
         );
 
         // Should be signed by operators

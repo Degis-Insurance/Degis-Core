@@ -46,6 +46,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // TODO: remove this after testnet v2
   await hre.run("addAllowedContracts");
+  await hre.run("addAllowedContractsForFD");
   // Run some afterwards tasks
   await hre.run("addMinterBurner");
 };

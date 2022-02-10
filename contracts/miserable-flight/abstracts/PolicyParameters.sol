@@ -12,4 +12,5 @@ abstract contract PolicyParameters {
 
     // Minimum time before departure for applying
     uint256 public MIN_TIME_BEFORE_DEPARTURE = 24 hours;
+    uint256 public MAX_TIME_UNTIL_DEPARTURE = 14 days;
 }

@@ -7,8 +7,6 @@ import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens.
@@ -85,6 +83,10 @@ contract PurchaseIncentiveVault is Ownable {
 
         // Initialize the last distribution block
         lastDistributionBlock = block.number;
+
+        // TODO: only for testnet v2
+        distributionInterval = 24 hours;
+        degisPerRound = 50000 ether;
     }
 
     // ---------------------------------------------------------------------------------------- //
