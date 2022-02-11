@@ -7,7 +7,7 @@ import { DegisLottery, DegisLottery__factory } from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
 task("injectFunds", "Inject usd into degis lottery")
-  .addParam("amount", "Amount of usd to be injected", null, types.int)
+  .addParam("amount", "Amount of usd to be injected", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const injectAmount = taskArgs.amount;

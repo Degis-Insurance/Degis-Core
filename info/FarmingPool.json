@@ -1,48 +1,84 @@
 {
-	"fuji": {
-		"1": {
-			"name": "MiserableFlight",
-			"address": "0xCFFa179086028255e8A75aBDe8AA261253133cF9",
-			"poolId": 1,
-			"reward": "0.25"
-		},
-		"2": {
-			"name": "BTC_49830.0_H_2201",
-			"address": "0x05f4de4A7A26F1B8D100C0187d3da9B177eB73cA",
-			"poolId": 2,
-			"reward": "0.25"
-		},
-		"3": {
-			"name": "BTC_40770.0_L_2201",
-			"address": "0xa40028898Db9feFd9a7E139D20bfC98C2A8c4760",
-			"poolId": 3,
-			"reward": "0.1"
-		},
-		"4": {
-			"name": "ETH_3540.0_H_2201",
-			"address": "0x6EA126Ee36741b1870E31adE1e9f1326F45206eF",
-			"poolId": 4,
-			"reward": "0.1"
-		},
-		"5": {
-			"name": "ETH_2880.0_L_2201",
-			"address": "0xD73C42f8c0A9FF038745081A76Fe1B2Bcc43aF9C",
-			"poolId": 5,
-			"reward": "0.1"
-		},
-		"6": {
-			"name": "AVAX_101.75_H_2201",
-			"address": "0x16E23B77BD30587Fa4DF46e5e7dE116e44222451",
-			"poolId": 6,
-			"reward": "0.1"
-		},
-		"7": {
-			"name": "AVAX_83.25_L_2201",
-			"address": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
-			"poolId": 7,
-			"reward": "0.1"
-		}
-	},
-	"avax": {},
-	"localhost": {}
+  "fuji": {
+    "1": {
+      "name": "MiserableFlight",
+      "address": "0xCFFa179086028255e8A75aBDe8AA261253133cF9",
+      "poolId": 1,
+      "reward": "0.25"
+    },
+    "2": {
+      "name": "BTC_49830.0_H_2201",
+      "address": "0x05f4de4A7A26F1B8D100C0187d3da9B177eB73cA",
+      "poolId": 2,
+      "reward": "0.25"
+    },
+    "3": {
+      "name": "BTC_40770.0_L_2201",
+      "address": "0xa40028898Db9feFd9a7E139D20bfC98C2A8c4760",
+      "poolId": 3,
+      "reward": "0.1"
+    },
+    "4": {
+      "name": "ETH_3540.0_H_2201",
+      "address": "0x6EA126Ee36741b1870E31adE1e9f1326F45206eF",
+      "poolId": 4,
+      "reward": "0.1"
+    },
+    "5": {
+      "name": "ETH_2880.0_L_2201",
+      "address": "0xD73C42f8c0A9FF038745081A76Fe1B2Bcc43aF9C",
+      "poolId": 5,
+      "reward": "0.1"
+    },
+    "6": {
+      "name": "AVAX_101.75_H_2201",
+      "address": "0x16E23B77BD30587Fa4DF46e5e7dE116e44222451",
+      "poolId": 6,
+      "reward": "0.1"
+    },
+    "7": {
+      "name": "AVAX_83.25_L_2201",
+      "address": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
+      "poolId": 7,
+      "reward": "0.1"
+    },
+    "8": {
+      "name": "BTC_40770.0_L_2201",
+      "address": "0x9EEF7661919DA646CE1ECFb740A4545F4Be79CaE",
+      "poolId": 8,
+      "reward": "0.25"
+    },
+    "9": {
+      "name": "ETH_3540.0_H_2201",
+      "address": "0xA0B9d40362bA14FEf4AA97145f7cdD2DbCf6354e",
+      "poolId": 9,
+      "reward": "0.25"
+    },
+    "10": {
+      "name": "ETH_2880.0_L_2201",
+      "address": "0xd5D895b8F7d162D7819CaDA8604C4D9Ff212E158",
+      "poolId": 10,
+      "reward": "0.25"
+    },
+    "11": {
+      "name": "AVAX_101.75_H_2201",
+      "address": "0xE66883bce4F76a2e5e3a2E0E2107a93C71DD82b2",
+      "poolId": 11,
+      "reward": "0.25"
+    },
+    "12": {
+      "name": "AVAX_83.25_L_2201",
+      "address": "0x23Ec2788Ec2FbE2c308B8904E404e3d28566bA15",
+      "poolId": 12,
+      "reward": "0.25"
+    },
+    "13": {
+      "name": "BTC_49830.0_H_2201",
+      "address": "0x70F4f81FBBB6A50Aed938bbD9670Bb7dF1D99F41",
+      "poolId": 13,
+      "reward": "0.25"
+    }
+  },
+  "avax": {},
+  "localhost": {}
 }
