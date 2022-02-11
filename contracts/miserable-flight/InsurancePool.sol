@@ -66,8 +66,6 @@ contract InsurancePool is
         rewardDistribution[0] = 50;
         rewardDistribution[1] = 40;
         rewardDistribution[2] = 10;
-
-        frozenTime = 7 days;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -378,10 +376,7 @@ contract InsurancePool is
      * @notice revert the last unstake request for a user
      * @param _user user's address
      */
-    function revertUnstakeRequest(address _user)
-        public
-        notZeroAddress(_user)
-    {
+    function revertUnstakeRequest(address _user) public notZeroAddress(_user) {
         require(
             _msgSender() == _user || _msgSender() == owner(),
             "Only the owner or the user himself can revert"

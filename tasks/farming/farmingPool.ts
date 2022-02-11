@@ -66,7 +66,7 @@ task("addFarmingPool", "Add new farming pool")
 
 task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
   .addParam("id", "Pool id", null, types.int)
-  .addParam("reward", "Degis reward per block", null, types.int)
+  .addParam("reward", "Degis reward per block", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolId = taskArgs.id;

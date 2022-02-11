@@ -23,6 +23,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   addressList[network.name].FarmingPool = farmingPool.address;
+  console.log(DegisToken.address);
 
   const purchaseIncentive = await deploy("PurchaseIncentiveVault", {
     contract: "PurchaseIncentiveVault",

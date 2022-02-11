@@ -196,8 +196,12 @@ contract PurchaseIncentiveVault is Ownable {
 
         if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
 
-        if (userInfo[_msgSender()].pendingRounds[length - 1] != currentRound)
-            userInfo[_msgSender()].pendingRounds.push(currentRound);
+        if (
+            length == 0 ||
+            (length != 0 &&
+                userInfo[_msgSender()].pendingRounds[length - 1] !=
+                currentRound)
+        ) userInfo[_msgSender()].pendingRounds.push(currentRound);
 
         roundInfo[currentRound].shares += _amount;
 
