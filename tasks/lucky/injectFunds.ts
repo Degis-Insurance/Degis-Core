@@ -3,7 +3,12 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { DegisLottery, DegisLottery__factory } from "../../typechain";
+import {
+  DegisLottery,
+  DegisLottery__factory,
+  MockUSD,
+  MockUSD__factory,
+} from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
 task("injectFunds", "Inject usd into degis lottery")
@@ -26,6 +31,12 @@ task("injectFunds", "Inject usd into degis lottery")
       await hre.ethers.getContractFactory("DegisLottery");
     const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
 
+    const usdAddress = addressList[network.name].MockUSD;
+    const MockUSD: MockUSD__factory = await hre.ethers.getContractFactory(
+      "MockUSD"
+    );
+    const usd: MockUSD = MockUSD.attach(usdAddress);
+    await usd.approve(lotteryAddress, parseUnits("1000000"));
     // Set
     const tx = await lottery.injectFunds(parseUnits(injectAmount));
     console.log("Tx details:", await tx.wait());
