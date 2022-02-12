@@ -125,7 +125,7 @@ contract InsurancePool is
     /**
      * @notice Get the balance that one user(LP) can unlock
      * @param _user User's address
-     * @return _unlockedAmount Unlocked amount of the pool
+     * @return _unlockedAmount Unlocked amount of the user
      */
     function getUnlockedFor(address _user)
         public
@@ -220,6 +220,8 @@ contract InsurancePool is
             "You do not have enough USD or input 0 amount"
         );
 
+        _updateLPValue();
+
         _deposit(_msgSender(), _amount);
     }
 
@@ -234,6 +236,8 @@ contract InsurancePool is
         nonReentrant
     {
         address _user = _msgSender();
+
+        _updateLPValue();
 
         uint256 userBalance = getUserBalance(_user);
         require(
@@ -253,6 +257,9 @@ contract InsurancePool is
             unstakeQueue.push(_user);
             unstakeAmount = unlocked; // only withdraw the unlocked value
             userInfo[_user].pendingBalance += remainingURequest;
+
+            // Update real staking balance
+            realStakingBalance -= remainingURequest;
         }
 
         _withdraw(_user, unstakeAmount);
@@ -263,6 +270,8 @@ contract InsurancePool is
      */
     function unstakeMax() external afterFrozenTime(_msgSender()) nonReentrant {
         address _user = _msgSender();
+
+        _updateLPValue();
 
         uint256 userBalance = getUserBalance(_user);
 
@@ -278,6 +287,9 @@ contract InsurancePool is
             unstakeQueue.push(_user);
             unstakeAmount = unlocked; // only withdraw the unlocked value
             userInfo[_user].pendingBalance += remainingURequest;
+
+            // Update real staking balance
+            realStakingBalance -= remainingURequest;
         }
 
         _withdraw(_user, unstakeAmount);
@@ -366,7 +378,7 @@ contract InsurancePool is
     /**
      * @notice Revert the last unstake request for a user
      */
-    function revertLastUnstakeRequest() public {
+    function revertLatestUnstakeRequest() public {
         // Use memory for less gas
         UnstakeRequest[] memory userRequests = unstakeRequests[_msgSender()];
 
@@ -385,9 +397,10 @@ contract InsurancePool is
      * @notice revert all unstake requests for a user
      */
     function revertAllUnstakeRequest() public {
-        UnstakeRequest[] memory userRequests = unstakeRequests[_msgSender()];
-
-        require(userRequests.length > 0, "No pending unstake request");
+        require(
+            unstakeRequests[_msgSender()].length > 0,
+            "No pending unstake request"
+        );
 
         _removeAllRequest(_msgSender());
 
@@ -408,7 +421,9 @@ contract InsurancePool is
      * @param _user User's address
      */
     function _removeAllRequest(address _user) internal {
-        for (uint256 i = 0; i < unstakeRequests[_user].length; i += 1) {
+        uint256 length = unstakeRequests[_user].length;
+        for (uint256 i = 0; i < length; i++) {
+            // Remove the latest unstake request from the queue
             _removeOneRequest(_user);
         }
     }
