@@ -5,7 +5,6 @@ interface IPolicyStruct {
     enum PolicyStatus {
         INI,
         SOLD,
-        DECLINED,
         EXPIRED,
         CLAIMED
     }

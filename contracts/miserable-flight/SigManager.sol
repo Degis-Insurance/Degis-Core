@@ -3,7 +3,6 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 import "../utils/Ownable.sol";
-
 import "hardhat/console.sol";
 
 /**

@@ -450,7 +450,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
             policyToken.mintPolicyToken(_user);
         } else {
-            policyList[_policyId].status = PolicyStatus.DECLINED;
             emit PolicyDeclined(_policyId, _user);
             revert("not sufficient capacity in the insurance pool");
         }

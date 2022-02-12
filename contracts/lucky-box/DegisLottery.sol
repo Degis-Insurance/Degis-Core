@@ -725,15 +725,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         return size > 0;
     }
 
-    //
-    //
-
-    ///
-
-    //
-
-    //
-
     function _viewUserTicetAmount(address user, uint256 encodedNumber)
         internal
         view

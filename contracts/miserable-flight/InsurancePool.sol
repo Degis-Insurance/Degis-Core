@@ -32,7 +32,7 @@ contract InsurancePool is
     // *********************************** Other Contracts ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    IERC20 public USDT;
+    IERC20 public USDToken;
     IDegisLottery public degisLottery;
 
     // ---------------------------------------------------------------------------------------- //
@@ -43,12 +43,12 @@ contract InsurancePool is
      * @notice Constructor function
      * @param _emergencyPool Emergency pool address
      * @param _degisLottery Lottery address
-     * @param _usdtAddress USDT address
+     * @param _usdAddress USDToken address
      */
     constructor(
         address _emergencyPool,
         address _degisLottery,
-        address _usdtAddress
+        address _usdAddress
     ) {
         // Initialize some factors
         collateralFactor = 1e18;
@@ -57,7 +57,7 @@ contract InsurancePool is
 
         emergencyPool = _emergencyPool;
 
-        USDT = IERC20(_usdtAddress);
+        USDToken = IERC20(_usdAddress);
 
         degisLottery = IDegisLottery(_degisLottery);
 
@@ -214,13 +214,9 @@ contract InsurancePool is
      * @notice LPs stake assets into the pool
      * @param _amount The amount that the user want to stake
      */
-    function stake(uint256 _amount)
-        external
-        notZeroAddress(_msgSender())
-        nonReentrant
-    {
+    function stake(uint256 _amount) external nonReentrant {
         require(
-            IERC20(USDT).balanceOf(_msgSender()) >= _amount && _amount > 0,
+            IERC20(USDToken).balanceOf(_msgSender()) >= _amount && _amount > 0,
             "You do not have enough USD or input 0 amount"
         );
 
@@ -234,7 +230,6 @@ contract InsurancePool is
      */
     function unstake(uint256 _amount)
         external
-        notZeroAddress(_msgSender())
         afterFrozenTime(_msgSender())
         nonReentrant
     {
@@ -266,12 +261,7 @@ contract InsurancePool is
     /**
      * @notice Unstake the max amount of a user
      */
-    function unstakeMax()
-        external
-        notZeroAddress(_msgSender())
-        afterFrozenTime(_msgSender())
-        nonReentrant
-    {
+    function unstakeMax() external afterFrozenTime(_msgSender()) nonReentrant {
         address _user = _msgSender();
 
         uint256 userBalance = getUserBalance(_user);
@@ -314,7 +304,7 @@ contract InsurancePool is
         _updateLockedRatio();
 
         // Remember approval
-        USDT.safeTransferFrom(_user, address(this), _premium);
+        USDToken.safeTransferFrom(_user, address(this), _premium);
 
         emit BuyNewPolicy(_user, _premium, _payoff);
     }
@@ -368,64 +358,45 @@ contract InsurancePool is
         _distributePremium(_premium);
 
         // Pay the claim
-        USDT.safeTransfer(_user, _realPayoff);
+        USDToken.safeTransfer(_user, _realPayoff);
 
         _updateLPValue();
     }
 
     /**
-     * @notice revert the last unstake request for a user
-     * @param _user user's address
+     * @notice Revert the last unstake request for a user
      */
-    function revertUnstakeRequest(address _user)
-        public
-        notZeroAddress(_user)
-    {
-        require(
-            _msgSender() == _user || _msgSender() == owner(),
-            "Only the owner or the user himself can revert"
-        );
+    function revertLastUnstakeRequest() public {
+        // Use memory for less gas
+        UnstakeRequest[] memory userRequests = unstakeRequests[_msgSender()];
 
-        UnstakeRequest[] storage userRequests = unstakeRequests[_user];
-        require(
-            userRequests.length > 0,
-            "this user has no pending unstake request"
-        );
+        require(userRequests.length > 0, "No pending unstake request");
 
         uint256 index = userRequests.length - 1;
-        uint256 remainingRequest = userRequests[index].pendingAmount -
-            userRequests[index].fulfilledAmount;
 
-        realStakingBalance += remainingRequest;
-        userInfo[_user].pendingBalance -= remainingRequest;
+        realStakingBalance += userRequests[index].pendingAmount;
+        userInfo[_msgSender()].pendingBalance -= userRequests[index]
+            .pendingAmount;
 
-        _removeOneRequest(_user);
+        _removeOneRequest(_msgSender());
     }
 
     /**
      * @notice revert all unstake requests for a user
-     * @param _user user's address
      */
-    function revertAllUnstakeRequest(address _user)
-        public
-        notZeroAddress(_user)
-    {
-        require(
-            _msgSender() == _user || _msgSender() == owner(),
-            "Only the owner or the user himself can revert"
-        );
+    function revertAllUnstakeRequest() public {
+        UnstakeRequest[] memory userRequests = unstakeRequests[_msgSender()];
 
-        UnstakeRequest[] storage userRequests = unstakeRequests[_user];
-        require(
-            userRequests.length > 0,
-            "this user has no pending unstake request"
-        );
-        _removeAllRequest(_user);
-        delete unstakeRequests[_user];
+        require(userRequests.length > 0, "No pending unstake request");
 
-        uint256 remainingRequest = userInfo[_user].pendingBalance;
+        _removeAllRequest(_msgSender());
+
+        delete unstakeRequests[_msgSender()];
+
+        uint256 remainingRequest = userInfo[_msgSender()].pendingBalance;
+
         realStakingBalance += remainingRequest;
-        userInfo[_user].pendingBalance = 0;
+        userInfo[_msgSender()].pendingBalance = 0;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -478,7 +449,7 @@ contract InsurancePool is
         _updateLockedRatio();
 
         // msg.sender always pays
-        USDT.safeTransferFrom(_user, address(this), _amount);
+        USDToken.safeTransferFrom(_user, address(this), _amount);
 
         // LP Token number need to be newly minted
         uint256 lp_num = _amount.div(LPValue);
@@ -504,7 +475,7 @@ contract InsurancePool is
 
         _updateLockedRatio();
 
-        USDT.safeTransfer(_user, _amount);
+        USDToken.safeTransfer(_user, _amount);
 
         uint256 lp_num = _amount.div(LPValue);
         _burn(_user, lp_num);
@@ -524,9 +495,17 @@ contract InsurancePool is
         );
 
         // Transfer some reward to emergency pool
-        USDT.safeTransfer(emergencyPool, premiumToEmergency);
+        USDToken.safeTransfer(emergencyPool, premiumToEmergency);
 
         // Transfer some reward to lottery
+        // Check the allowance first
+        if (
+            USDToken.allowance(address(this), address(degisLottery)) <
+            10000000 ether
+        ) {
+            USDToken.approve(address(degisLottery), type(uint256).max);
+        }
+
         degisLottery.injectFunds(premiumToLottery);
 
         emit PremiumDistributed(premiumToEmergency, premiumToLottery);
@@ -538,7 +517,7 @@ contract InsurancePool is
      */
     function _updateLPValue() internal {
         uint256 totalLP = totalSupply();
-        uint256 totalBalance = IERC20(USDT).balanceOf(address(this));
+        uint256 totalBalance = IERC20(USDToken).balanceOf(address(this));
 
         LPValue = (totalBalance - activePremiums).div(totalLP);
     }
