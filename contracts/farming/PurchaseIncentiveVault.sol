@@ -7,8 +7,6 @@ import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens.
@@ -101,7 +99,7 @@ contract PurchaseIncentiveVault is Ownable {
     modifier hasPassedInterval() {
         require(
             block.number - lastDistributionBlock > distributionInterval,
-            "Two distributions need to have an interval "
+            "Two distributions need to have an interval"
         );
         _;
     }
@@ -248,7 +246,10 @@ contract PurchaseIncentiveVault is Ownable {
 
         uint256 totalShares = info.shares;
 
-        info.degisPerShare = degisPerRound.div(totalShares);
+        // If no one staked, no reward
+        if (totalShares == 0) info.degisPerShare = 0;
+        else info.degisPerShare = degisPerRound.div(totalShares);
+
         info.hasDistributed = true;
 
         currentRound += 1;

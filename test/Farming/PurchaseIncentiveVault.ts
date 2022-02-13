@@ -68,7 +68,19 @@ describe("Purcahse Incentive Vault", function () {
     });
   });
 
-  describe("Owner Functions", function () {});
+  describe("Owner Functions", function () {
+    it("should be able to set degis per round", async function () {
+      await expect(vault.setDegisPerRound(parseUnits("1")))
+        .to.emit(vault, "DegisPerRoundChanged")
+        .withArgs(0, parseUnits("1"));
+    });
+
+    it("should be able to set distribution interval", async function () {
+      await expect(vault.setDistributionInterval(20))
+        .to.emit(vault, "DistributionIntervalChanged")
+        .withArgs(0, 20);
+    });
+  });
 
   describe("Stake and Redeem", function () {
     it("should be able to stake buyer tokens", async function () {
@@ -104,7 +116,39 @@ describe("Purcahse Incentive Vault", function () {
       expect(await vault.lastDistributionBlock()).to.equal(blockNumber);
     });
 
-    it("should be able to claim by user himself", async function () {
+    it("should not be able to settle before passing the interval", async function () {
+      await vault.settleCurrentRound();
+      await expect(vault.settleCurrentRound()).to.be.revertedWith(
+        "Two distributions need to have an interval"
+      );
+    });
+
+    it("should be able to claim reward by user himself", async function () {
+      await vault.stake(parseUnits("1"));
+      await vault.connect(user1).stake(parseUnits("3"));
+      await vault.settleCurrentRound();
+
+      await vault.claimOwnReward();
+      await vault.connect(user1).claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("1")
+      );
+      expect(await degis.balanceOf(user1.address)).to.equal(parseUnits("3"));
+    });
+
+    it("should not be able to repeat claiming after a claim", async function () {
+      await vault.stake(parseUnits("1"));
+      await vault.settleCurrentRound();
+
+      await vault.claimOwnReward();
+
+      await expect(vault.claimOwnReward()).to.be.revertedWith(
+        "Have claimed all"
+      );
+    });
+
+    it("should be able to claim by user himself after several rounds - all", async function () {
       const times = 20;
       for (let i = 0; i < times; i++) {
         await vault.stake(parseUnits("1"));
@@ -138,6 +182,36 @@ describe("Purcahse Incentive Vault", function () {
       );
 
       await expect(vault.claimOwnReward()).to.be.revertedWith(
+        "Have claimed all"
+      );
+      await expect(vault.connect(user1).claimOwnReward()).to.be.revertedWith(
+        "Have claimed all"
+      );
+    });
+
+    it("should be able to claim by user himself after several rounds - part", async function () {
+      const times = 4;
+      for (let i = 0; i < times; i++) {
+        await vault.stake(parseUnits("1"));
+        if (i % 2 == 0) {
+          await vault.connect(user1).stake(parseUnits("3"));
+        }
+        await vault.settleCurrentRound();
+      }
+
+      await vault.claimOwnReward();
+      await vault.connect(user1).claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("10")
+      );
+      expect(await degis.balanceOf(user1.address)).to.equal(parseUnits("6"));
+
+      await expect(vault.claimOwnReward()).to.be.revertedWith(
+        "Have claimed all"
+      );
+
+      await expect(vault.connect(user1).claimOwnReward()).to.be.revertedWith(
         "Have claimed all"
       );
     });
