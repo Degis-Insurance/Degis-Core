@@ -29,6 +29,36 @@
 			"address": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
 			"deadline": 1644868800,
 			"settleTime": 1644883200
+		},
+		"BTC_46606.0_H_2202": {
+			"address": "0x7A85b7b3eB7a5a12e02DfdA9C63Ac10e1987c284",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
+		},
+		"BTC_38132.0_L_2202": {
+			"address": "0xB962B7a098aab197fAF6686Fb4Fb62ec48602bFe",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
+		},
+		"ETH_3223.0_H_2202": {
+			"address": "0x98E39c97AcEB444FcEFbB13edAeeD238e10f05d4",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
+		},
+		"ETH_2637.0_L_2202": {
+			"address": "0x264316102409FB3152A4617364b19E51833fFA62",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
+		},
+		"AVAX_90.5_H_2202": {
+			"address": "0x2C783773D93032C18F930ecb05BaB87ADDfEFc96",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
+		},
+		"AVAX_74.1_L_2202": {
+			"address": "0x2a63989c7ba82f74C08B00Db560C49520a08dF5D",
+			"deadline": 1645056000,
+			"settleTime": 1645070400
 		}
 	},
 	"avax": {},
