@@ -246,3 +246,29 @@ task(
   const tx_2 = await pool.setAllowedSenders(allowedContracts);
   console.log("Tx2 details: ", await tx_2.wait());
 });
+
+task("removeMinter", "Remove minter from contract").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const degisTokenAddress = addressList[network.name].DegisToken;
+
+    const DegisToken: DegisToken__factory = await hre.ethers.getContractFactory(
+      "DegisToken"
+    );
+    const degis: DegisToken = DegisToken.attach(degisTokenAddress);
+
+    await degis.removeMinter("0xC169Fb5cA79697819946ccfF2C19f8cAC72c7d4e");
+
+    const isMinter = await degis.isMinter(
+      "0xC169Fb5cA79697819946ccfF2C19f8cAC72c7d4e"
+    );
+    console.log("is minter?, ", isMinter);
+  }
+);

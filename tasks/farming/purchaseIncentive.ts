@@ -22,6 +22,7 @@ task(
 
   const addressList = readAddressList();
   const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
+  // const vaultAddress = "0xC169Fb5cA79697819946ccfF2C19f8cAC72c7d4e";
 
   console.log(
     "The purchase incentive vault address of this network is: ",
@@ -65,6 +66,7 @@ task(
 
     const addressList = readAddressList();
     const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
+    // const vaultAddress = "0xC169Fb5cA79697819946ccfF2C19f8cAC72c7d4e";
 
     console.log(
       "The purchase incentive vault address of this network is: ",
@@ -80,10 +82,10 @@ task(
     const tx_1 = await vault.setDegisPerRound(
       parseUnits(degisPerRound.toString())
     );
-    console.log("Tx details:", await tx_1.wait());
+    console.log("Tx1 details:", await tx_1.wait());
 
     const tx_2 = await vault.setDistributionInterval(rewardInterval);
-    console.log("Tx details:", await tx_2.wait());
+    console.log("Tx2 details:", await tx_2.wait());
 
     // Check the result
     const degisR = await vault.degisPerRound();

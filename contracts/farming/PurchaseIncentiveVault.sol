@@ -7,6 +7,8 @@ import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens.
@@ -49,7 +51,7 @@ contract PurchaseIncentiveVault is Ownable {
     mapping(uint256 => RoundInfo) public roundInfo;
 
     struct UserInfo {
-        uint256 lastRewardRound;
+        uint256 lastRewardRoundIndex;
         uint256[] pendingRounds;
     }
     mapping(address => UserInfo) public userInfo;
@@ -68,7 +70,11 @@ contract PurchaseIncentiveVault is Ownable {
 
     event DegisPerRoundChanged(uint256 oldPerRound, uint256 newPerRound);
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
-    event Stake(address userAddress, uint256 currentRound, uint256 amount);
+    event Stake(
+        address userAddress,
+        uint256 currentRound,
+        uint256 actualAmount
+    );
     event Redeem(address userAddress, uint256 currentRound, uint256 amount);
     event RewardClaimed(address userAddress, uint256 userReward);
 
@@ -83,10 +89,6 @@ contract PurchaseIncentiveVault is Ownable {
 
         // Initialize the last distribution block
         lastDistributionBlock = block.number;
-
-        // TODO: only for testnet v2
-        distributionInterval = 24 hours;
-        degisPerRound = 50000 ether;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -136,8 +138,8 @@ contract PurchaseIncentiveVault is Ownable {
     function pendingReward() public view returns (uint256) {
         UserInfo memory user = userInfo[_msgSender()];
 
-        uint256 length = user.pendingRounds.length - user.lastRewardRound;
-        uint256 startIndex = user.lastRewardRound;
+        uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+        uint256 startIndex = user.lastRewardRoundIndex;
 
         uint256 userPendingReward;
         for (uint256 i = startIndex; i < startIndex + length; i++) {
@@ -184,18 +186,24 @@ contract PurchaseIncentiveVault is Ownable {
      * @param _amount Amount of buyer tokens to stake
      */
     function stake(uint256 _amount) external {
+        uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
+        uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
+
+        uint256 actualAmount = vaultBalanceAfter - vaultBalanceBefore;
 
         if (userSharesInRound[_msgSender()][currentRound] == 0) {
             roundInfo[currentRound].users.push(_msgSender());
         }
 
-        userSharesInRound[_msgSender()][currentRound] += _amount;
+        userSharesInRound[_msgSender()][currentRound] += actualAmount;
 
         uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
-        if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
+        // Initialize the last reward round
+        if (length == 0) userInfo[_msgSender()].lastRewardRoundIndex = 0;
 
+        // Only add the round if it's not in the array
         if (
             length == 0 ||
             (length != 0 &&
@@ -203,9 +211,10 @@ contract PurchaseIncentiveVault is Ownable {
                 currentRound)
         ) userInfo[_msgSender()].pendingRounds.push(currentRound);
 
-        roundInfo[currentRound].shares += _amount;
+        // Update the total shares
+        roundInfo[currentRound].shares += actualAmount;
 
-        emit Stake(_msgSender(), currentRound, _amount);
+        emit Stake(_msgSender(), currentRound, actualAmount);
     }
 
     /**
@@ -254,18 +263,16 @@ contract PurchaseIncentiveVault is Ownable {
 
         require(user.pendingRounds.length != 0, "You have no shares ever");
 
-        uint256 length = user.pendingRounds.length - user.lastRewardRound;
-        uint256 startIndex = user.lastRewardRound;
+        uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+
+        require(length > 0, "Have claimed all");
+
+        uint256 startIndex = user.lastRewardRoundIndex;
         if (length > MAX_ROUND) {
             length = MAX_ROUND;
 
-            userInfo[_msgSender()].lastRewardRound = user.pendingRounds[
-                MAX_ROUND
-            ];
-        } else
-            userInfo[_msgSender()].lastRewardRound =
-                user.pendingRounds[length - 1] +
-                1;
+            userInfo[_msgSender()].lastRewardRoundIndex += MAX_ROUND;
+        } else userInfo[_msgSender()].lastRewardRoundIndex += length;
 
         uint256 userPendingReward;
 
