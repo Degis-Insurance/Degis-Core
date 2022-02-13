@@ -70,6 +70,8 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
+
+        fee = 0.1 * 10**18;
     }
 
     // ----------------------------------------------------------------------------------- //
@@ -246,6 +248,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
             signature,
             _flightNumber,
             _departureTimestamp,
+            _landingDate,
             _msgSender(),
             _premium,
             _deadline
@@ -301,24 +304,26 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         string memory _path,
         bool _forceUpdate
     ) public {
+        PolicyInfo memory policy = policyList[_policyId];
+
         // Can not get the result before landing date
         // Landing date may not be true, may be a fixed interval (4hours)
         require(
-            block.timestamp >= policyList[_policyId].landingTimestamp,
+            block.timestamp >= policy.landingTimestamp,
             "Can only claim a policy after its expected landing timestamp"
         );
 
         // Check if the policy has been settled
         require(
-            (!policyList[_policyId].alreadySettled) ||
+            (!policy.alreadySettled) ||
                 (_forceUpdate && (_msgSender() == owner())),
-            "The policy status has already been settled, or you need to make a force update"
+            "Already settled"
         );
 
         // Check if the flight number is correct
         require(
             keccak256(abi.encodePacked(_flightNumber)) ==
-                keccak256(abi.encodePacked(policyList[_policyId].flightNumber)),
+                keccak256(abi.encodePacked(policy.flightNumber)),
             "Wrong flight number provided"
         );
 
@@ -326,9 +331,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         require(
             keccak256(abi.encodePacked(_timestamp)) ==
                 keccak256(
-                    abi.encodePacked(
-                        policyList[_policyId].departureTimestamp.uintToString()
-                    )
+                    abi.encodePacked(policy.departureTimestamp.uintToString())
                 ),
             "Wrong departure timestamp provided"
         );
@@ -527,6 +530,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         bytes calldata signature,
         string memory _flightNumber,
         uint256 _departureTimestamp,
+        uint256 _landingDate,
         address _address,
         uint256 _premium,
         uint256 _deadline
@@ -535,6 +539,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
             signature,
             _flightNumber,
             _departureTimestamp,
+            _landingDate,
             _address,
             _premium,
             _deadline

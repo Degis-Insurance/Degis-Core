@@ -136,6 +136,10 @@ describe("Purcahse Incentive Vault", function () {
       expect(await degis.balanceOf(user1.address)).to.equal(
         parseUnits((6 * times).toString())
       );
+
+      await expect(vault.claimOwnReward()).to.be.revertedWith(
+        "Have claimed all"
+      );
     });
 
     it("should be able to check the pending reward", async function () {

@@ -67,6 +67,7 @@ contract InsurancePool is
         rewardDistribution[2] = 10;
 
         frozenTime = 7 days;
+        MAX_UNSTAKE_LENGTH = 50;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -250,6 +251,11 @@ contract InsurancePool is
 
         // Will jump this part when the pool has enough liquidity
         if (_amount > unlocked) {
+            require(
+                unstakeQueue.length < MAX_UNSTAKE_LENGTH,
+                "Unstake queue is full"
+            );
+
             uint256 remainingURequest = _amount - unlocked;
             unstakeRequests[_user].push(
                 UnstakeRequest(remainingURequest, 0, false)
@@ -280,6 +286,11 @@ contract InsurancePool is
 
         // Will jump this part when the pool has enough liquidity
         if (userBalance > unlocked) {
+            require(
+                unstakeQueue.length < MAX_UNSTAKE_LENGTH,
+                "Unstake queue is full"
+            );
+
             uint256 remainingURequest = userBalance - unlocked;
             unstakeRequests[_user].push(
                 UnstakeRequest(remainingURequest, 0, false)
@@ -340,6 +351,7 @@ contract InsurancePool is
 
         // If there is any unstake request in the queue
         uint256 remainingPayoff = _payoff;
+
         if (unstakeQueue.length > 0) {
             _dealUnstakeQueue(remainingPayoff);
         }
@@ -532,9 +544,13 @@ contract InsurancePool is
      */
     function _updateLPValue() internal {
         uint256 totalLP = totalSupply();
-        uint256 totalBalance = IERC20(USDToken).balanceOf(address(this));
 
-        LPValue = (totalBalance - activePremiums).div(totalLP);
+        if (totalLP == 0) return;
+        else {
+            uint256 totalBalance = IERC20(USDToken).balanceOf(address(this));
+
+            LPValue = (totalBalance - activePremiums).div(totalLP);
+        }
     }
 
     /**

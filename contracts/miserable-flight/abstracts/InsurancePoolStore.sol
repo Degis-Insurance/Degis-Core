@@ -28,6 +28,8 @@ abstract contract InsurancePoolStore {
     // list of all unstake users
     address[] internal unstakeQueue;
 
+    uint256 public MAX_UNSTAKE_LENGTH;
+
     // 1 LP = LPValue(USD)
     uint256 public LPValue;
 

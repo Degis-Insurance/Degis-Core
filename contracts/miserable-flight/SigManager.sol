@@ -115,6 +115,7 @@ contract SigManager is Ownable {
         bytes calldata signature,
         string memory _flightNumber,
         uint256 _departureTimestamp,
+        uint256 _landingDate,
         address _user,
         uint256 _premium,
         uint256 _deadline
@@ -126,6 +127,7 @@ contract SigManager is Ownable {
                 _SUBMIT_APPLICATION_TYPEHASH,
                 hashedFlightNumber,
                 _departureTimestamp,
+                _landingDate,
                 _user,
                 _premium,
                 _deadline

@@ -15,6 +15,7 @@ interface ISigManager {
         bytes calldata signature,
         string memory _flightNumber,
         uint256 _departureTimestamp,
+        uint256 _landingDate,
         address _address,
         uint256 _premium,
         uint256 _deadline

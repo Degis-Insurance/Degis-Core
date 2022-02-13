@@ -51,7 +51,7 @@ contract PurchaseIncentiveVault is Ownable {
     mapping(uint256 => RoundInfo) public roundInfo;
 
     struct UserInfo {
-        uint256 lastRewardRound;
+        uint256 lastRewardRoundIndex;
         uint256[] pendingRounds;
     }
     mapping(address => UserInfo) public userInfo;
@@ -138,8 +138,8 @@ contract PurchaseIncentiveVault is Ownable {
     function pendingReward() public view returns (uint256) {
         UserInfo memory user = userInfo[_msgSender()];
 
-        uint256 length = user.pendingRounds.length - user.lastRewardRound;
-        uint256 startIndex = user.lastRewardRound;
+        uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+        uint256 startIndex = user.lastRewardRoundIndex;
 
         uint256 userPendingReward;
         for (uint256 i = startIndex; i < startIndex + length; i++) {
@@ -201,7 +201,7 @@ contract PurchaseIncentiveVault is Ownable {
         uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
         // Initialize the last reward round
-        if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
+        if (length == 0) userInfo[_msgSender()].lastRewardRoundIndex = 0;
 
         // Only add the round if it's not in the array
         if (
@@ -263,18 +263,16 @@ contract PurchaseIncentiveVault is Ownable {
 
         require(user.pendingRounds.length != 0, "You have no shares ever");
 
-        uint256 length = user.pendingRounds.length - user.lastRewardRound;
-        uint256 startIndex = user.lastRewardRound;
+        uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+
+        require(length > 0, "Have claimed all");
+
+        uint256 startIndex = user.lastRewardRoundIndex;
         if (length > MAX_ROUND) {
             length = MAX_ROUND;
 
-            userInfo[_msgSender()].lastRewardRound = user.pendingRounds[
-                MAX_ROUND
-            ];
-        } else
-            userInfo[_msgSender()].lastRewardRound =
-                user.pendingRounds[length - 1] +
-                1;
+            userInfo[_msgSender()].lastRewardRoundIndex += MAX_ROUND;
+        } else userInfo[_msgSender()].lastRewardRoundIndex += length;
 
         uint256 userPendingReward;
 

@@ -161,7 +161,9 @@ describe("Policy Flow", function () {
       const _SUBMIT_CLAIM_TYPEHASH = keccak256(
         toUtf8Bytes("5G is great, physical lab is difficult to find")
       );
-      const flightNumber = "AQ1299";
+
+      const departureTime = now + 48 * 3600;
+      const landingTime = now + 50 * 3600;
 
       const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
 
@@ -170,10 +172,20 @@ describe("Policy Flow", function () {
       const deadline = now + 30000;
 
       const hasedInfo = solidityKeccak256(
-        ["bytes", "bytes", "address", "uint256", "uint256"],
+        [
+          "bytes",
+          "bytes",
+          "uint256",
+          "uint256",
+          "address",
+          "uint256",
+          "uint256",
+        ],
         [
           _SUBMIT_CLAIM_TYPEHASH,
           hashedFlightNumber,
+          departureTime,
+          landingTime,
           dev_account.address,
           premium.toString(),
           deadline,
