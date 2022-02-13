@@ -114,6 +114,7 @@ contract SigManager is Ownable {
     function checkSignature(
         bytes calldata signature,
         string memory _flightNumber,
+        uint256 _departureTimestamp,
         address _user,
         uint256 _premium,
         uint256 _deadline
@@ -124,6 +125,7 @@ contract SigManager is Ownable {
             abi.encodePacked(
                 _SUBMIT_APPLICATION_TYPEHASH,
                 hashedFlightNumber,
+                _departureTimestamp,
                 _user,
                 _premium,
                 _deadline

@@ -70,7 +70,11 @@ contract PurchaseIncentiveVault is Ownable {
 
     event DegisPerRoundChanged(uint256 oldPerRound, uint256 newPerRound);
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
-    event Stake(address userAddress, uint256 currentRound, uint256 amount);
+    event Stake(
+        address userAddress,
+        uint256 currentRound,
+        uint256 actualAmount
+    );
     event Redeem(address userAddress, uint256 currentRound, uint256 amount);
     event RewardClaimed(address userAddress, uint256 userReward);
 
@@ -182,13 +186,17 @@ contract PurchaseIncentiveVault is Ownable {
      * @param _amount Amount of buyer tokens to stake
      */
     function stake(uint256 _amount) external {
+        uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
+        uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
+
+        uint256 actualAmount = vaultBalanceAfter - vaultBalanceBefore;
 
         if (userSharesInRound[_msgSender()][currentRound] == 0) {
             roundInfo[currentRound].users.push(_msgSender());
         }
 
-        userSharesInRound[_msgSender()][currentRound] += _amount;
+        userSharesInRound[_msgSender()][currentRound] += actualAmount;
 
         uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
@@ -196,13 +204,17 @@ contract PurchaseIncentiveVault is Ownable {
         if (length == 0) userInfo[_msgSender()].lastRewardRound = currentRound;
 
         // Only add the round if it's not in the array
-        if (userInfo[_msgSender()].pendingRounds[length - 1] != currentRound)
-            userInfo[_msgSender()].pendingRounds.push(currentRound);
+        if (
+            length == 0 ||
+            (length != 0 &&
+                userInfo[_msgSender()].pendingRounds[length - 1] !=
+                currentRound)
+        ) userInfo[_msgSender()].pendingRounds.push(currentRound);
 
         // Update the total shares
-        roundInfo[currentRound].shares += _amount;
+        roundInfo[currentRound].shares += actualAmount;
 
-        emit Stake(_msgSender(), currentRound, _amount);
+        emit Stake(_msgSender(), currentRound, actualAmount);
     }
 
     /**

@@ -433,10 +433,6 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             "Sorry, current lottery is not open"
         );
 
-        if (userCheckPoint[msg.sender] == 0) {
-            userCheckPoint[msg.sender] = currentLotteryId;
-        }
-
         if (userCheckPoint[msg.sender] < currentLotteryId) {
             receiveRewards(currentLotteryId - 1);
         }
@@ -448,25 +444,25 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             uint256 ticketAmount = usersTickets[msg.sender].ticketsAmount[
                 encodedNumber
             ];
-            uint256 ticketWight = usersTickets[msg.sender].ticketsWeight[
+            uint256 ticketWeight = usersTickets[msg.sender].ticketsWeight[
                 encodedNumber
             ];
             _redeemTicket(
                 poolTickets,
                 _ticketNumbers[i],
                 ticketAmount,
-                ticketWight
+                ticketWeight
             );
             _redeemTicket(
                 usersTickets[_msgSender()],
                 _ticketNumbers[i],
                 ticketAmount,
-                ticketWight
+                ticketWeight
             );
             totalAmount += ticketAmount;
         }
 
-        require(totalAmount != 0, "No tickets are being bought");
+        require(totalAmount != 0, "No tickets are being redeemed");
 
         DEGToken.safeTransfer(_msgSender(), totalAmount * TICKET_PRICE);
 
@@ -577,7 +573,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
      * @param _lotteryId lottery id
      * @param user user address
      */
-    function receiveRward(uint256 _lotteryId, address user)
+    function receiveReward(uint256 _lotteryId, address user)
         public
         view
         returns (uint256)
@@ -620,7 +616,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         uint256 awards = 0;
 
         for (uint256 i = userCheckPoint[msg.sender]; i <= _lotteryId; i++) {
-            uint256 award = receiveRward(i, msg.sender);
+            uint256 award = receiveReward(i, msg.sender);
             awards += award;
             lotteries[i].pendingRewards -= award;
 
@@ -849,7 +845,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
                 userRewards[i - _startRound] = usersRewards[user][i];
             } else {
                 userDrawed[i - _startRound] = 0;
-                userRewards[i - _startRound] = receiveRward(i, user);
+                userRewards[i - _startRound] = receiveReward(i, user);
             }
         }
         return (lotteryIds, userRewards, userDrawed);

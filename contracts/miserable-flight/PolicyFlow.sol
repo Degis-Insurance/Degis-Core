@@ -245,6 +245,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         _checkSignature(
             signature,
             _flightNumber,
+            _departureTimestamp,
             _msgSender(),
             _premium,
             _deadline
@@ -525,6 +526,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     function _checkSignature(
         bytes calldata signature,
         string memory _flightNumber,
+        uint256 _departureTimestamp,
         address _address,
         uint256 _premium,
         uint256 _deadline
@@ -532,6 +534,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         sigManager.checkSignature(
             signature,
             _flightNumber,
+            _departureTimestamp,
             _address,
             _premium,
             _deadline

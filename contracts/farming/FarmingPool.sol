@@ -304,6 +304,11 @@ contract FarmingPool is Ownable, ReentrancyGuard {
             _safeDegisTransfer(_msgSender(), pending);
         }
 
+        // Check the difference before and after the stake
+        uint256 poolBalanceBefore = IERC20(pool.lpToken).balanceOf(
+            address(this)
+        );
+
         // Transfer the lptoken into farming pool
         IERC20(pool.lpToken).safeTransferFrom(
             _msgSender(),
@@ -311,7 +316,15 @@ contract FarmingPool is Ownable, ReentrancyGuard {
             _amount
         );
 
-        user.stakingBalance += _amount;
+        // Check the difference before and after the stake
+        uint256 poolBalanceAfter = IERC20(pool.lpToken).balanceOf(
+            address(this)
+        );
+
+        // Actual deposit amount
+        uint256 actualAmount = poolBalanceAfter - poolBalanceBefore;
+
+        user.stakingBalance += actualAmount;
         user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
 
         emit Stake(_msgSender(), _poolId, _amount);

@@ -14,6 +14,7 @@ interface ISigManager {
     function checkSignature(
         bytes calldata signature,
         string memory _flightNumber,
+        uint256 _departureTimestamp,
         address _address,
         uint256 _premium,
         uint256 _deadline
