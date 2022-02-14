@@ -32,7 +32,7 @@ contract DegisToken is ERC20PermitWithMultipleMinters {
     modifier notExceedCap(uint256 _amount) {
         require(
             totalSupply() + _amount <= CAP,
-            "DegisToken exceeds the cap (100 million)"
+            "Exceeds the DEG cap (100 million)"
         );
         _;
     }
