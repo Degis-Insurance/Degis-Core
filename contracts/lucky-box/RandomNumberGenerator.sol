@@ -5,7 +5,6 @@ import "../utils/Ownable.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../libraries/StringsUtils.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBase.sol";
-
 import "./interfaces/IDegisLottery.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
