@@ -8,7 +8,7 @@ import {
 } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
 
 task(
   "settlePurchaseIncentive",
@@ -36,7 +36,13 @@ task(
 
   // Get the round before settlement
   const roundBefore = await vault.currentRound();
-  console.log("Round before settlement:", roundBefore);
+  console.log("Round before settlement:", roundBefore.toNumber());
+
+  const degisR = await vault.degisPerRound();
+  console.log("Degis reward in vault: ", formatEther(degisR));
+
+  const disInterval = await vault.distributionInterval();
+  console.log("Distribution interval in vault: ", disInterval.toString());
 
   const tx = await vault.settleCurrentRound();
   console.log("tx details:", await tx.wait());
