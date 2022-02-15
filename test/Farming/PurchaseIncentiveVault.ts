@@ -100,20 +100,36 @@ describe("Purcahse Incentive Vault", function () {
   });
 
   describe("Settle the Reward", function () {
+    let degisPerRound = parseUnits("4");
+    let distributionInterval = 1;
+
     beforeEach(async function () {
-      await vault.setDegisPerRound(parseUnits("4"));
-      await vault.setDistributionInterval(1);
+      await vault.setDegisPerRound(degisPerRound);
+      await vault.setDistributionInterval(distributionInterval);
     });
 
     it("should be able to settle correctly", async function () {
       await vault.stake(parseUnits("1"));
       await vault.connect(user1).stake(parseUnits("3"));
-      await vault.settleCurrentRound();
+      const blockNumber = await ethers.provider.getBlockNumber();
+
+      await expect(vault.settleCurrentRound())
+        .to.emit(vault, "RoundSettled")
+        .withArgs(currentRound, blockNumber + 1);
 
       expect(await vault.currentRound()).to.equal(currentRound + 1);
+      expect(await vault.lastDistributionBlock()).to.equal(blockNumber + 1);
+    });
 
-      const blockNumber = await ethers.provider.getBlockNumber();
-      expect(await vault.lastDistributionBlock()).to.equal(blockNumber);
+    it("should be able to settle after several stake&redeem", async function () {
+      await vault.stake(parseUnits("1"));
+      await vault.stake(parseUnits("1"));
+
+      await vault.redeem(parseUnits("1"));
+
+      await vault.stake(parseUnits("1"));
+
+      await expect(vault.settleCurrentRound()).to.emit(vault, "RoundSettled");
     });
 
     it("should not be able to settle before passing the interval", async function () {
@@ -145,6 +161,47 @@ describe("Purcahse Incentive Vault", function () {
 
       await expect(vault.claimOwnReward()).to.be.revertedWith(
         "Have claimed all"
+      );
+    });
+
+    it("should be able to claim by user himself when he stake in current round", async function () {
+      await vault.stake(parseUnits("1"));
+      await vault.settleCurrentRound();
+
+      await vault.stake(parseUnits("1"));
+      await vault.claimOwnReward();
+      await vault.settleCurrentRound();
+
+      await vault.stake(parseUnits("1"));
+      await vault.settleCurrentRound();
+      await vault.claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("12")
+      );
+    });
+
+    it("should be able to claim with max round amount", async function () {
+      await vault.setMaxRound(1);
+
+      await vault.stake(parseUnits("1"));
+      await vault.settleCurrentRound();
+
+      await vault.stake(parseUnits("1"));
+      await vault.claimOwnReward();
+      await vault.settleCurrentRound();
+
+      await vault.stake(parseUnits("1"));
+      await vault.settleCurrentRound();
+      await vault.claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("8")
+      );
+
+      await vault.claimOwnReward();
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        parseUnits("12")
       );
     });
 

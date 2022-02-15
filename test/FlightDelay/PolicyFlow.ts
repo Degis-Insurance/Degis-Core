@@ -194,7 +194,7 @@ describe("Policy Flow", function () {
 
       const signature = await dev_account.signMessage(arrayify(hasedInfo));
 
-      console.log("signature: ", signature);
+      // console.log("signature: ", signature);
 
       await flow.newApplication(
         productId,

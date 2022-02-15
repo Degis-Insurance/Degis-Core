@@ -75,6 +75,7 @@ contract PurchaseIncentiveVault is Ownable {
     );
     event Redeem(address userAddress, uint256 currentRound, uint256 amount);
     event RewardClaimed(address userAddress, uint256 userReward);
+    event RoundSettled(uint256 currentRound, uint256 blockNumber);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -175,6 +176,13 @@ contract PurchaseIncentiveVault is Ownable {
         emit DistributionIntervalChanged(oldInterval, _newInterval);
     }
 
+    /**
+     * @notice Set the max rounds to claim rewards
+     */
+    function setMaxRound(uint256 _maxRound) external onlyOwner {
+        MAX_ROUND = _maxRound;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -255,6 +263,8 @@ contract PurchaseIncentiveVault is Ownable {
 
         currentRound += 1;
         lastDistributionBlock = block.number;
+
+        emit RoundSettled(currentRound - 1, block.number);
     }
 
     /**
@@ -265,20 +275,25 @@ contract PurchaseIncentiveVault is Ownable {
 
         require(user.pendingRounds.length != 0, "You have no shares ever");
 
-        uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+        uint256 roundsToClaim = user.pendingRounds.length -
+            user.lastRewardRoundIndex;
 
-        require(length > 0, "Have claimed all");
+        require(roundsToClaim > 0, "Have claimed all");
 
-        uint256 startIndex = user.lastRewardRoundIndex;
-        if (length > MAX_ROUND) {
-            length = MAX_ROUND;
+        if (user.pendingRounds[user.pendingRounds.length - 1] == currentRound) {
+            roundsToClaim -= 1;
+        }
+
+        if (roundsToClaim > MAX_ROUND) {
+            roundsToClaim = MAX_ROUND;
 
             userInfo[_msgSender()].lastRewardRoundIndex += MAX_ROUND;
-        } else userInfo[_msgSender()].lastRewardRoundIndex += length;
+        } else userInfo[_msgSender()].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
+        uint256 startIndex = user.lastRewardRoundIndex;
 
-        for (uint256 i = startIndex; i < startIndex + length; i++) {
+        for (uint256 i = startIndex; i < startIndex + roundsToClaim; i++) {
             uint256 round = user.pendingRounds[i];
 
             userPendingReward += roundInfo[round].degisPerShare.mul(

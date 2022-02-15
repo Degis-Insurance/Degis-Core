@@ -55,10 +55,6 @@ describe("Degis Staking", function () {
     it("should be able to create a new pool", async function () {
       const blockNumber = await ethers.provider.getBlockNumber();
 
-      const overrides = {
-        nonce: 2,
-      };
-
       await expect(
         factory.createPool(
           poolToken.address,
