@@ -10,7 +10,7 @@
 			"name": "BTC_49830.0_H_2201",
 			"address": "0x05f4de4A7A26F1B8D100C0187d3da9B177eB73cA",
 			"poolId": 2,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"3": {
 			"name": "BTC_40770.0_L_2201",
@@ -46,31 +46,31 @@
 			"name": "BTC_40770.0_L_2201",
 			"address": "0x9EEF7661919DA646CE1ECFb740A4545F4Be79CaE",
 			"poolId": 8,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"9": {
 			"name": "ETH_3540.0_H_2201",
 			"address": "0xA0B9d40362bA14FEf4AA97145f7cdD2DbCf6354e",
 			"poolId": 9,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"10": {
 			"name": "ETH_2880.0_L_2201",
 			"address": "0xd5D895b8F7d162D7819CaDA8604C4D9Ff212E158",
 			"poolId": 10,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"11": {
 			"name": "AVAX_101.75_H_2201",
 			"address": "0xE66883bce4F76a2e5e3a2E0E2107a93C71DD82b2",
 			"poolId": 11,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"12": {
 			"name": "AVAX_83.25_L_2201",
 			"address": "0x23Ec2788Ec2FbE2c308B8904E404e3d28566bA15",
 			"poolId": 12,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"13": {
 			"name": "BTC_49830.0_H_2201",
@@ -112,6 +112,42 @@
 			"name": "AVAX_74.1_L_2202",
 			"address": "0xedC0A012A0154528BB5aB19B9E3DB4F501b0b4ab",
 			"poolId": 19,
+			"reward": "0.25"
+		},
+		"20": {
+			"name": "BTC_48092.0_H_2203",
+			"address": "0x58820ce51D51A0e18C17ca082E3cd3511FC825D3",
+			"poolId": 20,
+			"reward": "0.25"
+		},
+		"21": {
+			"name": "BTC_39348.0_L_2203",
+			"address": "0x3ff7646c632971c81d36b5746c31F2b683aEE82A",
+			"poolId": 21,
+			"reward": "0.25"
+		},
+		"22": {
+			"name": "ETH_3355.0_H_2203",
+			"address": "0xE9A36760c8ab61BE094777dc10dE67462dB9630D",
+			"poolId": 22,
+			"reward": "0.25"
+		},
+		"23": {
+			"name": "ETH_2745.0_L_2203",
+			"address": "0xC66Df8505CC8D7b980176bbbec4FA13A9D5438b2",
+			"poolId": 23,
+			"reward": "0.25"
+		},
+		"24": {
+			"name": "AVAX_94.0_H_2203",
+			"address": "0x965958f8286C24c349baaE46217eF5351018dCB5",
+			"poolId": 24,
+			"reward": "0.25"
+		},
+		"25": {
+			"name": "AVAX_77.0_L_2203",
+			"address": "0xb518b0D8ddd8Fe1F7e6e71ceA83079d459fd09A2",
+			"poolId": 25,
 			"reward": "0.25"
 		}
 	},
