@@ -100,3 +100,46 @@ task(
     const disInterval = await vault.distributionInterval();
     console.log("Distribution interval in vault: ", disInterval);
   });
+
+task("getUser", "Get the user's balance").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+  const addressList = readAddressList();
+  const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
+  // const vaultAddress = "0xC169Fb5cA79697819946ccfF2C19f8cAC72c7d4e";
+
+  console.log(
+    "The purchase incentive vault address of this network is: ",
+    vaultAddress
+  );
+
+  const PurchaseIncentiveVault: PurchaseIncentiveVault__factory =
+    await hre.ethers.getContractFactory("PurchaseIncentiveVault");
+  const vault: PurchaseIncentiveVault =
+    PurchaseIncentiveVault.attach(vaultAddress);
+
+  const userShares = await vault.userSharesInRound(
+    "0xf0535790505d39E526650031B404973530917ea2",
+    3
+  );
+  console.log("User shares in", 3, ": ", formatEther(userShares));
+
+  const userRewards = await vault.userRewards(
+    "0xf0535790505d39E526650031B404973530917ea2"
+  );
+  console.log("User rewards: ", formatEther(userRewards));
+
+  const lastroundindex = await vault.userInfo(
+    "0xf0535790505d39E526650031B404973530917ea2"
+  );
+  console.log("Last round index: ", lastroundindex.toNumber());
+
+  const roundShares = await vault.roundInfo(3);
+  console.log("Round shares: ", formatEther(roundShares.degisPerShare));
+
+  const currentRound = await vault.currentRound();
+  console.log("Current round: ", currentRound.toNumber());
+});

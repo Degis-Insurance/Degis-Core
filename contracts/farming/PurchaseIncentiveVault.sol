@@ -62,8 +62,6 @@ contract PurchaseIncentiveVault is Ownable {
     // User address => Pending rewards
     mapping(address => uint256) public userRewards;
 
-    mapping(address => uint256) public userLastRewardRound;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -267,7 +265,10 @@ contract PurchaseIncentiveVault is Ownable {
 
         require(length > 0, "Have claimed all");
 
-        uint256 startIndex = user.lastRewardRoundIndex;
+        if (user.pendingRounds[length - 1] == currentRound) {
+            length -= 1;
+        }
+
         if (length > MAX_ROUND) {
             length = MAX_ROUND;
 
@@ -275,6 +276,7 @@ contract PurchaseIncentiveVault is Ownable {
         } else userInfo[_msgSender()].lastRewardRoundIndex += length;
 
         uint256 userPendingReward;
+        uint256 startIndex = userInfo[_msgSender()].lastRewardRoundIndex;
 
         for (uint256 i = startIndex; i < startIndex + length; i++) {
             uint256 round = user.pendingRounds[i];
