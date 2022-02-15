@@ -27,6 +27,7 @@ import "./tasks/lucky/setAddress";
 import "./tasks/naughtyPrice/deployToken";
 import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
+import "./tasks/naughtyPrice/settle";
 
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/allowedContracts";
