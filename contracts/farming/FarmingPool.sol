@@ -72,6 +72,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     event NewPoolAdded(address lpToken, uint256 degisPerBlock);
     event RestartFarmingPool(uint256 poolId, uint256 blockNumber);
     event FarmingPoolStopped(uint256 poolId, uint256 blockNumber);
+    event DegisRewardChanged(uint256 poolId, uint256 degisPerBlock);
     event PoolUpdated(uint256 poolId);
 
     // ---------------------------------------------------------------------------------------- //
@@ -276,6 +277,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
             emit FarmingPoolStopped(_poolId, block.number);
         } else {
             poolList[_poolId].degisPerBlock = _degisPerBlock;
+            emit DegisRewardChanged(_poolId, _degisPerBlock);
         }
     }
 

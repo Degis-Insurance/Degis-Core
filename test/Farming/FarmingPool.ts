@@ -28,6 +28,8 @@ describe("Farming Pool", function () {
     pool = await FarmingPool.deploy(degis.address);
 
     MockUSD = await ethers.getContractFactory("MockUSD");
+
+    // Two usd contracts
     usd = await MockUSD.deploy();
     usd_2 = await MockUSD.deploy();
 
@@ -57,7 +59,21 @@ describe("Farming Pool", function () {
         .withArgs(60000);
     });
 
+    it("should not be able to set start block after start mining", async function () {
+      await pool.add(usd.address, parseUnits("5"), false);
+      await expect(pool.setStartBlock(60000)).to.be.revertedWith(
+        "Can not set start block after adding a pool"
+      );
+
+      await pool.add(usd_2.address, parseUnits("5"), false);
+      await expect(pool.setStartBlock(60000)).to.be.revertedWith(
+        "Can not set start block after adding a pool"
+      );
+    });
+
     it("should be able to add new pools", async function () {
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+
       await expect(pool.add(usd.address, parseUnits("5"), false))
         .to.emit(pool, "NewPoolAdded")
         .withArgs(usd.address, parseUnits("5"));
@@ -66,13 +82,25 @@ describe("Farming Pool", function () {
         .to.emit(pool, "NewPoolAdded")
         .withArgs(usd_2.address, parseUnits("5"));
 
+      // Have the correct pool id
       const nextPoolId = await pool._nextPoolId();
       expect(await pool.poolMapping(usd.address)).to.equal(nextPoolId.sub(2));
       expect(await pool.poolMapping(usd_2.address)).to.equal(nextPoolId.sub(1));
 
+      // Have correct pool infos
       const poolList = await pool.getPoolList();
-      expect(poolList[1].lpToken).to.equal(usd.address);
-      expect(poolList[2].lpToken).to.equal(usd_2.address);
+
+      const pool_1 = poolList[1];
+      expect(pool_1.lpToken).to.equal(usd.address);
+      expect(pool_1.degisPerBlock).to.equal(parseUnits("5"));
+      expect(pool_1.lastRewardBlock).to.equal(blockNumBefore + 1);
+      expect(pool_1.accDegisPerShare).to.equal(0);
+
+      const pool_2 = poolList[2];
+      expect(pool_2.lpToken).to.equal(usd_2.address);
+      expect(pool_2.degisPerBlock).to.equal(parseUnits("5"));
+      expect(pool_2.lastRewardBlock).to.equal(blockNumBefore + 2);
+      expect(pool_2.accDegisPerShare).to.equal(0);
     });
 
     it("should not be able to add two same pools", async function () {
@@ -81,6 +109,20 @@ describe("Farming Pool", function () {
       await expect(
         pool.add(usd.address, parseUnits("5"), false)
       ).to.be.revertedWith("This lptoken is already in the farming pool");
+    });
+
+    it("should be able to set degis reward of a pool", async function () {
+      await pool.add(usd.address, parseUnits("5"), false);
+      const poolId = await pool.poolMapping(usd.address);
+
+      await expect(pool.setDegisReward(poolId, parseUnits("10"), false))
+        .to.emit(pool, "DegisRewardChanged")
+        .withArgs(poolId, parseUnits("10"));
+
+      const poolList = await pool.getPoolList();
+      expect(poolList[poolId.toNumber()].degisPerBlock).to.equal(
+        parseUnits("10")
+      );
     });
 
     it("should be able to stop a existing pool", async function () {

@@ -41,5 +41,14 @@ describe("Farming Pool", function () {
         .to.emit(pool, "Deposit")
         .withArgs(usd.address, dev_account.address, parseUnits("100"));
     });
+
+    it("should be able to emergency withdraw funds from the pool", async function () {
+      await usd.approve(pool.address, parseUnits("100"));
+      await pool.deposit(usd.address, parseUnits("100"));
+
+      expect(await pool.emergencyWithdraw(usd.address, parseUnits("100")))
+        .to.emit(pool, "Withdraw")
+        .withArgs(usd.address, dev_account.address, parseUnits("100"));
+    });
   });
 });

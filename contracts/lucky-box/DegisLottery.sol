@@ -285,6 +285,18 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         emit RandomNumberGeneratorChanged(_randomNumberGenerator);
     }
 
+    /**
+     * @notice Change the end time of current round (only if it was set a wrong number)
+     */
+    function setEndTime(uint256 _endTime) external onlyOwner {
+        require(
+            lotteries[currentLotteryId].status == Status.Open,
+            "Only change endtime when Lottery open"
+        );
+
+        lotteries[currentLotteryId].endTime = _endTime;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -339,12 +351,17 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     /**
      * @notice Close a lottery
-     * @dev Callable only by the operator
+     * @dev Callable by any address and need to meet the endtime condition
      */
-    function closeLottery() external onlyOperator nonReentrant {
+    function closeLottery() external nonReentrant {
         require(
             lotteries[currentLotteryId].status == Status.Open,
             "Current lottery is not open"
+        );
+
+        require(
+            block.timestamp >= lotteries[currentLotteryId].endTime,
+            "Not time to close lottery"
         );
 
         lotteries[currentLotteryId].endTime = block.timestamp;
@@ -495,9 +512,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     /**
      * @notice Draw the final number, calculate reward in DEG for each group,
      *         and make this lottery claimable (need to wait for the random generator)
-     * @dev Callable only by the operator
+     * @dev Callable by any address
      */
-    function drawLottery() external onlyOperator nonReentrant {
+    function drawLottery() external nonReentrant {
         require(
             lotteries[currentLotteryId].status == Status.Close,
             "this lottery has not closed, you should first close it"
