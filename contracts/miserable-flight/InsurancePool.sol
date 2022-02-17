@@ -177,7 +177,7 @@ contract InsurancePool is
      * @notice Set the premium reward distribution
      * @param _newDistribution New distribution [LP, Lottery, Emergency]
      */
-    function setIncomeDistribution(uint256[3] memory _newDistribution)
+    function setRewardDistribution(uint256[3] memory _newDistribution)
         public
         onlyOwner
     {
