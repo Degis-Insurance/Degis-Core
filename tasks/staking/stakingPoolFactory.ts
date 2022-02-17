@@ -53,13 +53,13 @@ task("setStakingReward", "Set the degis reward of a staking pool")
   });
 
 task("deployStakingPool", "Deploy a new staking pool")
-  .addParam("poolToken", "Address of the pool token", null, types.string)
+  .addParam("pooltoken", "Address of the pool token", null, types.string)
   .addParam("start", "Staking pool start block", null, types.int)
-  .addParam("reward", "Degis reward per block", null, types.int)
+  .addParam("reward", "Degis reward per block", null, types.string)
   .addParam("isFlash", "Whether it is a flash pool", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
     // Get the args
-    const poolTokenAddress = taskArgs.poolToken;
+    const poolTokenAddress = taskArgs.pooltoken;
     const startBlock = taskArgs.start;
     const degisPerBlock = taskArgs.reward;
     const isFlashPool = taskArgs.isFlash;
