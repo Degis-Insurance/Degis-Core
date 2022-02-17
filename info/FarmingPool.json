@@ -82,7 +82,7 @@
 			"name": "BTC_46606.0_H_2202",
 			"address": "0x96761a3Bc635C9A2A440aa58dC7DF7D41044669b",
 			"poolId": 14,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"15": {
 			"name": "BTC_38132.0_L_2202",
