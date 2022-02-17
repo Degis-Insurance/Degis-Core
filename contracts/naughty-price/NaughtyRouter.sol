@@ -120,10 +120,6 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) {
-        (uint256 reserveA, uint256 reserveB) = _getReserves(_tokenA, _tokenB);
-
-        require(reserveA > 0 && reserveB > 0, "No tokens in the pool");
-
         // Mint _amountADesired policy tokens for users
         mintPolicyTokensForUser(
             _tokenA,
@@ -132,6 +128,7 @@ contract NaughtyRouter is Ownable {
             _msgSender()
         );
 
+        // Add liquidity
         {
             addLiquidity(
                 _tokenA,

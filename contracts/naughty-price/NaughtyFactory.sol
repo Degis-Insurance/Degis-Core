@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/INaughtyPair.sol";
 import "./interfaces/IPolicyCore.sol";
 import "../libraries/StringsUtils.sol";
-import "hardhat/console.sol";
+import "../utils/OwnableWithoutContext.sol";
 
 /**
  * @title Naughty Factory
@@ -17,7 +17,7 @@ import "hardhat/console.sol";
  *      Token 0 may change but Token 1 is always stablecoin.
  */
 
-contract NaughtyFactory {
+contract NaughtyFactory is OwnableWithoutContext {
     using StringsUtils for address;
 
     // ---------------------------------------------------------------------------------------- //
@@ -41,6 +41,11 @@ contract NaughtyFactory {
     // INIT_CODE_HASH for NaughtyPair, may be used in frontend
     bytes32 public constant PAIR_INIT_CODE_HASH =
         keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
+
+    event PolicyCoreAddressChanged(
+        address oldPolicyCore,
+        address newPolicyCore
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //
@@ -126,10 +131,12 @@ contract NaughtyFactory {
     /**
      * @notice Remember to call this function to set the policyCore address
      *         < PolicyCore should be the owner of policyToken >
-     * @param _policyCore: Address of policyCore contract
+     * @param _policyCore Address of policyCore contract
      */
-    function setPolicyCoreAddress(address _policyCore) external {
+    function setPolicyCoreAddress(address _policyCore) external onlyOwner {
+        address oldPolicyCore = policyCore;
         policyCore = _policyCore;
+        emit PolicyCoreAddressChanged(oldPolicyCore, _policyCore);
     }
 
     // ---------------------------------------------------------------------------------------- //
