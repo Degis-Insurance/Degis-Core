@@ -128,6 +128,26 @@ describe("Degis Staking", function () {
       await setNextBlockTime(now + 60);
     });
 
+    it("should be able to stake pool tokens and check the user status", async function () {
+      await expect(pool.stake(parseUnits("100"), now + 6000))
+        .to.emit(pool, "Stake")
+        .withArgs(dev_account.address, parseUnits("100"), now + 6000);
+
+      const blockTimestamp = await getLatestBlockTimestamp(ethers.provider);
+
+      const userInfo = await pool.users(dev_account.address);
+
+      expect(userInfo.tokenAmount).to.equal(parseUnits("100"));
+      expect(userInfo.totalWeight).to.equal(parseUnits("100000000"));
+      expect(userInfo.rewardDebts).to.equal(0);
+
+      const userDeposits = await pool.getUserDeposits(dev_account.address);
+      expect(userDeposits[0].tokenAmount).to.equal(parseUnits("100"));
+      expect(userDeposits[0].weight).to.equal(parseUnits("100000000"));
+      expect(userDeposits[0].lockedFrom).to.equal(blockTimestamp);
+      expect(userDeposits[0].lockedUntil).to.equal(now + 6000);
+    });
+
     it("should be able to stake pool tokens and harvest reward", async function () {
       const blocknum = 5;
 

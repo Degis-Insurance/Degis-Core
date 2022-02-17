@@ -100,35 +100,29 @@ contract NaughtyRouter is Ownable {
 
     /**
      * @notice Add liquidity but only provide stablecoins
+     * @dev Only difference with addLiquidity is that mintPolicyTokenForUser
      * @param _tokenA Address of policyToken
      * @param _tokenB Address of stablecoin
-     * @param _amountUSD Amount of stablecoins provided
+     * @param _amountADesired Amount of policyToken desired
+     * @param _amountBDesired Amount of stablecoin desired
+     * @param _amountAMin Minimum amount of policy token
+     * @param _amountBMin Minimum amount of stablecoin
      * @param _to Address that receive the lp token, normally the user himself
-     * @param _minRatio Minimum ratio (divided by 100)(amountMin / amountDesired)
      * @param _deadline Transaction will revert after this deadline
      */
     function addLiquidityWithUSD(
         address _tokenA,
         address _tokenB,
-        uint256 _amountUSD,
+        uint256 _amountADesired,
+        uint256 _amountBDesired,
+        uint256 _amountAMin,
+        uint256 _amountBMin,
         address _to,
-        uint256 _minRatio,
         uint256 _deadline
     ) external beforeDeadline(_deadline) {
-        require(_minRatio <= 100, "Minimum ratio can not exceed 100");
-
-        require(_checkStablecoin(_tokenB), "Please put stablecoin as tokenB");
-
         (uint256 reserveA, uint256 reserveB) = _getReserves(_tokenA, _tokenB);
 
         require(reserveA > 0 && reserveB > 0, "No tokens in the pool");
-
-        uint256 _amountADesired = _amountUSD.mul(reserveA).div(
-            reserveA + reserveB
-        );
-        uint256 _amountBDesired = _amountUSD.mul(reserveB).div(
-            reserveA + reserveB
-        );
 
         // Mint _amountADesired policy tokens for users
         mintPolicyTokensForUser(
@@ -144,8 +138,8 @@ contract NaughtyRouter is Ownable {
                 _tokenB,
                 _amountADesired,
                 _amountBDesired,
-                _amountADesired.mul(_minRatio).div(100),
-                _amountBDesired.mul(_minRatio).div(100),
+                _amountAMin,
+                _amountBMin,
                 _to,
                 _deadline
             );
@@ -432,7 +426,7 @@ contract NaughtyRouter is Ownable {
 
     /**
      * @notice Used when users only provide stablecoins and want to mint & add liquidity in one step
-     * @dev Need have approval before
+     * @dev Need have approval before (done by the user himself)
      * @param _policyTokenAddress Address of the policy token
      * @param _stablecoin Address of the stablecoin
      * @param _amount Amount to be used for minting policy tokens

@@ -265,12 +265,12 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         require(amount0In > 0 || amount1In > 0, "INSUFFICIENT_INPUT_AMOUNT");
 
         {
-            uint256 balance0Adjusted = balance0 * 1000 - amount0In * 20;
-            uint256 balance1Adjusted = balance1 * 1000 - amount1In * 20;
+            uint256 balance0Adjusted = balance0 * 1000 - amount0In * feeRate;
+            uint256 balance1Adjusted = balance1 * 1000 - amount1In * feeRate;
 
             require(
                 balance0Adjusted * balance1Adjusted >=
-                    _reserve0 * _reserve1 * (100**2),
+                    _reserve0 * _reserve1 * (1000**2),
                 "The remaining x*y is less than K"
             );
         }

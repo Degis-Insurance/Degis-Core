@@ -107,6 +107,14 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         return users[_user].deposits.length;
     }
 
+    function getUserDeposits(address _user)
+        external
+        view
+        returns (Deposit[] memory)
+    {
+        return users[_user].deposits;
+    }
+
     function pendingRewards(address _user) external view returns (uint256) {
         if (block.number < lastRewardBlock || block.number < startBlock)
             return 0;
