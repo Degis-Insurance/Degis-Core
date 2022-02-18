@@ -8,7 +8,10 @@ import {
   StakingPoolFactory,
   StakingPoolFactory__factory,
 } from "../../typechain";
-import { readAddressList } from "../../scripts/contractAddress";
+import {
+  readAddressList,
+  storeAddressList,
+} from "../../scripts/contractAddress";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
 task("setStakingReward", "Set the degis reward of a staking pool")
@@ -56,13 +59,13 @@ task("deployStakingPool", "Deploy a new staking pool")
   .addParam("pooltoken", "Address of the pool token", null, types.string)
   .addParam("start", "Staking pool start block", null, types.int)
   .addParam("reward", "Degis reward per block", null, types.string)
-  .addParam("isFlash", "Whether it is a flash pool", false, types.boolean)
+  .addParam("isflash", "Whether it is a flash pool", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolTokenAddress = taskArgs.pooltoken;
     const startBlock = taskArgs.start;
     const degisPerBlock = taskArgs.reward;
-    const isFlashPool = taskArgs.isFlash;
+    const isFlashPool = taskArgs.isflash;
 
     // Network info
     const { network } = hre;
@@ -94,4 +97,8 @@ task("deployStakingPool", "Deploy a new staking pool")
     // Check the result
     const poolData = await factory.getPoolData(poolTokenAddress);
     console.log("Pool data just deployed: ", poolData);
+
+    addressList[network.name].CoreStakingPool = poolData.poolAddress;
+
+    storeAddressList(addressList);
   });

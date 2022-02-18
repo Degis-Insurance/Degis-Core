@@ -247,6 +247,36 @@ task(
   console.log("Tx2 details: ", await tx_2.wait());
 });
 
+task(
+  "addAllowedContractsForStakingPool",
+  "Add allowed contracts for staking pool"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const DegisTokenAddress = addressList[network.name].DegisToken;
+
+  const DegisToken: DegisToken__factory = await hre.ethers.getContractFactory(
+    "DegisToken"
+  );
+  const degis: DegisToken = DegisToken.attach(DegisTokenAddress);
+
+  const stakingPoolAddress = addressList[network.name].CoreStakingPool;
+
+  const allowedContracts: string[] = [stakingPoolAddress];
+
+  const tx_1 = await degis.setAllowedRecipients(allowedContracts);
+  console.log("Tx1 details: ", await tx_1.wait());
+
+  const tx_2 = await degis.setAllowedSenders(allowedContracts);
+  console.log("Tx2 details: ", await tx_2.wait());
+});
+
 task("removeMinter", "Remove minter from contract").setAction(
   async (_, hre) => {
     const { network } = hre;

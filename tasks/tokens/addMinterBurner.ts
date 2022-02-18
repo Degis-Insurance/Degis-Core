@@ -69,5 +69,13 @@ task("addMinterBurner", "Add minter for degis/buyer tokens").setAction(
       const tx_5 = await buyerToken.addBurner(vaultAddress);
       console.log(await tx_5.wait());
     }
+
+    const StakingFactoryAddress = addressList[network.name].StakingPoolFactory;
+
+    const isAlready_6 = await degis.isMinter(StakingFactoryAddress);
+    if (!isAlready_6) {
+      const tx_6 = await degis.addMinter(StakingFactoryAddress);
+      console.log(await tx_6.wait());
+    }
   }
 );

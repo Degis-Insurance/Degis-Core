@@ -107,6 +107,14 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         return users[_user].deposits.length;
     }
 
+    function getDepositsInfo(address _user)
+        external
+        view
+        returns (Deposit[] memory)
+    {
+        return users[_user].deposits;
+    }
+
     function pendingRewards(address _user) external view returns (uint256) {
         if (block.number < lastRewardBlock || block.number < startBlock)
             return 0;
@@ -295,7 +303,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
             stakeDeposit.lockedUntil - stakeDeposit.lockedFrom
         ) * (stakeDeposit.tokenAmount - _amount);
 
-        // update the deposit, or delete it if its depleted
+        // update the deposit, or delete it if its deleted
         if (stakeDeposit.tokenAmount - _amount == 0) {
             delete user.deposits[_depositId];
         } else {
