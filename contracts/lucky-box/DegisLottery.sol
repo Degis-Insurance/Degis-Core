@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 
-import "hardhat/console.sol";
 
 contract DegisLottery is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;

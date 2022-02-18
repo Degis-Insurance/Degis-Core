@@ -7,7 +7,6 @@ import "../libraries/StringsUtils.sol";
 import "./interfaces/IPolicyFlow.sol";
 import "./interfaces/IPolicyStruct.sol";
 
-import "hardhat/console.sol";
 
 /**
  * @title  Policy Token for flight delay

@@ -43,6 +43,14 @@ describe("Farming Pool", function () {
       expect(await pool.owner()).to.equal(dev_account.address);
     });
 
+    it("should have the correct degis address", async function () {
+      expect(await pool.degis()).to.equal(degis.address);
+    });
+
+    it("should have the correct next pool id at first", async function () {
+      expect(await pool._nextPoolId()).to.equal(1);
+    });
+
     it("should have the first pool with ID:0", async function () {
       const defaultPool = await pool.poolList(0);
       expect(defaultPool.lpToken).to.equal(ethers.constants.AddressZero);

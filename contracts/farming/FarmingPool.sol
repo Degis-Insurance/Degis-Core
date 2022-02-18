@@ -11,8 +11,6 @@ import "../utils/Ownable.sol";
 
 import "../tokens/interfaces/IDegisToken.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title  Farming Pool
  * @notice This contract is for LPToken mining on Degis

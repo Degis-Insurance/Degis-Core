@@ -9,6 +9,7 @@ import "./interfaces/IPriceGetter.sol";
 import "./interfaces/INaughtyFactory.sol";
 import "./interfaces/INPPolicyToken.sol";
 
+
 /**
  * @title  PolicyCore
  * @notice Core logic of Naughty Price Product
@@ -57,9 +58,6 @@ contract PolicyCore is Ownable {
 
     // Naughty Router contract address
     address public naughtyRouter;
-
-    // Current distribution index
-    uint256 public currentDistributionIndex;
 
     struct PolicyTokenInfo {
         address policyTokenAddress;

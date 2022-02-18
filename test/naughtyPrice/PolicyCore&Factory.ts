@@ -27,7 +27,7 @@ import {
   solidityPack,
 } from "ethers/lib/utils";
 
-import { getLatestBlockTimestamp, getNow } from "../utils";
+import { getLatestBlockTimestamp, getNow, toWei } from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
@@ -41,12 +41,15 @@ describe("Policy Core and Naughty Factory", function () {
   let dev_account: SignerWithAddress,
     stablecoin: SignerWithAddress,
     user1: SignerWithAddress,
-    emergencyPool: SignerWithAddress;
+    emergencyPool: SignerWithAddress,
+    lottery: SignerWithAddress,
+    testAddress: SignerWithAddress;
 
-  let time: number, now: number, deadline: number, settleTimestamp: number;
+  let now: number, deadline: number, settleTimestamp: number;
 
   beforeEach(async function () {
-    [dev_account, stablecoin, user1, emergencyPool] = await ethers.getSigners();
+    [dev_account, stablecoin, user1, emergencyPool, lottery, testAddress] =
+      await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
@@ -73,8 +76,8 @@ describe("Policy Core and Naughty Factory", function () {
 
     await factory.setPolicyCoreAddress(core.address);
 
-    await core.setLottery(dev_account.address);
-    await core.setEmergencyPool(dev_account.address);
+    await core.setLottery(lottery.address);
+    await core.setEmergencyPool(emergencyPool.address);
 
     now = await getLatestBlockTimestamp(ethers.provider);
     deadline = now + 30000;
@@ -114,15 +117,19 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to set a new emergencyPool", async function () {
-      await expect(core.setEmergencyPool(emergencyPool.address))
+      await expect(core.setEmergencyPool(testAddress.address))
         .to.emit(core, "EmergencyPoolChanged")
-        .withArgs(emergencyPool.address);
-      expect(await core.emergencyPool()).to.equal(emergencyPool.address);
+        .withArgs(testAddress.address);
+      expect(await core.emergencyPool()).to.equal(testAddress.address);
     });
 
     it("should be able to set the core address in factory", async function () {
       await factory.setPolicyCoreAddress(core.address);
       expect(await factory.policyCore()).to.equal(core.address);
+
+      await expect(
+        factory.connect(user1).setPolicyCoreAddress(testAddress.address)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 
@@ -484,10 +491,11 @@ describe("Policy Core and Naughty Factory", function () {
       await setNextBlockTime(settleTimestamp + 1);
       await core.settleFinalResult(policyTokenName);
 
-      const balance = await policyTokenInstance.balanceOf(dev_account.address);
-      console.log("user policy token balance:", formatEther(balance));
+      const policyTokenBalance = await policyTokenInstance.balanceOf(
+        dev_account.address
+      );
 
-      await core.claim(policyTokenName, usd.address, balance, {
+      await core.claim(policyTokenName, usd.address, policyTokenBalance, {
         from: dev_account.address,
       });
 
@@ -495,18 +503,19 @@ describe("Policy Core and Naughty Factory", function () {
         0
       );
 
-      expect(await usd.balanceOf(dev_account.address)).to.equal(
-        parseUnits("99900")
-      );
+      // Income distribution
+      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("99900"));
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(toWei("20"));
+      expect(await usd.balanceOf(lottery.address)).to.equal(toWei("80"));
     });
 
     it("should be able to settle all policy tokens for users", async function () {
       // user1 deposit
-      await usd.mint(user1.address, parseUnits("1000"));
-      await usd.connect(user1).approve(core.address, parseUnits("1000"));
+      await usd.mint(user1.address, parseUnits("10000"));
+      await usd.connect(user1).approve(core.address, parseUnits("10000"));
       await core
         .connect(user1)
-        .deposit(policyTokenName, usd.address, parseUnits("1000"));
+        .deposit(policyTokenName, usd.address, parseUnits("10000"));
 
       const price = parseUnits("50000");
       await priceFeedMock.setResult(price);
@@ -520,7 +529,10 @@ describe("Policy Core and Naughty Factory", function () {
         .to.emit(core, "PolicyTokensSettledForUsers")
         .withArgs(policyTokenName, usd.address, 0, 2);
 
-      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("990"));
+      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("9900"));
+      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("99900"));
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(toWei("40"));
+      expect(await usd.balanceOf(lottery.address)).to.equal(toWei("160"));
     });
   });
 

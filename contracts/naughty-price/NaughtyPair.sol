@@ -10,7 +10,6 @@ import "../utils/ReentrancyGuard.sol";
 
 import "./interfaces/INaughtyFactory.sol";
 
-import "hardhat/console.sol";
 
 /**
  * @title  Naughty Pair
