@@ -120,8 +120,10 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) {
+        require(_checkStablecoin(_tokenB), "Token B should be stablecoin");
+
         // Mint _amountADesired policy tokens for users
-        mintPolicyTokensForUser(
+        _mintPolicyTokensForUser(
             _tokenA,
             _tokenB,
             _amountADesired,
@@ -192,8 +194,8 @@ contract NaughtyRouter is Ownable {
 
         address pair = _getPairAddress(_tokenA, _tokenB);
 
-        transferHelper(_tokenA, _msgSender(), pair, amountA);
-        transferHelper(_tokenB, _msgSender(), pair, amountB);
+        _transferHelper(_tokenA, _msgSender(), pair, amountA);
+        _transferHelper(_tokenB, _msgSender(), pair, amountB);
 
         liquidity = INaughtyPair(pair).mint(_to);
 
@@ -277,7 +279,7 @@ contract NaughtyRouter is Ownable {
 
         require(amountIn <= _amountInMax, "excessive input amount");
 
-        transferHelper(_tokenIn, _msgSender(), pair, amountIn);
+        _transferHelper(_tokenIn, _msgSender(), pair, amountIn);
 
         _swap(pair, amountIn, _amountOut, isBuying, _to);
     }
@@ -321,10 +323,14 @@ contract NaughtyRouter is Ownable {
         );
         require(amountOut >= _amountOutMin, "excessive output amount");
 
-        transferHelper(_tokenIn, _msgSender(), pair, _amountIn);
+        _transferHelper(_tokenIn, _msgSender(), pair, _amountIn);
 
         _swap(pair, _amountIn, amountOut, isBuying, _to);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Internal function to finish adding liquidity
@@ -373,10 +379,6 @@ contract NaughtyRouter is Ownable {
         }
     }
 
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
-
     /**
      * @notice Finish the erc20 transfer operation
      * @param _token ERC20 token address
@@ -384,7 +386,7 @@ contract NaughtyRouter is Ownable {
      * @param _to Pair address to receive the token
      * @param _amount Transfer amount
      */
-    function transferHelper(
+    function _transferHelper(
         address _token,
         address _from,
         address _to,
@@ -429,7 +431,7 @@ contract NaughtyRouter is Ownable {
      * @param _amount Amount to be used for minting policy tokens
      * @param _user The user's address
      */
-    function mintPolicyTokensForUser(
+    function _mintPolicyTokensForUser(
         address _policyTokenAddress,
         address _stablecoin,
         uint256 _amount,

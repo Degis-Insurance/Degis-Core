@@ -108,27 +108,23 @@ contract PolicyCore is Ownable {
     event LotteryChanged(address newLotteryAddress);
     event EmergencyPoolChanged(address newEmergencyPool);
     event NaughtyRouterChanged(address newRouter);
-
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
         uint256 deadline,
         uint256 settleTimestamp
     );
-
     event PoolDeployed(
         address poolAddress,
         address policyTokenAddress,
         address stablecoin
     );
-
     event Deposit(
         address userAddress,
         string policyTokenName,
         address stablecoin,
         uint256 amount
     );
-
     event DelegateDeposit(
         address payerAddress,
         address userAddress,
@@ -136,14 +132,24 @@ contract PolicyCore is Ownable {
         address stablecoin,
         uint256 amount
     );
-
+    event Redeem(
+        address userAddress,
+        string policyTokenName,
+        address stablecoin,
+        uint256 amount
+    );
+    event RedeemAfterSettlement(
+        address userAddress,
+        string policyTokenName,
+        address stablecoin,
+        uint256 amount
+    );
     event FinalResultSettled(
         string _policyTokenName,
         uint256 price,
         bool isHappened
     );
     event NewStablecoinAdded(address _newStablecoin);
-
     event PolicyTokensSettledForUsers(
         string policyTokenName,
         address stablecoin,
@@ -186,6 +192,23 @@ contract PolicyCore is Ownable {
         require(
             supportedStablecoin[_stablecoin] == true,
             "Do not support this stablecoin currently"
+        );
+        _;
+    }
+
+    /**
+     * @notice Checkt the policy token is paired with this stablecoin
+     * @param _policyTokenName Policy token name
+     * @param _stablecoin Stablecoin address
+     */
+    modifier validPolicyTokenWithStablecoin(
+        string memory _policyTokenName,
+        address _stablecoin
+    ) {
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
+        require(
+            whichStablecoin[policyTokenAddress] == _stablecoin,
+            "Invalid policytoken with stablecoin"
         );
         _;
     }
@@ -400,6 +423,7 @@ contract PolicyCore is Ownable {
     ) external onlyOwner returns (address) {
         require(_decimals <= 18, "Too many decimals");
         require(_deadline > block.timestamp, "Wrong deadline");
+        require(_settleTimestamp >= _deadline, "Wrong settleTimestamp");
 
         string memory policyTokenName = _generateName(
             _tokenName,
@@ -462,6 +486,10 @@ contract PolicyCore is Ownable {
         returns (address)
     {
         require(_poolDeadline > block.timestamp, "Wrong deadline");
+        require(
+            _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
+            "Policy token and pool deadline not the same"
+        );
 
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
@@ -491,7 +519,11 @@ contract PolicyCore is Ownable {
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount
-    ) external beforeDeadline(_policyTokenName) {
+    )
+        external
+        beforeDeadline(_policyTokenName)
+        validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
+    {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if the user gives the right stablecoin
@@ -531,19 +563,17 @@ contract PolicyCore is Ownable {
         address _stablecoin,
         uint256 _amount,
         address _user
-    ) external beforeDeadline(_policyTokenName) {
+    )
+        external
+        beforeDeadline(_policyTokenName)
+        validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
+    {
         require(
             _msgSender() == naughtyRouter,
             "Only the router contract can delegate"
         );
 
         address policyTokenAddress = findAddressbyName(_policyTokenName);
-
-        // Check if the user gives the right stablecoin
-        require(
-            whichStablecoin[policyTokenAddress] == _stablecoin,
-            "PolicyToken and stablecoin not matched"
-        );
 
         // Check if the user has enough balance
         require(
@@ -576,9 +606,13 @@ contract PolicyCore is Ownable {
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount
-    ) public enoughUSD(_stablecoin, _amount) beforeDeadline(_policyTokenName) {
-        address policyTokenAddress = policyTokenInfoMapping[_policyTokenName]
-            .policyTokenAddress;
+    )
+        public
+        enoughUSD(_stablecoin, _amount)
+        beforeDeadline(_policyTokenName)
+        validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
+    {
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if the user has enough quota (quota is only for those who mint policy tokens)
         require(
@@ -600,6 +634,8 @@ contract PolicyCore is Ownable {
 
         if (userQuota[msg.sender][policyTokenAddress] == 0)
             delete userQuota[msg.sender][policyTokenAddress];
+
+        emit Redeem(_msgSender(), _policyTokenName, _stablecoin, _amount);
     }
 
     /**
@@ -610,7 +646,7 @@ contract PolicyCore is Ownable {
     function redeemAfterSettlement(
         string memory _policyTokenName,
         address _stablecoin
-    ) public {
+    ) public validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin) {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Copy to memory (will not change the result)
@@ -650,6 +686,13 @@ contract PolicyCore is Ownable {
 
         // Delete the userQuota storage
         delete userQuota[msg.sender][policyTokenAddress];
+
+        emit RedeemAfterSettlement(
+            _msgSender(),
+            _policyTokenName,
+            _stablecoin,
+            amountWithFee
+        );
     }
 
     /**
@@ -663,7 +706,12 @@ contract PolicyCore is Ownable {
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount
-    ) public enoughUSD(_stablecoin, _amount) afterSettlement(_policyTokenName) {
+    )
+        public
+        enoughUSD(_stablecoin, _amount)
+        afterSettlement(_policyTokenName)
+        validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
+    {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Check if we have already settle the final price

@@ -162,6 +162,41 @@ describe("Policy Core and Naughty Factory", function () {
         .withArgs(policyTokenName, address, deadline, settleTimestamp);
     });
 
+    it("should be able to generate correct names with 18 decimals", async function () {
+      const policyTokenName = "BTC_5.565656565656565656_L_2112";
+
+      const token_init = defaultAbiCoder.encode(
+        ["string", "string", "address"],
+        [policyTokenName, policyTokenName, core.address]
+      );
+
+      // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
+      const bytecode = solidityPack(
+        ["bytes", "bytes"],
+        [NPPolicyToken.bytecode, token_init]
+      );
+
+      const INIT_CODE_HASH = keccak256(bytecode);
+
+      const salt = solidityKeccak256(["string"], [policyTokenName]);
+
+      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
+
+      await expect(
+        core.deployPolicyToken(
+          "BTC",
+          false,
+          18,
+          parseUnits("5.565656565656565656"),
+          2112,
+          ethers.BigNumber.from(deadline),
+          ethers.BigNumber.from(settleTimestamp)
+        )
+      )
+        .to.emit(core, "PolicyTokenDeployed")
+        .withArgs(policyTokenName, address, deadline, settleTimestamp);
+    });
+
     it("should be able to deploy a new policy token and get the correct address", async function () {
       const policyTokenName = "BTC_24000.0_L_2112";
 

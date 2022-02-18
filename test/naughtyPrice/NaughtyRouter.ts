@@ -210,16 +210,16 @@ describe("Naughty Router", function () {
       await usd.approve(router.address, toWei("10000"));
       await usd.approve(core.address, toWei("10000"));
 
-      await expect(
-        router.addLiquidityWithUSD(
-          policyTokenInfo.policyTokenAddress,
-          usd.address,
-          toWei("100"),
-          dev_account.address,
-          80,
-          now + txDelay
-        )
-      ).to.be.revertedWith("No tokens in the pool");
+      // await expect(
+      //   router.addLiquidityWithUSD(
+      //     policyTokenInfo.policyTokenAddress,
+      //     usd.address,
+      //     toWei("100"),
+      //     dev_account.address,
+      //     80,
+      //     now + txDelay
+      //   )
+      // ).to.be.revertedWith("No tokens in the pool");
 
       await router.addLiquidity(
         policyTokenInfo.policyTokenAddress,
@@ -236,12 +236,18 @@ describe("Naughty Router", function () {
         router.addLiquidityWithUSD(
           policyTokenInfo.policyTokenAddress,
           usd.address,
-          toWei("100"),
+          toWei("50"),
+          toWei("50"),
+          toWei("50"),
+          toWei("50"),
           dev_account.address,
-          80,
           now + txDelay
         )
       ).to.emit(router, "LiquidityAdded");
+
+      expect(await policyToken.balanceOf(dev_account.address)).to.equal(
+        toWei("50")
+      );
     });
   });
 
