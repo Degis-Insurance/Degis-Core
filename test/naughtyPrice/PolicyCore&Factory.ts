@@ -162,8 +162,32 @@ describe("Policy Core and Naughty Factory", function () {
         .withArgs(policyTokenName, address, deadline, settleTimestamp);
     });
 
+    it("should not be able to generate names with wrong decimals", async function () {
+      await expect(
+        core.deployPolicyToken(
+          "BTC",
+          false,
+          19, // wrong decimals
+          parseUnits("5.5656"),
+          2112,
+          ethers.BigNumber.from(deadline),
+          ethers.BigNumber.from(settleTimestamp)
+        )
+      ).to.be.revertedWith("Too many decimals");
+    });
+
     it("should be able to generate correct names with 18 decimals", async function () {
       const policyTokenName = "BTC_5.565656565656565656_L_2112";
+
+      expect(
+        await core._generateName(
+          "BTC",
+          18,
+          parseUnits("5.565656565656565656"),
+          false,
+          2112
+        )
+      ).to.equal(policyTokenName);
 
       const token_init = defaultAbiCoder.encode(
         ["string", "string", "address"],

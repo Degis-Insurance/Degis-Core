@@ -97,6 +97,7 @@ contract PolicyCore is Ownable {
         uint256 price;
         bool isHappened;
         bool alreadySettled;
+        uint256 currentDistributionIndex;
     }
     // Policy token address => Settlement result information
     mapping(address => SettlementInfo) public settleResult;
@@ -728,6 +729,14 @@ contract PolicyCore is Ownable {
 
         // Charge 1% fee
         uint256 amountWithFee = (_amount * 990) / 1000;
+        uint256 amountToCollect = _amount - amountWithFee;
+
+        // Collect the fees and distribute
+        _collectIncome(
+            _stablecoin,
+            (amountToCollect * 8) / 10,
+            amountToCollect - (amountToCollect * 8) / 10
+        );
 
         // Users must have enough policy tokens to claim
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
@@ -825,6 +834,11 @@ contract PolicyCore is Ownable {
         // Length of all depositors for this policy token
         uint256 length = allDepositors[policyTokenAddress].length;
 
+        require(
+            result.currentDistributionIndex <= length,
+            "Have distributed all"
+        );
+
         // Settle the policies in [_startIndex, _stopIndex)
         if (_startIndex == 0 && _stopIndex == 0) {
             amountToCollect += _settlePolicy(
@@ -833,7 +847,15 @@ contract PolicyCore is Ownable {
                 0,
                 length
             );
-            currentDistributionIndex = length;
+
+            // Update the distribution index for this policy token
+            settleResult[policyTokenAddress].currentDistributionIndex = length;
+
+            _collectIncome(
+                _stablecoin,
+                (amountToCollect * 8) / 10,
+                amountToCollect - (amountToCollect * 8) / 10
+            );
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -843,30 +865,33 @@ contract PolicyCore is Ownable {
             );
         } else {
             require(
-                currentDistributionIndex == _startIndex,
+                result.currentDistributionIndex == _startIndex,
                 "You need to start from the last distribution point"
             );
+            require(_stopIndex < length, "Invalid stop index");
+
             amountToCollect += _settlePolicy(
                 policyTokenAddress,
                 _stablecoin,
                 _startIndex,
                 _stopIndex
             );
-            currentDistributionIndex = _stopIndex;
+
+            // Update the distribution index for this policy token
+            settleResult[policyTokenAddress]
+                .currentDistributionIndex = _stopIndex;
+
+            _collectIncome(
+                _stablecoin,
+                (amountToCollect * 8) / 10,
+                amountToCollect - (amountToCollect * 8) / 10
+            );
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
                 _stablecoin,
                 _startIndex,
                 _stopIndex
-            );
-        }
-
-        if (currentDistributionIndex == length) {
-            _collectIncome(
-                _stablecoin,
-                (amountToCollect * 8) / 10,
-                amountToCollect - (amountToCollect * 8) / 10
             );
         }
     }
@@ -967,6 +992,11 @@ contract PolicyCore is Ownable {
 
         uint256 intPart = _strikePrice / 1e18;
         uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
+
+        require(
+            intPart > 0 || decimalPart > 0,
+            "Strike price must be greater than 0"
+        );
 
         string memory name = string(
             abi.encodePacked(
