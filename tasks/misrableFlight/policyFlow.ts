@@ -17,7 +17,7 @@ import { getNow } from "../../test/utils";
 task("settleFDPolicy", "Settle a flight delay policy")
   .addParam("id", "policyId", null, types.int)
   .addParam("flight", "flightnumber", null, types.string)
-  .addParam("timestamp", "departuretimestamp", null, types.int)
+  .addParam("timestamp", "departuretimestamp", null, types.string)
   .addParam("path", "path to get the return result", null, types.string)
   .addParam("update", "whether to force update", false, types.boolean)
   .setAction(async (taskArgs, hre) => {
