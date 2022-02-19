@@ -103,10 +103,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getDepositsLength(address _user) external view returns (uint256) {
-        return users[_user].deposits.length;
-    }
-
     function getUserDeposits(address _user)
         external
         view
@@ -217,6 +213,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         uint256 _amount,
         uint256 _lockUntil
     ) internal virtual nonReentrant {
+        require(block.number > startBlock, "Pool not started yet");
         require(_amount > 0, "Zero amount");
         require(
             _lockUntil == 0 ||
