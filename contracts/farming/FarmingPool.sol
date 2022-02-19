@@ -146,13 +146,17 @@ contract FarmingPool is Ownable, ReentrancyGuard {
 
         if (lp_balance == 0) return 0;
         else {
-            // Deigs amount given to this pool
-            uint256 blocks = block.number - poolInfo.lastRewardBlock;
-            uint256 degisReward = poolInfo.degisPerBlock * blocks;
+            // If the pool is still farming, update the info
+            if (isFarming[_poolId]) {
+                // Deigs amount given to this pool
+                uint256 blocks = block.number - poolInfo.lastRewardBlock;
+                uint256 degisReward = poolInfo.degisPerBlock * blocks;
 
-            // Update accDegisPerShare
-            accDegisPerShare += degisReward.div(lp_balance);
+                // Update accDegisPerShare
+                accDegisPerShare += degisReward.div(lp_balance);
+            }
 
+            // If the pool has stopped, not update the info
             uint256 pending = user.stakingBalance.mul(accDegisPerShare) -
                 user.rewardDebt;
             return pending;
