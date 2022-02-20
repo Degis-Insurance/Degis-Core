@@ -5,10 +5,10 @@ import os, platform
 
 # the full directory of Degis-Core
 UNIX_CORE_PATH = '/home/shangzh/Degis-Contract/Degis-Core/'
-MAC_CORE_PATH = '/Users/shangzh/Desktop/Degis-Website/Degis-Core/'
+MAC_CORE_PATH = '/Users/liyang/Code/Solidity/Degis/Degis-Core'
 
-NETWORK = 'fuji'
-FEE = 2
+NETWORK = 'localhost'
+FEE = 20
 REWARD = 0.25
 
 def get_token_info(token) -> dict:
@@ -53,6 +53,8 @@ def deploy_naughty_token(token, percentage):
     :param percentage: percentage away from current price
     :return: no return, just deploy the pools
     '''
+
+    print("Time is: ", datetime.datetime.now())
     # token, percentage = 'BTC', 0.1
     price_info = get_token_info(token)
     price = price_info['price']
@@ -63,7 +65,7 @@ def deploy_naughty_token(token, percentage):
 
     # calculate timestamp for deadline & settlement
     dates_to_deadline = 30
-    dates_to_settle = 60
+    dates_to_settle = 40
     current_date = datetime.datetime.now()
     deadline_timestamp = int((current_date + datetime.timedelta(days=dates_to_deadline)).timestamp())
     settle_timestamp = int((current_date + datetime.timedelta(days=dates_to_settle)).timestamp())
@@ -170,6 +172,71 @@ def deploy_naughty_mining(token):
         print(f"Token {put_token} mining pool deployed")
     except Exception:
         print(f'Token {token} failed with {Exception}')
+
+def settlePurchaseIncentive(): 
+    settle_purchaseIncentive_call = f"npx hardhat settlePurchaseIncentive --network {NETWORK}"
+    
+    try:
+        if platform.platform()[: 5] == 'Linux':
+            deploy_path = UNIX_CORE_PATH
+        else:
+            deploy_path = MAC_CORE_PATH
+
+        os.system(f'cd {deploy_path} && pwd && {settle_purchaseIncentive_call}')
+        print(f"Purchase incentive vault settled")
+        
+    except Exception:
+        print(f'Purchase incentive settlement failed with {Exception}')
+
+def closeLottery(): 
+    close_lottery_call = f"npx hardhat closeLotteryRound --network {NETWORK}"
+    
+    try:
+        if platform.platform()[: 5] == 'Linux':
+            deploy_path = UNIX_CORE_PATH
+        else:
+            deploy_path = MAC_CORE_PATH
+            
+        os.system(f'cd {deploy_path} && pwd && {close_lottery_call}')
+        print(f"Purchase incentive vault settled")
+        
+    except Exception:
+        print(f'Close lottery failed with {Exception}')
+
+def startLottery(): 
+    dates_to_closeLottery = 7
+    current_date = datetime.datetime.now()
+
+    deadline_timestamp = int((current_date + datetime.timedelta(days=dates_to_closeLottery)).timestamp())
+    start_lottery_call = f"npx hardhat startLotteryRound --end {deadline_timestamp} --network {NETWORK}"
+    
+    try:
+        if platform.platform()[: 5] == 'Linux':
+            deploy_path = UNIX_CORE_PATH
+        else:
+            deploy_path = MAC_CORE_PATH
+            
+        os.system(f'cd {deploy_path} && pwd && {start_lottery_call}')
+        print(f"Purchase incentive vault settled")
+        
+    except Exception:
+        print(f'Purchase incentive settlement failed with {Exception}')
+
+
+def drawLotteryRound(): 
+    draw_lottery_call = f"npx hardhat drawLotteryRound --network {NETWORK}"
+    
+    try:
+        if platform.platform()[: 5] == 'Linux':
+            deploy_path = UNIX_CORE_PATH
+        else:
+            deploy_path = MAC_CORE_PATH
+            
+        os.system(f'cd {deploy_path} && pwd && {draw_lottery_call}')
+        print(f"Purchase incentive vault settled")
+        
+    except Exception:
+        print(f'Purchase incentive settlement failed with {Exception}')
 
 def deploy_default():
     percentage = 0.2

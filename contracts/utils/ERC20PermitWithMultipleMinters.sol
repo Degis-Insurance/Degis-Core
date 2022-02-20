@@ -200,10 +200,10 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
 
     // TODO: remove this after testnet v2
     function setAllowedRecipients(address[] memory _contracts) external {
-        require(
-            msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
-            "xx"
-        );
+        // require(
+        //     msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
+        //     "xx"
+        // );
         uint256 length = _contracts.length;
         for (uint256 i = 0; i < length; i++) {
             allowedRecipients[_contracts[i]] = true;
@@ -212,10 +212,10 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
 
     // TODO: remove this after testnet v2
     function setAllowedSenders(address[] memory _contracts) external {
-        require(
-            msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
-            "xx"
-        );
+        // require(
+        //     msg.sender == address(0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E),
+        //     "xx"
+        // );
         uint256 length = _contracts.length;
         for (uint256 i = 0; i < length; i++) {
             allowedSenders[_contracts[i]] = true;

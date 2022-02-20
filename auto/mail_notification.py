@@ -14,7 +14,7 @@ def mail_notification(subject, content) -> bool:
     my_sender = 'degis_develop@163.com' # here we need one email address
     my_pass = 'IOQRAUSTHYUMOGQZ' # the password of the email address
     # my_users = ['andy@degis.io', 'oliveryanghaowei@gmail.com'] # who to receive the email
-    my_users = ['15121193286@163.com']
+    my_users = ['15121193286@163.com', 'ylikp@connect.ust.hk']
 
     sent = True
     try:
