@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { getContractAddress, parseUnits } from "ethers/lib/utils";
+import { getContractAddress } from "ethers/lib/utils";
 import { ethers } from "hardhat";
 import {
   CoreStakingPool,
@@ -13,11 +13,7 @@ import {
   StakingPoolFactory__factory,
 } from "../../typechain";
 
-import {
-  getLatestBlockNumber,
-  getLatestBlockTimestamp,
-  getNow,
-} from "../utils";
+import { getLatestBlockNumber, getLatestBlockTimestamp, toWei } from "../utils";
 
 describe("Degis Staking", function () {
   let StakingPoolFactory: StakingPoolFactory__factory,
@@ -26,10 +22,10 @@ describe("Degis Staking", function () {
   let MockUSD: MockUSD__factory, poolToken: MockUSD;
   let CoreStakingPool: CoreStakingPool__factory, pool: CoreStakingPool;
 
-  let dev_account: SignerWithAddress;
+  let dev_account: SignerWithAddress, testAddress: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account] = await ethers.getSigners();
+    [dev_account, testAddress] = await ethers.getSigners();
 
     CoreStakingPool = await ethers.getContractFactory("CoreStakingPool");
 
@@ -56,12 +52,7 @@ describe("Degis Staking", function () {
       const blockNumber = await ethers.provider.getBlockNumber();
 
       await expect(
-        factory.createPool(
-          poolToken.address,
-          blockNumber,
-          parseUnits("1"),
-          false
-        )
+        factory.createPool(poolToken.address, blockNumber, toWei("1"), false)
       ).to.emit(factory, "PoolRegistered");
 
       // Get pool address outside the factory
@@ -74,13 +65,26 @@ describe("Degis Staking", function () {
         contractAddress
       );
     });
+
+    it("should not be able to create two pools with the same pool token", async function () {
+      const blockNumber = await ethers.provider.getBlockNumber();
+
+      await expect(
+        factory.createPool(poolToken.address, blockNumber, toWei("1"), false)
+      ).to.emit(factory, "PoolRegistered");
+
+      await expect(
+        factory.createPool(poolToken.address, blockNumber, toWei("1"), false)
+      ).to.be.revertedWith("This pool is already registered");
+    });
+
     it("should be able to check the pool's information", async function () {
       const blockNumber = await ethers.provider.getBlockNumber();
 
       await factory.createPool(
         poolToken.address,
         blockNumber,
-        parseUnits("1"),
+        toWei("1"),
         false
       );
 
@@ -98,7 +102,7 @@ describe("Degis Staking", function () {
       expect(poolInfo.poolAddress).to.equal(contractAddress);
       expect(poolInfo.poolToken).to.equal(poolToken.address);
       expect(poolInfo.startBlock).to.equal(blockNumber);
-      expect(poolInfo.degisPerBlock).to.equal(parseUnits("1"));
+      expect(poolInfo.degisPerBlock).to.equal(toWei("1"));
       expect(poolInfo.isFlashPool).to.equal(false);
     });
   });
@@ -115,7 +119,7 @@ describe("Degis Staking", function () {
       await factory.createPool(
         poolToken.address,
         blockNumber,
-        parseUnits("1"),
+        toWei("1"),
         false
       );
 
@@ -123,79 +127,97 @@ describe("Degis Staking", function () {
 
       pool = CoreStakingPool.attach(poolAddress);
 
-      await poolToken.approve(poolAddress, parseUnits("1000"));
+      await poolToken.approve(poolAddress, toWei("1000"));
 
       await setNextBlockTime(now + 60);
     });
 
     it("should be able to stake pool tokens and check the user status", async function () {
-      await expect(pool.stake(parseUnits("100"), now + 6000))
+      await expect(pool.stake(toWei("100"), now + 6000))
         .to.emit(pool, "Stake")
-        .withArgs(dev_account.address, parseUnits("100"), now + 6000);
+        .withArgs(dev_account.address, toWei("100"), now + 6000);
 
       const blockTimestamp = await getLatestBlockTimestamp(ethers.provider);
 
       const userInfo = await pool.users(dev_account.address);
 
-      expect(userInfo.tokenAmount).to.equal(parseUnits("100"));
-      expect(userInfo.totalWeight).to.equal(parseUnits("100000000"));
+      expect(userInfo.tokenAmount).to.equal(toWei("100"));
+      expect(userInfo.totalWeight).to.equal(toWei("100000000"));
       expect(userInfo.rewardDebts).to.equal(0);
 
       const userDeposits = await pool.getUserDeposits(dev_account.address);
-      expect(userDeposits[0].tokenAmount).to.equal(parseUnits("100"));
-      expect(userDeposits[0].weight).to.equal(parseUnits("100000000"));
+      expect(userDeposits[0].tokenAmount).to.equal(toWei("100"));
+      expect(userDeposits[0].weight).to.equal(toWei("100000000"));
       expect(userDeposits[0].lockedFrom).to.equal(blockTimestamp);
       expect(userDeposits[0].lockedUntil).to.equal(now + 6000);
+    });
+
+    it("should not be able to stake tokens before the pool starts", async function () {
+      await factory.createPool(
+        testAddress.address,
+        blockNumber + 200,
+        toWei("1"),
+        false
+      );
+
+      const testpoolAddress = await factory.getPoolAddress(testAddress.address);
+
+      const testpool = CoreStakingPool.attach(testpoolAddress);
+
+      await expect(testpool.stake(toWei("100"), now + 6000)).to.be.revertedWith(
+        "Pool not started yet"
+      );
+      await expect(testpool.stake(toWei("100"), 0)).to.be.revertedWith(
+        "Pool not started yet"
+      );
     });
 
     it("should be able to stake pool tokens and harvest reward", async function () {
       const blocknum = 5;
 
-      await expect(pool.stake(parseUnits("100"), now + 6000))
+      await expect(pool.stake(toWei("100"), now + 6000))
         .to.emit(pool, "Stake")
-        .withArgs(dev_account.address, parseUnits("100"), now + 6000);
+        .withArgs(dev_account.address, toWei("100"), now + 6000);
 
       await mineBlocks(blocknum);
 
       await pool.harvest();
       expect(await degis.balanceOf(dev_account.address)).to.equal(
-        parseUnits((blocknum + 1).toString())
+        toWei((blocknum + 1).toString())
       );
     });
 
     it("should be able to withdraw pool tokens and get reward", async function () {
-      await pool.stake(parseUnits("100"), now + 6000);
+      await pool.stake(toWei("100"), now + 6000);
 
       await setNextBlockTime(now + 6000);
 
-      await pool.unstake(0, parseUnits("10"));
+      await pool.unstake(0, toWei("10"));
 
-      expect(await degis.balanceOf(dev_account.address)).to.equal(
-        parseUnits("1")
-      );
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
-        parseUnits("99910")
+        toWei("99910")
       );
     });
 
     it("should be able to stake for flexible", async function () {
-      await expect(pool.stake(parseUnits("100"), 0))
+      await expect(pool.stake(toWei("100"), 0))
         .to.emit(pool, "Stake")
-        .withArgs(dev_account.address, parseUnits("100"), 0);
+        .withArgs(dev_account.address, toWei("100"), 0);
     });
 
     it("should be able to able to stake multiple times and withdraw one", async function () {
-      await pool.stake(parseUnits("100"), now + 60000);
+      await pool.stake(toWei("100"), now + 60000);
       console.log("11111");
 
-      await pool.stake(parseUnits("200"), 0);
+      await pool.stake(toWei("200"), 0);
 
-      await expect(pool.unstake(1, parseUnits("100")))
+      await expect(pool.unstake(1, toWei("100")))
         .to.emit(pool, "Unstake")
-        .withArgs(dev_account.address, parseUnits("100"));
+        .withArgs(dev_account.address, toWei("100"));
 
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
-        parseUnits("99800")
+        toWei("99800")
       );
     });
   });

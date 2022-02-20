@@ -171,7 +171,7 @@ contract StakingPoolFactory is Ownable {
         // ensure that the pool is not already registered within the factory
         require(
             pools[poolToken] == address(0),
-            "this pool is already registered"
+            "This pool is already registered"
         );
 
         // create pool structure, register it within the factory
