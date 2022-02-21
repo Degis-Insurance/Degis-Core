@@ -13,7 +13,7 @@ def lark_notification(sendMsg, alert=False):
                             [
                                 {
                                     "tag": "text",
-                                    "text": sendMsg
+                                    "text": sendMsg + " deployed success"
                                 },
                                 {
                                     "tag": "a",
@@ -39,5 +39,5 @@ def lark_notification(sendMsg, alert=False):
         return False
 
 if __name__ == '__main__':
-    result = lark_notification('New Policy Token Deployed: BTC_20000.0_H_2202', False)
+    result = lark_notification('BTC_20000.0_H_2202', False)
     print(result)

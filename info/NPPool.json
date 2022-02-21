@@ -167,6 +167,13 @@
 			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
 			"poolDeadline": "1645416000",
 			"feeRate": 2
+		},
+		"BTC_43124.95_H_2205": {
+			"poolAddress": "0xe445716E3394CFC37dcE84ab0A0995e0cec1E206",
+			"policyTokenAddress": "0x74a88c2AF931ec902D27422Ba81ccF62DD8E9EB0",
+			"stablecoinAddress": "0x96a9175A1DD8bC37e7dD95Ee417cb92A9F19Ed0d",
+			"poolDeadline": "1648022040",
+			"feeRate": 20
 		}
 	},
 	"avax": {},

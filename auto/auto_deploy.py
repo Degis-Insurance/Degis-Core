@@ -3,11 +3,13 @@ import requests
 import datetime, json
 import os, platform
 
+from lark_notification import lark_notification
+
 # the full directory of Degis-Core
 UNIX_CORE_PATH = '/home/shangzh/Degis-Contract/Degis-Core/'
-MAC_CORE_PATH = '/Users/liyang/Code/Solidity/Degis/Degis-Core'
+MAC_CORE_PATH = '/Users/liyang/Code/Solidity/Degis/Degis-Core/'
 
-NETWORK = 'localhost'
+NETWORK = 'fuji'
 FEE = 20
 REWARD = 0.25
 
@@ -70,11 +72,15 @@ def deploy_naughty_token(token, percentage):
     deadline_timestamp = int((current_date + datetime.timedelta(days=dates_to_deadline)).timestamp())
     settle_timestamp = int((current_date + datetime.timedelta(days=dates_to_settle)).timestamp())
 
-    round_info = str(current_date).replace('-', '')[2: 6]
+    # round_info = str(current_date).replace('-', '')[2: 6]
+    round_info = "2205"
 
     # npx hardhat deployNPToken --name BTC --k 49830.0 --decimals 0 --iscall 1 --round 2201 --deadline 1644868800 --settletime 1644883200 --network fuji
     deploy_call = f"npx hardhat deployNPToken --name {token} --k {call_strike} --decimals 2 --iscall 1 --round {round_info} --deadline {deadline_timestamp} --settletime {settle_timestamp} --network {NETWORK}"
     deploy_put = f"npx hardhat deployNPToken --name {token} --k {put_strike} --decimals 2 --iscall 0 --round {round_info} --deadline {deadline_timestamp} --settletime {settle_timestamp} --network {NETWORK}"
+
+    call_token_name = f"{token}_{call_strike}_H_{round_info}"
+    put_token_name = f"{token}_{put_strike}_L_{round_info}"
 
     try:
         if platform.platform()[: 5] == 'Linux':
@@ -85,8 +91,13 @@ def deploy_naughty_token(token, percentage):
         print(f"Token {token} call {call_strike} deployed")
         os.system(f'cd {deploy_path} && pwd && {deploy_put}')
         print(f"Token {token} put {put_strike} deployed")
+
+        lark_notification(call_token_name)
+        lark_notification(put_token_name)
+
     except Exception:
         print(f'Token {token} failed with {Exception}')
+        lark_notification("token deploy failed", True)
 
 def deploy_naughty_pool(token, stable_coin):
     '''
@@ -123,6 +134,10 @@ def deploy_naughty_pool(token, stable_coin):
     deploy_call_pool = f"npx hardhat deployNPPool --name {call_token} --stablecoin {stable_coin_address} --deadline {deadline_timestamp} --fee {FEE} --network {NETWORK}"
     deploy_put_pool = f"npx hardhat deployNPPool --name {put_token} --stablecoin {stable_coin_address} --deadline {deadline_timestamp} --fee {FEE} --network {NETWORK}"
 
+
+    call_tokenpool_name = f"{call_token} Pool"
+    put_tokenpool_name = f"{put_token} Pool"
+
     try:
         if platform.platform()[: 5] == 'Linux':
             deploy_path = UNIX_CORE_PATH
@@ -132,8 +147,14 @@ def deploy_naughty_pool(token, stable_coin):
         print(f"Token {call_token} swap pool deployed")
         os.system(f'cd {deploy_path} && pwd && {deploy_put_pool}')
         print(f"Token {put_token} swap pool deployed")
+
+
+        lark_notification(call_tokenpool_name)
+        lark_notification(put_tokenpool_name)
+
     except Exception:
         print(f'Token {token} failed with {Exception}')
+        lark_notification("pool deploy failed", True)
 
 def deploy_naughty_mining(token):
     if platform.platform()[: 5] == 'Linux':
@@ -161,6 +182,10 @@ def deploy_naughty_mining(token):
     deploy_call_pool = f"npx hardhat addFarmingPool --name {call_token} --address {call_pool_address} --reward {REWARD} --network {NETWORK}"
     deploy_put_pool = f"npx hardhat addFarmingPool --name {put_token} --address {put_pool_address} --reward {REWARD} --network {NETWORK}"
 
+
+    call_tokenpool_name = f"{call_token} Mining Pool"
+    put_tokenpool_name = f"{put_token} Mining Pool"
+
     try:
         if platform.platform()[: 5] == 'Linux':
             deploy_path = UNIX_CORE_PATH
@@ -170,8 +195,13 @@ def deploy_naughty_mining(token):
         print(f"Token {call_token} mining pool deployed")
         os.system(f'cd {deploy_path} && pwd && {deploy_put_pool}')
         print(f"Token {put_token} mining pool deployed")
+
+        lark_notification(call_tokenpool_name)
+        lark_notification(put_tokenpool_name)
+
     except Exception:
         print(f'Token {token} failed with {Exception}')
+        lark_notification("mining deploy failed", True)
 
 def settlePurchaseIncentive(): 
     settle_purchaseIncentive_call = f"npx hardhat settlePurchaseIncentive --network {NETWORK}"
@@ -184,9 +214,12 @@ def settlePurchaseIncentive():
 
         os.system(f'cd {deploy_path} && pwd && {settle_purchaseIncentive_call}')
         print(f"Purchase incentive vault settled")
+
+        lark_notification("Purchase incentive vault settled")
         
     except Exception:
         print(f'Purchase incentive settlement failed with {Exception}')
+        lark_notification("Purchase incentive settlement failed", True)
 
 def closeLottery(): 
     close_lottery_call = f"npx hardhat closeLotteryRound --network {NETWORK}"
@@ -198,13 +231,16 @@ def closeLottery():
             deploy_path = MAC_CORE_PATH
             
         os.system(f'cd {deploy_path} && pwd && {close_lottery_call}')
-        print(f"Purchase incentive vault settled")
+        print(f"Lottery round closed")
+
+        lark_notification("Lottery round closed")
         
     except Exception:
         print(f'Close lottery failed with {Exception}')
+        lark_notification("lottery close failed", True)
 
 def startLottery(): 
-    dates_to_closeLottery = 7
+    dates_to_closeLottery = 1
     current_date = datetime.datetime.now()
 
     deadline_timestamp = int((current_date + datetime.timedelta(days=dates_to_closeLottery)).timestamp())
@@ -217,10 +253,14 @@ def startLottery():
             deploy_path = MAC_CORE_PATH
             
         os.system(f'cd {deploy_path} && pwd && {start_lottery_call}')
-        print(f"Purchase incentive vault settled")
+        print(f"New lottery round started")
+
+        lark_notification("New lottery round started")
         
     except Exception:
         print(f'Purchase incentive settlement failed with {Exception}')
+
+        lark_notification("New lottery round start failed", True)
 
 
 def drawLotteryRound(): 
@@ -233,10 +273,14 @@ def drawLotteryRound():
             deploy_path = MAC_CORE_PATH
             
         os.system(f'cd {deploy_path} && pwd && {draw_lottery_call}')
-        print(f"Purchase incentive vault settled")
+        print(f"Lottery round draw")
+
+        lark_notification("Lottery round draw")
         
     except Exception:
-        print(f'Purchase incentive settlement failed with {Exception}')
+        print(f'Lottery round draw failed with {Exception}')
+
+        lark_notification("Lottery round draw failed", True)
 
 def deploy_default():
     percentage = 0.2
