@@ -9,7 +9,7 @@ import {
   solidityKeccak256,
   toUtf8Bytes,
 } from "ethers/lib/utils";
-import { getNow } from "../../test/utils";
+import { getNow, toBN } from "../../test/utils";
 
 // import hre from "hardhat";
 
@@ -98,8 +98,8 @@ task("buyFDPolicy", "Buy a flight delay policy")
       productId,
       flightNumber,
       parseUnits(premium.toString()),
-      ethers.BigNumber.from(departureTimestamp),
-      ethers.BigNumber.from(landingTimestamp),
+      toBN(departureTimestamp),
+      toBN(landingTimestamp),
       deadline,
       sig
     );

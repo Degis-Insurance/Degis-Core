@@ -48,11 +48,16 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     event OracleUrlChanged(string newUrl);
     event DelayThresholdChanged(uint256 thresholdMin, uint256 thresholdMax);
 
-    event NewPolicyApplication(uint256 _policyID, address indexed user);
-    event PolicySold(uint256 policyID, address indexed user);
-    event PolicyDeclined(uint256 policyID, address indexed user);
-    event PolicyClaimed(uint256 policyID, address indexed user);
-    event PolicyExpired(uint256 policyID, address indexed user);
+    event NewPolicyApplication(uint256 policyId, address indexed user);
+    event NewClaimRequest(
+        uint256 policyId,
+        string flightNumber,
+        bytes32 requestId
+    );
+    event PolicySold(uint256 policyId, address indexed user);
+    event PolicyDeclined(uint256 policyId, address indexed user);
+    event PolicyClaimed(uint256 policyId, address indexed user);
+    event PolicyExpired(uint256 policyId, address indexed user);
     event FulfilledOracleRequest(uint256 policyId, bytes32 requestId);
     event PolicyOwnerTransfer(uint256 indexed tokenId, address newOwner);
 
@@ -353,6 +358,8 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         // Record this request
         requestList[requestId] = _policyId;
         policyList[_policyId].alreadySettled = true;
+
+        emit NewClaimRequest(_policyId, _flightNumber, requestId);
     }
 
     /**
@@ -472,7 +479,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         address _user,
         uint256 _policyId
     ) internal {
-        insurancePool.updateWhenExpire(_premium, _payoff, _user);
+        insurancePool.updateWhenExpire(_premium, _payoff);
         policyList[_policyId].status = PolicyStatus.EXPIRED;
         emit PolicyExpired(_policyId, _user);
     }

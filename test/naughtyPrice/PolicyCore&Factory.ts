@@ -27,7 +27,7 @@ import {
   solidityPack,
 } from "ethers/lib/utils";
 
-import { getLatestBlockTimestamp, getNow, toWei } from "../utils";
+import { getLatestBlockTimestamp, toBN, toWei } from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
@@ -161,8 +161,8 @@ describe("Policy Core and Naughty Factory", function () {
           4,
           parseUnits("5.5656"),
           2112,
-          ethers.BigNumber.from(deadline),
-          ethers.BigNumber.from(settleTimestamp)
+          toBN(deadline),
+          toBN(settleTimestamp)
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -177,8 +177,8 @@ describe("Policy Core and Naughty Factory", function () {
           19, // wrong decimals
           parseUnits("5.5656"),
           2112,
-          ethers.BigNumber.from(deadline),
-          ethers.BigNumber.from(settleTimestamp)
+          toBN(deadline),
+          toBN(settleTimestamp)
         )
       ).to.be.revertedWith("Too many decimals");
     });
@@ -220,8 +220,8 @@ describe("Policy Core and Naughty Factory", function () {
           18,
           parseUnits("5.565656565656565656"),
           2112,
-          ethers.BigNumber.from(deadline),
-          ethers.BigNumber.from(settleTimestamp)
+          toBN(deadline),
+          toBN(settleTimestamp)
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -260,8 +260,8 @@ describe("Policy Core and Naughty Factory", function () {
           0,
           parseUnits("24000"),
           2112,
-          ethers.BigNumber.from(deadline),
-          ethers.BigNumber.from(settleTimestamp)
+          toBN(deadline),
+          toBN(settleTimestamp)
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -290,8 +290,8 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         parseUnits("24000"),
         2112,
-        ethers.BigNumber.from(deadline),
-        ethers.BigNumber.from(settleTimestamp)
+        toBN(deadline),
+        toBN(settleTimestamp)
       );
 
       // Calculate the address
@@ -317,12 +317,7 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       await expect(
-        core.deployPool(
-          policyTokenName,
-          usd.address,
-          ethers.BigNumber.from(deadline),
-          20
-        )
+        core.deployPool(policyTokenName, usd.address, toBN(deadline), 20)
       )
         .to.emit(core, "PoolDeployed")
         .withArgs(poolAddress, policyTokenAddress, usd.address);
@@ -346,15 +341,10 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         parseUnits("24000"),
         2112,
-        ethers.BigNumber.from(deadline),
-        ethers.BigNumber.from(settleTimestamp)
+        toBN(deadline),
+        toBN(settleTimestamp)
       );
-      await core.deployPool(
-        policyTokenName,
-        usd.address,
-        ethers.BigNumber.from(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -427,15 +417,10 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         parseUnits("24000"),
         2112,
-        ethers.BigNumber.from(deadline),
-        ethers.BigNumber.from(settleTimestamp)
+        toBN(deadline),
+        toBN(settleTimestamp)
       );
-      await core.deployPool(
-        policyTokenName,
-        usd.address,
-        ethers.BigNumber.from(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -554,8 +539,8 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         parseUnits("24000"),
         2112,
-        ethers.BigNumber.from(deadline),
-        ethers.BigNumber.from(settleTimestamp)
+        toBN(deadline),
+        toBN(settleTimestamp)
       );
       await core.deployPolicyToken(
         "BTC",
@@ -563,22 +548,12 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         parseUnits("24000"),
         2112,
-        ethers.BigNumber.from(deadline),
-        ethers.BigNumber.from(settleTimestamp)
+        toBN(deadline),
+        toBN(settleTimestamp)
       );
 
-      await core.deployPool(
-        policyTokenName_H,
-        usd.address,
-        ethers.BigNumber.from(deadline),
-        20
-      );
-      await core.deployPool(
-        policyTokenName_L,
-        usd.address,
-        ethers.BigNumber.from(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName_H, usd.address, toBN(deadline), 20);
+      await core.deployPool(policyTokenName_L, usd.address, toBN(deadline), 20);
 
       policyTokenInfo_H = await core.policyTokenInfoMapping(policyTokenName_H);
       policyTokenInfo_L = await core.policyTokenInfoMapping(policyTokenName_L);

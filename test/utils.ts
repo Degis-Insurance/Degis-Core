@@ -35,5 +35,5 @@ export const getNow = () => {
 };
 
 export const toBN = (normalNumber: number) => {
-  return ethers.utils.BigNumber.from(normalNumber);
+  return ethers.BigNumber.from(normalNumber);
 };

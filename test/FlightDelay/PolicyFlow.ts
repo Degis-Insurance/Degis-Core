@@ -11,10 +11,12 @@ import { ethers } from "hardhat";
 import {
   BuyerToken,
   BuyerToken__factory,
+  EmergencyPool__factory,
+  EmergencyPool,
   FDPolicyToken,
   FDPolicyToken__factory,
-  FlightOracle,
-  FlightOracle__factory,
+  FlightOracleMock,
+  FlightOracleMock__factory,
   InsurancePool,
   InsurancePool__factory,
   MockUSD,
@@ -23,31 +25,41 @@ import {
   PolicyFlow__factory,
   SigManager,
   SigManager__factory,
+  DegisLottery__factory,
+  DegisLottery,
 } from "../../typechain";
-import { getNow } from "../utils";
+import { getLatestBlockTimestamp, toBN, toWei } from "../utils";
 
 describe("Policy Flow", function () {
   let dev_account: SignerWithAddress,
     user1: SignerWithAddress,
-    emergencyPool: SignerWithAddress,
-    lottery: SignerWithAddress;
+    deg: SignerWithAddress,
+    rand: SignerWithAddress;
 
   let PolicyFlow: PolicyFlow__factory, flow: PolicyFlow;
   let InsurancePool: InsurancePool__factory, pool: InsurancePool;
-  let FlightOracle: FlightOracle__factory, oracle: FlightOracle;
+  let EmergencyPool: EmergencyPool__factory, emergencyPool: EmergencyPool;
+  let Lottery: DegisLottery__factory, lottery: DegisLottery;
+  let FlightOracleMock: FlightOracleMock__factory, oracleMock: FlightOracleMock;
   let FDPolicyToken: FDPolicyToken__factory, policyToken: FDPolicyToken;
   let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
   let SigManager: SigManager__factory, sig: SigManager;
   let MockUSD: MockUSD__factory, usd: MockUSD;
 
   beforeEach(async function () {
-    [dev_account, user1, emergencyPool, lottery] = await ethers.getSigners();
+    [dev_account, user1, deg, rand] = await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
 
     SigManager = await ethers.getContractFactory("SigManager");
     sig = await SigManager.deploy();
+
+    EmergencyPool = await ethers.getContractFactory("EmergencyPool");
+    emergencyPool = await EmergencyPool.deploy();
+
+    Lottery = await ethers.getContractFactory("DegisLottery");
+    lottery = await Lottery.deploy(deg.address, usd.address, rand.address);
 
     InsurancePool = await ethers.getContractFactory("InsurancePool");
     pool = await InsurancePool.deploy(
@@ -70,9 +82,8 @@ describe("Policy Flow", function () {
       buyerToken.address
     );
 
-    const link_mainnet = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
-    FlightOracle = await ethers.getContractFactory("FlightOracle");
-    oracle = await FlightOracle.deploy(flow.address, link_mainnet);
+    FlightOracleMock = await ethers.getContractFactory("FlightOracleMock");
+    oracleMock = await FlightOracleMock.deploy(flow.address);
 
     await flow.deployed();
 
@@ -82,6 +93,7 @@ describe("Policy Flow", function () {
     await pool.setPolicyFlow(flow.address);
     await policyToken.updatePolicyFlow(flow.address);
     await buyerToken.addMinter(flow.address);
+    await lottery.setOperatorAddress(pool.address);
   });
 
   describe("Deployment", function () {
@@ -152,7 +164,7 @@ describe("Policy Flow", function () {
     beforeEach(async function () {
       productId = 0;
       flightNumber = "AQ1299";
-      now = getNow();
+      now = await getLatestBlockTimestamp(ethers.provider);
     });
 
     it("should be able to buy a policy", async function () {
@@ -196,15 +208,161 @@ describe("Policy Flow", function () {
 
       // console.log("signature: ", signature);
 
+      const policyId = await flow.totalPolicies();
+
+      await expect(
+        flow.newApplication(
+          productId,
+          flightNumber,
+          premium,
+          toBN(departureTime),
+          toBN(landingTime),
+          deadline,
+          signature
+        )
+      )
+        .to.emit(flow, "NewPolicyApplication")
+        .withArgs(policyId.toNumber() + 1, dev_account.address);
+
+      await expect(
+        flow.newApplication(
+          productId + 1,
+          flightNumber,
+          premium,
+          toBN(departureTime),
+          toBN(landingTime),
+          deadline,
+          signature
+        )
+      ).to.be.revertedWith("You are calling the wrong product contract");
+
+      await expect(
+        flow.newApplication(
+          productId,
+          flightNumber,
+          premium,
+          toBN(departureTime),
+          toBN(landingTime),
+          now - 2000,
+          signature
+        )
+      ).to.be.revertedWith("Expired deadline, please resubmit a transaction");
+
+      await expect(
+        flow.newApplication(
+          productId,
+          flightNumber,
+          premium,
+          toBN(now),
+          toBN(now + 50 * 3600),
+          deadline,
+          signature
+        )
+      ).to.be.revertedWith(
+        "It's too close to the departure time, you cannot buy this policy"
+      );
+    });
+  });
+
+  describe("Policy Settlement", function () {
+    let flightNumber: string,
+      departureTime: number,
+      landingTime: number,
+      policyId: number;
+
+    let now: number, url: string;
+
+    beforeEach(async function () {
+      await flow.setFlightOracle(oracleMock.address);
+
+      const productId = 0;
+      flightNumber = "AQ1299";
+
+      now = await getLatestBlockTimestamp(ethers.provider);
+
+      await sig.addSigner(dev_account.address);
+
+      const _SUBMIT_CLAIM_TYPEHASH = keccak256(
+        toUtf8Bytes("5G is great, physical lab is difficult to find")
+      );
+      departureTime = now + 48 * 3600;
+      landingTime = now + 50 * 3600;
+      const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
+      const premium = parseUnits("10");
+      const deadline = now + 30000;
+      const hasedInfo = solidityKeccak256(
+        [
+          "bytes",
+          "bytes",
+          "uint256",
+          "uint256",
+          "address",
+          "uint256",
+          "uint256",
+        ],
+        [
+          _SUBMIT_CLAIM_TYPEHASH,
+          hashedFlightNumber,
+          departureTime,
+          landingTime,
+          dev_account.address,
+          premium.toString(),
+          deadline,
+        ]
+      );
+
+      const signature = await dev_account.signMessage(arrayify(hasedInfo));
+
       await flow.newApplication(
         productId,
         flightNumber,
         premium,
-        ethers.BigNumber.from(now + 48 * 3600),
-        ethers.BigNumber.from(now + 50 * 3600),
+        toBN(departureTime),
+        toBN(landingTime),
         deadline,
         signature
       );
+
+      policyId = (await flow.totalPolicies()).toNumber();
+
+      url =
+        "https://degis.io:3207/flight_status?" +
+        "flight_no=" +
+        flightNumber +
+        "&timestamp=" +
+        departureTime;
+    });
+
+    it("should be able to settle a policy for no delay", async function () {
+      // Delay result to be 0: no delay
+      await oracleMock.setResult(0);
+
+      const requestId = solidityKeccak256(
+        ["uint256", "string", "string", "uint256"],
+        [toWei("0.1"), url, "delay", 1]
+      );
+
+      await setNextBlockTime(landingTime);
+
+      await expect(
+        flow.newClaimRequest(
+          policyId,
+          flightNumber,
+          departureTime.toString(),
+          "delay",
+          false
+        )
+      )
+        .to.emit(flow, "NewClaimRequest")
+        .withArgs(policyId, flightNumber, requestId);
     });
   });
 });
+
+// hre can be used in hardhat environment but not with mocha built-in test
+async function setNextBlockTime(time: number) {
+  await hre.network.provider.request({
+    method: "evm_setNextBlockTimestamp",
+    params: [time],
+  });
+}

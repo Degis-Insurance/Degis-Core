@@ -9,6 +9,7 @@ import {
   storeNaughtyTokenList,
 } from "../../scripts/contractAddress";
 import { parseUnits } from "ethers/lib/utils";
+import { toBN } from "../../test/utils";
 
 task("deployNPToken", "Deploy a new naughty price token")
   .addParam("name", "Strike token asset", null, types.string)
@@ -63,8 +64,8 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.decimals,
       parseUnits(taskArgs.k),
       taskArgs.round,
-      hre.ethers.BigNumber.from(tokenDeadline),
-      hre.ethers.BigNumber.from(tokenSettleTime)
+      toBN(tokenDeadline),
+      toBN(tokenSettleTime)
     );
     console.log("tx details:", await tx.wait());
 

@@ -47,8 +47,7 @@ interface IInsurancePool {
 
     function updateWhenExpire(
         uint256 _premium,
-        uint256 _payoff,
-        address _user
+        uint256 _payoff
     ) external;
 
     function payClaim(

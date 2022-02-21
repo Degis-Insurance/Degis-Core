@@ -6,6 +6,7 @@ import { readAddressList } from "../../scripts/contractAddress";
 import {
   DegisLottery,
   DegisLottery__factory,
+  InsurancePool__factory,
   RandomNumberGenerator,
   RandomNumberGenerator__factory,
 } from "../../typechain";
@@ -74,3 +75,32 @@ task(
   const lotAddress = await rand.DegisLottery();
   console.log("The lottery inside rand: ", lotAddress);
 });
+
+task("setOperator", "Set the operator address for degis lottery").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    // Addresses to be set
+    const insurancePoolAddress = addressList[network.name].InsurancePool;
+
+    // Get naughty factory contract instance
+    const lotteryAddress = addressList[network.name].DegisLottery;
+    const DegisLottery: DegisLottery__factory =
+      await hre.ethers.getContractFactory("DegisLottery");
+    const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
+
+    // Set
+    const tx = await lottery.setOperatorAddress(insurancePoolAddress);
+    console.log("Tx details:", await tx.wait());
+
+    // Check the result
+    const opAddress = await lottery.operatorAddress();
+    console.log("The operator is: ", opAddress);
+  }
+);

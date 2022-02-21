@@ -9,6 +9,7 @@ import {
   MockUSD__factory,
 } from "../../typechain";
 import { BigNumberish } from "ethers";
+import { toBN } from "../utils";
 
 describe("Insurance Pool for Flight Delay", function () {
   let MockUSD: MockUSD__factory, usd: MockUSD;
@@ -74,9 +75,9 @@ describe("Insurance Pool for Flight Delay", function () {
 
     it("should be able to set new reward distributions", async function () {
       const newRewardDistribution: BigNumberish[] = [
-        ethers.BigNumber.from(40),
-        ethers.BigNumber.from(30),
-        ethers.BigNumber.from(30),
+        toBN(40),
+        toBN(30),
+        toBN(30),
       ];
 
       await expect(

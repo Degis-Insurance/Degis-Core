@@ -1,6 +1,5 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import {
   BuyerToken,
@@ -19,7 +18,7 @@ import {
   PriceGetter__factory,
 } from "../../typechain";
 
-import { getNow, toWei } from "../utils";
+import { getLatestBlockTimestamp, getNow, toBN, toWei } from "../utils";
 
 describe("Naughty Router", function () {
   let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
@@ -70,7 +69,7 @@ describe("Naughty Router", function () {
 
     await factory.setPolicyCoreAddress(core.address);
 
-    now = getNow();
+    now = await getLatestBlockTimestamp(ethers.provider);
     deadline = now + 30000;
     settleTimestamp = now + 60000;
     policyTokenName = "BTC_24000.0_L_2112";
@@ -80,14 +79,14 @@ describe("Naughty Router", function () {
       0,
       toWei("24000"),
       2112,
-      BigNumber.from(deadline),
-      BigNumber.from(settleTimestamp)
+      toBN(deadline),
+      toBN(settleTimestamp)
     );
 
     await core.deployPool(
       policyTokenName,
       usd.address,
-      BigNumber.from(deadline),
+      toBN(deadline),
       20
     );
 
