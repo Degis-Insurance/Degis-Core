@@ -185,6 +185,42 @@
 			"address": "0xF1c4Ac3ff4D83dE723C0038843Ed2BEf9390a3Ff",
 			"poolId": 31,
 			"reward": "0.25"
+		},
+		"33": {
+			"name": "BTC_43124.95_H_2205",
+			"address": "0xe445716E3394CFC37dcE84ab0A0995e0cec1E206",
+			"poolId": 33,
+			"reward": "0.25"
+		},
+		"34": {
+			"name": "BTC_35284.15_L_2205",
+			"address": "0xF5c254789544F6B3F3793F4c7E79Acd4bD7CAd3A",
+			"poolId": 34,
+			"reward": "0.25"
+		},
+		"35": {
+			"name": "ETH_3014.75_H_2205",
+			"address": "0xbB91466e700E926dFC1ED26d57E3A7C476b777F1",
+			"poolId": 35,
+			"reward": "0.25"
+		},
+		"36": {
+			"name": "ETH_2466.61_L_2205",
+			"address": "0xCb4CA97Eb0F584e89fa3cf335f1d4c86eDec3De1",
+			"poolId": 36,
+			"reward": "0.25"
+		},
+		"37": {
+			"name": "AVAX_89.89_H_2205",
+			"address": "0xd82c964eB858B33C391Afb701a3eED31313857DD",
+			"poolId": 37,
+			"reward": "0.25"
+		},
+		"38": {
+			"name": "AVAX_73.55_L_2205",
+			"address": "0x0462Dc2A8b6813fE243f397BcB260478F550a1ff",
+			"poolId": 38,
+			"reward": "0.25"
 		}
 	},
 	"avax": {},
