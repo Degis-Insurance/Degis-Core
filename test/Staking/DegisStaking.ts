@@ -208,7 +208,6 @@ describe("Degis Staking", function () {
 
     it("should be able to able to stake multiple times and withdraw one", async function () {
       await pool.stake(toWei("100"), now + 60000);
-      console.log("11111");
 
       await pool.stake(toWei("200"), 0);
 

@@ -341,13 +341,15 @@ contract InsurancePool is
         external
         onlyPolicyFlow
     {
+        // Distribute the premium
+        uint256 remainingPremium = _distributePremium(_premium);
+
         // Update pool status
         activePremiums -= _premium;
         lockedBalance -= _payoff;
-        availableCapacity += _payoff;
 
-        // Distribute the premium
-        _distributePremium(_premium);
+        availableCapacity += _payoff + remainingPremium;
+        totalStakingBalance += remainingPremium;
 
         // If there is any unstake request in the queue
         uint256 remainingPayoff = _payoff;
@@ -372,14 +374,25 @@ contract InsurancePool is
         uint256 _realPayoff,
         address _user
     ) external onlyPolicyFlow notZeroAddress(_user) {
+        // Distribute the premium
+        uint256 remainingPremium = _distributePremium(_premium);
+
         // Update the pool status
         lockedBalance -= _payoff;
-        totalStakingBalance -= _realPayoff;
-        realStakingBalance -= _realPayoff;
-        activePremiums -= _premium;
 
-        // Distribute the premium
-        _distributePremium(_premium);
+        totalStakingBalance =
+            totalStakingBalance -
+            _realPayoff +
+            remainingPremium;
+
+        realStakingBalance =
+            realStakingBalance -
+            _realPayoff +
+            remainingPremium;
+
+        availableCapacity += (_payoff - _realPayoff + remainingPremium);
+
+        activePremiums -= _premium;
 
         // Pay the claim
         USDToken.safeTransfer(_user, _realPayoff);
@@ -514,7 +527,7 @@ contract InsurancePool is
      * @notice Distribute the premium to lottery and emergency pool
      * @param _premium Premium amount to be distributed
      */
-    function _distributePremium(uint256 _premium) internal {
+    function _distributePremium(uint256 _premium) internal returns (uint256) {
         uint256 premiumToLottery = _premium.mul(rewardDistribution[1].div(100));
 
         uint256 premiumToEmergency = _premium.mul(
@@ -536,6 +549,8 @@ contract InsurancePool is
         degisLottery.injectFunds(premiumToLottery);
 
         emit PremiumDistributed(premiumToEmergency, premiumToLottery);
+
+        return _premium - premiumToEmergency - premiumToLottery;
     }
 
     /**

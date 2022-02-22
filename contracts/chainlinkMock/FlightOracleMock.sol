@@ -77,10 +77,11 @@ contract FlightOracleMock is Ownable {
         string memory _url,
         string memory _path,
         int256 _times
-    ) public onlyPolicyFlow returns (bytes32 test_hash) {
-        test_hash = keccak256(abi.encodePacked(_payment, _url, _path, _times));
+    ) public view onlyPolicyFlow returns (bytes32 requestId) {
+        requestId = keccak256(abi.encodePacked(_payment, _url, _path, _times));
 
-        fulfill(test_hash, delayResult);
+        // fulfill(test_hash, delayResult);
+        return requestId;
     }
 
     /**
@@ -88,9 +89,8 @@ contract FlightOracleMock is Ownable {
      * @dev The recordChainlinkFulfillment protects this function from being called
      *      by anyone other than the oracle address that the request was sent to
      * @param _requestId The ID that was generated for the request
-     * @param _data The answer provided by the oracle
      */
-    function fulfill(bytes32 _requestId, uint256 _data) public {
-        policyFlow.finalSettlement(_requestId, _data);
+    function fulfill(bytes32 _requestId) public {
+        policyFlow.finalSettlement(_requestId, delayResult);
     }
 }

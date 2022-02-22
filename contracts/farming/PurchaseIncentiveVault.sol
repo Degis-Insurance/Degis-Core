@@ -6,6 +6,7 @@ import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title  Purchase Incentive Vault
@@ -14,7 +15,7 @@ import "../libraries/SafePRBMath.sol";
  *         About every 24 hours, the reward will be calculated to users' account.
  *         After disrtribution, users' reward balance will update but they still need to manually claim the reward.
  */
-contract PurchaseIncentiveVault is Ownable {
+contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     using SafeERC20 for IBuyerToken;
     using SafePRBMath for uint256;
 
@@ -191,7 +192,7 @@ contract PurchaseIncentiveVault is Ownable {
      * @notice Stake buyer tokens into this contract
      * @param _amount Amount of buyer tokens to stake
      */
-    function stake(uint256 _amount) external {
+    function stake(uint256 _amount) external nonReentrant {
         uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
         uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
@@ -227,7 +228,7 @@ contract PurchaseIncentiveVault is Ownable {
      * @notice Redeem buyer token from the vault
      * @param _amount Amount to redeem
      */
-    function redeem(uint256 _amount) external {
+    function redeem(uint256 _amount) external nonReentrant {
         uint256 userBalance = userSharesInRound[_msgSender()][currentRound];
         require(
             userBalance >= _amount,
@@ -238,7 +239,9 @@ contract PurchaseIncentiveVault is Ownable {
 
         userSharesInRound[_msgSender()][currentRound] -= _amount;
 
-        userInfo[_msgSender()].pendingRounds.pop();
+        if (userSharesInRound[_msgSender()][currentRound] == 0) {
+            userInfo[_msgSender()].pendingRounds.pop();
+        }
 
         roundInfo[currentRound].shares -= _amount;
 
@@ -270,7 +273,7 @@ contract PurchaseIncentiveVault is Ownable {
     /**
      * @notice User can claim his own reward
      */
-    function claimOwnReward() external {
+    function claimOwnReward() external nonReentrant {
         UserInfo memory user = userInfo[_msgSender()];
 
         require(user.pendingRounds.length != 0, "You have no shares ever");

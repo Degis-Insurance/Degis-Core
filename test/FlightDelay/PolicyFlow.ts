@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import {
   arrayify,
+  formatEther,
   keccak256,
   parseUnits,
   solidityKeccak256,
@@ -81,11 +82,11 @@ describe("Policy Flow", function () {
       sig.address,
       buyerToken.address
     );
+    await flow.deployed();
 
     FlightOracleMock = await ethers.getContractFactory("FlightOracleMock");
     oracleMock = await FlightOracleMock.deploy(flow.address);
-
-    await flow.deployed();
+    await oracleMock.deployed();
 
     // Preparations:
     await usd.approve(pool.address, parseUnits("10000"));
@@ -108,7 +109,7 @@ describe("Policy Flow", function () {
     });
 
     it("should have the correct initial fee", async function () {
-      expect(await flow.fee()).to.equal(parseUnits("0.1"));
+      expect(await flow.fee()).to.equal(toWei("0.1"));
     });
 
     it("should have the correct inital policy amount", async function () {
@@ -176,11 +177,8 @@ describe("Policy Flow", function () {
 
       const departureTime = now + 48 * 3600;
       const landingTime = now + 50 * 3600;
-
       const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
-
       const premium = parseUnits("10");
-
       const deadline = now + 30000;
 
       const hasedInfo = solidityKeccak256(
@@ -268,7 +266,8 @@ describe("Policy Flow", function () {
     let flightNumber: string,
       departureTime: number,
       landingTime: number,
-      policyId: number;
+      policyId: number,
+      premium: number;
 
     let now: number, url: string;
 
@@ -288,7 +287,7 @@ describe("Policy Flow", function () {
       departureTime = now + 48 * 3600;
       landingTime = now + 50 * 3600;
       const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
-      const premium = parseUnits("10");
+      premium = 10;
       const deadline = now + 30000;
       const hasedInfo = solidityKeccak256(
         [
@@ -306,7 +305,7 @@ describe("Policy Flow", function () {
           departureTime,
           landingTime,
           dev_account.address,
-          premium.toString(),
+          toWei(premium.toString()),
           deadline,
         ]
       );
@@ -316,7 +315,7 @@ describe("Policy Flow", function () {
       await flow.newApplication(
         productId,
         flightNumber,
-        premium,
+        toWei(premium.toString()),
         toBN(departureTime),
         toBN(landingTime),
         deadline,
@@ -335,7 +334,9 @@ describe("Policy Flow", function () {
 
     it("should be able to settle a policy for no delay", async function () {
       // Delay result to be 0: no delay
-      await oracleMock.setResult(0);
+      const delayResult = 0;
+      await oracleMock.setResult(delayResult);
+      expect(await oracleMock.delayResult()).to.equal(delayResult);
 
       const requestId = solidityKeccak256(
         ["uint256", "string", "string", "uint256"],
@@ -355,6 +356,79 @@ describe("Policy Flow", function () {
       )
         .to.emit(flow, "NewClaimRequest")
         .withArgs(policyId, flightNumber, requestId);
+
+      await expect(oracleMock.fulfill(requestId))
+        .to.emit(flow, "FulfilledOracleRequest")
+        .withArgs(policyId, requestId);
+
+      const policyTokenInfo = await flow.policyList(policyId);
+
+      expect(policyTokenInfo.alreadySettled).to.equal(true);
+      expect(policyTokenInfo.delayResult).to.equal(delayResult);
+
+      expect(await pool.activePremiums()).to.equal(0);
+      expect(await pool.totalStakingBalance()).to.equal(
+        toWei((1000 + premium * 0.5).toString())
+      );
+      expect(await pool.lockedBalance()).to.equal(0);
+      expect(await pool.availableCapacity()).to.equal(
+        toWei((1000 + premium * 0.5).toString())
+      );
+
+      // Check premium distribution
+      expect(await usd.balanceOf(lottery.address)).to.equal(
+        toWei((premium * 0.4).toString())
+      );
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(
+        toWei((premium * 0.1).toString())
+      );
+    });
+
+    it("should be able to settle a policy with some delay", async function () {
+      const delayResult = 60;
+      await oracleMock.setResult(delayResult);
+      expect(await oracleMock.delayResult()).to.equal(delayResult);
+
+      const requestId = solidityKeccak256(
+        ["uint256", "string", "string", "uint256"],
+        [toWei("0.1"), url, "delay", 1]
+      );
+
+      await setNextBlockTime(landingTime);
+
+      await expect(
+        flow.newClaimRequest(
+          policyId,
+          flightNumber,
+          departureTime.toString(),
+          "delay",
+          false
+        )
+      )
+        .to.emit(flow, "NewClaimRequest")
+        .withArgs(policyId, flightNumber, requestId);
+
+      const MAX_PAYOFF = formatEther(await flow.MAX_PAYOFF());
+
+      const payoff = Math.floor(delayResult ** 2 / 480);
+
+      await expect(oracleMock.fulfill(requestId))
+        .to.emit(flow, "FulfilledOracleRequest")
+        .withArgs(policyId, requestId);
+
+      const policyTokenInfo = await flow.policyList(policyId);
+
+      expect(policyTokenInfo.alreadySettled).to.equal(true);
+      expect(policyTokenInfo.delayResult).to.equal(delayResult);
+
+      expect(await pool.activePremiums()).to.equal(0);
+      expect(await pool.totalStakingBalance()).to.equal(
+        toWei((1000 - payoff + premium * 0.5).toString())
+      );
+      expect(await pool.lockedBalance()).to.equal(0);
+      expect(await pool.availableCapacity()).to.equal(
+        toWei((1000  - payoff + premium * 0.5).toString())
+      );
     });
   });
 });
