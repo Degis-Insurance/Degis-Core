@@ -9,7 +9,7 @@ import {
   MockUSD__factory,
 } from "../../typechain";
 import { BigNumberish } from "ethers";
-import { toBN } from "../utils";
+import { toBN, toWei } from "../utils";
 
 describe("Insurance Pool for Flight Delay", function () {
   let MockUSD: MockUSD__factory, usd: MockUSD;
@@ -172,5 +172,16 @@ describe("Insurance Pool for Flight Delay", function () {
 
       expect(await pool.checkCapacity(parseUnits("100"))).to.equal(true);
     });
+  });
+
+  describe("Stake and Withdraw with Policies", function () {
+    beforeEach(async function () {
+      // Set the fake policy flow address to do some test
+      await pool.setPolicyFlow(dev_account.address);
+
+      await pool.stake(toWei("10000"));
+    });
+
+    it("should be able to have a unstake queue", async function () {});
   });
 });
