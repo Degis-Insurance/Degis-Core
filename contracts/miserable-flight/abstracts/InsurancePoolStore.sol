@@ -5,8 +5,6 @@ abstract contract InsurancePoolStore {
     address public policyFlow;
     address public emergencyPool;
 
-    uint256 public purchaseIncentiveAmount;
-
     uint256 public frozenTime; // default as 7 days
 
     struct UserInfo {
@@ -15,29 +13,11 @@ abstract contract InsurancePoolStore {
     }
     mapping(address => UserInfo) public userInfo;
 
-    //  of every unstake request in the queue
-    struct UnstakeRequest {
-        uint256 pendingAmount;
-        uint256 fulfilledAmount;
-        bool isPaidOut; // if this request has been fully paid out // maybe redundant
-    }
-
-    // a user's unstake requests
-    mapping(address => UnstakeRequest[]) internal unstakeRequests;
-
-    // list of all unstake users
-    address[] internal unstakeQueue;
-
-    uint256 public MAX_UNSTAKE_LENGTH;
-
     // 1 LP = LPValue(USD)
     uint256 public LPValue;
 
     // Total staking balance of the pool
     uint256 public totalStakingBalance;
-
-    // Real staking balance = current staking balance - sum(unstake request in the queue)
-    uint256 public realStakingBalance;
 
     // Locked balance is for potiential payoff
     uint256 public lockedBalance;
@@ -63,7 +43,7 @@ abstract contract InsurancePoolStore {
 
     event PolicyFlowChanged(address policyFlowAddress);
 
-    event BuyNewPolicy(
+    event NewPolicyBought(
         address indexed userAddress,
         uint256 premium,
         uint256 payout

@@ -3,6 +3,10 @@ import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 import {
+  DegisLottery,
+  DegisLottery__factory,
+  EmergencyPool,
+  EmergencyPool__factory,
   InsurancePool,
   InsurancePool__factory,
   MockUSD,
@@ -14,18 +18,26 @@ import { toBN, toWei } from "../utils";
 describe("Insurance Pool for Flight Delay", function () {
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let InsurancePool: InsurancePool__factory, pool: InsurancePool;
+  let EmergencyPool: EmergencyPool__factory, emergencyPool: EmergencyPool;
+  let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
 
-  let dev_account: SignerWithAddress,
-    emergencyPool: SignerWithAddress,
-    lottery: SignerWithAddress,
-    policyflow: SignerWithAddress;
+  let dev_account: SignerWithAddress, policyflow: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account, emergencyPool, lottery, policyflow] =
-      await ethers.getSigners();
+    [dev_account, policyflow] = await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
+
+    EmergencyPool = await ethers.getContractFactory("EmergencyPool");
+    emergencyPool = await EmergencyPool.deploy();
+
+    DegisLottery = await ethers.getContractFactory("DegisLottery");
+    lottery = await DegisLottery.deploy(
+      usd.address,
+      usd.address,
+      dev_account.address
+    );
 
     InsurancePool = await ethers.getContractFactory("InsurancePool");
     pool = await InsurancePool.deploy(
@@ -35,6 +47,7 @@ describe("Insurance Pool for Flight Delay", function () {
     );
 
     await usd.approve(pool.address, parseUnits("10000"));
+    await lottery.setOperatorAddress(pool.address);
   });
 
   describe("Deployment", function () {
@@ -45,11 +58,6 @@ describe("Insurance Pool for Flight Delay", function () {
     it("should have the correct frozen time", async function () {
       const frozen = 7 * 24 * 3600;
       expect(await pool.frozenTime()).to.equal(frozen);
-    });
-
-    it("should have the correct max unstake length", async function () {
-      const maxUnstakeLength = 50;
-      expect(await pool.MAX_UNSTAKE_LENGTH()).to.equal(maxUnstakeLength);
     });
 
     it("should have the correct reward distribution", async function () {
@@ -179,9 +187,45 @@ describe("Insurance Pool for Flight Delay", function () {
       // Set the fake policy flow address to do some test
       await pool.setPolicyFlow(dev_account.address);
 
-      await pool.stake(toWei("10000"));
+      // Remove fronzen time for test
+      await pool.setFrozenTime(0);
+
+      await pool.stake(toWei("100"));
     });
 
-    it("should be able to have a unstake queue", async function () {});
+    it("should not be able to unstake when no capacity", async function () {
+      await pool.updateWhenBuy(toWei("10"), toWei("50"), dev_account.address);
+
+      await expect(pool.unstake(toWei("50")))
+        .to.emit(pool, "Unstake")
+        .withArgs(dev_account.address, toWei("50"));
+
+      await expect(pool.unstake("10")).to.be.revertedWith("All locked");
+
+      await pool.updateWhenExpire(toWei("10"), toWei("50"));
+
+      expect(await pool.totalStakingBalance()).to.equal(toWei("55"));
+      expect(await pool.availableCapacity()).to.equal(toWei("55"));
+    });
+
+    it("should be ablt to unstake when pay claim", async function () {
+      await pool.updateWhenBuy(toWei("10"), toWei("50"), dev_account.address);
+
+      await expect(pool.unstake(toWei("50")))
+        .to.emit(pool, "Unstake")
+        .withArgs(dev_account.address, toWei("50"));
+
+      await expect(pool.unstake("10")).to.be.revertedWith("All locked");
+
+      await pool.payClaim(
+        toWei("10"),
+        toWei("50"),
+        toWei("50"),
+        dev_account.address
+      );
+
+      expect(await pool.totalStakingBalance()).to.equal(toWei("5"));
+      expect(await pool.availableCapacity()).to.equal(toWei("5"));
+    });
   });
 });

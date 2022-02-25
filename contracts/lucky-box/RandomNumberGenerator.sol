@@ -96,14 +96,18 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         //*********************************//
         // TODO: This part is only for test on Fuji Testnet because there is no VRF currently
         string memory randInput = string(
-            abi.encodePacked((block.timestamp).uintToString(), address(this))
+            abi.encodePacked(
+                block.timestamp.uintToString(),
+                blockhash(block.number - (block.timestamp % 64)),
+                address(this)
+            )
         );
         randomResult = _rand(randInput) % 10000;
+
+        latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
         //*********************************//
 
         // latestRequestId = requestRandomness(keyHash, fee);
-
-        latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 
     function _rand(string memory input) internal pure returns (uint256) {

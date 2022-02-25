@@ -5,13 +5,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
 import "../libraries/SafePRBMath.sol";
-
 import "../lucky-box/interfaces/IDegisLottery.sol";
-
 import "../utils/OwnableWithoutContext.sol";
-
 import "./abstracts/InsurancePoolStore.sol";
 
 /**
@@ -67,7 +63,6 @@ contract InsurancePool is
         rewardDistribution[2] = 10;
 
         frozenTime = 7 days;
-        MAX_UNSTAKE_LENGTH = 50;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -216,9 +211,10 @@ contract InsurancePool is
      * @param _amount The amount that the user want to stake
      */
     function stake(uint256 _amount) external nonReentrant {
+        require(_amount > 0, "Zero Amount");
         require(
-            IERC20(USDToken).balanceOf(_msgSender()) >= _amount && _amount > 0,
-            "You do not have enough USD or input 0 amount"
+            IERC20(USDToken).balanceOf(_msgSender()) >= _amount,
+            "Not enough USD"
         );
 
         _updateLPValue();
@@ -236,6 +232,8 @@ contract InsurancePool is
         afterFrozenTime(_msgSender())
         nonReentrant
     {
+        require(totalStakingBalance - lockedBalance > 0, "All locked");
+
         address _user = _msgSender();
 
         _updateLPValue();
@@ -250,31 +248,17 @@ contract InsurancePool is
         uint256 unstakeAmount = _amount;
 
         // Will jump this part when the pool has enough liquidity
-        if (_amount > unlocked) {
-            require(
-                unstakeQueue.length < MAX_UNSTAKE_LENGTH,
-                "Unstake queue is full"
-            );
+        if (_amount > unlocked) unstakeAmount = unlocked; // only withdraw the unlocked value
 
-            uint256 remainingURequest = _amount - unlocked;
-            unstakeRequests[_user].push(
-                UnstakeRequest(remainingURequest, 0, false)
-            );
-            unstakeQueue.push(_user);
-            unstakeAmount = unlocked; // only withdraw the unlocked value
-            userInfo[_user].pendingBalance += remainingURequest;
-
-            // Update real staking balance
-            realStakingBalance -= remainingURequest;
-        }
-
-        _withdraw(_user, unstakeAmount);
+        if (unstakeAmount > 0) _withdraw(_user, unstakeAmount);
     }
 
     /**
      * @notice Unstake the max amount of a user
      */
     function unstakeMax() external afterFrozenTime(_msgSender()) nonReentrant {
+        require(totalStakingBalance - lockedBalance > 0, "All locked");
+
         address _user = _msgSender();
 
         _updateLPValue();
@@ -285,23 +269,7 @@ contract InsurancePool is
         uint256 unstakeAmount = userBalance;
 
         // Will jump this part when the pool has enough liquidity
-        if (userBalance > unlocked) {
-            require(
-                unstakeQueue.length < MAX_UNSTAKE_LENGTH,
-                "Unstake queue is full"
-            );
-
-            uint256 remainingURequest = userBalance - unlocked;
-            unstakeRequests[_user].push(
-                UnstakeRequest(remainingURequest, 0, false)
-            );
-            unstakeQueue.push(_user);
-            unstakeAmount = unlocked; // only withdraw the unlocked value
-            userInfo[_user].pendingBalance += remainingURequest;
-
-            // Update real staking balance
-            realStakingBalance -= remainingURequest;
-        }
+        if (userBalance > unlocked) unstakeAmount = unlocked; // only withdraw the unlocked value
 
         _withdraw(_user, unstakeAmount);
     }
@@ -329,7 +297,7 @@ contract InsurancePool is
         // Remember approval
         USDToken.safeTransferFrom(_user, address(this), _premium);
 
-        emit BuyNewPolicy(_user, _premium, _payoff);
+        emit NewPolicyBought(_user, _premium, _payoff);
     }
 
     /**
@@ -350,13 +318,6 @@ contract InsurancePool is
 
         availableCapacity += _payoff + remainingPremium;
         totalStakingBalance += remainingPremium;
-
-        // If there is any unstake request in the queue
-        uint256 remainingPayoff = _payoff;
-
-        if (unstakeQueue.length > 0) {
-            _dealUnstakeQueue(remainingPayoff);
-        }
 
         _updateLPValue();
     }
@@ -385,11 +346,6 @@ contract InsurancePool is
             _realPayoff +
             remainingPremium;
 
-        realStakingBalance =
-            realStakingBalance -
-            _realPayoff +
-            remainingPremium;
-
         availableCapacity += (_payoff - _realPayoff + remainingPremium);
 
         activePremiums -= _premium;
@@ -400,77 +356,9 @@ contract InsurancePool is
         _updateLPValue();
     }
 
-    /**
-     * @notice Revert the last unstake request for a user
-     */
-    function revertLatestUnstakeRequest() public {
-        // Use memory for less gas
-        UnstakeRequest[] memory userRequests = unstakeRequests[_msgSender()];
-
-        require(userRequests.length > 0, "No pending unstake request");
-
-        uint256 index = userRequests.length - 1;
-
-        realStakingBalance += userRequests[index].pendingAmount;
-        userInfo[_msgSender()].pendingBalance -= userRequests[index]
-            .pendingAmount;
-
-        _removeOneRequest(_msgSender());
-    }
-
-    /**
-     * @notice revert all unstake requests for a user
-     */
-    function revertAllUnstakeRequest() public {
-        require(
-            unstakeRequests[_msgSender()].length > 0,
-            "No pending unstake request"
-        );
-
-        _removeAllRequest(_msgSender());
-
-        delete unstakeRequests[_msgSender()];
-
-        uint256 remainingRequest = userInfo[_msgSender()].pendingBalance;
-
-        realStakingBalance += remainingRequest;
-        userInfo[_msgSender()].pendingBalance = 0;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ********************************** Internal Functions ********************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Remove all unstake requests for a user
-     * @param _user User's address
-     */
-    function _removeAllRequest(address _user) internal {
-        uint256 length = unstakeRequests[_user].length;
-        for (uint256 i = 0; i < length; i++) {
-            // Remove the latest unstake request from the queue
-            _removeOneRequest(_user);
-        }
-    }
-
-    /**
-     * @notice Remove one(the latest) unstake requests for a user
-     * @param _user User's address
-     */
-    function _removeOneRequest(address _user) internal {
-        uint256 index = unstakeQueue.length - 1;
-
-        while (index >= 0) {
-            if (unstakeQueue[index] == _user) break;
-            index -= 1;
-        }
-
-        for (uint256 j = index; j < unstakeQueue.length - 1; j += 1) {
-            unstakeQueue[j] = unstakeQueue[j + 1];
-        }
-
-        unstakeQueue.pop();
-    }
 
     /**
      * @notice Finish the deposit process
@@ -483,7 +371,6 @@ contract InsurancePool is
 
         // Update the pool's status
         totalStakingBalance += _amount;
-        realStakingBalance += _amount;
         availableCapacity += amountWithFactor;
 
         _updateLockedRatio();
@@ -510,7 +397,6 @@ contract InsurancePool is
         uint256 amountWithFactor = _amount.mul(collateralFactor);
         // Update the pool's status
         totalStakingBalance -= _amount;
-        realStakingBalance -= _amount;
         availableCapacity -= amountWithFactor;
 
         _updateLockedRatio();
@@ -574,52 +460,5 @@ contract InsurancePool is
     function _updateLockedRatio() internal {
         if (lockedBalance == 0) lockedRatio = 0;
         else lockedRatio = lockedBalance.div(totalStakingBalance);
-    }
-
-    /**
-     * @notice When some capacity unlocked, deal with the unstake queue
-     * @dev Normally we do not need this process
-     * @param remainingPayoff Remaining payoff amount
-     */
-    function _dealUnstakeQueue(uint256 remainingPayoff) internal {
-        uint256 pendingAmount;
-        for (uint256 i = unstakeQueue.length - 1; i >= 0; i -= 1) {
-            if (remainingPayoff >= 0) {
-                address pendingUser = unstakeQueue[i];
-                for (
-                    uint256 j = 0;
-                    j < unstakeRequests[pendingUser].length;
-                    j++
-                ) {
-                    pendingAmount = unstakeRequests[pendingUser][j]
-                        .pendingAmount;
-                    if (remainingPayoff > pendingAmount) {
-                        remainingPayoff -= pendingAmount;
-
-                        for (
-                            uint256 k = 0;
-                            k < unstakeRequests[pendingUser].length - 1;
-                            k += 1
-                        ) {
-                            unstakeRequests[pendingUser][k] = unstakeRequests[
-                                pendingUser
-                            ][k + 1];
-                        }
-                        unstakeRequests[pendingUser].pop();
-
-                        _withdraw(pendingUser, pendingAmount);
-                    } else {
-                        unstakeRequests[pendingUser][j]
-                            .pendingAmount -= remainingPayoff;
-                        unstakeRequests[pendingUser][j]
-                            .fulfilledAmount += remainingPayoff;
-                        _withdraw(pendingUser, remainingPayoff);
-
-                        remainingPayoff = 0;
-                        break;
-                    }
-                }
-            } else break;
-        }
     }
 }
