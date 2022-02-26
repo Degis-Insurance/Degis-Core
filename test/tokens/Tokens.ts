@@ -101,5 +101,7 @@ describe("ERC20Permit", function () {
     await erc20.deployed();
   });
 
-  it("should have the permit", async function () {});
+  it("should have the permit", async function () {
+    
+  });
 });

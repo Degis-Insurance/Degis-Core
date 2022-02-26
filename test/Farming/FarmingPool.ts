@@ -10,6 +10,7 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseUnits } from "ethers/lib/utils";
+import { toWei } from "../utils";
 
 describe("Farming Pool", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;
@@ -231,26 +232,37 @@ describe("Farming Pool", function () {
   describe("Pool Update", function () {
     it("should be able to update the pools when add a new pool", async function () {
       await pool.add(usd.address, parseUnits("5"), false);
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, toWei("100"));
 
       await expect(pool.add(usd_2.address, parseUnits("5"), true))
-        .to.emit(pool, "NewPoolAdded")
-        .withArgs(usd_2.address, parseUnits("5"));
+        .to.emit(pool, "PoolUpdated")
+        .withArgs(1);
     });
 
     it("should be able to update the pools when stop a pool", async function () {
       await pool.add(usd.address, parseUnits("5"), false);
       await pool.add(usd_2.address, parseUnits("5"), true);
 
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, toWei("100"));
+
       await mineBlocks(5);
       const blockNumBefore = await ethers.provider.getBlockNumber();
 
       await expect(pool.setDegisReward(1, 0, true))
-        .to.emit(pool, "FarmingPoolStopped")
-        .withArgs(1, blockNumBefore + 1);
+        .to.emit(pool, "PoolUpdated")
+        .withArgs(1);
     });
 
     it("should be able to manually mass update the pools", async function () {
-      await pool.massUpdatePools();
+      await pool.add(usd.address, parseUnits("5"), false);
+      await usd.approve(pool.address, parseUnits("1000"));
+      await pool.stake(1, toWei("100"));
+
+      await expect(pool.massUpdatePools())
+        .to.emit(pool, "PoolUpdated")
+        .withArgs(1);
     });
   });
 });
