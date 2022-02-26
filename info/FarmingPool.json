@@ -4,7 +4,7 @@
 			"name": "MiserableFlight",
 			"address": "0xCFFa179086028255e8A75aBDe8AA261253133cF9",
 			"poolId": 1,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"2": {
 			"name": "BTC_49830.0_H_2201",
@@ -28,19 +28,19 @@
 			"name": "ETH_2880.0_L_2201",
 			"address": "0xD73C42f8c0A9FF038745081A76Fe1B2Bcc43aF9C",
 			"poolId": 5,
-			"reward": "0.1"
+			"reward": "0"
 		},
 		"6": {
 			"name": "AVAX_101.75_H_2201",
 			"address": "0x16E23B77BD30587Fa4DF46e5e7dE116e44222451",
 			"poolId": 6,
-			"reward": "0.1"
+			"reward": "0"
 		},
 		"7": {
 			"name": "AVAX_83.25_L_2201",
 			"address": "0xC97bBB9976c65b8be9779E3A96f35A1e731A92C1",
 			"poolId": 7,
-			"reward": "0.1"
+			"reward": "0"
 		},
 		"8": {
 			"name": "BTC_40770.0_L_2201",
@@ -190,37 +190,37 @@
 			"name": "BTC_43124.95_H_2205",
 			"address": "0xe445716E3394CFC37dcE84ab0A0995e0cec1E206",
 			"poolId": 33,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"34": {
 			"name": "BTC_35284.15_L_2205",
 			"address": "0xF5c254789544F6B3F3793F4c7E79Acd4bD7CAd3A",
 			"poolId": 34,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"35": {
 			"name": "ETH_3014.75_H_2205",
 			"address": "0xbB91466e700E926dFC1ED26d57E3A7C476b777F1",
 			"poolId": 35,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"36": {
 			"name": "ETH_2466.61_L_2205",
 			"address": "0xCb4CA97Eb0F584e89fa3cf335f1d4c86eDec3De1",
 			"poolId": 36,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"37": {
 			"name": "AVAX_89.89_H_2205",
 			"address": "0xd82c964eB858B33C391Afb701a3eED31313857DD",
 			"poolId": 37,
-			"reward": "0.25"
+			"reward": "0"
 		},
 		"38": {
 			"name": "AVAX_73.55_L_2205",
 			"address": "0x0462Dc2A8b6813fE243f397BcB260478F550a1ff",
 			"poolId": 38,
-			"reward": "0.25"
+			"reward": "0"
 		}
 	},
 	"avax": {},
