@@ -1,8 +1,8 @@
 # Degis-Core
 
-**This repo is still during the migration from truffle to hardhat&ts.**
+**Core smart contracts for Degis**
 
-- Audit Snapshot time: Jan 7 10:23
+- Slowmist Audit Snapshot time: Jan 7 10:23
 
 Core smart contracts for Degis including:
 
@@ -115,6 +115,6 @@ npx hardhat verify --constructor-args scripts/verify/arguments.js DEPLOYED_CONTR
 
 - Every time you deploy the contracts, the abis will be put inside **deployments** folder.
 
-- You also need to run the **getAddressList.js** to generate a separate json file containing the addresslist.
+- All addresses of deployed contracts and tokens will be stored inside the info folder.
 
 

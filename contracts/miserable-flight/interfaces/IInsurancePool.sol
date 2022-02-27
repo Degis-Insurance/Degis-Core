@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 interface IInsurancePool {
@@ -8,10 +8,7 @@ interface IInsurancePool {
 
     function getPoolUnlocked() external view returns (uint256);
 
-    function getUnlockedFor(address _user)
-        external
-        view
-        returns (uint256);
+    function getUnlockedFor(address _user) external view returns (uint256);
 
     function getLockedFor(address _user) external view returns (uint256);
 
@@ -45,10 +42,7 @@ interface IInsurancePool {
         address _user
     ) external;
 
-    function updateWhenExpire(
-        uint256 _premium,
-        uint256 _payoff
-    ) external;
+    function updateWhenExpire(uint256 _premium, uint256 _payoff) external;
 
     function payClaim(
         uint256 _premium,

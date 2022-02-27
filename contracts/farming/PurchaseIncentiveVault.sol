@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
 import "../libraries/SafePRBMath.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /**
  * @title  Purchase Incentive Vault
@@ -37,7 +37,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     uint256 public distributionInterval;
 
     // Last distribution block
-    uint256 public lastDistributionBlock;
+    uint256 public lastDistribution;
 
     uint256 public MAX_ROUND = 50;
 
@@ -67,7 +67,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event DegisPerRoundChanged(uint256 oldPerRound, uint256 newPerRound);
+    event DegisRewardChanged(uint256 oldPerRound, uint256 newPerRound);
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
     event Stake(
         address userAddress,
@@ -87,8 +87,8 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
         buyerToken = IBuyerToken(_buyerToken);
         degis = IDegisToken(_degisToken);
 
-        // Initialize the last distribution block
-        lastDistributionBlock = block.number;
+        // Initialize the last distribution time
+        lastDistribution = block.timestamp;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -96,12 +96,12 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Check if admins can distribute at this time
+     * @notice Check if admins can distribute now
      */
     modifier hasPassedInterval() {
         require(
-            block.number - lastDistributionBlock > distributionInterval,
-            "Two distributions need to have an interval"
+            block.timestamp - lastDistribution > distributionInterval,
+            "Two distributions should have an interval"
         );
         _;
     }
@@ -135,13 +135,12 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @notice Get a user's pending reward
      * @return userPendingReward User's pending reward
      */
-    function pendingReward() public view returns (uint256) {
+    function pendingReward() public view returns (uint256 userPendingReward) {
         UserInfo memory user = userInfo[_msgSender()];
 
         uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
         uint256 startIndex = user.lastRewardRoundIndex;
 
-        uint256 userPendingReward;
         for (uint256 i = startIndex; i < startIndex + length; i++) {
             uint256 round = user.pendingRounds[i];
 
@@ -149,8 +148,6 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
                 userSharesInRound[_msgSender()][round]
             );
         }
-
-        return userPendingReward;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -162,9 +159,9 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @param _degisPerRound Degis distribution per round to be set
      */
     function setDegisPerRound(uint256 _degisPerRound) external onlyOwner {
-        uint256 oldPerRound = degisPerRound;
+        emit DegisRewardChanged(degisPerRound, _degisPerRound);
+
         degisPerRound = _degisPerRound;
-        emit DegisPerRoundChanged(oldPerRound, _degisPerRound);
     }
 
     /**
@@ -172,9 +169,9 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @param _newInterval The new interval
      */
     function setDistributionInterval(uint256 _newInterval) external onlyOwner {
-        uint256 oldInterval = distributionInterval;
+        emit DistributionIntervalChanged(distributionInterval, _newInterval);
+
         distributionInterval = _newInterval;
-        emit DistributionIntervalChanged(oldInterval, _newInterval);
     }
 
     /**
@@ -199,6 +196,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
 
         uint256 actualAmount = vaultBalanceAfter - vaultBalanceBefore;
 
+        // If the user has not staked in this round, record this new user
         if (userSharesInRound[_msgSender()][currentRound] == 0) {
             roundInfo[currentRound].users.push(_msgSender());
         }
@@ -254,7 +252,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      */
     function settleCurrentRound() external hasPassedInterval {
         RoundInfo storage info = roundInfo[currentRound];
-        require(info.hasDistributed == false, "Already distributed this round");
+        require(!info.hasDistributed, "Already distributed");
 
         uint256 totalShares = info.shares;
 
@@ -264,10 +262,10 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
 
         info.hasDistributed = true;
 
-        currentRound += 1;
-        lastDistributionBlock = block.number;
+        emit RoundSettled(currentRound, block.timestamp);
 
-        emit RoundSettled(currentRound - 1, block.number);
+        currentRound += 1;
+        lastDistribution = block.timestamp;
     }
 
     /**

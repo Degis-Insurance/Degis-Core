@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 import "../utils/Ownable.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
@@ -79,17 +79,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         fee = 0.1 * 10**18;
     }
 
-    // ----------------------------------------------------------------------------------- //
-    // ************************************ Modifiers ************************************ //
-    // ----------------------------------------------------------------------------------- //
-
-    /**
-     * @dev This modifier uses assert which means this error should never happens.
-     */
-    modifier validAddress() {
-        assert(msg.sender != address(0));
-        _;
-    }
 
     // ----------------------------------------------------------------------------------- //
     // ********************************* View Functions ********************************** //
@@ -261,6 +250,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
         // Generate the policy
         // Use ++totalPolicies to keep the policyId the same as ERC721 tokenId
+        // Policy Id starts from 1
         uint256 currentPolicyId = ++totalPolicies;
 
         policyList[currentPolicyId] = PolicyInfo(

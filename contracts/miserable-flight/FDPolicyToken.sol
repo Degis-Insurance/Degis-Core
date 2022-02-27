@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
@@ -6,7 +6,6 @@ import "../utils/OwnableWithoutContext.sol";
 import "../libraries/StringsUtils.sol";
 import "./interfaces/IPolicyFlow.sol";
 import "./interfaces/IPolicyStruct.sol";
-
 
 /**
  * @title  Policy Token for flight delay

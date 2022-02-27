@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -84,7 +84,7 @@ contract InsurancePool is
      * @notice The address can not be zero
      */
     modifier notZeroAddress(address _address) {
-        require(_address != address(0), "Can not be zero address");
+        assert(_address != address(0));
         _;
     }
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "../utils/Ownable.sol";
@@ -28,18 +28,6 @@ contract PriceFeedMock is Ownable {
     );
 
     event LatestPriceGet(uint256 roundID, uint256 price);
-
-    // ---------------------------------------------------------------------------------------- //
-    // *************************************** Modifiers ************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
-    /**
-     * @notice Can not give zero address
-     */
-    modifier notZeroAddress(address _address) {
-        require(_address != address(0), "can not give zero address");
-        _;
-    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Main Functions *********************************** //

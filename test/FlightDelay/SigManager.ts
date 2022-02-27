@@ -1,11 +1,6 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import {
-  SigManager,
-  SigManager__factory,
-  PolicyFlow,
-  PolicyFlow__factory,
-} from "../../typechain";
+import { SigManager, SigManager__factory } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 

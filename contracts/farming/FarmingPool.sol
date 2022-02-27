@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -18,8 +18,18 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafeERC20 for IDegisToken;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // The reward token is degis
+    IDegisToken public degis;
+
     // PoolId starts from 1
     uint256 public _nextPoolId;
+
+    // Farming starts from a certain block number
+    uint256 public startBlock;
 
     struct PoolInfo {
         address lpToken;
@@ -41,11 +51,6 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     }
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
-
-    // The reward token is degis
-    IDegisToken public degis;
-
-    uint256 public startBlock; // Farming starts from a certain block number
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -99,7 +104,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
      * @notice The address can not be zero
      */
     modifier notZeroAddress(address _address) {
-        require(_address != address(0), "Can not be zero address");
+        assert(_address != address(0));
         _;
     }
 
@@ -124,7 +129,6 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     function pendingDegis(uint256 _poolId, address _user)
         external
         view
-        notZeroAddress(_user)
         returns (uint256)
     {
         PoolInfo memory poolInfo = poolList[_poolId];
@@ -156,6 +160,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
             // If the pool has stopped, not update the info
             uint256 pending = user.stakingBalance.mul(accDegisPerShare) -
                 user.rewardDebt;
+
             return pending;
         }
     }

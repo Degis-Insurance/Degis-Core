@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
@@ -17,6 +17,7 @@ contract PriceGetter is Ownable {
         uint256 decimals;
     }
     // Use token name (string) as the mapping key
+    // Should set the correct orginal token name
     mapping(string => PriceFeedInfo) public priceFeedInfo;
 
     // ---------------------------------------------------------------------------------------- //
@@ -48,17 +49,17 @@ contract PriceGetter is Ownable {
 
         // Uncomment below when launched on Avalanche Fuji
         priceFeedInfo["AVAX"] = PriceFeedInfo(
-            0x5498BB86BC934c8D34FDA08E81D444153d0D06aD,
+            0x0A77230d17318075983913bC2145DB16C7366156,
             8
         );
 
         priceFeedInfo["ETH"] = PriceFeedInfo(
-            0x86d67c3D38D2bCeE722E601025C25a575021c6EA,
+            0x976B3D034E162d8bD72D6b9C989d545b839003b0,
             8
         );
 
         priceFeedInfo["BTC"] = PriceFeedInfo(
-            0x31CF013A08c6Ac228C94551d535d5BAfE19c602a,
+            0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
             8
         );
     }
@@ -71,7 +72,7 @@ contract PriceGetter is Ownable {
      * @notice Can not give zero address
      */
     modifier notZeroAddress(address _address) {
-        require(_address != address(0), "can not give zero address");
+        require(_address != address(0), "Zero address");
         _;
     }
 
@@ -130,6 +131,7 @@ contract PriceGetter is Ownable {
             timeStamp,
             answeredInRound
         );
+        // Transfer the result decimals
         uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
 
         return finalPrice;
