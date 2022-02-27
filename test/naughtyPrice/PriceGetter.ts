@@ -23,10 +23,22 @@ describe("PriceGetter", function () {
       expect(await priceGetter.owner()).to.equal(dev_account.address);
     });
 
-    it("should set some price feeds at the beginning", async function () {
+    it("should set AVAX price feeds at the beginning", async function () {
       expect(
         (await priceGetter.priceFeedInfo("AVAX")).priceFeedAddress
-      ).to.equal("0x5498BB86BC934c8D34FDA08E81D444153d0D06aD");
+      ).to.equal("0x0A77230d17318075983913bC2145DB16C7366156");
+    });
+
+    it("should set BTC price feeds at the beginning", async function () {
+      expect(
+        (await priceGetter.priceFeedInfo("BTC")).priceFeedAddress
+      ).to.equal("0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743");
+    });
+
+    it("should set ETH price feeds at the beginning", async function () {
+      expect(
+        (await priceGetter.priceFeedInfo("ETH")).priceFeedAddress
+      ).to.equal("0x976B3D034E162d8bD72D6b9C989d545b839003b0");
     });
   });
 

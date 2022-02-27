@@ -4,7 +4,7 @@ import { SigManager, SigManager__factory } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { keccak256, toUtf8Bytes } from "ethers/lib/utils";
 
-describe("Flight Delay Policy Token", function () {
+describe("Signature Manager", function () {
   let SigManager: SigManager__factory, sig: SigManager;
 
   let dev_account: SignerWithAddress;
@@ -49,7 +49,7 @@ describe("Flight Delay Policy Token", function () {
       await sig.addSigner(dev_account.address);
 
       await expect(sig.addSigner(dev_account.address)).to.be.revertedWith(
-        "this address is already a signer"
+        "Already a signer"
       );
 
       expect(await sig.isValidSigner(dev_account.address)).to.equal(true);
@@ -64,7 +64,7 @@ describe("Flight Delay Policy Token", function () {
 
     it("should not be able to remove a signer not registered", async function () {
       await expect(sig.removeSigner(dev_account.address)).to.be.revertedWith(
-        "this address is not a signer"
+        "Not a signer"
       );
     });
   });

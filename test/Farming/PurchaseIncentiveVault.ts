@@ -11,6 +11,7 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { parseEther, parseUnits } from "ethers/lib/utils";
 import { timeStamp } from "console";
+import { getLatestBlockTimestamp } from "../utils";
 
 describe("Purcahse Incentive Vault", function () {
   let PurchaseIncentiveVault: PurchaseIncentiveVault__factory,
@@ -23,7 +24,7 @@ describe("Purcahse Incentive Vault", function () {
     user2: SignerWithAddress,
     policyflow: SignerWithAddress;
 
-  let currentRound: number, initBlockNumber: number;
+  let currentRound: number, initBlockNumber: number, initTimestamp: number;
 
   beforeEach(async function () {
     [dev_account, user1, user2, policyflow] = await ethers.getSigners();
@@ -41,6 +42,7 @@ describe("Purcahse Incentive Vault", function () {
       buyerToken.address,
       degis.address
     );
+    initTimestamp = await getLatestBlockTimestamp(ethers.provider);
     initBlockNumber = await ethers.provider.getBlockNumber();
 
     await vault.deployed();
@@ -64,14 +66,14 @@ describe("Purcahse Incentive Vault", function () {
     });
 
     it("should set the lastDistributionBlock correctly", async function () {
-      expect(await vault.lastDistributionBlock()).to.equal(initBlockNumber);
+      expect(await vault.lastDistribution()).to.equal(initTimestamp);
     });
   });
 
   describe("Owner Functions", function () {
     it("should be able to set degis per round", async function () {
       await expect(vault.setDegisPerRound(parseUnits("1")))
-        .to.emit(vault, "DegisPerRoundChanged")
+        .to.emit(vault, "DegisRewardChanged")
         .withArgs(0, parseUnits("1"));
     });
 
@@ -113,12 +115,14 @@ describe("Purcahse Incentive Vault", function () {
       await vault.connect(user1).stake(parseUnits("3"));
       const blockNumber = await ethers.provider.getBlockNumber();
 
+      const timestamp = await getLatestBlockTimestamp(ethers.provider);
+
       await expect(vault.settleCurrentRound())
         .to.emit(vault, "RoundSettled")
-        .withArgs(currentRound, blockNumber + 1);
+        .withArgs(currentRound, timestamp + 1);
 
       expect(await vault.currentRound()).to.equal(currentRound + 1);
-      expect(await vault.lastDistributionBlock()).to.equal(blockNumber + 1);
+      expect(await vault.lastDistribution()).to.equal(timestamp + 1);
     });
 
     it("should be able to settle after several stake&redeem", async function () {
@@ -135,7 +139,7 @@ describe("Purcahse Incentive Vault", function () {
     it("should not be able to settle before passing the interval", async function () {
       await vault.settleCurrentRound();
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
-        "Two distributions need to have an interval"
+        "Two distributions should have an interval"
       );
     });
 
