@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "../utils/interfaces/IERC20Decimals.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/SafePRBMath.sol";
@@ -543,7 +544,13 @@ contract PolicyCore is Ownable {
             _amount
         );
 
-        _mintPolicyToken(policyTokenAddress, _amount, msg.sender);
+        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
+
+        _mintPolicyToken(
+            policyTokenAddress,
+            _amount * 10**(18 - stablecoinDecimals),
+            msg.sender
+        );
 
         emit Deposit(_msgSender(), _policyTokenName, _stablecoin, _amount);
     }
@@ -553,7 +560,7 @@ contract PolicyCore is Ownable {
      * @dev Only called by the router contract
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the sable coin
-     * @param _amount Amount of stablecoin (also the amount of policy tokens)
+     * @param _amount Amount of stablecoin (may have 6 decimals) (different from the amount with 18 decimals)
      * @param _user Address to receive the policy tokens
      */
     function delegateDeposit(
@@ -582,7 +589,13 @@ contract PolicyCore is Ownable {
         // Transfer stablecoins to this contract
         IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
-        _mintPolicyToken(policyTokenAddress, _amount, _user);
+        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
+
+        _mintPolicyToken(
+            policyTokenAddress,
+            _amount * 10**(18 - stablecoinDecimals),
+            _user
+        );
 
         emit DelegateDeposit(
             _msgSender(),
@@ -598,7 +611,7 @@ contract PolicyCore is Ownable {
      * @dev Redeem happens before the deadline and is different from claim/settle
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount of USDT (also the amount of policy tokens)
+     * @param _amount Amount of Policy Tokens (18 decimals) (stablecoin may have different decimals)
      */
     function redeem(
         string memory _policyTokenName,
@@ -625,7 +638,13 @@ contract PolicyCore is Ownable {
             "You do not have sufficient policy tokens to redeem"
         );
 
-        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
+        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
+
+        IERC20(_stablecoin).safeTransfer(
+            msg.sender,
+            _amount / 10**(18 - stablecoinDecimals)
+        );
+
         policyToken.burn(_msgSender(), _amount);
 
         userQuota[msg.sender][policyTokenAddress] -= _amount;

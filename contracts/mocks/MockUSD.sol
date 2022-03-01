@@ -39,4 +39,9 @@ contract MockUSD is ERC20 {
         _mint(_account, _amount);
         userHaveMinted[_account] += _amount;
     }
+
+    // 6 decimals to mock stablecoins
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }

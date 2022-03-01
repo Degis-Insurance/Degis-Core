@@ -32,6 +32,8 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
         ERC20(name, symbol)
         ERC20Permit(name)
     {
+        // After the owner is transferred to multisig governance
+        // This initial minter should be removed
         isMinter[_msgSender()] = true;
     }
 

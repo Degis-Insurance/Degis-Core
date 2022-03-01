@@ -2,11 +2,8 @@
 pragma solidity ^0.8.10;
 
 import "../utils/Ownable.sol";
-
 import "./interfaces/IPool.sol";
-
 import "./CoreStakingPool.sol";
-
 import "../tokens/interfaces/IDegisToken.sol";
 
 contract StakingPoolFactory is Ownable {
