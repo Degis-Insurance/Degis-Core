@@ -413,7 +413,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
         if (_result == 0) {
             // 0: on time
-            policyExpired(premium, MAX_PAYOFF, buyerAddress, policyId);
+            _policyExpired(premium, MAX_PAYOFF, buyerAddress, policyId);
         } else if (_result <= DELAY_THRESHOLD_MAX) {
             uint256 real_payoff = calcPayoff(_result);
             _policyClaimed(premium, real_payoff, buyerAddress, policyId);
@@ -463,7 +463,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
      * @param _user user's address
      * @param _policyId the unique policy ID
      */
-    function policyExpired(
+    function _policyExpired(
         uint256 _premium,
         uint256 _payoff,
         address _user,

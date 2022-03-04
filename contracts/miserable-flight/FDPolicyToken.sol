@@ -63,7 +63,7 @@ contract FDPolicyToken is
         returns (string memory)
     {
         require(_tokenId < _nextId, "TokenId is too large!");
-        return getTokenURI(_tokenId);
+        return _getTokenURI(_tokenId);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -90,7 +90,7 @@ contract FDPolicyToken is
     function mintPolicyToken(address _to) public {
         require(
             _msgSender() == address(policyFlow),
-            "Only the policyflow contract can mint policy token"
+            "Only the policyflow contract can mint fd policy token"
         );
         uint256 tokenId = _nextId++;
         _safeMint(_to, tokenId);
@@ -120,7 +120,7 @@ contract FDPolicyToken is
      * @notice Get the tokenURI, the metadata is from policyFlow contract
      * @param _tokenId Token Id of the policy token
      */
-    function getTokenURI(uint256 _tokenId)
+    function _getTokenURI(uint256 _tokenId)
         internal
         view
         returns (string memory)
@@ -128,7 +128,7 @@ contract FDPolicyToken is
         PolicyInfo memory info = policyFlow.getPolicyInfoById(_tokenId);
 
         return
-            constructTokenURI(
+            _constructTokenURI(
                 PolicyTokenURIParam(
                     info.flightNumber,
                     info.buyerAddress,
@@ -144,8 +144,9 @@ contract FDPolicyToken is
 
     /**
      * @notice Construct the metadata of a specific policy token
+     * @param _params The parameters of the policy token
      */
-    function constructTokenURI(PolicyTokenURIParam memory _params)
+    function _constructTokenURI(PolicyTokenURIParam memory _params)
         internal
         pure
         returns (string memory)
