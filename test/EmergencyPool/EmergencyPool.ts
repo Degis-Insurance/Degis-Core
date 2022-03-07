@@ -13,10 +13,10 @@ describe("Emergency Pool", function () {
   let EmergencyPool: EmergencyPool__factory, pool: EmergencyPool;
   let MockUSD: MockUSD__factory, usd: MockUSD;
 
-  let dev_account: SignerWithAddress, user1: SignerWithAddress;
+  let dev_account: SignerWithAddress, non_owner: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account, user1] = await ethers.getSigners();
+    [dev_account, non_owner] = await ethers.getSigners();
 
     EmergencyPool = await ethers.getContractFactory("EmergencyPool");
     pool = await EmergencyPool.deploy();
@@ -69,7 +69,7 @@ describe("Emergency Pool", function () {
 
       await expect(
         pool
-          .connect(user1)
+          .connect(non_owner)
           .emergencyWithdraw(usd.address, stablecoinToWei("100"))
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
