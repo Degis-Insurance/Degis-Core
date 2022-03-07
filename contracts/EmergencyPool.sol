@@ -2,7 +2,6 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import "./utils/Ownable.sol";
 
 /**
@@ -46,7 +45,7 @@ contract EmergencyPool is Ownable {
      * @param _amount The amount that the user want to stake
      */
     function deposit(address _tokenAddress, uint256 _amount) external {
-        require(_amount > 0, "Please deposit some funds");
+        require(_amount > 0, "Amount must be greater than 0");
 
         IERC20(_tokenAddress).safeTransferFrom(
             _msgSender(),
@@ -68,7 +67,7 @@ contract EmergencyPool is Ownable {
         onlyOwner
     {
         uint256 balance = IERC20(_tokenAddress).balanceOf(address(this));
-        require(_amount <= balance, "Not enough balance to withdraw");
+        require(_amount <= balance, "Insufficient funds");
 
         IERC20(_tokenAddress).safeTransfer(owner(), _amount);
         emit Withdraw(_tokenAddress, owner(), _amount);

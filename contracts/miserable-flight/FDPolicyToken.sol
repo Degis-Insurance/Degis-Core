@@ -99,6 +99,7 @@ contract FDPolicyToken is
     /**
      * @notice Transfer the owner of a policy token and update the information in policyFlow
      * @dev Need approval and is prepared for secondary market
+     * @dev If you just transfer the policy token, you will not transfer the right for claiming payoff
      * @param _from The original owner of the policy
      * @param _to The new owner of the policy
      * @param _tokenId Token id of the policy

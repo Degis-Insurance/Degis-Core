@@ -247,7 +247,10 @@ describe("Policy Core and Naughty Factory", function () {
         [NPPolicyToken.bytecode, token_init]
       );
 
-      const INIT_CODE_HASH = keccak256(bytecode2);
+      // const INIT_CODE_HASH = keccak256(bytecode2);
+      const INIT_CODE_HASH = await factory.getInitCodeHashForPolicyToken(
+        policyTokenName
+      );
 
       const salt = solidityKeccak256(["string"], [policyTokenName]);
 

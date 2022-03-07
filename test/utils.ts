@@ -2,6 +2,10 @@ export const toWei = (etherAmount: string) => {
   return ethers.utils.parseUnits(etherAmount);
 };
 
+export const stablecoinToWei = (stablecoinAmount: string) => {
+  return ethers.utils.parseUnits(stablecoinAmount, 6);
+};
+
 export const getAddressZero = () => {
   return ethers.constants.AddressZero;
 };

@@ -110,6 +110,10 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         // latestRequestId = requestRandomness(keyHash, fee);
     }
 
+    /**
+     * @notice Get the random number
+     * @return randomNumber the random result
+     */
     function _rand(string memory input) internal pure returns (uint256) {
         return uint256(keccak256(abi.encodePacked(input)));
     }

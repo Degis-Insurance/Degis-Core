@@ -7,9 +7,9 @@ import {
   MockUSD__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { parseUnits } from "ethers/lib/utils";
+import { stablecoinToWei } from "../utils";
 
-describe("Farming Pool", function () {
+describe("Emergency Pool", function () {
   let EmergencyPool: EmergencyPool__factory, pool: EmergencyPool;
   let MockUSD: MockUSD__factory, usd: MockUSD;
 
@@ -31,24 +31,56 @@ describe("Farming Pool", function () {
     it("should have the correct name", async function () {
       expect(await pool.name()).to.equal("Degis Emergency Pool");
     });
+
+    it("should have the correct owner", async function () {
+      expect(await pool.owner()).to.equal(dev_account.address);
+    });
   });
 
   describe("Deposit and Withdraw", function () {
     it("should be able to deposit funds into the pool", async function () {
-      await usd.approve(pool.address, parseUnits("100"));
+      await usd.approve(pool.address, stablecoinToWei("100"));
 
-      expect(await pool.deposit(usd.address, parseUnits("100")))
+      expect(await pool.deposit(usd.address, stablecoinToWei("100")))
         .to.emit(pool, "Deposit")
-        .withArgs(usd.address, dev_account.address, parseUnits("100"));
+        .withArgs(usd.address, dev_account.address, stablecoinToWei("100"));
+    });
+
+    it("should not be able to deposit with zero amount", async function () {
+      await usd.approve(pool.address, stablecoinToWei("100"));
+
+      await expect(
+        pool.deposit(usd.address, stablecoinToWei("0"))
+      ).to.be.revertedWith("Amount must be greater than 0");
     });
 
     it("should be able to emergency withdraw funds from the pool", async function () {
-      await usd.approve(pool.address, parseUnits("100"));
-      await pool.deposit(usd.address, parseUnits("100"));
+      await usd.approve(pool.address, stablecoinToWei("100"));
+      await pool.deposit(usd.address, stablecoinToWei("100"));
 
-      expect(await pool.emergencyWithdraw(usd.address, parseUnits("100")))
+      expect(await pool.emergencyWithdraw(usd.address, stablecoinToWei("100")))
         .to.emit(pool, "Withdraw")
-        .withArgs(usd.address, dev_account.address, parseUnits("100"));
+        .withArgs(usd.address, dev_account.address, stablecoinToWei("100"));
+    });
+
+    it("should not be able to withdraw funds by non-owner", async function () {
+      await usd.approve(pool.address, stablecoinToWei("100"));
+      await pool.deposit(usd.address, stablecoinToWei("100"));
+
+      await expect(
+        pool
+          .connect(user1)
+          .emergencyWithdraw(usd.address, stablecoinToWei("100"))
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+
+    it("should not be able to withdraw more funds than the balance", async function () {
+      await usd.approve(pool.address, stablecoinToWei("100"));
+      await pool.deposit(usd.address, stablecoinToWei("100"));
+
+      await expect(
+        pool.emergencyWithdraw(usd.address, stablecoinToWei("101"))
+      ).to.be.revertedWith("Insufficient funds");
     });
   });
 });

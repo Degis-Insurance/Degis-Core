@@ -269,6 +269,11 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         emit OperatorAddressChanged(_operatorAddress);
     }
 
+    /**
+     * @notice Set the contract address for the RandomGenerator contract
+     * @dev Only callable by the owner
+     * @param _randomNumberGenerator Address of the RandomGenerator contract
+     */
     function setRandomNumberGenerator(address _randomNumberGenerator)
         external
         onlyOwner
@@ -285,6 +290,8 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     /**
      * @notice Change the end time of current round (only if it was set a wrong number)
+     * @dev Normally this function is not needed
+     * @param _endTime New end time
      */
     function setEndTime(uint256 _endTime) external onlyOwner {
         require(
@@ -302,8 +309,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     /**
      * @notice Start the lottery
      * @dev Callable only by operator
-     * @param _endTime endTime of the lottery (timestamp in s)
-     * @param _stageProportion breakdown of rewards per bracket (must sum to 10,000)(100 <=> 1)
+     * @param _endTime EndTime of the lottery (UNIX timestamp in s)
+     * @param _stageProportion Breakdown of rewards per bracket
+     * @dev Stage proportion must sum to 10,000(100 <=> 1)
      */
     function startLottery(
         uint256 _endTime,
@@ -350,6 +358,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     /**
      * @notice Close a lottery
      * @dev Callable by any address and need to meet the endtime condition
+     * @dev Normally it's automatically called by our contract
      */
     function closeLottery() external nonReentrant {
         require(
@@ -402,8 +411,10 @@ contract DegisLottery is ReentrancyGuard, Ownable {
             receiveRewards(currentLotteryId - 1);
         }
 
+        // Get the weight of current round (round is a global content)
         uint256 roundWeight = getCurrentRoundWeight();
 
+        // Total amount of tickets will be bought
         uint256 totalAmount = 0;
 
         for (uint256 i = 0; i < _ticketNumbers.length; i++) {
@@ -486,9 +497,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
 
     /**
      * @notice Inject funds
-     * @param _amount amount to inject 
+     * @param _amount amount to inject
      * @dev Callable by owner(incentive) or injector address(insurancePool income)
-            First transfer USD and then call this function to record
+     * @dev Transfer without calling this function will not be recorded
      */
     function injectFunds(uint256 _amount) external onlyOperator nonReentrant {
         USDToken.safeTransferFrom(_msgSender(), address(this), _amount);
@@ -652,8 +663,9 @@ contract DegisLottery is ReentrancyGuard, Ownable {
     }
 
     /**
-     * @notice Recover wrong tokens sent to the contract, only by the owner
-               All tokens except DEG and USD are wrong tokens
+     * @notice Recover wrong tokens sent to the contract
+     * @dev    Only callable by the owner
+     * @dev    All tokens except DEG and USD are wrong tokens
      * @param _tokenAddress the address of the token to withdraw
      * @param _tokenAmount token amount to withdraw
      */

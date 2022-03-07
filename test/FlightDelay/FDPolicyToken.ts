@@ -73,7 +73,7 @@ describe("Flight Delay Policy Token", function () {
 
     it("should not be able to mint policy tokens before setting the policyflow address", async function () {
       await expect(fdToken.mintPolicyToken(user1.address)).to.be.revertedWith(
-        "Only the policyflow contract can mint policy token"
+        "Only the policyflow contract can mint fd policy token"
       );
     });
 
