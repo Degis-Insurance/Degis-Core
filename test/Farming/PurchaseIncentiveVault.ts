@@ -106,31 +106,132 @@ describe("Purcahse Incentive Vault", function () {
         .to.emit(vault, "Stake")
         .withArgs(dev_account.address, currentRound, toWei("100"));
 
+      // Last reward round index (inside pendingRounds)
       const lastRewardRoundIndex = await vault.userInfo(dev_account.address);
-
       expect(lastRewardRoundIndex).to.equal(0);
 
+      // User shares in round
       const userSharesInRound = await vault.userSharesInRound(
         dev_account.address,
         currentRound
       );
-
       expect(userSharesInRound).to.equal(toWei("100"));
+
+      // User's pending rounds
+      const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
+        dev_account.address
+      );
+      expect(userPendingRounds.length).to.equal(1);
+      expect(userPendingRounds[0]).to.equal(currentRound);
+
+      // Round info
+      const roundInfo = await vault.roundInfo(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("100"));
+      expect(roundInfo.degisPerShare).to.equal(0);
+      expect(roundInfo.hasDistributed).to.equal(false);
+
+      // Users in this round
+      const usersInRound = await vault.getUsersInRound(currentRound);
+      expect(usersInRound.length).to.equal(1);
+      expect(usersInRound[0]).to.equal(dev_account.address);
+    });
+
+    it("should be able to stake buyer tokens for multiple times", async function () {
+      const currentRound = await vault.currentRound();
+
+      await vault.stake(toWei("100"));
+      await vault.stake(toWei("100"));
+
+      const lastRewardRoundIndex = await vault.userInfo(dev_account.address);
+      expect(lastRewardRoundIndex).to.equal(0);
+
+      expect(
+        await vault.userSharesInRound(dev_account.address, currentRound)
+      ).to.equal(toWei("200"));
 
       const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
         dev_account.address
       );
       expect(userPendingRounds.length).to.equal(1);
       expect(userPendingRounds[0]).to.equal(currentRound);
+
+      // Round info
+      const roundInfo = await vault.roundInfo(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("200"));
+      expect(roundInfo.degisPerShare).to.equal(0);
+      expect(roundInfo.hasDistributed).to.equal(false);
+
+      // Users in this round
+      const usersInRound = await vault.getUsersInRound(currentRound);
+      expect(usersInRound.length).to.equal(1);
+      expect(usersInRound[0]).to.equal(dev_account.address);
     });
 
     it("should be able to redeem buyer tokens", async function () {
       const currentRound = await vault.currentRound();
       await vault.stake(toWei("100"));
 
+      await expect(vault.redeem(toWei("100")))
+        .to.emit(vault, "Redeem")
+        .withArgs(dev_account.address, currentRound, toWei("100"));
+
+      // Initial mint: 1000
+      // Stake: 100 Redeem: 100
+      expect(await buyerToken.balanceOf(dev_account.address)).to.equal(
+        toWei("1000")
+      );
+
+      await expect(vault.redeem(toWei("500"))).to.be.revertedWith(
+        "Not enough buyer tokens for you to redeem"
+      );
+
+      const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
+        dev_account.address
+      );
+      expect(userPendingRounds.length).to.equal(0);
+
+      // Round info
+      const roundInfo = await vault.roundInfo(currentRound);
+      expect(roundInfo.shares).to.equal(0);
+      expect(roundInfo.degisPerShare).to.equal(0);
+      expect(roundInfo.hasDistributed).to.equal(false);
+
+      // Users in this round
+      // The user address will not be deleted even if the user has no shares
+      const usersInRound = await vault.getUsersInRound(currentRound);
+      expect(usersInRound.length).to.equal(1);
+      expect(usersInRound[0]).to.equal(dev_account.address);
+    });
+
+    it("should be able to redeem buyer tokens for multiple times", async function () {
+      const currentRound = await vault.currentRound();
+      await vault.stake(toWei("100"));
+
       await expect(vault.redeem(toWei("50")))
         .to.emit(vault, "Redeem")
         .withArgs(dev_account.address, currentRound, toWei("50"));
+
+      // Initial mint: 1000
+      // Stake: 100 Redeem: 50
+      expect(await buyerToken.balanceOf(dev_account.address)).to.equal(
+        toWei("950")
+      );
+
+      await expect(vault.redeem(toWei("500"))).to.be.revertedWith(
+        "Not enough buyer tokens for you to redeem"
+      );
+
+      const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
+        dev_account.address
+      );
+      expect(userPendingRounds.length).to.equal(1);
+      expect(userPendingRounds[0]).to.equal(currentRound);
+
+      await vault.redeem(toWei("50"));
+
+      const userPendingRounds_after: BigNumber[] =
+        await vault.getUserPendingRounds(dev_account.address);
+      expect(userPendingRounds_after.length).to.equal(0);
     });
   });
 
