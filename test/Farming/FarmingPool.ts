@@ -115,6 +115,12 @@ describe("Farming Pool", function () {
       // Have correct pool infos
       const poolList = await pool.getPoolList();
 
+      const pool_0 = poolList[0];
+      expect(pool_0.lpToken).to.equal(zeroAddress());
+      expect(pool_0.degisPerBlock).to.equal(0);
+      expect(pool_0.lastRewardBlock).to.equal(0);
+      expect(pool_0.accDegisPerShare).to.equal(0);
+
       const pool_1 = poolList[1];
       expect(pool_1.lpToken).to.equal(lptoken_1.address);
       expect(pool_1.degisPerBlock).to.equal(toWei("5"));
@@ -157,6 +163,21 @@ describe("Farming Pool", function () {
 
       await expect(pool.setDegisReward(poolId, 0, false))
         .to.emit(pool, "FarmingPoolStopped")
+        .withArgs(poolId, blockNumBefore + 1);
+    });
+
+    it("should be able to restart a farming pool", async function () {
+      await pool.add(lptoken_1.address, toWei("5"), false);
+      const poolId = await pool.poolMapping(lptoken_1.address);
+
+      // Stop a pool
+      await pool.setDegisReward(poolId, 0, false);
+
+      const blockNumBefore = await ethers.provider.getBlockNumber();
+
+      // Restart
+      await expect(pool.setDegisReward(poolId, toWei("10"), false))
+        .to.emit(pool, "FarmingPoolRestarted")
         .withArgs(poolId, blockNumBefore + 1);
     });
   });
@@ -218,6 +239,30 @@ describe("Farming Pool", function () {
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("5"));
     });
 
+    it("should be able to get correct rewards after another user deposit", async function () {
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+      await pool.stake(1, toWei("100"));
+
+      await lptoken_1.mint(user1.address, toWei("1000"));
+      await lptoken_1.connect(user1).approve(pool.address, toWei("1000"));
+
+      await expect(pool.connect(user1).stake(1, toWei("100")))
+        .to.emit(pool, "Stake")
+        .withArgs(user1.address, 1, toWei("100"));
+
+      // 3 blocks reward: 5 * 3 = 15
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("15")
+      );
+
+      await mineBlocks(1);
+
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("17.5")
+      );
+    });
+
     it("should be able to get correct rewards when harvest for self", async function () {
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
@@ -233,6 +278,32 @@ describe("Farming Pool", function () {
         .withArgs(dev_account.address, dev_account.address, 1, toWei("30"));
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("30"));
+    });
+
+    it("should be able to harvest correct rewards after another user deposit", async function () {
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+      await pool.stake(1, toWei("100"));
+
+      await lptoken_1.mint(user1.address, toWei("1000"));
+      await lptoken_1.connect(user1).approve(pool.address, toWei("1000"));
+
+      await pool.connect(user1).stake(1, toWei("100"));
+
+      // 3 blocks reward: 5 * 3 = 15
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("15")
+      );
+
+      await mineBlocks(1);
+
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("17.5")
+      );
+
+      // 17.5 + 2.5(1 block reward)
+      await pool.harvest(1, dev_account.address);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("20"));
     });
 
     it("should be able to get correct rewards when harvest for another account", async function () {

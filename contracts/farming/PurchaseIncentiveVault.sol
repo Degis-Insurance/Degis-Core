@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
+
+import "../utils/Pausable.sol";
+
 import "../libraries/SafePRBMath.sol";
 
 /**
@@ -15,7 +18,7 @@ import "../libraries/SafePRBMath.sol";
  *         About every 24 hours, the reward will be calculated to users' account.
  *         After disrtribution, users' reward balance will update but they still need to manually claim the reward.
  */
-contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
+contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IBuyerToken;
     using SafePRBMath for uint256;
 
@@ -69,6 +72,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
 
     event DegisRewardChanged(uint256 oldPerRound, uint256 newPerRound);
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
+    event MaxRoundChanged(uint256 oldMaxRound, uint256 newMaxRound);
     event Stake(
         address userAddress,
         uint256 currentRound,
@@ -97,6 +101,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
 
     /**
      * @notice Check if admins can distribute now
+     * @dev Should pass the distribution interval
      */
     modifier hasPassedInterval() {
         require(
@@ -121,6 +126,32 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
         returns (uint256)
     {
         return roundInfo[_round].users.length;
+    }
+
+    /**
+     * @notice Get the user addresses in _round
+     * @param _round Round number to check
+     * @return users All user addresses in this round
+     */
+    function getUsersInRound(uint256 _round)
+        public
+        view
+        returns (address[] memory)
+    {
+        return roundInfo[_round].users;
+    }
+
+    /**
+     * @notice Get user's pending rounds
+     * @param _user User address to check
+     * @return pendingRounds User's pending rounds
+     */
+    function getUserPendingRounds(address _user)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return userInfo[_user].pendingRounds;
     }
 
     /**
@@ -154,6 +185,14 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    function pause() external onlyOwner {
+        super._pause();
+    }
+
+    function unpause() external onlyOwner {
+        super._unpause();
+    }
+
     /**
      * @notice Set degis distribution per round
      * @param _degisPerRound Degis distribution per round to be set
@@ -178,6 +217,8 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @notice Set the max rounds to claim rewards
      */
     function setMaxRound(uint256 _maxRound) external onlyOwner {
+        emit MaxRoundChanged(MAX_ROUND, _maxRound);
+
         MAX_ROUND = _maxRound;
     }
 
@@ -189,7 +230,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @notice Stake buyer tokens into this contract
      * @param _amount Amount of buyer tokens to stake
      */
-    function stake(uint256 _amount) external nonReentrant {
+    function stake(uint256 _amount) external nonReentrant whenNotPaused {
         uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
         uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
@@ -226,7 +267,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @notice Redeem buyer token from the vault
      * @param _amount Amount to redeem
      */
-    function redeem(uint256 _amount) external nonReentrant {
+    function redeem(uint256 _amount) external nonReentrant whenNotPaused {
         uint256 userBalance = userSharesInRound[_msgSender()][currentRound];
         require(
             userBalance >= _amount,
@@ -250,7 +291,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
      * @notice Setttle the current round
      * @dev Callable by any address, must pass the distribution interval
      */
-    function settleCurrentRound() external hasPassedInterval {
+    function settleCurrentRound() external hasPassedInterval whenNotPaused {
         RoundInfo storage info = roundInfo[currentRound];
         require(!info.hasDistributed, "Already distributed");
 
@@ -271,7 +312,7 @@ contract PurchaseIncentiveVault is Ownable, ReentrancyGuard {
     /**
      * @notice User can claim his own reward
      */
-    function claimOwnReward() external nonReentrant {
+    function claimOwnReward() external nonReentrant whenNotPaused {
         UserInfo memory user = userInfo[_msgSender()];
 
         require(user.pendingRounds.length != 0, "You have no shares ever");

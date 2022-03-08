@@ -70,7 +70,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
         uint256 pendingReward
     );
     event NewPoolAdded(address lpToken, uint256 degisPerBlock);
-    event RestartFarmingPool(uint256 poolId, uint256 blockNumber);
+    event FarmingPoolRestarted(uint256 poolId, uint256 blockNumber);
     event FarmingPoolStopped(uint256 poolId, uint256 blockNumber);
     event DegisRewardChanged(uint256 poolId, uint256 degisPerBlock);
     event PoolUpdated(uint256 poolId);
@@ -273,7 +273,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
 
         if (isFarming[_poolId] == false && _degisPerBlock > 0) {
             isFarming[_poolId] = true;
-            emit RestartFarmingPool(_poolId, block.number);
+            emit FarmingPoolRestarted(_poolId, block.number);
         }
 
         if (_degisPerBlock == 0) {
@@ -367,7 +367,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     /**
      * @notice Harvest the degis reward and can be sent to another address
      * @param _poolId Id of the farming pool
-     * @param _to Receiver of degis rewards.
+     * @param _to Receiver of degis rewards
      */
     function harvest(uint256 _poolId, address _to) public nonReentrant {
         // Only update the pool when it is still in farming
