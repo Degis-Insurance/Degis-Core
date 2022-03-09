@@ -231,6 +231,8 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @param _amount Amount of buyer tokens to stake
      */
     function stake(uint256 _amount) external nonReentrant whenNotPaused {
+        require(_amount > 0, "Amount must be greater than 0");
+
         uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
         uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
@@ -268,6 +270,8 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @param _amount Amount to redeem
      */
     function redeem(uint256 _amount) external nonReentrant whenNotPaused {
+        require(_amount > 0, "Amount must be greater than 0");
+
         uint256 userBalance = userSharesInRound[_msgSender()][currentRound];
         require(
             userBalance >= _amount,

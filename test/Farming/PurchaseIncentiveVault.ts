@@ -102,6 +102,8 @@ describe("Purcahse Incentive Vault", function () {
   describe("Stake and Redeem", function () {
     it("should be able to stake buyer tokens", async function () {
       const currentRound = await vault.currentRound();
+
+      // Check the stake event
       await expect(vault.stake(toWei("100")))
         .to.emit(vault, "Stake")
         .withArgs(dev_account.address, currentRound, toWei("100"));
@@ -136,6 +138,16 @@ describe("Purcahse Incentive Vault", function () {
       expect(usersInRound[0]).to.equal(dev_account.address);
     });
 
+    it("should not be able to stake with zero amount", async function () {
+      await expect(vault.stake(0)).to.be.revertedWith(
+        "Amount must be greater than 0"
+      );
+
+      await expect(vault.connect(user1).stake(0)).to.be.revertedWith(
+        "Amount must be greater than 0"
+      );
+    });
+
     it("should be able to stake buyer tokens for multiple times", async function () {
       const currentRound = await vault.currentRound();
 
@@ -165,6 +177,53 @@ describe("Purcahse Incentive Vault", function () {
       const usersInRound = await vault.getUsersInRound(currentRound);
       expect(usersInRound.length).to.equal(1);
       expect(usersInRound[0]).to.equal(dev_account.address);
+    });
+
+    it("should be able to stake buyer tokens by different users", async function () {
+      const currentRound = await vault.currentRound();
+
+      await vault.stake(toWei("100"));
+      await vault.connect(user1).stake(toWei("100"));
+
+      // Last reward round index
+      // No claim before, should be 0
+      const lastRewardRoundIndex_dev = await vault.userInfo(
+        dev_account.address
+      );
+      expect(lastRewardRoundIndex_dev).to.equal(0);
+      const lastRewardRoundIndex_user1 = await vault.userInfo(user1.address);
+      expect(lastRewardRoundIndex_user1).to.equal(0);
+
+      // Correct user shares
+      expect(
+        await vault.userSharesInRound(dev_account.address, currentRound)
+      ).to.equal(toWei("100"));
+      expect(
+        await vault.userSharesInRound(user1.address, currentRound)
+      ).to.equal(toWei("100"));
+
+      // Correct user pending rounds
+      const userPendingRounds_dev: BigNumber[] =
+        await vault.getUserPendingRounds(dev_account.address);
+      expect(userPendingRounds_dev.length).to.equal(1);
+      expect(userPendingRounds_dev[0]).to.equal(currentRound);
+
+      const userPendingRounds_user1: BigNumber[] =
+        await vault.getUserPendingRounds(dev_account.address);
+      expect(userPendingRounds_user1.length).to.equal(1);
+      expect(userPendingRounds_user1[0]).to.equal(currentRound);
+
+      // Round info
+      const roundInfo = await vault.roundInfo(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("200"));
+      expect(roundInfo.degisPerShare).to.equal(0);
+      expect(roundInfo.hasDistributed).to.equal(false);
+
+      // Users in this round
+      const usersInRound = await vault.getUsersInRound(currentRound);
+      expect(usersInRound.length).to.equal(2);
+      expect(usersInRound[0]).to.equal(dev_account.address);
+      expect(usersInRound[1]).to.equal(user1.address);
     });
 
     it("should be able to redeem buyer tokens", async function () {
@@ -203,6 +262,14 @@ describe("Purcahse Incentive Vault", function () {
       expect(usersInRound[0]).to.equal(dev_account.address);
     });
 
+    it("should not be able to redeem with zero amount", async function () {
+      await vault.stake(toWei("100"));
+
+      await expect(vault.redeem(0)).to.be.revertedWith(
+        "Amount must be greater than 0"
+      );
+    });
+
     it("should be able to redeem buyer tokens for multiple times", async function () {
       const currentRound = await vault.currentRound();
       await vault.stake(toWei("100"));
@@ -217,6 +284,7 @@ describe("Purcahse Incentive Vault", function () {
         toWei("950")
       );
 
+      // Redeem 500 is not possible
       await expect(vault.redeem(toWei("500"))).to.be.revertedWith(
         "Not enough buyer tokens for you to redeem"
       );
@@ -229,6 +297,7 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.redeem(toWei("50"));
 
+      // After redeeming all tokens in current round, the pending round should be poped
       const userPendingRounds_after: BigNumber[] =
         await vault.getUserPendingRounds(dev_account.address);
       expect(userPendingRounds_after.length).to.equal(0);
@@ -253,12 +322,54 @@ describe("Purcahse Incentive Vault", function () {
 
       const currentRound = (await vault.currentRound()).toNumber();
 
+      // Each block, timestamp + 1
       await expect(vault.settleCurrentRound())
         .to.emit(vault, "RoundSettled")
         .withArgs(currentRound, timestamp + 1);
 
       expect(await vault.currentRound()).to.equal(currentRound + 1);
       expect(await vault.lastDistribution()).to.equal(timestamp + 1);
+
+      const roundInfo = await vault.roundInfo(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("4"));
+      expect(roundInfo.hasDistributed).to.equal(true);
+      expect(roundInfo.degisPerShare).to.equal(toWei("1"));
+
+      const lastRewardRoundIndex_dev = await vault.userInfo(
+        dev_account.address
+      );
+      expect(lastRewardRoundIndex_dev).to.equal(0);
+      const lastRewardRoundIndex_user1 = await vault.userInfo(
+        dev_account.address
+      );
+      expect(lastRewardRoundIndex_user1).to.equal(0);
+    });
+
+    it("should be able to settle when no reward", async function () {
+      // Set reward per round to 0
+      await vault.setDegisPerRound(0);
+
+      await vault.stake(toWei("1"));
+      await vault.connect(user1).stake(toWei("3"));
+      const blockNumber = await ethers.provider.getBlockNumber();
+
+      const timestamp = await getLatestBlockTimestamp(ethers.provider);
+
+      const currentRound = (await vault.currentRound()).toNumber();
+
+      // Each block, timestamp + 1
+      await expect(vault.settleCurrentRound())
+        .to.emit(vault, "RoundSettled")
+        .withArgs(currentRound, timestamp + 1);
+
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
+      expect(await vault.lastDistribution()).to.equal(timestamp + 1);
+
+      const roundInfo = await vault.roundInfo(currentRound);
+
+      expect(roundInfo.shares).to.equal(toWei("4"));
+      expect(roundInfo.hasDistributed).to.equal(true);
+      expect(roundInfo.degisPerShare).to.equal(toWei("0"));
     });
 
     it("should be able to settle after several stake&redeem", async function () {
@@ -308,6 +419,9 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.stake(toWei("1"));
       await vault.claimOwnReward();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("4"));
+
       await vault.settleCurrentRound();
 
       await vault.stake(toWei("1"));
@@ -318,23 +432,31 @@ describe("Purcahse Incentive Vault", function () {
     });
 
     it("should be able to claim with max round amount", async function () {
-      await vault.setMaxRound(1);
+      await vault.setMaxRound(2);
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
 
       await vault.stake(toWei("1"));
+
       await vault.claimOwnReward();
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("4"));
+
       await vault.settleCurrentRound();
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
-      await vault.claimOwnReward();
 
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("8"));
+      await vault.stake(toWei("1"));
+      await vault.settleCurrentRound();
 
+      // Max Round = 2, This time only claim rewards of 2 rounds(8)
       await vault.claimOwnReward();
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("12"));
+
+      // Claim the remaining rewards(4)
+      await vault.claimOwnReward();
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("16"));
     });
 
     it("should be able to claim by user himself after several rounds - all", async function () {
