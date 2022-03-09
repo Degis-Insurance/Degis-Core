@@ -43,13 +43,16 @@ describe("Flight Delay Policy Token", function () {
     });
 
     it("should set the deployer as the owner", async function () {
-      const [dev_account] = await ethers.getSigners();
       expect(await fdToken.owner()).to.equal(dev_account.address);
     });
 
     it("should be able to transfer ownership", async function () {
       await fdToken.transferOwnership(user1.address);
       expect(await fdToken.owner()).to.equal(user1.address);
+
+      expect(await fdToken.transferOwnership(user2.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
     });
 
     it("should be able to renounce ownership", async function () {

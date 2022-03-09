@@ -96,6 +96,7 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
      * @param _token0 Token0 address (policy token address)
      * @param _token1 Token1 address (stablecoin address)
      * @param _deadline Deadline for this pool
+     * @param _feeRate Fee rate to LP holders
      */
     function initialize(
         address _token0,
@@ -111,7 +112,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
         token0 = _token0;
         token1 = _token1;
-        deadline = _deadline; // deadline for the whole pool after which no swap will be allowed
+
+        // deadline for the whole pool after which no swap will be allowed
+        deadline = _deadline;
 
         feeRate = _feeRate;
     }

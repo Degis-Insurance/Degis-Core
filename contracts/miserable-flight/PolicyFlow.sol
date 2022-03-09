@@ -9,9 +9,11 @@ import "./interfaces/IInsurancePool.sol";
 import "./interfaces/IPolicyStruct.sol";
 import "./abstracts/PolicyParameters.sol";
 import "../libraries/StringsUtils.sol";
+import "../libraries/StablecoinDecimal.sol";
 
 contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     using StringsUtils for uint256;
+    using StablecoinDecimal for uint256;
 
     // Other contracts
     IBuyerToken public buyerToken;
@@ -78,7 +80,6 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
 
         fee = 0.1 * 10**18;
     }
-
 
     // ----------------------------------------------------------------------------------- //
     // ********************************* View Functions ********************************** //
@@ -204,9 +205,10 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     /**
      * @notice Buy a new flight delay policy
      * @dev The transaction should have the signature from the backend server
+     * @dev Premium is in stablecoin, so it is 6 decimals
      * @param _productId ID of the purchased product (0: flightdelay; 1,2,3...: others)
      * @param _flightNumber Flight number in string (e.g. "AQ1299")
-     * @param _premium Premium of this policy (decimals: 18)
+     * @param _premium Premium of this policy (decimals: 6)
      * @param _departureTimestamp Departure date of this flight (unix timestamp in s, not ms!)
      * @param _landingDate Landing date of this flight (uinx timestamp in s, not ms!)
      * @param _deadline Deadline for this purchase request
@@ -273,7 +275,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
         _policyCheck(_premium, MAX_PAYOFF, msg.sender, currentPolicyId);
 
         // Give buyer tokens depending on the usd value they spent
-        buyerToken.mintBuyerToken(msg.sender, _premium);
+        buyerToken.mintBuyerToken(msg.sender, _premium.toNormal());
 
         // Store the policy's total order with userAddress
         userPolicyList[msg.sender].push(totalPolicies);

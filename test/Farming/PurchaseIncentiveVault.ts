@@ -380,7 +380,10 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.stake(toWei("1"));
 
+      const currentRound = (await vault.currentRound()).toNumber();
+
       await expect(vault.settleCurrentRound()).to.emit(vault, "RoundSettled");
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
     });
 
     it("should not be able to settle before passing the interval", async function () {
@@ -388,16 +391,27 @@ describe("Purcahse Incentive Vault", function () {
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
         "Two distributions should have an interval"
       );
+
+      await vault.stake(toWei("1"));
+      await vault.settleCurrentRound();
+      await expect(vault.settleCurrentRound()).to.be.revertedWith(
+        "Two distributions should have an interval"
+      );
     });
 
     it("should be able to claim reward by user himself", async function () {
+      // Two users deposit
       await vault.stake(toWei("1"));
       await vault.connect(user1).stake(toWei("3"));
+
+      // Settlement
       await vault.settleCurrentRound();
 
+      // Two users claim their reward
       await vault.claimOwnReward();
       await vault.connect(user1).claimOwnReward();
 
+      // Check balance
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("3"));
     });

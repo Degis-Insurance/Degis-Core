@@ -3,10 +3,10 @@ import { ethers } from "hardhat";
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { SafePRBMathTester__factory, SafePRBMathTester } from "../../typechain";
-import { toWei } from "../utils";
+import { stablecoinToWei, toWei } from "../utils";
 import { formatEther } from "ethers/lib/utils";
 
-describe("StringUtils Library", function () {
+describe("SafePRBMath Library", function () {
   let dev_account: SignerWithAddress;
 
   let SafePRBMathTester: SafePRBMathTester__factory, tester: SafePRBMathTester;
@@ -20,6 +20,12 @@ describe("StringUtils Library", function () {
 
   it("should be able to calculate the avg", async function () {
     expect(await tester.avg(toWei("10"), toWei("30"))).to.equal(toWei("20"));
+  });
+
+  it("should be able to calculate the avg with two different decimals", async function () {
+    expect(await tester.avg(toWei("10"), stablecoinToWei("30"))).to.not.equal(
+      toWei("20")
+    );
   });
 
   it("should be able to calculate the ceil", async function () {
@@ -48,6 +54,12 @@ describe("StringUtils Library", function () {
     expect(await tester.div(toWei("6"), toWei("3"))).to.equal(toWei("2"));
 
     expect(await tester.div(toWei("6"), toWei("4"))).to.equal(toWei("1.5"));
+  });
+
+  it("should be able to calculate the avg with two different decimals", async function () {
+    expect(await tester.div(toWei("6"), stablecoinToWei("3"))).to.not.equal(
+      toWei("2")
+    );
   });
 
   it("should be able to calculate the e", async function () {

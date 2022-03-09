@@ -1,6 +1,9 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import { getTokenAddressOnAVAX } from "../info/tokenAddress";
+
+const stablecoin: string = getTokenAddressOnAVAX("USDT.e");
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -13,6 +16,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
+  // Deploy degis token contract
+  // No constructor args
   const degis = await deploy("DegisToken", {
     contract: "DegisToken",
     from: deployer,
@@ -21,6 +26,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].DegisToken = degis.address;
 
+  // Deploy buyer token contract
+  // No constructor args
   const buyerToken = await deploy("BuyerToken", {
     contract: "BuyerToken",
     from: deployer,
@@ -29,6 +36,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].BuyerToken = buyerToken.address;
 
+  // Deploy emergency pool contract
+  // No constructor args
   const emergency = await deploy("EmergencyPool", {
     contract: "EmergencyPool",
     from: deployer,
@@ -39,12 +48,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   if (network.name == "avax") {
     const IERC20ABI = await getArtifact("ERC20").then((x) => x.abi);
-    await save("USDC", {
-      address: "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664",
+
+    await save("USD", {
+      address: stablecoin,
       abi: IERC20ABI,
     });
-    addressList[network.name].USDC =
-      "0xa7d7079b0fead91f3e65f86e8915cb59c1a4c664";
+
+    addressList[network.name].USDTe = stablecoin;
   } else {
     const mockUSD = await deploy("MockUSD", {
       contract: "MockUSD",
