@@ -16,7 +16,7 @@ import {
   VRFMock__factory,
 } from "../../typechain";
 
-import { getNow } from "../utils";
+import { getNow, stablecoinToWei, toWei } from "../utils";
 
 describe("Degis Lottery", function () {
   let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
@@ -47,8 +47,8 @@ describe("Degis Lottery", function () {
 
     await rand.setLotteryAddress(lottery.address);
 
-    await degis.mintDegis(dev_account.address, parseUnits("10000"));
-    await degis.approve(lottery.address, parseUnits("10000"));
+    await degis.mintDegis(dev_account.address, toWei("10000"));
+    await degis.approve(lottery.address, toWei("10000"));
   });
 
   describe("Deployment", function () {
@@ -146,13 +146,13 @@ describe("Degis Lottery", function () {
     });
 
     it("should be able to inject funds", async function () {
-      await usd.approve(lottery.address, parseUnits("1000"));
-      await expect(lottery.injectFunds(parseUnits("100")))
+      await usd.approve(lottery.address, stablecoinToWei("1000"));
+      await expect(lottery.injectFunds(stablecoinToWei("100")))
         .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, parseUnits("100"));
+        .withArgs(currentLotteryId, stablecoinToWei("100"));
 
       const lotteryInfo = await lottery.lotteries(currentLotteryId);
-      expect(lotteryInfo.totalRewards).to.equal(parseUnits("100"));
+      expect(lotteryInfo.totalRewards).to.equal(stablecoinToWei("100"));
     });
 
     it("should be able to stop a lottery", async function () {
@@ -183,16 +183,16 @@ describe("Degis Lottery", function () {
     it("should be able to inject funds when not open", async function () {
       await lottery.closeLottery();
 
-      await usd.approve(lottery.address, parseUnits("1000"));
-      await expect(lottery.injectFunds(parseUnits("100")))
+      await usd.approve(lottery.address, stablecoinToWei("1000"));
+      await expect(lottery.injectFunds(stablecoinToWei("100")))
         .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, parseUnits("100"));
+        .withArgs(currentLotteryId, stablecoinToWei("100"));
 
       await lottery.drawLottery();
 
-      await expect(lottery.injectFunds(parseUnits("100")))
+      await expect(lottery.injectFunds(stablecoinToWei("100")))
         .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, parseUnits("100"));
+        .withArgs(currentLotteryId, stablecoinToWei("100"));
     });
   });
 
@@ -202,8 +202,8 @@ describe("Degis Lottery", function () {
     beforeEach(async function () {
       now = getNow();
 
-      await degis.mintDegis(user1.address, parseUnits("10000"));
-      await degis.connect(user1).approve(lottery.address, parseUnits("10000"));
+      await degis.mintDegis(user1.address, toWei("10000"));
+      await degis.connect(user1).approve(lottery.address, toWei("10000"));
 
       // Start a lottery
       await lottery.startLottery(now + 600, [2000, 2000, 2000, 2000]);
@@ -213,8 +213,8 @@ describe("Degis Lottery", function () {
       await lottery.connect(user1).buyTickets([1234, 1235], [3, 6]);
 
       // Inject funds
-      await usd.approve(lottery.address, parseUnits("1000"));
-      await lottery.injectFunds(parseUnits("100"));
+      await usd.approve(lottery.address, stablecoinToWei("1000"));
+      await lottery.injectFunds(stablecoinToWei("100"));
 
       currentLotteryId = (await lottery.currentLotteryId()).toNumber();
     });

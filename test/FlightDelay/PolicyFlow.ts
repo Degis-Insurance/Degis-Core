@@ -4,7 +4,6 @@ import {
   arrayify,
   formatEther,
   keccak256,
-  parseUnits,
   solidityKeccak256,
   toUtf8Bytes,
 } from "ethers/lib/utils";
@@ -29,7 +28,12 @@ import {
   DegisLottery__factory,
   DegisLottery,
 } from "../../typechain";
-import { getLatestBlockTimestamp, toBN, toWei } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  stablecoinToWei,
+  toBN,
+  toWei,
+} from "../utils";
 
 describe("Policy Flow", function () {
   let dev_account: SignerWithAddress,
@@ -89,8 +93,8 @@ describe("Policy Flow", function () {
     await oracleMock.deployed();
 
     // Preparations:
-    await usd.approve(pool.address, parseUnits("10000"));
-    await pool.stake(parseUnits("1000"));
+    await usd.approve(pool.address, stablecoinToWei("10000"));
+    await pool.stake(stablecoinToWei("1000"));
     await pool.setPolicyFlow(flow.address);
     await policyToken.updatePolicyFlow(flow.address);
     await buyerToken.addMinter(flow.address);
@@ -119,15 +123,15 @@ describe("Policy Flow", function () {
 
   describe("Owner Functions", function () {
     it("should be able to change the fee", async function () {
-      await expect(flow.setFee(parseUnits("1")))
+      await expect(flow.setFee(toWei("1")))
         .to.emit(flow, "FeeChanged")
-        .withArgs(parseUnits("1"));
+        .withArgs(toWei("1"));
     });
 
     it("should be able to change the max payoff", async function () {
-      await expect(flow.setMaxPayoff(parseUnits("400")))
+      await expect(flow.setMaxPayoff(stablecoinToWei("400")))
         .to.emit(flow, "MaxPayoffChanged")
-        .withArgs(parseUnits("400"));
+        .withArgs(stablecoinToWei("400"));
     });
 
     it("should be able to change the min departure time", async function () {
@@ -178,7 +182,7 @@ describe("Policy Flow", function () {
       const departureTime = now + 48 * 3600;
       const landingTime = now + 50 * 3600;
       const hashedFlightNumber = keccak256(toUtf8Bytes(flightNumber));
-      const premium = parseUnits("10");
+      const premium = stablecoinToWei("10");
       const deadline = now + 30000;
 
       const hasedInfo = solidityKeccak256(
@@ -368,19 +372,19 @@ describe("Policy Flow", function () {
 
       expect(await pool.activePremiums()).to.equal(0);
       expect(await pool.totalStakingBalance()).to.equal(
-        toWei((1000 + premium * 0.5).toString())
+        stablecoinToWei((1000 + premium * 0.5).toString())
       );
       expect(await pool.lockedBalance()).to.equal(0);
       expect(await pool.availableCapacity()).to.equal(
-        toWei((1000 + premium * 0.5).toString())
+        stablecoinToWei((1000 + premium * 0.5).toString())
       );
 
       // Check premium distribution
       expect(await usd.balanceOf(lottery.address)).to.equal(
-        toWei((premium * 0.4).toString())
+        stablecoinToWei((premium * 0.4).toString())
       );
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
-        toWei((premium * 0.1).toString())
+        stablecoinToWei((premium * 0.1).toString())
       );
     });
 
@@ -427,7 +431,7 @@ describe("Policy Flow", function () {
       );
       expect(await pool.lockedBalance()).to.equal(0);
       expect(await pool.availableCapacity()).to.equal(
-        toWei((1000  - payoff + premium * 0.5).toString())
+        toWei((1000 - payoff + premium * 0.5).toString())
       );
     });
   });

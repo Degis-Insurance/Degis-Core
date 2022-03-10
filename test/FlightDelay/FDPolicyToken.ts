@@ -7,6 +7,7 @@ import {
   PolicyFlow__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { zeroAddress } from "../utils";
 
 describe("Flight Delay Policy Token", function () {
   let FDPolicyToken: FDPolicyToken__factory,
@@ -47,10 +48,17 @@ describe("Flight Delay Policy Token", function () {
     });
 
     it("should be able to transfer ownership", async function () {
-      await fdToken.transferOwnership(user1.address);
+      await expect(fdToken.transferOwnership(zeroAddress())).to.be.revertedWith(
+        "Ownable: new owner is the zero address"
+      );
+
+      await expect(fdToken.transferOwnership(user1.address))
+        .to.emit(fdToken, "OwnershipTransferred")
+        .withArgs(dev_account.address, user1.address);
+
       expect(await fdToken.owner()).to.equal(user1.address);
 
-      expect(await fdToken.transferOwnership(user2.address)).to.be.revertedWith(
+      await expect(fdToken.transferOwnership(user2.address)).to.be.revertedWith(
         "Ownable: caller is not the owner"
       );
     });
@@ -58,7 +66,7 @@ describe("Flight Delay Policy Token", function () {
     it("should be able to renounce ownership", async function () {
       await expect(fdToken.renounceOwnership())
         .to.emit(fdToken, "OwnershipTransferred")
-        .withArgs(dev_account.address, ethers.constants.AddressZero);
+        .withArgs(dev_account.address, zeroAddress());
     });
 
     it("_nextId should start from 1", async function () {

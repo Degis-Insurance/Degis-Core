@@ -13,7 +13,7 @@ import {
   MockUSD__factory,
 } from "../../typechain";
 import { BigNumberish } from "ethers";
-import { toBN, toWei } from "../utils";
+import { stablecoinToWei, toBN, toWei, zeroAddress } from "../utils";
 
 describe("Insurance Pool for Flight Delay", function () {
   let MockUSD: MockUSD__factory, usd: MockUSD;
@@ -21,10 +21,13 @@ describe("Insurance Pool for Flight Delay", function () {
   let EmergencyPool: EmergencyPool__factory, emergencyPool: EmergencyPool;
   let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
 
-  let dev_account: SignerWithAddress, policyflow: SignerWithAddress;
+  let dev_account: SignerWithAddress,
+    policyflow: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account, policyflow] = await ethers.getSigners();
+    [dev_account, policyflow, user1, user2] = await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
@@ -70,6 +73,28 @@ describe("Insurance Pool for Flight Delay", function () {
   });
 
   describe("Owner Functions", function () {
+    it("should be able to transfer ownership", async function () {
+      await expect(pool.transferOwnership(zeroAddress())).to.be.revertedWith(
+        "Ownable: new owner is the zero address"
+      );
+
+      await expect(pool.transferOwnership(user1.address))
+        .to.emit(pool, "OwnershipTransferred")
+        .withArgs(dev_account.address, user1.address);
+
+      expect(await pool.owner()).to.equal(user1.address);
+
+      await expect(pool.transferOwnership(user2.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+    });
+
+    it("should be able to renounce ownership", async function () {
+      await expect(pool.renounceOwnership())
+        .to.emit(pool, "OwnershipTransferred")
+        .withArgs(dev_account.address, zeroAddress());
+    });
+
     it("should be able to set a new frozen time", async function () {
       await expect(pool.setFrozenTime(10))
         .to.emit(pool, "FrozenTimeChanged")
@@ -118,29 +143,29 @@ describe("Insurance Pool for Flight Delay", function () {
 
   describe("Stake and Withdraw", function () {
     it("should be able to stake some usd", async function () {
-      await expect(pool.stake(parseUnits("100")))
+      await expect(pool.stake(stablecoinToWei("100")))
         .to.emit(pool, "Stake")
-        .withArgs(dev_account.address, parseUnits("100"));
+        .withArgs(dev_account.address, stablecoinToWei("100"));
 
       const userBalance = await pool.getUserBalance(dev_account.address);
-      expect(userBalance).to.equal(parseUnits("100"));
+      expect(userBalance).to.equal(stablecoinToWei("100"));
 
       const userUnlockedBalance = await pool.getUnlockedFor(
         dev_account.address
       );
-      expect(userUnlockedBalance).to.equal(parseUnits("100"));
+      expect(userUnlockedBalance).to.equal(stablecoinToWei("100"));
     });
 
     it("should not be able to withdraw before the frozen time", async function () {
-      await pool.stake(parseUnits("100"));
+      await pool.stake(stablecoinToWei("100"));
 
-      await expect(pool.unstake(parseUnits("50"))).to.be.revertedWith(
+      await expect(pool.unstake(stablecoinToWei("50"))).to.be.revertedWith(
         "Can not withdraw until the fronzen time"
       );
     });
 
     it("should be able to withdraw after the frozen time", async function () {
-      await pool.stake(parseUnits("100"));
+      await pool.stake(stablecoinToWei("100"));
 
       await pool.setFrozenTime(0);
       //  This will affect other tests
@@ -149,36 +174,36 @@ describe("Insurance Pool for Flight Delay", function () {
       //     params: [frozen],
       //   });
 
-      await expect(pool.unstake(parseUnits("50")))
+      await expect(pool.unstake(stablecoinToWei("50")))
         .to.emit(pool, "Unstake")
-        .withArgs(dev_account.address, parseUnits("50"));
+        .withArgs(dev_account.address, stablecoinToWei("50"));
 
       expect(await pool.getUserBalance(dev_account.address)).to.equal(
-        parseUnits("50")
+        stablecoinToWei("50")
       );
 
       expect(await pool.getUnlockedFor(dev_account.address)).to.equal(
-        parseUnits("50")
+        stablecoinToWei("50")
       );
     });
 
     it("should be able to unstake maximum amount", async function () {
-      await pool.stake(parseUnits("100"));
+      await pool.stake(stablecoinToWei("100"));
       await pool.setFrozenTime(0);
       await expect(pool.unstakeMax())
         .to.emit(pool, "Unstake")
-        .withArgs(dev_account.address, parseUnits("100"));
+        .withArgs(dev_account.address, stablecoinToWei("100"));
 
       expect(await pool.getUserBalance(dev_account.address)).to.equal(0);
       expect(await pool.getUnlockedFor(dev_account.address)).to.equal(0);
     });
 
     it("should be able to check capacity", async function () {
-      expect(await pool.checkCapacity(parseUnits("100"))).to.equal(false);
+      expect(await pool.checkCapacity(stablecoinToWei("100"))).to.equal(false);
 
-      await pool.stake(parseUnits("100"));
+      await pool.stake(stablecoinToWei("100"));
 
-      expect(await pool.checkCapacity(parseUnits("100"))).to.equal(true);
+      expect(await pool.checkCapacity(stablecoinToWei("100"))).to.equal(true);
     });
   });
 
@@ -190,42 +215,52 @@ describe("Insurance Pool for Flight Delay", function () {
       // Remove fronzen time for test
       await pool.setFrozenTime(0);
 
-      await pool.stake(toWei("100"));
+      await pool.stake(stablecoinToWei("100"));
     });
 
     it("should not be able to unstake when no capacity", async function () {
-      await pool.updateWhenBuy(toWei("10"), toWei("50"), dev_account.address);
+      await pool.updateWhenBuy(
+        stablecoinToWei("10"),
+        stablecoinToWei("50"),
+        dev_account.address
+      );
 
-      await expect(pool.unstake(toWei("50")))
+      await expect(pool.unstake(stablecoinToWei("50")))
         .to.emit(pool, "Unstake")
-        .withArgs(dev_account.address, toWei("50"));
+        .withArgs(dev_account.address, stablecoinToWei("50"));
 
-      await expect(pool.unstake("10")).to.be.revertedWith("All locked");
+      await expect(pool.unstake(stablecoinToWei("10"))).to.be.revertedWith(
+        "All locked"
+      );
 
-      await pool.updateWhenExpire(toWei("10"), toWei("50"));
+      await pool.updateWhenExpire(stablecoinToWei("10"), stablecoinToWei("50"));
 
-      expect(await pool.totalStakingBalance()).to.equal(toWei("55"));
-      expect(await pool.availableCapacity()).to.equal(toWei("55"));
+      expect(await pool.totalStakingBalance()).to.equal(stablecoinToWei("55"));
+      expect(await pool.availableCapacity()).to.equal(stablecoinToWei("55"));
     });
 
     it("should be ablt to unstake when pay claim", async function () {
-      await pool.updateWhenBuy(toWei("10"), toWei("50"), dev_account.address);
+      await pool.updateWhenBuy(
+        stablecoinToWei("10"),
+        stablecoinToWei("50"),
+        dev_account.address
+      );
 
-      await expect(pool.unstake(toWei("50")))
+      await expect(pool.unstake(stablecoinToWei("50")))
         .to.emit(pool, "Unstake")
-        .withArgs(dev_account.address, toWei("50"));
+        .withArgs(dev_account.address, stablecoinToWei("50"));
 
       await expect(pool.unstake("10")).to.be.revertedWith("All locked");
 
       await pool.payClaim(
-        toWei("10"),
-        toWei("50"),
-        toWei("50"),
+        stablecoinToWei("10"),
+        stablecoinToWei("50"),
+        stablecoinToWei("50"),
         dev_account.address
       );
 
-      expect(await pool.totalStakingBalance()).to.equal(toWei("5"));
-      expect(await pool.availableCapacity()).to.equal(toWei("5"));
+      expect(await pool.totalStakingBalance()).to.equal(stablecoinToWei("5"));
+      expect(await pool.availableCapacity()).to.equal(stablecoinToWei("5"));
     });
   });
 });
