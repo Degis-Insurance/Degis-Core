@@ -10,7 +10,7 @@ import {
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
-  const { deploy, get } = deployments;
+  const { deploy } = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
@@ -35,5 +35,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeProxyAdmin(proxyAddressList);
 };
 
-func.tags = ["FDPolicyFlow"];
+func.tags = ["ProxyAdmin"];
 export default func;

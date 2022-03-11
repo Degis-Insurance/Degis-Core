@@ -17,7 +17,6 @@ abstract contract OwnableWithoutContext {
      */
     constructor(address _initialOwner) {
         _transferOwnership(_initialOwner);
-        emit OwnershipTransferred(address(0), _initialOwner);
     }
 
     /**

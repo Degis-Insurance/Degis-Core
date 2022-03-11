@@ -19,7 +19,6 @@ abstract contract Ownable is Context {
      */
     constructor(address _initialOwner) {
         _transferOwnership(_initialOwner);
-        emit OwnershipTransferred(address(0), _initialOwner);
     }
 
     /**

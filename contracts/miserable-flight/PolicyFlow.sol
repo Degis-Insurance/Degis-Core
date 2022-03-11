@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 import "../utils/Ownable.sol";
+import "../proxy/Initializable.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
 import "./interfaces/IFDPolicyToken.sol";
@@ -11,7 +12,7 @@ import "./abstracts/PolicyParameters.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/StablecoinDecimal.sol";
 
-contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
+contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Initializable {
     using StringsUtils for uint256;
     using StablecoinDecimal for uint256;
 
@@ -67,12 +68,34 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Constructor of the PolicyFlow contract
+     * @dev The parameters will be passed to the init function to be upgradable
+     * @param _insurancePool The InsurancePool contract address
+     * @param _policyToken The PolicyToken contract address
+     * @param _sigManager The SigManager contract address
+     * @param _buyerToken The BuyerToken contract address
+     */
     constructor(
         address _insurancePool,
         address _policyToken,
         address _sigManager,
         address _buyerToken
-    ) {
+    ) Ownable(msg.sender){
+        _init_policyflow(
+            _insurancePool,
+            _policyToken,
+            _sigManager,
+            _buyerToken
+        );
+    }
+
+    function _init_policyflow(
+        address _insurancePool,
+        address _policyToken,
+        address _sigManager,
+        address _buyerToken
+    ) internal initializer {
         insurancePool = IInsurancePool(_insurancePool);
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
