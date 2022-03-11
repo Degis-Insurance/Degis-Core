@@ -3,6 +3,9 @@ pragma solidity ^0.8.10;
 
 import "./Context.sol";
 
+/**
+ * @dev The owner can be set during deployment, not default to be msg.sender
+ */
 abstract contract Ownable is Context {
     address private _owner;
 
@@ -14,8 +17,9 @@ abstract contract Ownable is Context {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor() {
-        _transferOwnership(msg.sender);
+    constructor(address _initialOwner) {
+        _transferOwnership(_initialOwner);
+        emit OwnershipTransferred(address(0), _initialOwner);
     }
 
     /**

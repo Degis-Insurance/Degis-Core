@@ -170,7 +170,7 @@ contract PolicyCore is Ownable {
         address _usdt,
         address _factory,
         address _priceGetter
-    ) {
+    ) Ownable(msg.sender) {
         // Add the first stablecoin supported
         supportedStablecoin[_usdt] = true;
 

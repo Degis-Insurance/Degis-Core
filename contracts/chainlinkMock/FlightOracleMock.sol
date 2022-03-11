@@ -26,7 +26,7 @@ contract FlightOracleMock is Ownable {
     /**
      * @notice Need the address of LINK token on specific network
      */
-    constructor(address _policyFlow) {
+    constructor(address _policyFlow) Ownable(msg.sender) {
         policyFlow = IPolicyFlow(_policyFlow);
     }
 

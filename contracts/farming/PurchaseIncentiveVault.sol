@@ -86,7 +86,7 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _buyerToken, address _degisToken) {
+    constructor(address _buyerToken, address _degisToken) Ownable(msg.sender) {
         // Initialize two tokens
         buyerToken = IBuyerToken(_buyerToken);
         degis = IDegisToken(_degisToken);

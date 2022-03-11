@@ -56,7 +56,7 @@ contract NaughtyRouter is Ownable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _factory, address _buyerToken) {
+    constructor(address _factory, address _buyerToken) Ownable(msg.sender) {
         factory = _factory;
         buyerToken = _buyerToken;
     }

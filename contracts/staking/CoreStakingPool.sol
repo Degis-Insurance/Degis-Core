@@ -17,6 +17,7 @@ contract CoreStakingPool is Ownable, BasePool {
         uint256 _degisPerBlock,
         bool _isFlashPool
     )
+        Ownable(msg.sender)
         BasePool(
             _degisToken,
             _poolToken,

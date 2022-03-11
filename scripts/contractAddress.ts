@@ -24,6 +24,17 @@ export const storeNaughtyPoolList = function (NPPoolList: object) {
   fs.writeFileSync("info/NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
 };
 
+export const readProxyAdmin = function () {
+  return JSON.parse(fs.readFileSync("info/proxyAdmin.json", "utf-8"));
+};
+
+export const storeProxyAdmin = function (proxyAdmin: object) {
+  fs.writeFileSync(
+    "info/proxyAdmin.json",
+    JSON.stringify(proxyAdmin, null, "\t")
+  );
+};
+
 export const readNaughtyTokenList = function () {
   return JSON.parse(fs.readFileSync("info/NPToken.json", "utf-8"));
 };

@@ -79,7 +79,7 @@ contract FarmingPool is Ownable, ReentrancyGuard {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _degis) {
+    constructor(address _degis) Ownable(msg.sender) {
         degis = IDegisToken(_degis);
 
         // Start from 1

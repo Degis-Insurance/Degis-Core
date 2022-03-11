@@ -44,7 +44,7 @@ contract PriceGetter is Ownable {
     /**
      * @notice Constructor function, initialize some price feed
      */
-    constructor() {
+    constructor() Ownable(msg.sender) {
         // At first, launch three kind of pools
 
         // Uncomment below when launched on Avalanche Fuji

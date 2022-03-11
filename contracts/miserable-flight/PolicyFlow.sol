@@ -513,7 +513,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable {
             payoff = MAX_PAYOFF;
         }
 
-        payoff = payoff * 1e18;
+        payoff = payoff * 1e6;
         return payoff;
     }
 

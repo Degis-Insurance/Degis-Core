@@ -3,7 +3,6 @@ pragma solidity ^0.8.10;
 
 import "../utils/Ownable.sol";
 import "../lucky-box/interfaces/IDegisLottery.sol";
-
 import "../libraries/StringsUtils.sol";
 
 contract VRFMock is Ownable {
@@ -14,6 +13,8 @@ contract VRFMock is Ownable {
     uint256 public randomResult;
 
     uint256 public latestLotteryId;
+
+    constructor() Ownable(msg.sender) {}
 
     /**
      * @notice Set the address for the DegisLottery

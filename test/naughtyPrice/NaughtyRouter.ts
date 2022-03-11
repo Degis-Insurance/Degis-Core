@@ -18,7 +18,13 @@ import {
   PriceGetter__factory,
 } from "../../typechain";
 
-import { getLatestBlockTimestamp, getNow, toBN, toWei } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  getNow,
+  stablecoinToWei,
+  toBN,
+  toWei,
+} from "../utils";
 
 describe("Naughty Router", function () {
   let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
@@ -83,12 +89,7 @@ describe("Naughty Router", function () {
       toBN(settleTimestamp)
     );
 
-    await core.deployPool(
-      policyTokenName,
-      usd.address,
-      toBN(deadline),
-      20
-    );
+    await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
     await router.deployed();
 
@@ -105,8 +106,8 @@ describe("Naughty Router", function () {
       usd.address
     );
 
-    await usd.approve(core.address, toWei("10000"));
-    await core.deposit(policyTokenName, usd.address, toWei("10000"));
+    await usd.approve(core.address, stablecoinToWei("10000"));
+    await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
     await buyerToken.addMinter(router.address);
   });
