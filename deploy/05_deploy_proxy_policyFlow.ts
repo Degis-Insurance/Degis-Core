@@ -19,11 +19,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
   const proxyAddressList = readProxyAdmin();
 
-  const proxyOptions: ProxyOptions = {
-    proxyContract: "OpenZeppelinTransparentProxy",
-    viaAdminContract: "ProxyAdmin",
-  };
-
   // Arguments for deployment
   const insurancePoolAddress: string = addressList[network.name].InsurancePool;
   const fdPolicyTokenAddress: string = addressList[network.name].FDPolicyToken;
@@ -36,11 +31,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     buyerTokenAddress,
   ];
 
+  // Always use the same proxy admin
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "OptimizedTransparentProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      methodName: "initialize",
+      args: argsConfig,
+    },
+  };
+
   const policyFlow = await deploy("PolicyFlow", {
     contract: "PolicyFlow",
     from: deployer,
     proxy: proxyOptions,
-    args: argsConfig,
+    args: [],
     log: true,
   });
   addressList[network.name].PolicyFlow = policyFlow.address;

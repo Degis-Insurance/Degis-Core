@@ -10,5 +10,8 @@ export const getTokenAddressOnAVAX = (name: string): string => {
 
     case "DEG":
       return "0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645";
+
+    default:
+      return "";
   }
 };

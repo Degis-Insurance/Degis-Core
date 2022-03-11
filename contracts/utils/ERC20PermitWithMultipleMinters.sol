@@ -31,6 +31,7 @@ contract ERC20PermitWithMultipleMinters is ERC20Permit, OwnableWithoutContext {
     constructor(string memory name, string memory symbol)
         ERC20(name, symbol)
         ERC20Permit(name)
+        OwnableWithoutContext(msg.sender)
     {
         // After the owner is transferred to multisig governance
         // This initial minter should be removed

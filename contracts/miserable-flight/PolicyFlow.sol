@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
-import "../utils/Ownable.sol";
-import "../proxy/Initializable.sol";
+import "../proxy/OwnableUpgradeable.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
 import "./interfaces/IFDPolicyToken.sol";
@@ -12,7 +11,7 @@ import "./abstracts/PolicyParameters.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/StablecoinDecimal.sol";
 
-contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Initializable {
+contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
     using StringsUtils for uint256;
     using StablecoinDecimal for uint256;
 
@@ -65,24 +64,25 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Initializable {
     event PolicyOwnerTransfer(uint256 indexed tokenId, address newOwner);
 
     // ---------------------------------------------------------------------------------------- //
-    // ************************************* Constructor ************************************** //
+    // ************************************* Initializer ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Constructor of the PolicyFlow contract
-     * @dev The parameters will be passed to the init function to be upgradable
+     * @notice Initializer of the PolicyFlow contract
+     * @dev Upgradeable contracts do not have a constrcutor
      * @param _insurancePool The InsurancePool contract address
      * @param _policyToken The PolicyToken contract address
      * @param _sigManager The SigManager contract address
      * @param _buyerToken The BuyerToken contract address
      */
-    constructor(
+    function initialize(
         address _insurancePool,
         address _policyToken,
         address _sigManager,
         address _buyerToken
-    ) Ownable(msg.sender){
-        _init_policyflow(
+    ) public initializer {
+        __Ownable_init(msg.sender);
+        __PolicyFlow_init(
             _insurancePool,
             _policyToken,
             _sigManager,
@@ -90,17 +90,18 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Initializable {
         );
     }
 
-    function _init_policyflow(
+    function __PolicyFlow_init(
         address _insurancePool,
         address _policyToken,
         address _sigManager,
         address _buyerToken
-    ) internal initializer {
+    ) internal onlyInitializing {
         insurancePool = IInsurancePool(_insurancePool);
         policyToken = IFDPolicyToken(_policyToken);
         sigManager = ISigManager(_sigManager);
         buyerToken = IBuyerToken(_buyerToken);
 
+        // Set the oracle fee
         fee = 0.1 * 10**18;
     }
 
@@ -110,6 +111,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, Ownable, Initializable {
 
     /**
      * @notice Show a user's policies (all)
+     * @dev Should only be checked for frontend
      * @param _user User's address
      * @return userPolicies User's all policy details
      */

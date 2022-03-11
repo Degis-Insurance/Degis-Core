@@ -3,7 +3,6 @@ import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import {
   readAddressList,
   storeAddressList,
-  getLinkAddress,
   readProxyAdmin,
   storeProxyAdmin,
 } from "../scripts/contractAddress";

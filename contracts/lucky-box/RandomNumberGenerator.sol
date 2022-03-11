@@ -34,7 +34,7 @@ contract RandomNumberGenerator is VRFConsumerBase, Ownable {
         address _vrfCoordinator,
         address _linkToken,
         bytes32 _keyHash
-    ) VRFConsumerBase(_vrfCoordinator, _linkToken) {
+    ) Ownable(msg.sender) VRFConsumerBase(_vrfCoordinator, _linkToken) {
         keyHash = _keyHash;
         fee = 0.1 * 10e18;
     }
