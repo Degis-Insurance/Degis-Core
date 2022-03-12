@@ -35,6 +35,7 @@ import {
   toBN,
   toWei,
 } from "../utils";
+import { deployments } from "hardhat";
 
 describe("Policy Flow", function () {
   let dev_account: SignerWithAddress,
@@ -80,14 +81,19 @@ describe("Policy Flow", function () {
     FDPolicyToken = await ethers.getContractFactory("FDPolicyToken");
     policyToken = await FDPolicyToken.deploy();
 
-    PolicyFlow = await ethers.getContractFactory("PolicyFlow");
-    flow = await PolicyFlow.deploy(
-      pool.address,
-      policyToken.address,
-      sig.address,
-      buyerToken.address
-    );
-    await flow.deployed();
+    await deployments.fixture(["ProxyAdmin", "PolicyFlow"]);
+
+    const policyFlow_d = await deployments.get("PolicyFlow");
+    flow = await ethers.getContractAt("PolicyFlow", policyFlow_d.address);
+
+    // PolicyFlow = await ethers.getContractFactory("PolicyFlow");
+    // flow = await PolicyFlow.deploy(
+    //   pool.address,
+    //   policyToken.address,
+    //   sig.address,
+    //   buyerToken.address
+    // );
+    // await flow.deployed();
 
     FlightOracleMock = await ethers.getContractFactory("FlightOracleMock");
     oracleMock = await FlightOracleMock.deploy(flow.address);

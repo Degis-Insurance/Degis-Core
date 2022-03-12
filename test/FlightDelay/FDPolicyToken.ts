@@ -8,6 +8,7 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { zeroAddress } from "../utils";
+import { deployments } from "hardhat";
 
 describe("Flight Delay Policy Token", function () {
   let FDPolicyToken: FDPolicyToken__factory,
@@ -26,15 +27,6 @@ describe("Flight Delay Policy Token", function () {
     FDPolicyToken = await ethers.getContractFactory("FDPolicyToken");
     fdToken = await FDPolicyToken.deploy();
     await fdToken.deployed();
-
-    PolicyFlow = await ethers.getContractFactory("PolicyFlow");
-    flow = await PolicyFlow.deploy(
-      user1.address,
-      fdToken.address,
-      user1.address,
-      user1.address
-    );
-    await flow.deployed();
   });
 
   describe("Deployment", function () {
