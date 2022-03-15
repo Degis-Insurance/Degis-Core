@@ -422,7 +422,10 @@ contract PolicyCore is Ownable {
             _round
         );
         // Deploy a new policy token by the factory contract
-        address policyTokenAddress = factory.deployPolicyToken(policyTokenName);
+        address policyTokenAddress = factory.deployPolicyToken(
+            policyTokenName,
+            _decimals
+        );
 
         // Store the policyToken information in the mapping
         policyTokenInfoMapping[policyTokenName] = PolicyTokenInfo(

@@ -18,6 +18,8 @@ contract NPPolicyToken is ERC20 {
 
     address public minter;
 
+    uint256 private tokenDecimals;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -28,9 +30,11 @@ contract NPPolicyToken is ERC20 {
     constructor(
         string memory _name,
         string memory _symbol,
-        address _minter
+        address _minter,
+        uint256 _decimals
     ) ERC20(_name, _symbol) {
         minter = _minter;
+        tokenDecimals = _decimals;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -69,7 +73,11 @@ contract NPPolicyToken is ERC20 {
         emit Burn(_account, _amount);
     }
 
-    function decimals() public pure override returns (uint8) {
-        return 6;
+    /**
+     * @notice Get the decimals of this token
+     * @dev It should be the same as its paired stablecoin
+     */
+    function decimals() public view override returns (uint8) {
+        return uint8(tokenDecimals);
     }
 }
