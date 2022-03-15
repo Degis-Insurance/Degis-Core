@@ -11,7 +11,8 @@ import "./interfaces/INaughtyFactory.sol";
 import "./interfaces/IPolicyCore.sol";
 
 import "../utils/Ownable.sol";
-import "../libraries/SafePRBMath.sol";
+
+import "hardhat/console.sol";
 
 /**
  * @title  NaughtyRouter
@@ -23,7 +24,6 @@ import "../libraries/SafePRBMath.sol";
 contract NaughtyRouter is Ownable {
     using SafeERC20 for IERC20;
     using SafeERC20 for INaughtyPair;
-    using SafePRBMath for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -236,6 +236,10 @@ contract NaughtyRouter is Ownable {
 
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
+
+        console.log("Amount A", amountA);
+        console.log("Amount B", amountB);
+        console.log("Liquidity", _liquidity);
 
         emit LiquidityRemoved(pair, amountA, amountB, _liquidity);
     }
@@ -523,10 +527,10 @@ contract NaughtyRouter is Ownable {
         require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
 
         uint256 amountInWithFee = _amountIn * (1000 - _feeRate);
-        uint256 numerator = amountInWithFee.mul(reserveOut);
+        uint256 numerator = amountInWithFee * (reserveOut);
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
 
-        amountOut = numerator.div(denominator);
+        amountOut = numerator / denominator;
     }
 
     /**
@@ -556,14 +560,15 @@ contract NaughtyRouter is Ownable {
         require(_amountOut > 0, "insufficient output amount");
         require(reserveIn > 0 && reserveOut > 0, "insufficient liquidity");
 
-        uint256 numerator = reserveIn.mul(_amountOut) * 1000;
+        uint256 numerator = reserveIn * (_amountOut) * 1000;
         uint256 denominator = (reserveOut - _amountOut) * (1000 - _feeRate);
 
-        amountIn = numerator.div(denominator) + 1;
+        amountIn = numerator / denominator + 1;
     }
 
     /**
-     * @notice Given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
+     * @notice Given some amount of an asset and pair reserves
+     *         returns an equivalent amount of the other asset
      * @dev Used when add or remove liquidity
      * @param _amountA Amount of tokenA ( can be policytoken or stablecoin)
      * @param _reserveA Reserve of tokenA
@@ -577,6 +582,6 @@ contract NaughtyRouter is Ownable {
         require(_amountA > 0, "insufficient amount");
         require(_reserveA > 0 && _reserveB > 0, "insufficient liquidity");
 
-        amountB = _amountA.mul(_reserveB).div(_reserveA);
+        amountB = (_amountA * _reserveB) / _reserveA;
     }
 }

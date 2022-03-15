@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/SafePRBMath.sol";
 import "../utils/Ownable.sol";
+import "../utils/interfaces/IERC20Decimals.sol";
 import "./interfaces/IPriceGetter.sol";
 import "./interfaces/INaughtyFactory.sol";
 import "./interfaces/INPPolicyToken.sol";
@@ -32,6 +33,10 @@ import "./interfaces/INPPolicyToken.sol";
  *              Original Token Name(with decimals) + Strike Price + Lower or Higher + Date
  *         E.g.  AVAX_30.0_L_2101, BTC_30000.0_L_2102, ETH_8000.0_H_2109
  *         (the original name need to be the same as in the chainlink oracle)
+ *         There are two decimals for a policy token:
+ *              1. Name decimals: Only for generating the name of policyToken
+ *              2. Token decimals: The decimals of the policyToken
+ *                 (should be the same as the paired stablecoin)
  */
 
 contract PolicyCore is Ownable {
@@ -61,7 +66,8 @@ contract PolicyCore is Ownable {
     struct PolicyTokenInfo {
         address policyTokenAddress;
         bool isCall;
-        uint256 decimals; // decimals of the oracle pricefeed
+        uint256 nameDecimals; // decimals of the name generation
+        uint256 tokenDecimals; // decimals of the policy token
         uint256 strikePrice;
         uint256 deadline;
         uint256 settleTimestamp;
@@ -395,28 +401,40 @@ contract PolicyCore is Ownable {
      * @dev Only the owner can deploy new policy token
      *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
+     * @param _stablecoin Address of the stablecoin (Just for check decimals here)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
-     * @param _decimals Decimals of this token's price (0~18)
+     * @param _nameDecimals Decimals of this token's name (0~18)
+     * @param _tokenDecimals Decimals of this token's value (0~18) (same as paired stablecoin)
      * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      */
     function deployPolicyToken(
         string memory _tokenName,
+        address _stablecoin,
         bool _isCall,
-        uint256 _decimals,
+        uint256 _nameDecimals,
+        uint256 _tokenDecimals,
         uint256 _strikePrice,
         uint256 _round,
         uint256 _deadline,
         uint256 _settleTimestamp
     ) external onlyOwner {
-        require(_decimals <= 18, "Too many decimals");
+        require(
+            _nameDecimals <= 18 && _tokenDecimals <= 18,
+            "Too many decimals"
+        );
+        require(
+            IERC20Decimals(_stablecoin).decimals() == _tokenDecimals,
+            "Decimals not paired"
+        );
+
         require(_deadline > block.timestamp, "Wrong deadline");
         require(_settleTimestamp >= _deadline, "Wrong settleTimestamp");
 
         string memory policyTokenName = _generateName(
             _tokenName,
-            _decimals,
+            _nameDecimals,
             _strikePrice,
             _isCall,
             _round
@@ -424,14 +442,15 @@ contract PolicyCore is Ownable {
         // Deploy a new policy token by the factory contract
         address policyTokenAddress = factory.deployPolicyToken(
             policyTokenName,
-            _decimals
+            _tokenDecimals
         );
 
         // Store the policyToken information in the mapping
         policyTokenInfoMapping[policyTokenName] = PolicyTokenInfo(
             policyTokenAddress,
             _isCall,
-            _decimals,
+            _nameDecimals,
+            _tokenDecimals,
             _strikePrice,
             _deadline,
             _settleTimestamp

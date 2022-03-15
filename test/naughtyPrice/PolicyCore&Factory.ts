@@ -157,8 +157,10 @@ describe("Policy Core and Naughty Factory", function () {
       await expect(
         core.deployPolicyToken(
           "BTC",
+          usd.address,
           false,
           4,
+          6,
           parseUnits("5.5656"),
           2112,
           toBN(deadline),
@@ -173,8 +175,10 @@ describe("Policy Core and Naughty Factory", function () {
       await expect(
         core.deployPolicyToken(
           "BTC",
+          usd.address,
           false,
           19, // wrong decimals
+          6,
           parseUnits("5.5656"),
           2112,
           toBN(deadline),
@@ -216,8 +220,10 @@ describe("Policy Core and Naughty Factory", function () {
       await expect(
         core.deployPolicyToken(
           "BTC",
+          usd.address,
           false,
           18,
+          6,
           parseUnits("5.565656565656565656"),
           2112,
           toBN(deadline),
@@ -232,7 +238,10 @@ describe("Policy Core and Naughty Factory", function () {
       const policyTokenName = "BTC_24000.0_L_2112";
 
       // Type 1 (If you want to use this function, please change the visibility)
-      const bytecode1 = await factory.getPolicyTokenBytecode(policyTokenName);
+      const bytecode1 = await factory.getPolicyTokenBytecode(
+        policyTokenName,
+        6
+      );
 
       // Type 2 (Normally we use this)
       // abi.encode(_tokenName, _tokenName, policyCore)
@@ -259,8 +268,10 @@ describe("Policy Core and Naughty Factory", function () {
       await expect(
         core.deployPolicyToken(
           "BTC",
+          usd.address,
           false,
           0,
+          6,
           parseUnits("24000"),
           2112,
           toBN(deadline),
@@ -289,8 +300,10 @@ describe("Policy Core and Naughty Factory", function () {
       // Preset2: Deploy a policy token
       await core.deployPolicyToken(
         "BTC",
+        usd.address,
         false,
         0,
+        6,
         parseUnits("24000"),
         2112,
         toBN(deadline),
@@ -340,8 +353,10 @@ describe("Policy Core and Naughty Factory", function () {
       policyTokenName = "BTC_24000.0_L_2112";
       await core.deployPolicyToken(
         "BTC",
+        usd.address,
         false,
         0,
+        6,
         parseUnits("24000"),
         2112,
         toBN(deadline),
@@ -416,8 +431,10 @@ describe("Policy Core and Naughty Factory", function () {
       policyTokenName = "BTC_24000.0_L_2112";
       await core.deployPolicyToken(
         "BTC",
+        usd.address,
         false,
         0,
+        6,
         parseUnits("24000"),
         2112,
         toBN(deadline),
@@ -538,8 +555,10 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.deployPolicyToken(
         "BTC",
+        usd.address,
         true,
         0,
+        6,
         parseUnits("24000"),
         2112,
         toBN(deadline),
@@ -547,8 +566,10 @@ describe("Policy Core and Naughty Factory", function () {
       );
       await core.deployPolicyToken(
         "BTC",
+        usd.address,
         false,
         0,
+        6,
         parseUnits("24000"),
         2112,
         toBN(deadline),
