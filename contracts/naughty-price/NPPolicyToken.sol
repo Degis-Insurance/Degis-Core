@@ -68,4 +68,8 @@ contract NPPolicyToken is ERC20 {
         _burn(_account, _amount);
         emit Burn(_account, _amount);
     }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
 }

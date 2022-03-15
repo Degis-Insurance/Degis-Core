@@ -81,19 +81,17 @@ describe("Policy Flow", function () {
     FDPolicyToken = await ethers.getContractFactory("FDPolicyToken");
     policyToken = await FDPolicyToken.deploy();
 
-    await deployments.fixture(["ProxyAdmin", "PolicyFlow"]);
+    PolicyFlow = await ethers.getContractFactory("PolicyFlow");
+    flow = await PolicyFlow.deploy();
+    await flow.deployed();
 
-    const policyFlow_d = await deployments.get("PolicyFlow");
-    flow = await ethers.getContractAt("PolicyFlow", policyFlow_d.address);
-
-    // PolicyFlow = await ethers.getContractFactory("PolicyFlow");
-    // flow = await PolicyFlow.deploy(
-    //   pool.address,
-    //   policyToken.address,
-    //   sig.address,
-    //   buyerToken.address
-    // );
-    // await flow.deployed();
+    // It is behind proxy, so use initialize
+    await flow.initialize(
+      pool.address,
+      policyToken.address,
+      sig.address,
+      buyerToken.address
+    );
 
     FlightOracleMock = await ethers.getContractFactory("FlightOracleMock");
     oracleMock = await FlightOracleMock.deploy(flow.address);
