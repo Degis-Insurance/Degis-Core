@@ -1,4 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -33,10 +52,11 @@ import "./interfaces/INPPolicyToken.sol";
  *              Original Token Name(with decimals) + Strike Price + Lower or Higher + Date
  *         E.g.  AVAX_30.0_L_2101, BTC_30000.0_L_2102, ETH_8000.0_H_2109
  *         (the original name need to be the same as in the chainlink oracle)
- *         There are two decimals for a policy token:
+ *         There are three decimals for a policy token:
  *              1. Name decimals: Only for generating the name of policyToken
  *              2. Token decimals: The decimals of the policyToken
  *                 (should be the same as the paired stablecoin)
+ *              3. Price decimals: Always 18. The oracle result will be transferred for settlement
  */
 
 contract PolicyCore is Ownable {
@@ -869,7 +889,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Collect the income
-     * @dev Can be done by anyone, only when there is some income to distribute
+     * @dev Can be done by anyone, only when there is some income to be distributed
      * @param _stablecoin Address of stablecoin
      */
     function collectIncome(address _stablecoin) public {
@@ -980,7 +1000,7 @@ contract PolicyCore is Ownable {
         uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
 
         require(
-            intPart > 0 || decimalPart > 0,
+            intPart > 0 && decimalPart > 0,
             "Int part and decimal part should > 0"
         );
 

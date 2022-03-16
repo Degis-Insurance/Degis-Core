@@ -18,6 +18,7 @@ describe("Farming Pool", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let MockERC20: MockERC20__factory, lptoken_1: MockERC20, lptoken_2: MockERC20;
+  let MockUSD: MockUSD__factory, lptoken_3: MockUSD;
 
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
 
@@ -41,10 +42,14 @@ describe("Farming Pool", function () {
 
     MockERC20 = await ethers.getContractFactory("MockERC20");
 
-    // Two lptoken contracts
+    // Two lptoken contracts (18 decimals)
     // They will be added as farming pools
     lptoken_1 = await MockERC20.deploy();
     lptoken_2 = await MockERC20.deploy();
+
+    // 6 decimals
+    MockUSD = await ethers.getContractFactory("MockUSD");
+    lptoken_3 = await MockUSD.deploy();
 
     // Add minter role for farming pool contract
     await degis.addMinter(pool.address);
@@ -187,6 +192,8 @@ describe("Farming Pool", function () {
       // Add lptoken_1
       // Reward speed: 5 degis per block
       await pool.add(lptoken_1.address, toWei("5"), false);
+
+      await pool.add(lptoken_3.address, toWei("5"), false);
     });
 
     it("should be able to deposit lptokens", async function () {
@@ -196,6 +203,15 @@ describe("Farming Pool", function () {
       await expect(pool.stake(1, toWei("100")))
         .to.emit(pool, "Stake")
         .withArgs(dev_account.address, 1, toWei("100"));
+    });
+
+    it("should be able to deposit lptokens with 6 decimals", async function () {
+      await lptoken_3.mint(dev_account.address, stablecoinToWei("1000"));
+      await lptoken_3.approve(pool.address, stablecoinToWei("1000"));
+
+      await expect(pool.stake(2, stablecoinToWei("100")))
+        .to.emit(pool, "Stake")
+        .withArgs(dev_account.address, 2, stablecoinToWei("100"));
     });
 
     it("should be able to get correct farming rewards", async function () {
@@ -209,6 +225,21 @@ describe("Farming Pool", function () {
 
       // 5 blocks reward: 5 * 5 = 25
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("25")
+      );
+    });
+
+    it("should be able to get correct farming rewards with 6 decimals", async function () {
+      await lptoken_3.mint(dev_account.address, stablecoinToWei("1000"));
+      await lptoken_3.approve(pool.address, stablecoinToWei("1000"));
+      await pool.stake(2, stablecoinToWei("100"));
+
+      // Mine five blocks
+      // BlockNumber += 5
+      await mineBlocks(5);
+
+      // 5 blocks reward: 5 * 5 = 25
+      expect(await pool.pendingDegis(2, dev_account.address)).to.equal(
         toWei("25")
       );
     });
@@ -261,6 +292,34 @@ describe("Farming Pool", function () {
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("17.5")
       );
+    });
+
+    it("should be able to get correct rewards after another user deposit with 6 decimals", async function () {
+      await lptoken_3.mint(dev_account.address, stablecoinToWei("1000"));
+      await lptoken_3.approve(pool.address, stablecoinToWei("1000"));
+      await pool.stake(2, stablecoinToWei("100"));
+
+      await lptoken_3.mint(user1.address, stablecoinToWei("1000"));
+      await lptoken_3
+        .connect(user1)
+        .approve(pool.address, stablecoinToWei("1000"));
+
+      await expect(pool.connect(user1).stake(2, stablecoinToWei("100")))
+        .to.emit(pool, "Stake")
+        .withArgs(user1.address, 2, stablecoinToWei("100"));
+
+      // 3 blocks reward: 5 * 3 = 15
+      expect(await pool.pendingDegis(2, dev_account.address)).to.equal(
+        toWei("15")
+      );
+      expect(await pool.pendingDegis(2, user1.address)).to.equal(0);
+
+      await mineBlocks(1);
+
+      expect(await pool.pendingDegis(2, dev_account.address)).to.equal(
+        toWei("17.5")
+      );
+      expect(await pool.pendingDegis(2, user1.address)).to.equal(toWei("2.5"));
     });
 
     it("should be able to get correct rewards when harvest for self", async function () {
