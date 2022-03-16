@@ -33,6 +33,9 @@ async function main() {
 
   const implementation = await admin.getProxyImplementation(policyFlowAddress);
   console.log("impl address is: ", implementation);
+
+  const adminContract = await admin.getProxyAdmin(policyFlowAddress);
+  console.log("admin of policy flow: ", adminContract);
 }
 
 main()
