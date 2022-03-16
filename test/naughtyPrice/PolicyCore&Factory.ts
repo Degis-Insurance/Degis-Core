@@ -380,7 +380,11 @@ describe("Policy Core and Naughty Factory", function () {
       await usd.approve(core.address, stablecoinToWei("10000"), {
         from: dev_account.address,
       });
-      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
+      await core.deposit(
+        policyTokenName,
+        usd.address,
+        stablecoinToWei("10000")
+      );
 
       // user1 deposit
       await usd.mint(user1.address, stablecoinToWei("500"));
@@ -398,7 +402,9 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       // Check user1's balance
-      expect(await usd.balanceOf(user1.address)).to.equal(stablecoinToWei("300"));
+      expect(await usd.balanceOf(user1.address)).to.equal(
+        stablecoinToWei("300")
+      );
       expect(await policyTokenInstance.balanceOf(user1.address)).to.equal(
         stablecoinToWei("200")
       );
@@ -414,7 +420,11 @@ describe("Policy Core and Naughty Factory", function () {
 
     it("should be able to redeem usd with policy tokens", async function () {
       await usd.approve(core.address, stablecoinToWei("10000"));
-      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
+      await core.deposit(
+        policyTokenName,
+        usd.address,
+        stablecoinToWei("10000")
+      );
 
       await policyTokenInstance.approve(core.address, stablecoinToWei("5000"));
       await core.redeem(policyTokenName, usd.address, stablecoinToWei("5000"));
@@ -456,7 +466,11 @@ describe("Policy Core and Naughty Factory", function () {
       await usd.approve(core.address, stablecoinToWei("10000"), {
         from: dev_account.address,
       });
-      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
+      await core.deposit(
+        policyTokenName,
+        usd.address,
+        stablecoinToWei("10000")
+      );
     });
 
     it("should be able to settle the final result", async function () {
@@ -518,6 +532,11 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("99900")
       );
+      // The income should be collected manually
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(0);
+      expect(await usd.balanceOf(lottery.address)).to.equal(0);
+
+      await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
         stablecoinToWei("20")
       );
@@ -534,7 +553,7 @@ describe("Policy Core and Naughty Factory", function () {
         .connect(user1)
         .deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
-      const price = stablecoinToWei("50000");
+      const price = toWei("50000");
       await priceFeedMock.setResult(price);
 
       await setNextBlockTime(settleTimestamp + 1);
@@ -552,6 +571,10 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("99900")
       );
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(0);
+      expect(await usd.balanceOf(lottery.address)).to.equal(0);
+
+      await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
         stablecoinToWei("40")
       );
@@ -635,7 +658,7 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to settle all policy tokens with multiple active tokens", async function () {
-      const price = parseUnits("50000");
+      const price = toWei("50000");
       await priceFeedMock.setResult(price);
 
       await setNextBlockTime(settleTimestamp + 1);
@@ -651,7 +674,7 @@ describe("Policy Core and Naughty Factory", function () {
         stablecoinToWei("9900")
       );
       expect(await usd.balanceOf(core.address)).to.equal(
-        stablecoinToWei("20000")
+        stablecoinToWei("20200")
       );
     });
   });
