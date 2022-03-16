@@ -27,7 +27,12 @@ import {
   solidityPack,
 } from "ethers/lib/utils";
 
-import { getLatestBlockTimestamp, toBN, toWei } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  stablecoinToWei,
+  toBN,
+  toWei,
+} from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
@@ -138,11 +143,11 @@ describe("Policy Core and Naughty Factory", function () {
       const policyTokenName = "BTC_5.5656_L_2112";
 
       const token_init = defaultAbiCoder.encode(
-        ["string", "string", "address"],
-        [policyTokenName, policyTokenName, core.address]
+        ["string", "string", "address", "uint256"],
+        [policyTokenName, policyTokenName, core.address, 6]
       );
 
-      // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
+      // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore, decimals);
       const bytecode = solidityPack(
         ["bytes", "bytes"],
         [NPPolicyToken.bytecode, token_init]
@@ -168,7 +173,7 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, deadline, settleTimestamp);
+        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
     });
 
     it("should not be able to generate names with wrong decimals", async function () {
@@ -201,8 +206,8 @@ describe("Policy Core and Naughty Factory", function () {
       ).to.equal(policyTokenName);
 
       const token_init = defaultAbiCoder.encode(
-        ["string", "string", "address"],
-        [policyTokenName, policyTokenName, core.address]
+        ["string", "string", "address", "uint256"],
+        [policyTokenName, policyTokenName, core.address, 6]
       );
 
       // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
@@ -231,7 +236,7 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, deadline, settleTimestamp);
+        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
     });
 
     it("should be able to deploy a new policy token and get the correct address", async function () {
@@ -246,8 +251,8 @@ describe("Policy Core and Naughty Factory", function () {
       // Type 2 (Normally we use this)
       // abi.encode(_tokenName, _tokenName, policyCore)
       const token_init = defaultAbiCoder.encode(
-        ["string", "string", "address"],
-        [policyTokenName, policyTokenName, core.address]
+        ["string", "string", "address", "uint256"],
+        [policyTokenName, policyTokenName, core.address, 6]
       );
 
       // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
@@ -258,7 +263,8 @@ describe("Policy Core and Naughty Factory", function () {
 
       // const INIT_CODE_HASH = keccak256(bytecode2);
       const INIT_CODE_HASH = await factory.getInitCodeHashForPolicyToken(
-        policyTokenName
+        policyTokenName,
+        6
       );
 
       const salt = solidityKeccak256(["string"], [policyTokenName]);
@@ -279,7 +285,7 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, deadline, settleTimestamp);
+        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
 
       // Get address from name
       const policyTokenInfo = await core.policyTokenInfoMapping(
@@ -371,30 +377,30 @@ describe("Policy Core and Naughty Factory", function () {
     });
     it("should be able to stake usd and get policytokens", async function () {
       // dev_account deposit
-      await usd.approve(core.address, parseUnits("10000"), {
+      await usd.approve(core.address, stablecoinToWei("10000"), {
         from: dev_account.address,
       });
-      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
+      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
       // user1 deposit
-      await usd.mint(user1.address, parseUnits("500"));
-      await usd.connect(user1).approve(core.address, parseUnits("200"));
+      await usd.mint(user1.address, stablecoinToWei("500"));
+      await usd.connect(user1).approve(core.address, stablecoinToWei("200"));
       await core
         .connect(user1)
-        .deposit(policyTokenName, usd.address, parseUnits("200"));
+        .deposit(policyTokenName, usd.address, stablecoinToWei("200"));
 
       // Check dev_account's balance
       expect(await usd.balanceOf(dev_account.address)).to.equal(
-        parseUnits("90000")
+        stablecoinToWei("90000")
       );
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
-        parseUnits("10000")
+        stablecoinToWei("10000")
       );
 
       // Check user1's balance
-      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("300"));
+      expect(await usd.balanceOf(user1.address)).to.equal(stablecoinToWei("300"));
       expect(await policyTokenInstance.balanceOf(user1.address)).to.equal(
-        parseUnits("200")
+        stablecoinToWei("200")
       );
 
       // get allDepositors
@@ -407,18 +413,18 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to redeem usd with policy tokens", async function () {
-      await usd.approve(core.address, parseUnits("10000"));
-      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
+      await usd.approve(core.address, stablecoinToWei("10000"));
+      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
-      await policyTokenInstance.approve(core.address, parseUnits("5000"));
-      await core.redeem(policyTokenName, usd.address, parseUnits("5000"));
+      await policyTokenInstance.approve(core.address, stablecoinToWei("5000"));
+      await core.redeem(policyTokenName, usd.address, stablecoinToWei("5000"));
 
       expect(await usd.balanceOf(dev_account.address)).to.equal(
-        parseUnits("95000")
+        stablecoinToWei("95000")
       );
 
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
-        parseUnits("5000")
+        stablecoinToWei("5000")
       );
     });
   });
@@ -447,10 +453,10 @@ describe("Policy Core and Naughty Factory", function () {
         policyTokenInfo.policyTokenAddress
       );
 
-      await usd.approve(core.address, parseUnits("10000"), {
+      await usd.approve(core.address, stablecoinToWei("10000"), {
         from: dev_account.address,
       });
-      await core.deposit(policyTokenName, usd.address, parseUnits("10000"));
+      await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
     });
 
     it("should be able to settle the final result", async function () {
@@ -509,20 +515,26 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       // Income distribution
-      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("99900"));
-      expect(await usd.balanceOf(emergencyPool.address)).to.equal(toWei("20"));
-      expect(await usd.balanceOf(lottery.address)).to.equal(toWei("80"));
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("99900")
+      );
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(
+        stablecoinToWei("20")
+      );
+      expect(await usd.balanceOf(lottery.address)).to.equal(
+        stablecoinToWei("80")
+      );
     });
 
     it("should be able to settle all policy tokens for users", async function () {
       // user1 deposit
-      await usd.mint(user1.address, parseUnits("10000"));
-      await usd.connect(user1).approve(core.address, parseUnits("10000"));
+      await usd.mint(user1.address, stablecoinToWei("10000"));
+      await usd.connect(user1).approve(core.address, stablecoinToWei("10000"));
       await core
         .connect(user1)
-        .deposit(policyTokenName, usd.address, parseUnits("10000"));
+        .deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
-      const price = parseUnits("50000");
+      const price = stablecoinToWei("50000");
       await priceFeedMock.setResult(price);
 
       await setNextBlockTime(settleTimestamp + 1);
@@ -534,10 +546,18 @@ describe("Policy Core and Naughty Factory", function () {
         .to.emit(core, "PolicyTokensSettledForUsers")
         .withArgs(policyTokenName, usd.address, 0, 2);
 
-      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("9900"));
-      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("99900"));
-      expect(await usd.balanceOf(emergencyPool.address)).to.equal(toWei("40"));
-      expect(await usd.balanceOf(lottery.address)).to.equal(toWei("160"));
+      expect(await usd.balanceOf(user1.address)).to.equal(
+        stablecoinToWei("9900")
+      );
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("99900")
+      );
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(
+        stablecoinToWei("40")
+      );
+      expect(await usd.balanceOf(lottery.address)).to.equal(
+        stablecoinToWei("160")
+      );
     });
   });
 
@@ -590,20 +610,28 @@ describe("Policy Core and Naughty Factory", function () {
         policyTokenInfo_L.policyTokenAddress
       );
 
-      await usd.approve(core.address, parseUnits("20000"), {
+      await usd.approve(core.address, stablecoinToWei("20000"), {
         from: dev_account.address,
       });
-      await core.deposit(policyTokenName_H, usd.address, parseUnits("10000"));
-      await core.deposit(policyTokenName_L, usd.address, parseUnits("10000"));
+      await core.deposit(
+        policyTokenName_H,
+        usd.address,
+        stablecoinToWei("10000")
+      );
+      await core.deposit(
+        policyTokenName_L,
+        usd.address,
+        stablecoinToWei("10000")
+      );
 
-      await usd.mint(user1.address, parseUnits("20000"));
-      await usd.connect(user1).approve(core.address, parseUnits("20000"));
+      await usd.mint(user1.address, stablecoinToWei("20000"));
+      await usd.connect(user1).approve(core.address, stablecoinToWei("20000"));
       await core
         .connect(user1)
-        .deposit(policyTokenName_H, usd.address, parseUnits("10000"));
+        .deposit(policyTokenName_H, usd.address, stablecoinToWei("10000"));
       await core
         .connect(user1)
-        .deposit(policyTokenName_L, usd.address, parseUnits("10000"));
+        .deposit(policyTokenName_L, usd.address, stablecoinToWei("10000"));
     });
 
     it("should be able to settle all policy tokens with multiple active tokens", async function () {
@@ -619,8 +647,12 @@ describe("Policy Core and Naughty Factory", function () {
         .to.emit(core, "PolicyTokensSettledForUsers")
         .withArgs(policyTokenName_L, usd.address, 0, 2);
 
-      expect(await usd.balanceOf(user1.address)).to.equal(parseUnits("9900"));
-      expect(await usd.balanceOf(core.address)).to.equal(parseUnits("20000"));
+      expect(await usd.balanceOf(user1.address)).to.equal(
+        stablecoinToWei("9900")
+      );
+      expect(await usd.balanceOf(core.address)).to.equal(
+        stablecoinToWei("20000")
+      );
     });
   });
 });

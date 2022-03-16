@@ -204,8 +204,8 @@ describe("Naughty Router", function () {
         .to.emit(router, "LiquidityRemoved")
         .withArgs(
           pairAddress,
-          stablecoinToWei("10"),
-          stablecoinToWei("10"),
+          stablecoinToWei("9.999900"),
+          stablecoinToWei("9.999900"),
           stablecoinToWei("10")
         );
     });

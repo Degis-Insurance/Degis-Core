@@ -118,6 +118,7 @@ contract PolicyCore is Ownable {
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
+        uint256 tokenDecimals,
         uint256 deadline,
         uint256 settleTimestamp
     );
@@ -468,6 +469,7 @@ contract PolicyCore is Ownable {
         emit PolicyTokenDeployed(
             policyTokenName,
             policyTokenAddress,
+            _tokenDecimals,
             _deadline,
             _settleTimestamp
         );

@@ -10,6 +10,8 @@ import "../utils/ReentrancyGuard.sol";
 
 import "./interfaces/INaughtyFactory.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Naughty Pair
  * @notice This is the contract for the naughtyPrice swapping pair.
@@ -195,9 +197,16 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
         uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
 
+        console.logUint(balance0);
+        console.logUint(balance1);
+
         uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY;
 
+        console.logUint(liquidity);
+
         uint256 _totalSupply = totalSupply(); // gas savings
+
+        console.logUint(_totalSupply);
 
         // How many tokens to be sent back
         amount0 = (liquidity * balance0) / _totalSupply;

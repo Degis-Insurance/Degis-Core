@@ -87,17 +87,21 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @notice Get the INIT_CODE_HASH for policy tokens with parameters
      * @param _policyTokenName Name of the policy token to be deployed
      */
-    function getInitCodeHashForPolicyToken(string memory _policyTokenName)
-        external
-        view
-        returns (bytes32)
-    {
+    function getInitCodeHashForPolicyToken(
+        string memory _policyTokenName,
+        uint256 _tokenDecimals
+    ) external view returns (bytes32) {
         bytes memory bytecode = type(NPPolicyToken).creationCode;
         return
             keccak256(
                 abi.encodePacked(
                     bytecode,
-                    abi.encode(_policyTokenName, _policyTokenName, policyCore)
+                    abi.encode(
+                        _policyTokenName,
+                        _policyTokenName,
+                        policyCore,
+                        _tokenDecimals
+                    )
                 )
             );
     }
