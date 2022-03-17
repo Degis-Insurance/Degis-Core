@@ -3,31 +3,60 @@ import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
 import {
+  readAddressList,
+  readFarmingPoolList,
+  readNaughtyPoolList,
+  readNaughtyTokenList,
+  readProxyAdmin,
+  readSignerList,
   clearAddressList,
   clearFarmingPoolList,
   clearNaughtyPoolList,
   clearNaughtyTokenList,
   clearProxyAdmin,
   clearSignerList,
+  storeAddressList,
+  storeFarmingPoolList,
+  storeNaughtyPoolList,
+  storeNaughtyTokenList,
+  storeProxyAdmin,
 } from "../scripts/contractAddress";
 
 task("clearRecord", "Clear some record")
   .addParam("type", "Type of info to be cleared", null, types.string)
   .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
     switch (taskArgs.type) {
       case "ContractAddress":
-        clearAddressList();
+        const addressList = readAddressList();
+        addressList[network.name] = {};
+        storeAddressList(addressList);
+        break;
       case "FarmingPool":
-        clearFarmingPoolList();
+        const farmingPoolList = readFarmingPoolList();
+        farmingPoolList[network.name] = {};
+        storeFarmingPoolList(farmingPoolList);
+        break;
       case "NaughtyPool":
-        clearNaughtyPoolList();
+        const naughtyPoolList = readFarmingPoolList();
+        naughtyPoolList[network.name] = {};
+        storeNaughtyPoolList(naughtyPoolList);
+        break;
       case "NaughtyToken":
-        clearNaughtyTokenList();
+        const naughtyTokenList = readNaughtyTokenList();
+        naughtyTokenList[network.name] = {};
+        storeNaughtyTokenList(naughtyTokenList);
+        break;
       case "ProxyAdmin":
-        clearProxyAdmin();
+        const proxyAdmin = readProxyAdmin();
+        proxyAdmin[network.name] = {};
+        storeProxyAdmin(proxyAdmin);
+        break;
       case "Signer":
         clearSignerList();
+        break;
       default:
         console.log("Unrecognized type");
+        break;
     }
   });
