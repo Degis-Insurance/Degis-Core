@@ -1,5 +1,12 @@
 {
-  "fuji": {},
-  "avax": {},
-  "localhost": {}
+	"fuji": {},
+	"avax": {},
+	"localhost": {
+		"1": {
+			"name": "testtoken",
+			"address": "0xe0261b9D9d99b3ac7185bAf62af9297bC4bfA574",
+			"poolId": 1,
+			"reward": 2
+		}
+	}
 }

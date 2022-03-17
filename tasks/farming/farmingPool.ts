@@ -10,6 +10,9 @@ import {
 } from "../../scripts/contractAddress";
 import { parseUnits, formatEther } from "ethers/lib/utils";
 
+const addressList = readAddressList();
+const farmingPoolList = readFarmingPoolList();
+
 task("addFarmingPool", "Add new farming pool")
   .addParam("name", "The name of the new farming pool", "unnamed", types.string)
   .addParam("address", "The pool's address to be added", null, types.string)
@@ -27,9 +30,6 @@ task("addFarmingPool", "Add new farming pool")
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
-    const farmingPoolList = readFarmingPoolList();
 
     const farmingPoolAddress = addressList[network.name].FarmingPool;
     console.log(
@@ -80,9 +80,6 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const addressList = readAddressList();
-    const farmingPoolList = readFarmingPoolList();
-
     const farmingPoolAddress = addressList[network.name].FarmingPool;
     console.log(
       "The farming pool address of this network is: ",
@@ -125,9 +122,7 @@ task("setFarmingStartBlock", "Set the start block of farming")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const addressList = readAddressList();
     const farmingPoolAddress = addressList[network.name].FarmingPool;
-
     console.log(
       "The farming pool address of this network is: ",
       farmingPoolAddress
