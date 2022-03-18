@@ -97,6 +97,10 @@ yarn coverage
 
 - Notes: We are currently using a forked version of solidity-coverage that includes optimizer settings. Ideally we will move to the maintained version after this is fixed on their end.
 
+```
+"solidity-coverage": "https://github.com/jbx-protocol/solidity-coverage.git#0fcd2f608c0e3e00bf66ab62c7610f5ea553fba8"
+```
+
 ## Verify
 
 Verify the contracts with "hardhat-etherscan" plugin:
@@ -118,3 +122,16 @@ npx hardhat verify --constructor-args scripts/verify/arguments.js DEPLOYED_CONTR
 - All addresses of deployed contracts and tokens will be stored inside the info folder.
 
 
+## About Proxy Contracts
+
+We use proxy contracts for some contracts including:
+
+- FarmingPool
+- ...
+(the list may be extended later)
+
+We will have one ProxyAdmin Contract and its owner is our multi-sig wallet.
+
+The ProxyAdmin contract can upgrade the implementation contract of farmingPool.
+
+All proxies will share the same proxy admin address.
