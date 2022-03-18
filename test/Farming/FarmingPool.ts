@@ -11,7 +11,12 @@ import {
   MockUSD__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { stablecoinToWei, toWei, zeroAddress } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  stablecoinToWei,
+  toWei,
+  zeroAddress,
+} from "../utils";
 import { BigNumberish } from "ethers";
 
 describe("Farming Pool", function () {
@@ -25,8 +30,8 @@ describe("Farming Pool", function () {
   // Pool info type definition
   type PoolInfo = {
     lpToken: string;
-    degisPerBlock: BigNumberish;
-    lastRewardBlock: BigNumberish;
+    degisPerSecond: BigNumberish;
+    lastRewardTimestamp: BigNumberish;
     accDegisPerShare: BigNumberish;
   };
 
@@ -72,33 +77,35 @@ describe("Farming Pool", function () {
       const defaultPool: PoolInfo = await pool.poolList(0);
 
       expect(defaultPool.lpToken).to.equal(zeroAddress());
-      expect(defaultPool.degisPerBlock).to.equal(0);
-      expect(defaultPool.lastRewardBlock).to.equal(0);
+      expect(defaultPool.degisPerSecond).to.equal(0);
+      expect(defaultPool.lastRewardTimestamp).to.equal(0);
       expect(defaultPool.accDegisPerShare).to.equal(0);
     });
   });
 
   describe("Owner Functions", function () {
     it("should be able to set the start block", async function () {
-      await expect(pool.setStartBlock(60000))
-        .to.emit(pool, "StartBlockChanged")
+      await expect(pool.setStartTimestamp(60000))
+        .to.emit(pool, "StartTimestampChanged")
         .withArgs(60000);
     });
 
     it("should not be able to set start block after start mining", async function () {
       await pool.add(lptoken_1.address, toWei("5"), false);
-      await expect(pool.setStartBlock(60000)).to.be.revertedWith(
-        "Can not set start block after adding a pool"
+      await expect(pool.setStartTimestamp(60000)).to.be.revertedWith(
+        "Can not set start timestamp after adding a pool"
       );
 
       await pool.add(lptoken_2.address, toWei("5"), false);
-      await expect(pool.setStartBlock(60000)).to.be.revertedWith(
-        "Can not set start block after adding a pool"
+      await expect(pool.setStartTimestamp(60000)).to.be.revertedWith(
+        "Can not set start timestamp after adding a pool"
       );
     });
 
     it("should be able to add new pools", async function () {
-      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const blockTimestampBefore = await getLatestBlockTimestamp(
+        ethers.provider
+      );
 
       await expect(pool.add(lptoken_1.address, toWei("5"), false))
         .to.emit(pool, "NewPoolAdded")
@@ -122,20 +129,20 @@ describe("Farming Pool", function () {
 
       const pool_0 = poolList[0];
       expect(pool_0.lpToken).to.equal(zeroAddress());
-      expect(pool_0.degisPerBlock).to.equal(0);
-      expect(pool_0.lastRewardBlock).to.equal(0);
+      expect(pool_0.degisPerSecond).to.equal(0);
+      expect(pool_0.lastRewardTimestamp).to.equal(0);
       expect(pool_0.accDegisPerShare).to.equal(0);
 
       const pool_1 = poolList[1];
       expect(pool_1.lpToken).to.equal(lptoken_1.address);
-      expect(pool_1.degisPerBlock).to.equal(toWei("5"));
-      expect(pool_1.lastRewardBlock).to.equal(blockNumBefore + 1);
+      expect(pool_1.degisPerSecond).to.equal(toWei("5"));
+      expect(pool_1.lastRewardTimestamp).to.equal(blockTimestampBefore + 1);
       expect(pool_1.accDegisPerShare).to.equal(0);
 
       const pool_2 = poolList[2];
       expect(pool_2.lpToken).to.equal(lptoken_2.address);
-      expect(pool_2.degisPerBlock).to.equal(toWei("5"));
-      expect(pool_2.lastRewardBlock).to.equal(blockNumBefore + 2);
+      expect(pool_2.degisPerSecond).to.equal(toWei("5"));
+      expect(pool_2.lastRewardTimestamp).to.equal(blockTimestampBefore + 2);
       expect(pool_2.accDegisPerShare).to.equal(0);
     });
 
@@ -156,7 +163,7 @@ describe("Farming Pool", function () {
         .withArgs(poolId, toWei("10"));
 
       const poolList = await pool.getPoolList();
-      expect(poolList[poolId.toNumber()].degisPerBlock).to.equal(toWei("10"));
+      expect(poolList[poolId.toNumber()].degisPerSecond).to.equal(toWei("10"));
     });
 
     it("should be able to stop a existing pool", async function () {
@@ -164,11 +171,13 @@ describe("Farming Pool", function () {
 
       const poolId = await pool.poolMapping(lptoken_1.address);
 
-      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const blockTimestampBefore = await getLatestBlockTimestamp(
+        ethers.provider
+      );
 
       await expect(pool.setDegisReward(poolId, 0, false))
         .to.emit(pool, "FarmingPoolStopped")
-        .withArgs(poolId, blockNumBefore + 1);
+        .withArgs(poolId, blockTimestampBefore + 1);
     });
 
     it("should be able to restart a farming pool", async function () {
@@ -178,12 +187,14 @@ describe("Farming Pool", function () {
       // Stop a pool
       await pool.setDegisReward(poolId, 0, false);
 
-      const blockNumBefore = await ethers.provider.getBlockNumber();
+      const blockTimestampBefore = await getLatestBlockTimestamp(
+        ethers.provider
+      );
 
       // Restart
       await expect(pool.setDegisReward(poolId, toWei("10"), false))
-        .to.emit(pool, "FarmingPoolRestarted")
-        .withArgs(poolId, blockNumBefore + 1);
+        .to.emit(pool, "FarmingPoolStarted")
+        .withArgs(poolId, blockTimestampBefore + 1);
     });
   });
 

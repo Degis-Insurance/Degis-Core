@@ -90,6 +90,15 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         // Start from 1
         _nextPoolId = 1;
+
+        poolList.push(
+            PoolInfo({
+                lpToken: address(0),
+                degisPerSecond: 0,
+                lastRewardTimestamp: 0,
+                accDegisPerShare: 0
+            })
+        );
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -211,7 +220,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         // Can only be set before any pool is added
         require(
             _nextPoolId == 1,
-            "Can not set start block after adding a pool"
+            "Can not set start timestamp after adding a pool"
         );
 
         startTimestamp = _startTimestamp;
@@ -307,6 +316,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     function stake(uint256 _poolId, uint256 _amount)
         public
         nonReentrant
+        whenNotPaused
         stillFarming(_poolId)
     {
         require(_amount > 0, "Can not stake zero");
@@ -404,7 +414,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             user.rewardDebt;
 
         // Effects
-        user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
+        user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
 
         // Interactions
         if (pendingReward != 0) {
@@ -518,6 +528,9 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         uint256 poolBalanceAfter = IERC20(_lpToken).balanceOf(address(this));
 
-        return poolBalanceAfter - poolBalanceBefore;
+        return
+            _out
+                ? poolBalanceBefore - poolBalanceAfter
+                : poolBalanceAfter - poolBalanceBefore;
     }
 }
