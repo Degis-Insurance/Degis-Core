@@ -694,7 +694,7 @@ contract PolicyCore is Ownable {
      * @dev It is done after result settlement and only if the result is true
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stable coin
-     * @param _amount Amount of USDT (also the amount of policy tokens)
+     * @param _amount Amount of stablecoin
      */
     function claim(
         string memory _policyTokenName,
@@ -895,7 +895,7 @@ contract PolicyCore is Ownable {
     function collectIncome(address _stablecoin) public {
         require(
             lottery != address(0) && emergencyPool != address(0),
-            "Please set the lottery address"
+            "Please set the lottery & emergencyPool address"
         );
 
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
