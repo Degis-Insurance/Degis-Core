@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../utils/OwnableWithoutContext.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
-import "../libraries/SafePRBMath.sol";
-
 import "../tokens/interfaces/IDegisToken.sol";
 
 /**
@@ -17,7 +15,6 @@ import "../tokens/interfaces/IDegisToken.sol";
  *         The degis reward is calculated by timestamp rather than block number
  */
 contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
-    using SafePRBMath for uint256;
     using SafeERC20 for IERC20;
     using SafeERC20 for IDegisToken;
 
@@ -54,6 +51,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     struct UserInfo {
         uint256 rewardDebt; // degis reward debt
         uint256 stakingBalance; // the amount of a user's staking in the pool
+        uint256 bonus; // user bonus point 
     }
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;

@@ -995,14 +995,13 @@ contract PolicyCore is Ownable {
 
         // Integer part of the strike price (12e18 => 12)
         uint256 intPart = _strikePrice / 1e18;
+        require(intPart > 0, "Invalid int part");
+
         // Decimal part of the strike price (1234e16 => 34)
         // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
         uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
-
-        require(
-            intPart > 0 && decimalPart > 0,
-            "Int part and decimal part should > 0"
-        );
+        if (_decimals >= 2)
+            require(decimalPart > 10**(_decimals - 1), "Invalid decimal part");
 
         // Combine the string
         string memory name = string(

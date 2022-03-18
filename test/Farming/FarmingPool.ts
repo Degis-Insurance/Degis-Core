@@ -81,6 +81,10 @@ describe("Farming Pool", function () {
       expect(defaultPool.lastRewardTimestamp).to.equal(0);
       expect(defaultPool.accDegisPerShare).to.equal(0);
     });
+
+    it("should have the correct pausable status", async function () {
+      expect(await pool.paused()).to.equal(false);
+    });
   });
 
   describe("Owner Functions", function () {
@@ -99,6 +103,32 @@ describe("Farming Pool", function () {
       await pool.add(lptoken_2.address, toWei("5"), false);
       await expect(pool.setStartTimestamp(60000)).to.be.revertedWith(
         "Can not set start timestamp after adding a pool"
+      );
+    });
+
+    it("should be able to pause the contract", async function () {
+      await expect(pool.connect(user1).pause()).to.be.revertedWith(
+        "Ownable: caller is not the owner"
+      );
+      await pool.pause();
+
+      await expect(
+        pool.add(lptoken_1.address, toWei("5"), false)
+      ).to.be.revertedWith("Pausable: paused");
+    });
+
+    it("should be able to unpause the contract", async function () {
+      await pool.pause();
+
+      await expect(
+        pool.add(lptoken_1.address, toWei("5"), false)
+      ).to.be.revertedWith("Pausable: paused");
+
+      await pool.unpause();
+
+      await expect(pool.add(lptoken_1.address, toWei("5"), false)).to.emit(
+        pool,
+        "NewPoolAdded"
       );
     });
 
@@ -127,18 +157,21 @@ describe("Farming Pool", function () {
       // Have correct pool infos
       const poolList = await pool.getPoolList();
 
+      // Default pool
       const pool_0 = poolList[0];
       expect(pool_0.lpToken).to.equal(zeroAddress());
       expect(pool_0.degisPerSecond).to.equal(0);
       expect(pool_0.lastRewardTimestamp).to.equal(0);
       expect(pool_0.accDegisPerShare).to.equal(0);
 
+      // Pool 1: lptoken_1
       const pool_1 = poolList[1];
       expect(pool_1.lpToken).to.equal(lptoken_1.address);
       expect(pool_1.degisPerSecond).to.equal(toWei("5"));
       expect(pool_1.lastRewardTimestamp).to.equal(blockTimestampBefore + 1);
       expect(pool_1.accDegisPerShare).to.equal(0);
 
+      // Pool 2: lptoken_2
       const pool_2 = poolList[2];
       expect(pool_2.lpToken).to.equal(lptoken_2.address);
       expect(pool_2.degisPerSecond).to.equal(toWei("5"));
@@ -203,7 +236,8 @@ describe("Farming Pool", function () {
       // Add lptoken_1
       // Reward speed: 5 degis per block
       await pool.add(lptoken_1.address, toWei("5"), false);
-
+      // Add lptoken_3
+      // Reward speed: 5 degis per block
       await pool.add(lptoken_3.address, toWei("5"), false);
     });
 
@@ -288,7 +322,6 @@ describe("Farming Pool", function () {
 
       await lptoken_1.mint(user1.address, toWei("1000"));
       await lptoken_1.connect(user1).approve(pool.address, toWei("1000"));
-
       await expect(pool.connect(user1).stake(1, toWei("100")))
         .to.emit(pool, "Stake")
         .withArgs(user1.address, 1, toWei("100"));
@@ -297,12 +330,14 @@ describe("Farming Pool", function () {
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("15")
       );
+      expect(await pool.pendingDegis(1, user1.address)).to.equal(0);
 
       await mineBlocks(1);
 
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("17.5")
       );
+      expect(await pool.pendingDegis(1, user1.address)).to.equal(toWei("2.5"));
     });
 
     it("should be able to get correct rewards after another user deposit with 6 decimals", async function () {

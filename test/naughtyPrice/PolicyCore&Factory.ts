@@ -242,34 +242,32 @@ describe("Policy Core and Naughty Factory", function () {
     it("should be able to deploy a new policy token and get the correct address", async function () {
       const policyTokenName = "BTC_24000.0_L_2112";
 
-      // Type 1 (If you want to use this function, please change the visibility)
-      const bytecode1 = await factory.getPolicyTokenBytecode(
-        policyTokenName,
-        6
-      );
+      // Keep the policy token decimals the same as stablecoin
+      const decimals = await usd.decimals();
 
-      // Type 2 (Normally we use this)
-      // abi.encode(_tokenName, _tokenName, policyCore)
+      // abi.encode(_tokenName, _tokenName, policyCore, tokenDecimals)
       const token_init = defaultAbiCoder.encode(
         ["string", "string", "address", "uint256"],
-        [policyTokenName, policyTokenName, core.address, 6]
+        [policyTokenName, policyTokenName, core.address, decimals]
       );
 
-      // abi.encodePacked(bytecode, abi.encode(_tokenName, _tokenName, policyCore);
+      // abi.encodePacked(bytecode, token_init);
       const bytecode2 = solidityPack(
         ["bytes", "bytes"],
         [NPPolicyToken.bytecode, token_init]
       );
 
-      // const INIT_CODE_HASH = keccak256(bytecode2);
-      const INIT_CODE_HASH = await factory.getInitCodeHashForPolicyToken(
+      // Use the function provided in factory contract or keccak256(bytecode)
+      const INIT_CODE_HASH_1 = keccak256(bytecode2);
+      const INIT_CODE_HASH_2 = await factory.getInitCodeHashForPolicyToken(
         policyTokenName,
-        6
+        decimals
       );
+      expect(INIT_CODE_HASH_1 == INIT_CODE_HASH_2);
 
       const salt = solidityKeccak256(["string"], [policyTokenName]);
 
-      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
+      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH_2);
 
       await expect(
         core.deployPolicyToken(
@@ -277,7 +275,7 @@ describe("Policy Core and Naughty Factory", function () {
           usd.address,
           false,
           0,
-          6,
+          decimals,
           parseUnits("24000"),
           2112,
           toBN(deadline),
@@ -328,8 +326,8 @@ describe("Policy Core and Naughty Factory", function () {
       const INIT_CODE_HASH = keccak256(NaughtyPair.bytecode);
 
       const salt = solidityKeccak256(
-        ["string", "string"],
-        [policyTokenAddress.toLowerCase(), usd.address.toLowerCase()]
+        ["address", "address"],
+        [policyTokenAddress, usd.address]
       );
 
       const poolAddress = getCreate2Address(
