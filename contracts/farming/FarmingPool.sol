@@ -328,25 +328,13 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             emit Harvest(msg.sender, msg.sender, _poolId, reward);
         }
 
-        // Check the difference before and after the stake
-        uint256 poolBalanceBefore = IERC20(pool.lpToken).balanceOf(
-            address(this)
-        );
-
-        // Transfer the lptoken into farming pool
-        IERC20(pool.lpToken).safeTransferFrom(
+        // Actual deposit amount
+        uint256 actualAmount = _safeLPTransfer(
+            false,
+            pool.lpToken,
             msg.sender,
-            address(this),
             _amount
         );
-
-        // Check the difference before and after the stake
-        uint256 poolBalanceAfter = IERC20(pool.lpToken).balanceOf(
-            address(this)
-        );
-
-        // Actual deposit amount
-        uint256 actualAmount = poolBalanceAfter - poolBalanceBefore;
 
         user.stakingBalance += actualAmount;
         user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
@@ -371,19 +359,28 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         require(user.stakingBalance >= _amount, "Not enough stakingBalance");
 
+        // Update if the pool is still farming
+        // Users can withdraw even after the pool stopped
         if (isFarming[_poolId]) updatePool(_poolId);
 
-        uint256 pending = user.stakingBalance.mul(pool.accDegisPerShare) -
+        uint256 pending = (user.stakingBalance * pool.accDegisPerShare) /
+            SCALE -
             user.rewardDebt;
 
-        _safeDegisTransfer(msg.sender, pending);
+        uint256 reward = _safeDegisTransfer(msg.sender, pending);
+        emit Harvest(msg.sender, msg.sender, _poolId, reward);
 
         user.stakingBalance -= _amount;
-        user.rewardDebt = user.stakingBalance.mul(pool.accDegisPerShare);
+        user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
 
-        IERC20(pool.lpToken).safeTransfer(msg.sender, _amount);
+        uint256 actualAmount = _safeLPTransfer(
+            true,
+            pool.lpToken,
+            msg.sender,
+            _amount
+        );
 
-        emit Withdraw(msg.sender, _poolId, _amount);
+        emit Withdraw(msg.sender, _poolId, actualAmount);
     }
 
     /**
@@ -498,5 +495,29 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             degis.safeTransfer(_to, _amount);
             return _amount;
         }
+    }
+
+    /**
+     * @notice Finish the transfer of LP Token
+     * @dev The lp token may have loss during transfer
+     * @param _out Whether the lp token is out
+     * @param _lpToken LP token address
+     * @param _user User address
+     * @param _amount Amount of lp tokens
+     */
+    function _safeLPTransfer(
+        bool _out,
+        address _lpToken,
+        address _user,
+        uint256 _amount
+    ) internal returns (uint256) {
+        uint256 poolBalanceBefore = IERC20(_lpToken).balanceOf(address(this));
+
+        if (_out) IERC20(_lpToken).safeTransfer(_user, _amount);
+        else IERC20(_lpToken).safeTransferFrom(_user, address(this), _amount);
+
+        uint256 poolBalanceAfter = IERC20(_lpToken).balanceOf(address(this));
+
+        return poolBalanceAfter - poolBalanceBefore;
     }
 }
