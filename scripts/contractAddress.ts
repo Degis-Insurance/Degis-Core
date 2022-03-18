@@ -4,6 +4,9 @@
 
 import * as fs from "fs";
 
+///
+/// Deployed Contract Address Info Record
+///
 export const readAddressList = function () {
   // const filePath = __dirname + "/address.json"
   return JSON.parse(fs.readFileSync("info/address.json", "utf-8"));
@@ -16,6 +19,14 @@ export const storeAddressList = function (addressList: object) {
   );
 };
 
+export const clearAddressList = function () {
+  const emptyList = {};
+  fs.writeFileSync("info/address.json", JSON.stringify(emptyList, null, "\t"));
+};
+
+///
+/// Naughty Price Pool Info Record
+///
 export const readNaughtyPoolList = function () {
   return JSON.parse(fs.readFileSync("info/NPPool.json", "utf-8"));
 };
@@ -24,6 +35,36 @@ export const storeNaughtyPoolList = function (NPPoolList: object) {
   fs.writeFileSync("info/NPPool.json", JSON.stringify(NPPoolList, null, "\t"));
 };
 
+export const clearNaughtyPoolList = function () {
+  const emptyList = {};
+  fs.writeFileSync("info/NPPool.json", JSON.stringify(emptyList, null, "\t"));
+};
+
+///
+/// Proxy Admin Info Record
+///
+export const readProxyAdmin = function () {
+  return JSON.parse(fs.readFileSync("info/proxyAdmin.json", "utf-8"));
+};
+
+export const storeProxyAdmin = function (proxyAdmin: object) {
+  fs.writeFileSync(
+    "info/proxyAdmin.json",
+    JSON.stringify(proxyAdmin, null, "\t")
+  );
+};
+
+export const clearProxyAdmin = function () {
+  const emptyList = {};
+  fs.writeFileSync(
+    "info/proxyAdmin.json",
+    JSON.stringify(emptyList, null, "\t")
+  );
+};
+
+///
+/// Naughty Price Token Info Record
+///
 export const readNaughtyTokenList = function () {
   return JSON.parse(fs.readFileSync("info/NPToken.json", "utf-8"));
 };
@@ -32,6 +73,14 @@ export const storeNaughtyTokenList = function (tokenList: object) {
   fs.writeFileSync("info/NPToken.json", JSON.stringify(tokenList, null, "\t"));
 };
 
+export const clearNaughtyTokenList = function () {
+  const emptyList = {};
+  fs.writeFileSync("info/NPToken.json", JSON.stringify(emptyList, null, "\t"));
+};
+
+///
+/// Farming Pool Info Record
+///
 export const readFarmingPoolList = function () {
   return JSON.parse(fs.readFileSync("info/FarmingPool.json", "utf-8"));
 };
@@ -43,12 +92,28 @@ export const storeFarmingPoolList = function (farmingPoolList: object) {
   );
 };
 
+export const clearFarmingPoolList = function () {
+  const emptyList = {};
+  fs.writeFileSync(
+    "info/FarmingPool.json",
+    JSON.stringify(emptyList, null, "\t")
+  );
+};
+
+///
+/// Signer Info Record
+///
 export const readSignerList = function () {
   return JSON.parse(fs.readFileSync("info/Signers.json", "utf-8"));
 };
 
 export const storeSignerList = function (signerList: object) {
   fs.writeFileSync("info/Signers.json", JSON.stringify(signerList, null, "\t"));
+};
+
+export const clearSignerList = function () {
+  const emptyList = {};
+  fs.writeFileSync("info/Signers.json", JSON.stringify(emptyList, null, "\t"));
 };
 
 export const getLinkAddress = function (networkName: string) {

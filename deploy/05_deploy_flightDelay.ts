@@ -20,7 +20,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const MockUSD = await get("MockUSD");
   const DegisLottery = await get("DegisLottery");
   const EmergencyPool = await get("EmergencyPool");
-  const BuyerToken = await get("BuyerToken");
 
   const policyToken = await deploy("FDPolicyToken", {
     contract: "FDPolicyToken",
@@ -46,31 +45,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].InsurancePool = pool.address;
 
-  const flow = await deploy("PolicyFlow", {
-    contract: "PolicyFlow",
-    from: deployer,
-    args: [pool.address, policyToken.address, sig.address, BuyerToken.address],
-    log: true,
-  });
-  addressList[network.name].PolicyFlow = flow.address;
-
-  const linkAddress = getLinkAddress(network.name);
-  const oracle = await deploy("FlightOracle", {
-    contract: "FlightOracle",
-    from: deployer,
-    args: [flow.address, linkAddress],
-    log: true,
-  });
-  addressList[network.name].FlightOracle = oracle.address;
-
   // Store the address list after deployment
   storeAddressList(addressList);
-
-  // Run some afterwards tasks
-  await hre.run("setFDPolicyFlow");
-  await hre.run("setFDPolicyToken");
-  await hre.run("setFDOracle");
-  await hre.run("setFDInsurancePool");
 };
 
 func.tags = ["FlightDelay"];

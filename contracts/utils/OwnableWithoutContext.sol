@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
+/**
+ * @dev The owner can be set during deployment, not default to be msg.sender
+ */
 abstract contract OwnableWithoutContext {
     address private _owner;
 
@@ -12,8 +15,8 @@ abstract contract OwnableWithoutContext {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor() {
-        _transferOwnership(msg.sender);
+    constructor(address _initialOwner) {
+        _transferOwnership(_initialOwner);
     }
 
     /**

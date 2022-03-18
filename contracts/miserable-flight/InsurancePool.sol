@@ -45,7 +45,7 @@ contract InsurancePool is
         address _emergencyPool,
         address _degisLottery,
         address _usdAddress
-    ) {
+    ) OwnableWithoutContext(msg.sender) {
         // Initialize some factors
         collateralFactor = 1e18;
         lockedRatio = 1e18;

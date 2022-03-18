@@ -114,7 +114,7 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         address _DEGTokenAddress,
         address _USDTokenAddress,
         address _randomGeneratorAddress
-    ) {
+    ) Ownable(msg.sender) {
         DEGToken = IERC20(_DEGTokenAddress);
         USDToken = IERC20(_USDTokenAddress);
         randomGenerator = IRandomNumberGenerator(_randomGeneratorAddress);

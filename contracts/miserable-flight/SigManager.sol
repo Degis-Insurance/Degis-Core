@@ -33,7 +33,7 @@ contract SigManager is Ownable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() {
+    constructor() Ownable(msg.sender) {
         _SUBMIT_APPLICATION_TYPEHASH = keccak256(
             "5G is great, physical lab is difficult to find"
         );

@@ -18,7 +18,13 @@ import {
   PriceGetter__factory,
 } from "../../typechain";
 
-import { getLatestBlockTimestamp, getNow, toBN, toWei } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  getNow,
+  stablecoinToWei,
+  toBN,
+  toWei,
+} from "../utils";
 
 describe("Naughty Router", function () {
   let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
@@ -75,20 +81,17 @@ describe("Naughty Router", function () {
     policyTokenName = "BTC_24000.0_L_2112";
     await core.deployPolicyToken(
       "BTC",
+      usd.address,
       false,
       0,
+      6,
       toWei("24000"),
       2112,
       toBN(deadline),
       toBN(settleTimestamp)
     );
 
-    await core.deployPool(
-      policyTokenName,
-      usd.address,
-      toBN(deadline),
-      20
-    );
+    await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
     await router.deployed();
 
@@ -105,25 +108,25 @@ describe("Naughty Router", function () {
       usd.address
     );
 
-    await usd.approve(core.address, toWei("10000"));
-    await core.deposit(policyTokenName, usd.address, toWei("10000"));
+    await usd.approve(core.address, stablecoinToWei("10000"));
+    await core.deposit(policyTokenName, usd.address, stablecoinToWei("10000"));
 
     await buyerToken.addMinter(router.address);
   });
 
   describe("Basic modifier", function () {
     it("should be reverted when pass the deadline of a single transaction", async function () {
-      await policyToken.approve(router.address, toWei("100"));
-      await usd.approve(router.address, toWei("100"));
+      await policyToken.approve(router.address, stablecoinToWei("100"));
+      await usd.approve(router.address, stablecoinToWei("100"));
 
       await expect(
         router.addLiquidity(
           policyTokenInfo.policyTokenAddress,
           usd.address,
-          toWei("100"),
-          toWei("100"),
-          toWei("80"),
-          toWei("80"),
+          stablecoinToWei("100"),
+          stablecoinToWei("100"),
+          stablecoinToWei("80"),
+          stablecoinToWei("80"),
           dev_account.address,
           now - 30
         )
@@ -133,17 +136,17 @@ describe("Naughty Router", function () {
 
   describe("Add and Remove Liquidity", function () {
     it("should be able to add liquidity and get lp tokens", async function () {
-      await policyToken.approve(router.address, toWei("100"));
-      await usd.approve(router.address, toWei("100"));
+      await policyToken.approve(router.address, stablecoinToWei("100"));
+      await usd.approve(router.address, stablecoinToWei("100"));
 
       await expect(
         router.addLiquidity(
           policyTokenInfo.policyTokenAddress,
           usd.address,
-          toWei("100"),
-          toWei("100"),
-          toWei("80"),
-          toWei("80"),
+          stablecoinToWei("100"),
+          stablecoinToWei("100"),
+          stablecoinToWei("80"),
+          stablecoinToWei("80"),
           dev_account.address,
           now + txDelay
         )
@@ -151,23 +154,23 @@ describe("Naughty Router", function () {
         .to.emit(router, "LiquidityAdded")
         .withArgs(
           pairAddress,
-          toWei("100"),
-          toWei("100"),
-          toWei("99.999999999999999")
+          stablecoinToWei("100"),
+          stablecoinToWei("100"),
+          stablecoinToWei("99.999999")
         );
     });
 
     it("should be able to remove liquidty from the pool", async function () {
-      await policyToken.approve(router.address, toWei("200"));
-      await usd.approve(router.address, toWei("200"));
+      await policyToken.approve(router.address, stablecoinToWei("200"));
+      await usd.approve(router.address, stablecoinToWei("200"));
 
       await router.addLiquidity(
         policyTokenInfo.policyTokenAddress,
         usd.address,
-        toWei("100"),
-        toWei("100"),
-        toWei("80"),
-        toWei("80"),
+        stablecoinToWei("100"),
+        stablecoinToWei("100"),
+        stablecoinToWei("80"),
+        stablecoinToWei("80"),
         dev_account.address,
         now + txDelay
       );
@@ -175,39 +178,44 @@ describe("Naughty Router", function () {
       await router.addLiquidity(
         policyTokenInfo.policyTokenAddress,
         usd.address,
-        toWei("100"),
-        toWei("100"),
-        toWei("80"),
-        toWei("80"),
+        stablecoinToWei("100"),
+        stablecoinToWei("100"),
+        stablecoinToWei("80"),
+        stablecoinToWei("80"),
         dev_account.address,
         now + txDelay
       );
 
       const NaughtyPair = await ethers.getContractFactory("NaughtyPair");
       const pair = NaughtyPair.attach(pairAddress);
-      await pair.approve(router.address, toWei("10"));
+      await pair.approve(router.address, stablecoinToWei("10"));
 
       await expect(
         router.removeLiquidity(
           policyTokenInfo.policyTokenAddress,
           usd.address,
-          toWei("10"),
-          toWei("8"),
-          toWei("8"),
+          stablecoinToWei("10"),
+          stablecoinToWei("8"),
+          stablecoinToWei("8"),
           dev_account.address,
           now + txDelay
         )
       )
         .to.emit(router, "LiquidityRemoved")
-        .withArgs(pairAddress, toWei("10"), toWei("10"), toWei("10"));
+        .withArgs(
+          pairAddress,
+          stablecoinToWei("9.999900"),
+          stablecoinToWei("9.999900"),
+          stablecoinToWei("10")
+        );
     });
 
     it("should be able to add liquidity only with stablecoins", async function () {
       await core.setNaughtyRouter(router.address);
 
-      await policyToken.approve(router.address, toWei("10000"));
-      await usd.approve(router.address, toWei("10000"));
-      await usd.approve(core.address, toWei("10000"));
+      await policyToken.approve(router.address, stablecoinToWei("10000"));
+      await usd.approve(router.address, stablecoinToWei("10000"));
+      await usd.approve(core.address, stablecoinToWei("10000"));
 
       // await expect(
       //   router.addLiquidityWithUSD(
@@ -235,17 +243,17 @@ describe("Naughty Router", function () {
         router.addLiquidityWithUSD(
           policyTokenInfo.policyTokenAddress,
           usd.address,
-          toWei("50"),
-          toWei("50"),
-          toWei("50"),
-          toWei("50"),
+          stablecoinToWei("50"),
+          stablecoinToWei("50"),
+          stablecoinToWei("50"),
+          stablecoinToWei("50"),
           dev_account.address,
           now + txDelay
         )
       ).to.emit(router, "LiquidityAdded");
 
       expect(await policyToken.balanceOf(dev_account.address)).to.equal(
-        toWei("10000")
+        stablecoinToWei("10000")
       );
     });
   });
@@ -254,16 +262,16 @@ describe("Naughty Router", function () {
     beforeEach(async function () {
       await core.setNaughtyRouter(router.address);
 
-      await policyToken.approve(router.address, toWei("10000"));
-      await usd.approve(router.address, toWei("10000"));
+      await policyToken.approve(router.address, stablecoinToWei("10000"));
+      await usd.approve(router.address, stablecoinToWei("10000"));
 
       await router.addLiquidity(
         policyTokenInfo.policyTokenAddress,
         usd.address,
-        toWei("100"),
-        toWei("100"),
-        toWei("80"),
-        toWei("80"),
+        stablecoinToWei("100"),
+        stablecoinToWei("100"),
+        stablecoinToWei("80"),
+        stablecoinToWei("80"),
         dev_account.address,
         now + txDelay
       );
@@ -271,30 +279,32 @@ describe("Naughty Router", function () {
     it("should be able to swap tokens for exact tokens", async function () {
       // Swap for 1 usd, max pay 2 policy tokens
       await router.swapTokensforExactTokens(
-        toWei("2"),
-        toWei("1"),
+        stablecoinToWei("2"),
+        stablecoinToWei("1"),
         policyTokenInfo.policyTokenAddress,
         usd.address,
         dev_account.address,
         now + txDelay
       );
 
-      const bal = await usd.balanceOf(dev_account.address);
-      // console.log(ethers.utils.formatEther(bal));
-      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("89901"));
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("89901")
+      );
     });
 
     it("should be able to swap exact tokens for tokens", async function () {
       await router.swapExactTokensforTokens(
-        toWei("1"),
-        toWei("0.5"),
+        stablecoinToWei("1"),
+        stablecoinToWei("0.5"),
         usd.address,
         policyTokenInfo.policyTokenAddress,
         dev_account.address,
         now + txDelay
       );
 
-      expect(await usd.balanceOf(dev_account.address)).to.equal(toWei("89899"));
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("89899")
+      );
     });
   });
 });

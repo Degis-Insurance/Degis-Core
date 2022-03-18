@@ -16,14 +16,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const DegisToken = await get("DegisToken");
   const BuyerToken = await get("BuyerToken");
 
-  const farmingPool = await deploy("FarmingPool", {
-    contract: "FarmingPool",
-    from: deployer,
-    args: [DegisToken.address],
-    log: true,
-  });
-  addressList[network.name].FarmingPool = farmingPool.address;
-
   const purchaseIncentive = await deploy("PurchaseIncentiveVault", {
     contract: "PurchaseIncentiveVault",
     from: deployer,
@@ -34,10 +26,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Store the address list after deployment
   storeAddressList(addressList);
-
-  // Run some afterwards tasks
-  // await hre.run("")
 };
 
-func.tags = ["Farming"];
+func.tags = ["PurchaseIncentive"];
 export default func;

@@ -36,7 +36,7 @@ contract FlightOracle is ChainlinkClient, Ownable {
     /**
      * @notice Need the address of LINK token on specific network
      */
-    constructor(address _policyFlow, address _link) {
+    constructor(address _policyFlow, address _link) Ownable(msg.sender) {
         policyFlow = IPolicyFlow(_policyFlow);
 
         setChainlinkToken(_link);

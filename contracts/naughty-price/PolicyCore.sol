@@ -1,11 +1,30 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../utils/interfaces/IERC20Decimals.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/SafePRBMath.sol";
 import "../utils/Ownable.sol";
+import "../utils/interfaces/IERC20Decimals.sol";
 import "./interfaces/IPriceGetter.sol";
 import "./interfaces/INaughtyFactory.sol";
 import "./interfaces/INPPolicyToken.sol";
@@ -33,6 +52,11 @@ import "./interfaces/INPPolicyToken.sol";
  *              Original Token Name(with decimals) + Strike Price + Lower or Higher + Date
  *         E.g.  AVAX_30.0_L_2101, BTC_30000.0_L_2102, ETH_8000.0_H_2109
  *         (the original name need to be the same as in the chainlink oracle)
+ *         There are three decimals for a policy token:
+ *              1. Name decimals: Only for generating the name of policyToken
+ *              2. Token decimals: The decimals of the policyToken
+ *                 (should be the same as the paired stablecoin)
+ *              3. Price decimals: Always 18. The oracle result will be transferred for settlement
  */
 
 contract PolicyCore is Ownable {
@@ -62,7 +86,8 @@ contract PolicyCore is Ownable {
     struct PolicyTokenInfo {
         address policyTokenAddress;
         bool isCall;
-        uint256 decimals; // decimals of the oracle pricefeed
+        uint256 nameDecimals; // decimals of the name generation
+        uint256 tokenDecimals; // decimals of the policy token
         uint256 strikePrice;
         uint256 deadline;
         uint256 settleTimestamp;
@@ -100,6 +125,9 @@ contract PolicyCore is Ownable {
     // Policy token address => Settlement result information
     mapping(address => SettlementInfo) public settleResult;
 
+    mapping(address => uint256) public pendingIncomeToLottery;
+    mapping(address => uint256) public pendingIncomeToEmergency;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -110,6 +138,7 @@ contract PolicyCore is Ownable {
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
+        uint256 tokenDecimals,
         uint256 deadline,
         uint256 settleTimestamp
     );
@@ -162,7 +191,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Constructor, for some addresses
-     * @param _usdt USDT is the first stablecoin supported in the pool
+     * @param _usdt USDT.e is the first stablecoin supported in the pool
      * @param _factory Address of naughty factory
      * @param _priceGetter Address of the oracle contract
      */
@@ -170,7 +199,7 @@ contract PolicyCore is Ownable {
         address _usdt,
         address _factory,
         address _priceGetter
-    ) {
+    ) Ownable(msg.sender) {
         // Add the first stablecoin supported
         supportedStablecoin[_usdt] = true;
 
@@ -196,7 +225,7 @@ contract PolicyCore is Ownable {
     }
 
     /**
-     * @notice Checkt the policy token is paired with this stablecoin
+     * @notice Check whether the policy token is paired with this stablecoin
      * @param _policyTokenName Policy token name
      * @param _stablecoin Stablecoin address
      */
@@ -221,19 +250,6 @@ contract PolicyCore is Ownable {
             policyTokenInfoMapping[_policyTokenName].policyTokenAddress !=
                 address(0),
             "This policy token has not been deployed, please deploy it first"
-        );
-        _;
-    }
-
-    /**
-     * @notice Check if there are enough stablecoins in this contract
-     * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount to be checked
-     */
-    modifier enoughUSD(address _stablecoin, uint256 _amount) {
-        require(
-            IERC20(_stablecoin).balanceOf(address(this)) >= _amount,
-            "Not sufficient stablecoins in the contract"
         );
         _;
     }
@@ -272,8 +288,7 @@ contract PolicyCore is Ownable {
      * @param _policyTokenName Name of the policy token
      */
     modifier notAlreadySettled(string memory _policyTokenName) {
-        address policyTokenAddress = policyTokenInfoMapping[_policyTokenName]
-            .policyTokenAddress;
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
         require(
             settleResult[policyTokenAddress].alreadySettled == false,
             "This policy has already been settled"
@@ -290,13 +305,15 @@ contract PolicyCore is Ownable {
      * @param _policyTokenName Name of the policy token (e.g. "AVAX_30_L_2103")
      * @return policyTokenAddress Address of the policy token
      */
-    // Note: not really needed
     function findAddressbyName(string memory _policyTokenName)
         public
         view
-        returns (address)
+        returns (address policyTokenAddress)
     {
-        return policyTokenInfoMapping[_policyTokenName].policyTokenAddress;
+        policyTokenAddress = policyTokenInfoMapping[_policyTokenName]
+            .policyTokenAddress;
+
+        require(policyTokenAddress != address(0), "Policy token not found");
     }
 
     /**
@@ -304,13 +321,14 @@ contract PolicyCore is Ownable {
      * @param _policyTokenAddress Address of the policy token
      * @return policyTokenName Name of the policy token
      */
-    // Note: not really needed
     function findNamebyAddress(address _policyTokenAddress)
         public
         view
-        returns (string memory)
+        returns (string memory policyTokenName)
     {
-        return policyTokenAddressToName[_policyTokenAddress];
+        policyTokenName = policyTokenAddressToName[_policyTokenAddress];
+
+        require(bytes(policyTokenName).length > 0, "Policy name not found");
     }
 
     /**
@@ -404,41 +422,56 @@ contract PolicyCore is Ownable {
      * @dev Only the owner can deploy new policy token
      *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
+     * @param _stablecoin Address of the stablecoin (Just for check decimals here)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
-     * @param _decimals Decimals of this token's price (0~18)
+     * @param _nameDecimals Decimals of this token's name (0~18)
+     * @param _tokenDecimals Decimals of this token's value (0~18) (same as paired stablecoin)
      * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
-     * @return policyTokenAddress The address of the policy token just deployed
      */
     function deployPolicyToken(
         string memory _tokenName,
+        address _stablecoin,
         bool _isCall,
-        uint256 _decimals,
+        uint256 _nameDecimals,
+        uint256 _tokenDecimals,
         uint256 _strikePrice,
         uint256 _round,
         uint256 _deadline,
         uint256 _settleTimestamp
-    ) external onlyOwner returns (address) {
-        require(_decimals <= 18, "Too many decimals");
+    ) external onlyOwner {
+        require(
+            _nameDecimals <= 18 && _tokenDecimals <= 18,
+            "Too many decimals"
+        );
+        require(
+            IERC20Decimals(_stablecoin).decimals() == _tokenDecimals,
+            "Decimals not paired"
+        );
+
         require(_deadline > block.timestamp, "Wrong deadline");
         require(_settleTimestamp >= _deadline, "Wrong settleTimestamp");
 
         string memory policyTokenName = _generateName(
             _tokenName,
-            _decimals,
+            _nameDecimals,
             _strikePrice,
             _isCall,
             _round
         );
         // Deploy a new policy token by the factory contract
-        address policyTokenAddress = factory.deployPolicyToken(policyTokenName);
+        address policyTokenAddress = factory.deployPolicyToken(
+            policyTokenName,
+            _tokenDecimals
+        );
 
         // Store the policyToken information in the mapping
         policyTokenInfoMapping[policyTokenName] = PolicyTokenInfo(
             policyTokenAddress,
             _isCall,
-            _decimals,
+            _nameDecimals,
+            _tokenDecimals,
             _strikePrice,
             _deadline,
             _settleTimestamp
@@ -456,12 +489,10 @@ contract PolicyCore is Ownable {
         emit PolicyTokenDeployed(
             policyTokenName,
             policyTokenAddress,
+            _tokenDecimals,
             _deadline,
             _settleTimestamp
         );
-
-        // You can not get the return value from outside, but keep it here.
-        return policyTokenAddress;
     }
 
     /**
@@ -511,48 +542,19 @@ contract PolicyCore is Ownable {
     /**
      * @notice Deposit stablecoins and get policy tokens
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the sable coin
-     * @param _amount Amount of stablecoin (also the amount of policy tokens)
+     * @param _stablecoin Address of the stable coin
+     * @param _amount Amount of stablecoin
      */
     function deposit(
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _amount
     )
-        external
+        public
         beforeDeadline(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
-        address policyTokenAddress = findAddressbyName(_policyTokenName);
-
-        // Check if the user gives the right stablecoin
-        require(
-            whichStablecoin[policyTokenAddress] == _stablecoin,
-            "PolicyToken and stablecoin not matched"
-        );
-
-        // Check if the user has enough balance
-        require(
-            IERC20(_stablecoin).balanceOf(_msgSender()) >= _amount,
-            "User's stablecoin balance not sufficient"
-        );
-
-        // Transfer stablecoins to this contract
-        IERC20(_stablecoin).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            _amount
-        );
-
-        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
-
-        _mintPolicyToken(
-            policyTokenAddress,
-            _amount * 10**(18 - stablecoinDecimals),
-            msg.sender
-        );
-
-        emit Deposit(_msgSender(), _policyTokenName, _stablecoin, _amount);
+        _deposit(_policyTokenName, _stablecoin, _amount, msg.sender);
     }
 
     /**
@@ -560,7 +562,7 @@ contract PolicyCore is Ownable {
      * @dev Only called by the router contract
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the sable coin
-     * @param _amount Amount of stablecoin (may have 6 decimals) (different from the amount with 18 decimals)
+     * @param _amount Amount of stablecoin
      * @param _user Address to receive the policy tokens
      */
     function delegateDeposit(
@@ -574,31 +576,14 @@ contract PolicyCore is Ownable {
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
         require(
-            _msgSender() == naughtyRouter,
+            msg.sender == naughtyRouter,
             "Only the router contract can delegate"
         );
 
-        address policyTokenAddress = findAddressbyName(_policyTokenName);
-
-        // Check if the user has enough balance
-        require(
-            IERC20(_stablecoin).balanceOf(_user) >= _amount,
-            "User's stablecoin balance not sufficient"
-        );
-
-        // Transfer stablecoins to this contract
-        IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
-
-        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
-
-        _mintPolicyToken(
-            policyTokenAddress,
-            _amount * 10**(18 - stablecoinDecimals),
-            _user
-        );
+        _deposit(_policyTokenName, _stablecoin, _amount, _user);
 
         emit DelegateDeposit(
-            _msgSender(),
+            msg.sender,
             _user,
             _policyTokenName,
             _stablecoin,
@@ -611,7 +596,7 @@ contract PolicyCore is Ownable {
      * @dev Redeem happens before the deadline and is different from claim/settle
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount of Policy Tokens (18 decimals) (stablecoin may have different decimals)
+     * @param _amount Amount to redeem
      */
     function redeem(
         string memory _policyTokenName,
@@ -619,7 +604,6 @@ contract PolicyCore is Ownable {
         uint256 _amount
     )
         public
-        enoughUSD(_stablecoin, _amount)
         beforeDeadline(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
@@ -631,28 +615,17 @@ contract PolicyCore is Ownable {
             "User's quota not sufficient"
         );
 
-        // Enough policy tokens to burn
-        INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
-        require(
-            policyToken.balanceOf(msg.sender) >= _amount,
-            "You do not have sufficient policy tokens to redeem"
-        );
-
-        uint256 stablecoinDecimals = IERC20Decimals(_stablecoin).decimals();
-
-        IERC20(_stablecoin).safeTransfer(
-            msg.sender,
-            _amount / 10**(18 - stablecoinDecimals)
-        );
-
-        policyToken.burn(_msgSender(), _amount);
-
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
         if (userQuota[msg.sender][policyTokenAddress] == 0)
             delete userQuota[msg.sender][policyTokenAddress];
 
-        emit Redeem(_msgSender(), _policyTokenName, _stablecoin, _amount);
+        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
+
+        INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
+        policyToken.burn(msg.sender, _amount);
+
+        emit Redeem(msg.sender, _policyTokenName, _stablecoin, _amount);
     }
 
     /**
@@ -663,7 +636,11 @@ contract PolicyCore is Ownable {
     function redeemAfterSettlement(
         string memory _policyTokenName,
         address _stablecoin
-    ) public validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin) {
+    )
+        public
+        afterSettlement(_policyTokenName)
+        validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
+    {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // Copy to memory (will not change the result)
@@ -692,11 +669,11 @@ contract PolicyCore is Ownable {
         uint256 amountWithFee = (amount * 990) / 1000;
         uint256 amountToCollect = amount - amountWithFee;
 
-        _collectIncome(
-            _stablecoin,
-            (amountToCollect * 8) / 10,
-            amountToCollect - (amountToCollect * 8) / 10
-        );
+        pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+        pendingIncomeToEmergency[_stablecoin] +=
+            amountToCollect -
+            (amountToCollect * 8) /
+            10;
 
         // Send back stablecoins directly
         IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
@@ -705,7 +682,7 @@ contract PolicyCore is Ownable {
         delete userQuota[msg.sender][policyTokenAddress];
 
         emit RedeemAfterSettlement(
-            _msgSender(),
+            msg.sender,
             _policyTokenName,
             _stablecoin,
             amountWithFee
@@ -717,7 +694,7 @@ contract PolicyCore is Ownable {
      * @dev It is done after result settlement and only if the result is true
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stable coin
-     * @param _amount Amount of USDT (also the amount of policy tokens)
+     * @param _amount Amount of stablecoin
      */
     function claim(
         string memory _policyTokenName,
@@ -725,21 +702,23 @@ contract PolicyCore is Ownable {
         uint256 _amount
     )
         public
-        enoughUSD(_stablecoin, _amount)
         afterSettlement(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
+        // Copy to memory (will not change the result)
+        SettlementInfo memory result = settleResult[policyTokenAddress];
+
         // Check if we have already settle the final price
         require(
-            settleResult[policyTokenAddress].alreadySettled,
+            result.price != 0 && result.alreadySettled,
             "Have not got the oracle result"
         );
 
         // Check if the event happens
         require(
-            settleResult[policyTokenAddress].isHappened,
+            result.isHappened,
             "The result does not happen, you can not claim"
         );
 
@@ -747,24 +726,20 @@ contract PolicyCore is Ownable {
         uint256 amountWithFee = (_amount * 990) / 1000;
         uint256 amountToCollect = _amount - amountWithFee;
 
-        // Collect the fees and distribute
-        _collectIncome(
-            _stablecoin,
-            (amountToCollect * 8) / 10,
-            amountToCollect - (amountToCollect * 8) / 10
-        );
+        // Update pending income record
+        pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+        pendingIncomeToEmergency[_stablecoin] +=
+            amountToCollect -
+            (amountToCollect * 8) /
+            10;
+
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
         // Users must have enough policy tokens to claim
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
-        require(
-            policyToken.balanceOf(msg.sender) >= _amount,
-            "You do not have sufficient policy tokens to claim"
-        );
 
-        // Burn the policy tokens and redeem payoff
-        // Different amounts
-        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
-        policyToken.burn(_msgSender(), _amount);
+        // Burn the policy tokens
+        policyToken.burn(msg.sender, _amount);
     }
 
     /**
@@ -776,28 +751,26 @@ contract PolicyCore is Ownable {
         afterSettlement(_policyTokenName)
         notAlreadySettled(_policyTokenName)
     {
-        PolicyTokenInfo memory policyTokenInfo = policyTokenInfoMapping[
-            _policyTokenName
-        ];
-
-        address policyTokenAddress = policyTokenInfo.policyTokenAddress;
-        require(
-            policyTokenAddress != address(0),
-            "This policy token does not exist, maybe you input a wrong name"
-        );
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         SettlementInfo storage result = settleResult[policyTokenAddress];
 
-        // Get the final price from oracle
+        // Get the strike token name
         string memory originalTokenName = policyTokenToOriginal[
             policyTokenAddress
         ];
 
+        // Get the final price from oracle
         uint256 price = IPriceGetter(priceGetter).getLatestPrice(
             originalTokenName
         );
 
+        result.alreadySettled = true;
         result.price = price;
+
+        PolicyTokenInfo memory policyTokenInfo = policyTokenInfoMapping[
+            _policyTokenName
+        ];
 
         // Get the final result
         bool situationT1 = (price >= policyTokenInfo.strikePrice) &&
@@ -805,11 +778,11 @@ contract PolicyCore is Ownable {
         bool situationT2 = (price <= policyTokenInfo.strikePrice) &&
             !policyTokenInfo.isCall;
 
-        result.isHappened = (situationT1 || situationT2) ? true : false;
+        bool isHappened = (situationT1 || situationT2) ? true : false;
 
-        result.alreadySettled = true;
+        result.isHappened = isHappened;
 
-        emit FinalResultSettled(_policyTokenName, price, result.isHappened);
+        emit FinalResultSettled(_policyTokenName, price, isHappened);
     }
 
     /**
@@ -867,11 +840,12 @@ contract PolicyCore is Ownable {
             // Update the distribution index for this policy token
             settleResult[policyTokenAddress].currentDistributionIndex = length;
 
-            _collectIncome(
-                _stablecoin,
-                (amountToCollect * 8) / 10,
-                amountToCollect - (amountToCollect * 8) / 10
-            );
+            // Update pending income record
+            pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+            pendingIncomeToEmergency[_stablecoin] +=
+                amountToCollect -
+                (amountToCollect * 8) /
+                10;
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -897,11 +871,12 @@ contract PolicyCore is Ownable {
             settleResult[policyTokenAddress]
                 .currentDistributionIndex = _stopIndex;
 
-            _collectIncome(
-                _stablecoin,
-                (amountToCollect * 8) / 10,
-                amountToCollect - (amountToCollect * 8) / 10
-            );
+            // Update pending income record
+            pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+            pendingIncomeToEmergency[_stablecoin] +=
+                amountToCollect -
+                (amountToCollect * 8) /
+                10;
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -912,54 +887,64 @@ contract PolicyCore is Ownable {
         }
     }
 
+    /**
+     * @notice Collect the income
+     * @dev Can be done by anyone, only when there is some income to be distributed
+     * @param _stablecoin Address of stablecoin
+     */
+    function collectIncome(address _stablecoin) public {
+        require(
+            lottery != address(0) && emergencyPool != address(0),
+            "Please set the lottery & emergencyPool address"
+        );
+
+        uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
+        uint256 amountToEmergency = pendingIncomeToEmergency[_stablecoin];
+        require(
+            amountToLottery > 0 && amountToEmergency > 0,
+            "No pending income"
+        );
+
+        IERC20(_stablecoin).safeTransfer(lottery, amountToLottery);
+        IERC20(_stablecoin).safeTransfer(emergencyPool, amountToEmergency);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Collect the income
-     * @param _stablecoin Address of stable coin
-     * @param _amountToLottery Fee to lottery
-     * @param _amountToEmergency Fee to emergency pool
+     * @notice Finish Deposit
+     * @param _policyTokenName Name of the policy token
+     * @param _stablecoin Address of the sable coin
+     * @param _amount Amount of stablecoin
+     * @param _user Address to receive the policy tokens
      */
-    function _collectIncome(
+    function _deposit(
+        string memory _policyTokenName,
         address _stablecoin,
-        uint256 _amountToLottery,
-        uint256 _amountToEmergency
-    ) internal {
-        require(
-            lottery != address(0) && emergencyPool != address(0),
-            "Please set the lottery address"
-        );
-
-        IERC20(_stablecoin).safeTransfer(lottery, _amountToLottery);
-        IERC20(_stablecoin).safeTransfer(emergencyPool, _amountToEmergency);
-    }
-
-    /**
-     * @notice Mint Policy Token 1:1 USD
-     *         The policy token need to be deployed first!
-     * @param _policyTokenAddress Address of the policy token
-     * @param _amount Amount to mint
-     * @param _user Address to receive the policy token
-     */
-    function _mintPolicyToken(
-        address _policyTokenAddress,
         uint256 _amount,
         address _user
     ) internal {
-        INPPolicyToken policyToken = INPPolicyToken(_policyTokenAddress);
-
-        // Mint new policy tokens
-        policyToken.mint(_user, _amount);
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
 
         // If this is the first deposit, store the user address
-        if (userQuota[_user][_policyTokenAddress] == 0) {
-            allDepositors[_policyTokenAddress].push(_user);
+        if (userQuota[_user][policyTokenAddress] == 0) {
+            allDepositors[policyTokenAddress].push(_user);
         }
 
         // Update the user quota
-        userQuota[_user][_policyTokenAddress] += _amount;
+        userQuota[_user][policyTokenAddress] += _amount;
+
+        // Transfer stablecoins to this contract
+        IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
+
+        INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
+        // Mint new policy tokens
+        // Amount need to be transferred
+        policyToken.mint(_user, _amount);
+
+        emit Deposit(_user, _policyTokenName, _stablecoin, _amount);
     }
 
     /**
@@ -984,6 +969,7 @@ contract PolicyCore is Ownable {
                 IERC20(_stablecoin).safeTransfer(user, amountWithFee);
                 delete userQuota[user][_policyTokenAddress];
 
+                // Accumulate the remaining part that will be collected later
                 amountRemaining += amount - amountWithFee;
             } else continue;
         }
@@ -991,10 +977,10 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Generate the policy token name
-     * @param _tokenName Name of the token
+     * @param _tokenName Name of the stike token (BTC, ETH, AVAX...)
      * @param _decimals Decimals of the name generation (0,1=>1)
-     * @param _strikePrice Strike price of the policy
-     * @param _isCall The policy's payoff is triggered when higher or lower
+     * @param _strikePrice Strike price of the policy (18 decimals)
+     * @param _isCall The policy's payoff is triggered when higher(true) or lower(false)
      * @param _round Round of the policy (e.g. 2112, 2201)
      */
     function _generateName(
@@ -1004,16 +990,21 @@ contract PolicyCore is Ownable {
         bool _isCall,
         uint256 _round
     ) public pure returns (string memory) {
+        // The direction is "H"(Call) or "L"(Put)
         string memory direction = _isCall ? "H" : "L";
 
+        // Integer part of the strike price (12e18 => 12)
         uint256 intPart = _strikePrice / 1e18;
+        // Decimal part of the strike price (1234e16 => 34)
+        // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
         uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
 
         require(
-            intPart > 0 || decimalPart > 0,
-            "Strike price must be greater than 0"
+            intPart > 0 && decimalPart > 0,
+            "Int part and decimal part should > 0"
         );
 
+        // Combine the string
         string memory name = string(
             abi.encodePacked(
                 _tokenName,

@@ -29,11 +29,13 @@ import {
   DegisLottery,
 } from "../../typechain";
 import {
+  formatStablecoin,
   getLatestBlockTimestamp,
   stablecoinToWei,
   toBN,
   toWei,
 } from "../utils";
+import { deployments } from "hardhat";
 
 describe("Policy Flow", function () {
   let dev_account: SignerWithAddress,
@@ -80,13 +82,16 @@ describe("Policy Flow", function () {
     policyToken = await FDPolicyToken.deploy();
 
     PolicyFlow = await ethers.getContractFactory("PolicyFlow");
-    flow = await PolicyFlow.deploy(
+    flow = await PolicyFlow.deploy();
+    await flow.deployed();
+
+    // It is behind proxy, so use initialize
+    await flow.initialize(
       pool.address,
       policyToken.address,
       sig.address,
       buyerToken.address
     );
-    await flow.deployed();
 
     FlightOracleMock = await ethers.getContractFactory("FlightOracleMock");
     oracleMock = await FlightOracleMock.deploy(flow.address);
@@ -309,7 +314,7 @@ describe("Policy Flow", function () {
           departureTime,
           landingTime,
           dev_account.address,
-          toWei(premium.toString()),
+          stablecoinToWei(premium.toString()),
           deadline,
         ]
       );
@@ -319,7 +324,7 @@ describe("Policy Flow", function () {
       await flow.newApplication(
         productId,
         flightNumber,
-        toWei(premium.toString()),
+        stablecoinToWei(premium.toString()),
         toBN(departureTime),
         toBN(landingTime),
         deadline,
@@ -412,7 +417,7 @@ describe("Policy Flow", function () {
         .to.emit(flow, "NewClaimRequest")
         .withArgs(policyId, flightNumber, requestId);
 
-      const MAX_PAYOFF = formatEther(await flow.MAX_PAYOFF());
+      const MAX_PAYOFF = formatStablecoin((await flow.MAX_PAYOFF()).toString());
 
       const payoff = Math.floor(delayResult ** 2 / 480);
 
@@ -427,11 +432,11 @@ describe("Policy Flow", function () {
 
       expect(await pool.activePremiums()).to.equal(0);
       expect(await pool.totalStakingBalance()).to.equal(
-        toWei((1000 - payoff + premium * 0.5).toString())
+        stablecoinToWei((1000 - payoff + premium * 0.5).toString())
       );
       expect(await pool.lockedBalance()).to.equal(0);
       expect(await pool.availableCapacity()).to.equal(
-        toWei((1000 - payoff + premium * 0.5).toString())
+        stablecoinToWei((1000 - payoff + premium * 0.5).toString())
       );
     });
   });

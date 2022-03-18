@@ -47,6 +47,8 @@ contract NaughtyFactory is OwnableWithoutContext {
         address newPolicyCore
     );
 
+    constructor() OwnableWithoutContext(msg.sender) {}
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -85,17 +87,21 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @notice Get the INIT_CODE_HASH for policy tokens with parameters
      * @param _policyTokenName Name of the policy token to be deployed
      */
-    function getInitCodeHashForPolicyToken(string memory _policyTokenName)
-        external
-        view
-        returns (bytes32)
-    {
+    function getInitCodeHashForPolicyToken(
+        string memory _policyTokenName,
+        uint256 _tokenDecimals
+    ) external view returns (bytes32) {
         bytes memory bytecode = type(NPPolicyToken).creationCode;
         return
             keccak256(
                 abi.encodePacked(
                     bytecode,
-                    abi.encode(_policyTokenName, _policyTokenName, policyCore)
+                    abi.encode(
+                        _policyTokenName,
+                        _policyTokenName,
+                        policyCore,
+                        _tokenDecimals
+                    )
                 )
             );
     }
@@ -186,17 +192,19 @@ contract NaughtyFactory is OwnableWithoutContext {
     /**
      * @notice For each round we need to first create the policytoken(ERC20)
      * @param _policyTokenName Name of the policyToken
+     * @param _decimals Decimals of the policyToken
      * @return PolicyToken address
      */
-    function deployPolicyToken(string memory _policyTokenName)
-        external
-        alreadySetPolicyCore
-        onlyPolicyCore
-        returns (address)
-    {
+    function deployPolicyToken(
+        string memory _policyTokenName,
+        uint256 _decimals
+    ) external alreadySetPolicyCore onlyPolicyCore returns (address) {
         bytes32 salt = keccak256(abi.encodePacked(_policyTokenName));
 
-        bytes memory bytecode = getPolicyTokenBytecode(_policyTokenName);
+        bytes memory bytecode = getPolicyTokenBytecode(
+            _policyTokenName,
+            _decimals
+        );
 
         address _policTokenAddress = _deploy(bytecode, salt);
 
@@ -231,7 +239,7 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @dev It is public for test convinience
      * @param _tokenName Name of policyToken
      */
-    function getPolicyTokenBytecode(string memory _tokenName)
+    function getPolicyTokenBytecode(string memory _tokenName, uint256 _decimals)
         public
         view
         returns (bytes memory)
@@ -243,7 +251,7 @@ contract NaughtyFactory is OwnableWithoutContext {
         return
             abi.encodePacked(
                 bytecode,
-                abi.encode(_tokenName, _tokenName, policyCore)
+                abi.encode(_tokenName, _tokenName, policyCore, _decimals)
             );
     }
 }

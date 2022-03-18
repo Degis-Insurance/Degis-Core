@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
-import "../libraries/SafePRBMath.sol";
+import "../libraries/Math.sol";
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -9,6 +9,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../utils/ReentrancyGuard.sol";
 
 import "./interfaces/INaughtyFactory.sol";
+
+import "hardhat/console.sol";
 
 /**
  * @title  Naughty Pair
@@ -20,7 +22,6 @@ import "./interfaces/INaughtyFactory.sol";
  */
 contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     using SafeERC20 for IERC20;
-    using SafePRBMath for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -96,7 +97,7 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
      * @param _token0 Token0 address (policy token address)
      * @param _token1 Token1 address (stablecoin address)
      * @param _deadline Deadline for this pool
-     * @param _feeRate Fee rate to LP holders
+     * @param _feeRate Fee rate to LP holders (1000 <=> 100%)
      */
     function initialize(
         address _token0,
@@ -163,12 +164,12 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
         uint256 _totalSupply = totalSupply(); // gas savings
         if (_totalSupply == 0) {
-            liquidity = amount0.gm(amount1) - MINIMUM_LIQUIDITY;
+            liquidity = Math.sqrt(amount0 * amount1 - MINIMUM_LIQUIDITY);
             _mint(address(this), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = min(
-                amount0.mul(_totalSupply).div(_reserve0),
-                amount1.mul(_totalSupply).div(_reserve1)
+                (amount0 * _totalSupply) / _reserve0,
+                (amount1 * _totalSupply) / _reserve1
             );
         }
 
@@ -196,13 +197,20 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
         uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
 
-        uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY; // lp token balance
+        console.logUint(balance0);
+        console.logUint(balance1);
+
+        uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY;
+
+        console.logUint(liquidity);
 
         uint256 _totalSupply = totalSupply(); // gas savings
 
+        console.logUint(_totalSupply);
+
         // How many tokens to be sent back
-        amount0 = liquidity.mul(balance0).div(_totalSupply);
-        amount1 = liquidity.mul(balance1).div(_totalSupply);
+        amount0 = (liquidity * balance0) / _totalSupply;
+        amount1 = (liquidity * balance1) / _totalSupply;
 
         require(amount0 > 0 && amount1 > 0, "Insufficient liquidity burned");
 

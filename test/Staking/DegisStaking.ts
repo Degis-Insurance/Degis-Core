@@ -7,8 +7,8 @@ import {
   CoreStakingPool__factory,
   DegisToken,
   DegisToken__factory,
-  MockUSD,
-  MockUSD__factory,
+  MockERC20,
+  MockERC20__factory,
   StakingPoolFactory,
   StakingPoolFactory__factory,
 } from "../../typechain";
@@ -19,7 +19,7 @@ describe("Degis Staking", function () {
   let StakingPoolFactory: StakingPoolFactory__factory,
     factory: StakingPoolFactory;
   let DegisToken: DegisToken__factory, degis: DegisToken;
-  let MockUSD: MockUSD__factory, poolToken: MockUSD;
+  let MockERC20: MockERC20__factory, poolToken: MockERC20;
   let CoreStakingPool: CoreStakingPool__factory, pool: CoreStakingPool;
 
   let dev_account: SignerWithAddress, testAddress: SignerWithAddress;
@@ -32,8 +32,8 @@ describe("Degis Staking", function () {
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
 
-    MockUSD = await ethers.getContractFactory("MockUSD");
-    poolToken = await MockUSD.deploy();
+    MockERC20 = await ethers.getContractFactory("MockERC20");
+    poolToken = await MockERC20.deploy();
 
     StakingPoolFactory = await ethers.getContractFactory("StakingPoolFactory");
     factory = await StakingPoolFactory.deploy(degis.address);
@@ -127,6 +127,7 @@ describe("Degis Staking", function () {
 
       pool = CoreStakingPool.attach(poolAddress);
 
+      await poolToken.mint(dev_account.address, toWei("100000"));
       await poolToken.approve(poolAddress, toWei("1000"));
 
       await setNextBlockTime(now + 60);

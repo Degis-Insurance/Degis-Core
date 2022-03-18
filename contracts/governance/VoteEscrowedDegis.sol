@@ -6,19 +6,20 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./VeERC20Upgradeable.sol";
 import "./Whitelist.sol";
 import "./libraries/Math.sol";
 
-/// @title Vote Escrowed Degis
-/// @notice The staking contract for DEG -> veDEG, also the token used for governance.
-/// If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
-/// If you unstake any amount of degis, you loose all of your veDEG.
-/// ERC721 staking does not affect generation nor cap for the moment, but it will in a future upgrade.
-/// Note that it's ownable and the owner wields tremendous power. The ownership
-/// will be transferred to a governance smart contract once Platypus is sufficiently
-/// distributed and the community can show to govern itself.
+/**
+ * @title Vote Escrowed Degis
+ * @notice The staking contract for DEG -> veDEG, also the token used for governance.
+ * If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
+ * If you unstake any amount of degis, you loose all of your veDEG.
+ * ERC721 staking does not affect generation nor cap for the moment, but it will in a future upgrade.
+ * Note that it's ownable and the owner wields tremendous power. The ownership
+ * will be transferred to a governance smart contract once Platypus is sufficiently
+ * distributed and the community can show to govern itself.
+ */
 contract VoteEscrowedDegis is
     Initializable,
     OwnableUpgradeable,
@@ -29,19 +30,14 @@ contract VoteEscrowedDegis is
     using SafeERC20 for IERC20;
 
     struct UserInfo {
-        uint256 amount; // degis staked by user
-        uint256 lastRelease; // time of last veDEG claim or first deposit if user has not claimed yet
-        // the id of the currently staked nft
-        // important: the id is offset by +1 to handle tokenID = 0
-        uint256 stakedNftId;
+        // degis staked by user
+        uint256 amount;
+        // time of last veDEG claim or first deposit if user has not claimed yet
+        uint256 lastRelease;
     }
 
-    /// @notice the degis token
+    // Degis token
     IERC20 public degis;
-
-    /// @dev Magic value for onERC721Received
-    /// Equals to bytes4(keccak256("onERC721Received(address,address,uint256,bytes)"))
-    bytes4 private constant ERC721_RECEIVED = 0x150b7a02;
 
     /// @notice max veDEG to staked degis ratio
     /// Note if user has 10 degis staked, they can only have a max of 10 * maxCap veDEG in balance

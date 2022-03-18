@@ -43,7 +43,10 @@ contract FDPolicyToken is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() ERC721("Degis FlightDelay PolicyToken", "DEGIS_FD_PT") {
+    constructor()
+        ERC721("Degis FlightDelay PolicyToken", "DEGIS_FD_PT")
+        OwnableWithoutContext(msg.sender)
+    {
         _nextId = 1;
     }
 

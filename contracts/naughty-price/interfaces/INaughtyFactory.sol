@@ -7,9 +7,10 @@ interface INaughtyFactory {
         view
         returns (address);
 
-    function deployPolicyToken(string memory _policyTokenName)
-        external
-        returns (address);
+    function deployPolicyToken(
+        string memory _policyTokenName,
+        uint256 _decimals
+    ) external returns (address);
 
     function deployPool(
         address _policyTokenAddress,

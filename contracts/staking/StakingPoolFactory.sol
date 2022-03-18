@@ -60,7 +60,7 @@ contract StakingPoolFactory is Ownable {
      *
      * @param _degisToken Degis token address
      */
-    constructor(address _degisToken) {
+    constructor(address _degisToken) Ownable(msg.sender) {
         degisToken = _degisToken;
     }
 

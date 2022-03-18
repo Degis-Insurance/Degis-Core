@@ -2,8 +2,16 @@ export const toWei = (etherAmount: string) => {
   return ethers.utils.parseUnits(etherAmount);
 };
 
+export const formatTokenAmount = (amount: string) => {
+  return ethers.utils.formatUnits(amount, 18);
+};
+
 export const stablecoinToWei = (stablecoinAmount: string) => {
   return ethers.utils.parseUnits(stablecoinAmount, 6);
+};
+
+export const formatStablecoin = (stablecoinAmount: string) => {
+  return ethers.utils.formatUnits(stablecoinAmount, 6);
 };
 
 export const zeroAddress = () => {

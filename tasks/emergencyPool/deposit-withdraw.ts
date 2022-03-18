@@ -8,7 +8,7 @@ import {
   MockUSD,
   MockUSD__factory,
 } from "../../typechain";
-import { formatEther, parseUnits } from "ethers/lib/utils";
+import { formatEther, formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("depositEmergencyPool", "deposit funds into emergency pool")
   .addParam("address", "token address", null, types.string)
@@ -42,7 +42,7 @@ task("depositEmergencyPool", "deposit funds into emergency pool")
       dev_account.address,
       emergencyPoolAddress
     );
-    if (parseInt(formatEther(allowance)) < 10000000) {
+    if (parseInt(formatUnits(allowance, 6)) < 10000000) {
       await erc20.approve(
         emergencyPoolAddress,
         parseUnits("100000000000000000000000")
