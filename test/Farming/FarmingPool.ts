@@ -501,6 +501,8 @@ describe("Farming Pool", function () {
 
       await mineBlocks(1);
 
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("5"));
+
       const poolInfo = await pool.poolList(1);
       console.log(poolInfo);
 
