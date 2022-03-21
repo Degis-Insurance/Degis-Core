@@ -70,7 +70,14 @@ contract VoteEscrowedDegis is
     event StakedNft(address indexed user, uint256 indexed nftId);
     event UnstakedNft(address indexed user, uint256 indexed nftId);
 
-    function initialize(IERC20 _degis) public initializer {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    function initialize(address _degis, address _farmingPool)
+        public
+        initializer
+    {
         require(address(_degis) != address(0), "zero address");
 
         // Initialize veDEG
@@ -79,14 +86,17 @@ contract VoteEscrowedDegis is
         __ReentrancyGuard_init_unchained();
         __Pausable_init_unchained();
 
-        // set generationRate (veDEG per sec per degis staked)
+        // Set generationRate (veDEG per sec per degis staked)
         generationRate = 10**15;
 
-        // set maxCap
+        // Set maxCap ratio
         maxCapRatio = 100;
 
-        // set degis
-        degis = _degis;
+        // Set degis
+        degis = IERC20(_degis);
+
+        // Set farming pool
+        farmingPool = IFarmingPool(_farmingPool);
     }
 
     // ---------------------------------------------------------------------------------------- //
