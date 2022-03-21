@@ -16,7 +16,8 @@ interface IFarmingPool {
 
     function setDegisReward(
         uint256 _poolId,
-        uint256 _degisPerBlock,
+        uint256 _basicDegisPerBlock,
+        uint256 _bonusDegisPerBlock,
         bool _withUpdate
     ) external;
 
@@ -29,4 +30,6 @@ interface IFarmingPool {
     function massUpdatePools() external;
 
     function harvest(uint256 _poolId, address _to) external;
+
+    function updateBonus(address _user, uint256 _newBalance) external;
 }

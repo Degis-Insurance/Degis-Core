@@ -3,12 +3,13 @@ pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./VeERC20Upgradeable.sol";
-import "./Whitelist.sol";
-import "./libraries/Math.sol";
+import {Math} from "./libraries/Math.sol";
+
+import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
 
 /**
  * @title Vote Escrowed Degis
@@ -38,24 +39,19 @@ contract VoteEscrowedDegis is
     // Degis token
     IERC20 public degis;
 
+    // Farming pool
+    IFarmingPool farmingPool;
+
     // Max veDEG to staked degis ratio
     // Max veDEG amount = maxCap * degis staked
-    uint256 public maxCap;
+    uint256 public maxCapRatio;
 
     // Rate of veDEG generated per second, per degis staked
     uint256 public generationRate;
 
-    /// @notice invVvoteThreshold threshold.
-    /// @notice voteThreshold is the tercentage of cap from which votes starts to count for governance proposals.
-    /// @dev inverse of the threshold to apply.
-    /// Example: th = 5% => (1/5) * 100 => invVoteThreshold = 20
-    /// Example 2: th = 3.03% => (1/3.03) * 100 => invVoteThreshold = 33
-    /// Formula is invVoteThreshold = (1 / th) * 100
-    uint256 public invVoteThreshold;
-
     // Whitelist contract checker
     // Contract addresses are by default unable to stake degis, they must be whitelisted
-    Whitelist public whitelist;
+    mapping(address => bool) whitelist;
 
     // User info
     mapping(address => UserInfo) public users;
@@ -76,101 +72,89 @@ contract VoteEscrowedDegis is
         require(address(_degis) != address(0), "zero address");
 
         // Initialize veDEG
-        __ERC20_init("Platypus Venom", "veDEG");
+        __ERC20_init("Vote Escrowed DEG", "veDEG");
         __Ownable_init();
         __ReentrancyGuard_init_unchained();
         __Pausable_init_unchained();
 
         // set generationRate (veDEG per sec per degis staked)
-        generationRate = 3888888888888;
+        generationRate = 10**15;
 
         // set maxCap
-        maxCap = 100;
-
-        // set inv vote threshold
-        // invVoteThreshold = 20 => th = 5
-        invVoteThreshold = 20;
+        maxCapRatio = 100;
 
         // set degis
         degis = _degis;
     }
 
-    /**
-     * @dev pause pool, restricting certain operations
-     */
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************** Modifiers *************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    modifier notContract(address _addr) {
+        if (_addr != tx.origin) {
+            require(whitelist[_addr], "Not whitelisted");
+        }
+        _;
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     function pause() external onlyOwner {
         _pause();
     }
 
-    /**
-     * @dev unpause pool, enabling certain operations
-     */
     function unpause() external onlyOwner {
         _unpause();
     }
 
-    /// @notice sets whitelist address
-    /// @param _whitelist the new whitelist address
-    function setWhitelist(Whitelist _whitelist) external onlyOwner {
-        require(address(_whitelist) != address(0), "zero address");
-        whitelist = _whitelist;
+    /**
+     * @notice Add a new whitelist address
+     */
+    function addWhitelist(address _account) external onlyOwner {
+        whitelist[_account] = true;
     }
 
-    /// @notice sets maxCap
-    /// @param _maxCap the new max ratio
-    function setMaxCap(uint256 _maxCap) external onlyOwner {
-        require(_maxCap != 0, "max cap cannot be zero");
-        maxCap = _maxCap;
+    /**
+     * @notice Remove a new whitelist address
+     */
+    function removeWhitelist(address _account) external onlyOwner {
+        whitelist[_account] = false;
     }
 
-    /// @notice sets generation rate
-    /// @param _generationRate the new max ratio
+    /**
+     * @notice Set maxCap ratio
+     * @param _maxCapRatio the new max ratio
+     */
+    function setMaxCapRatio(uint256 _maxCapRatio) external onlyOwner {
+        require(_maxCapRatio > 0, "Max cao ratio should be greater than zero");
+        maxCapRatio = _maxCapRatio;
+    }
+
+    /**
+     * @notice Set generationRate
+     * @param _generationRate the new generation rate
+     */
     function setGenerationRate(uint256 _generationRate) external onlyOwner {
-        require(_generationRate != 0, "generation rate cannot be zero");
+        require(
+            _generationRate > 0,
+            "Generation rate should be greater than 0"
+        );
         generationRate = _generationRate;
     }
 
-    /// @notice sets invVoteThreshold
-    /// @param _invVoteThreshold the new var
-    /// Formula is invVoteThreshold = (1 / th) * 100
-    function setInvVoteThreshold(uint256 _invVoteThreshold) external onlyOwner {
-        // onwner should set a high value if we do not want to implement an important threshold
-        require(_invVoteThreshold != 0, "invVoteThreshold cannot be zero");
-        invVoteThreshold = _invVoteThreshold;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
-    /// @notice checks wether user _addr has degis staked
-    /// @param _addr the user address to check
-    /// @return true if the user has degis in stake, false otherwise
-    function isUser(address _addr) public view returns (bool) {
-        return users[_addr].amount > 0;
-    }
-
-    /// @notice returns staked amount of degis for user
-    /// @param _addr the user address to check
-    /// @return staked amount of degis
-    function getStakeddegis(address _addr) external view returns (uint256) {
-        return users[_addr].amount;
-    }
-
-
-    /// @dev explicity override multiple inheritance
-    function balanceOf(address account)
-        public
-        view
-        override(VeERC20Upgradeable)
-        returns (uint256)
-    {
-        return super.balanceOf(account);
-    }
-
-    /// @notice deposits degis into contract
-    /// @param _amount the amount of degis to deposit
+    /**
+     * @notice Depisit degis
+     */
     function deposit(uint256 _amount) external nonReentrant whenNotPaused {
-        require(_amount > 0, "amount to deposit cannot be zero");
+        require(_amount > 0, "Zero amount");
 
-        // assert call is not coming from a smart contract
-        // unless it is whitelisted
         _assertNotContract(msg.sender);
 
         if (isUser(msg.sender)) {
@@ -188,63 +172,44 @@ contract VoteEscrowedDegis is
         degis.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
-    /// @notice asserts addres in param is not a smart contract.
-    /// @notice if it is a smart contract, check that it is whitelisted
-    /// @param _addr the address to check
-    function _assertNotContract(address _addr) private view {
-        if (_addr != tx.origin) {
-            require(
-                address(whitelist) != address(0) && whitelist.check(_addr),
-                "Smart contract depositors not allowed"
-            );
-        }
-    }
-
     /// @notice claims accumulated veDEG
     function claim() external nonReentrant whenNotPaused {
         require(isUser(msg.sender), "user has no stake");
         _claim(msg.sender);
     }
 
-    /// @dev private claim function
-    /// @param _addr the address of the user to claim from
-    function _claim(address _addr) private {
-        uint256 amount = _claimable(_addr);
+    /**
+     * @notice Finish the claim process
+     * @param _user User address
+     */
+    function _claim(address _user) private {
+        uint256 amount = _claimable(_user);
 
         // update last release time
-        users[_addr].lastRelease = block.timestamp;
+        users[_user].lastRelease = block.timestamp;
 
         if (amount > 0) {
-            emit Claimed(_addr, amount);
-            _mint(_addr, amount);
+            emit Claimed(_user, amount);
+            _mint(_user, amount);
         }
     }
 
-    /// @notice Calculate the amount of veDEG that can be claimed by user
-    /// @param _addr the address to check
-    /// @return amount of veDEG that can be claimed by user
-    function claimable(address _addr) external view returns (uint256) {
-        require(_addr != address(0), "zero address");
-        return _claimable(_addr);
-    }
+    /**
+     * @notice Calculate the amount of veDEG that can be claimed by user
+     */
+    function claimable(address _user) external view returns (uint256) {
+        require(_user != address(0), "zero address");
 
-    /// @dev private claim function
-    /// @param _addr the address of the user to claim from
-    function _claimable(address _addr) private view returns (uint256) {
-        UserInfo storage user = users[_addr];
+        UserInfo memory user = users[_user];
 
-        // get seconds elapsed since last claim
-        uint256 secondsElapsed = block.timestamp - user.lastRelease;
+        // Seconds passed since last claim
+        uint256 timePassed = block.timestamp - user.lastRelease;
 
         // calculate pending amount
-        // Math.mwmul used to multiply wad numbers
-        uint256 pending = Math.wmul(
-            user.amount,
-            secondsElapsed * generationRate
-        );
+        uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
 
         // get user's veDEG balance
-        uint256 userVeDEGBalance = balanceOf(_addr);
+        uint256 userVeDEGBalance = balanceOf(_user);
 
         // user veDEG balance cannot go above user.amount * maxCap
         uint256 maxVeDEGCap = user.amount * maxCap;
@@ -283,26 +248,10 @@ contract VoteEscrowedDegis is
         degis.safeTransfer(msg.sender, _amount);
     }
 
-    /// @notice get votes for veDEG
-    /// @dev votes should only count if account has > threshold% of current cap reached
-    /// @dev invVoteThreshold = (1/threshold%)*100
-    /// @return the valid votes
-    function getVotes(address _account)
-        external
-        view
-        virtual
-        returns (uint256)
+    function _afterTokenOperation(address _user, uint256 _newBalance)
+        internal
+        override
     {
-        uint256 veDEGBalance = balanceOf(_account);
-
-        // check that user has more than voting treshold of maxCap and has degis in stake
-        if (
-            veDEGBalance * invVoteThreshold > users[_account].amount * maxCap &&
-            isUser(_account)
-        ) {
-            return veDEGBalance;
-        } else {
-            return 0;
-        }
+        farmingPool.updateBonus();
     }
 }
