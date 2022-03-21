@@ -35,7 +35,7 @@ contract VeERC20Upgradeable is Initializable, ContextUpgradeable, IVeERC20 {
      */
     function __ERC20_init(string memory name_, string memory symbol_)
         internal
-        initializer
+        onlyInitializing
     {
         __Context_init_unchained();
         __ERC20_init_unchained(name_, symbol_);
@@ -43,7 +43,7 @@ contract VeERC20Upgradeable is Initializable, ContextUpgradeable, IVeERC20 {
 
     function __ERC20_init_unchained(string memory name_, string memory symbol_)
         internal
-        initializer
+        onlyInitializing
     {
         _name = name_;
         _symbol = symbol_;

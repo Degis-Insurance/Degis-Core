@@ -7,9 +7,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../utils/OwnableWithoutContext.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "../tokens/interfaces/IDegisToken.sol";
-
 import "../libraries/Math.sol";
-
 import "../governance/interfaces/IVeDEG.sol";
 
 /**
@@ -21,6 +19,7 @@ import "../governance/interfaces/IVeDEG.sol";
 contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     using SafeERC20 for IERC20;
     using SafeERC20 for IDegisToken;
+    using Math for uint256;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -106,11 +105,8 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _degis, address _veDEG)
-        OwnableWithoutContext(msg.sender)
-    {
+    constructor(address _degis) OwnableWithoutContext(msg.sender) {
         degis = IDegisToken(_degis);
-        veDEG = IVeDEG(_veDEG);
 
         // Start from 1
         _nextPoolId = 1;
@@ -246,6 +242,10 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    function setVeDEG(address _veDEG) external onlyOwner {
+        veDEG = IVeDEG(_veDEG);
     }
 
     /**
@@ -407,13 +407,14 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         user.stakingBalance += actualAmount;
 
-        // Update the user's bonus
-        uint256 oldBonus = user.bonus;
-        user.bonus = Math.sqrt(
-            user.stakingBalance * veDEG.balanceOf(msg.sender)
-        );
-        // Update the pool's total bonus
-        pool.totalBonus += user.bonus - oldBonus;
+        if (address(veDEG) != address(0)) {
+            // Update the user's bonus if veDEG boosting is on
+            uint256 oldBonus = user.bonus;
+            user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
+                .sqrt();
+            // Update the pool's total bonus
+            pool.totalBonus += user.bonus - oldBonus;
+        }
 
         user.rewardDebt =
             (user.stakingBalance *
@@ -465,13 +466,14 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         user.stakingBalance -= actualAmount;
 
-        // Update the user's bonus
-        uint256 oldBonus = user.bonus;
-        user.bonus = Math.sqrt(
-            user.stakingBalance * veDEG.balanceOf(msg.sender)
-        );
-        // Update the pool's total bonus
-        pool.totalBonus += user.bonus - oldBonus;
+        // Update the user's bonus when veDEG boosting is on
+        if (address(veDEG) != address(0)) {
+            uint256 oldBonus = user.bonus;
+            user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
+                .sqrt();
+            // Update the pool's total bonus
+            pool.totalBonus += user.bonus - oldBonus;
+        }
 
         user.rewardDebt =
             (user.stakingBalance *
@@ -600,9 +602,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             // get oldFactor
             uint256 oldFactor = user.bonus; // get old factor
             // calculate newFactor
-            uint256 newFactor = Math.sqrt(
-                _newVeDEGBalance * user.stakingBalance
-            );
+            uint256 newFactor = (_newVeDEGBalance * user.stakingBalance).sqrt();
             // update user factor
             user.bonus = newFactor;
             // update reward debt, take into account newFactor

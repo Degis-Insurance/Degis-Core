@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 library Math {
-    uint256 constant WAD = 10**18;
+    uint256 internal constant WAD = 10**18;
 
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;

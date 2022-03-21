@@ -9,7 +9,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./VeERC20Upgradeable.sol";
-import {Math} from "./libraries/Math.sol";
+import {Math} from "../libraries/Math.sol";
 
 import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
 
@@ -44,7 +44,7 @@ contract VoteEscrowedDegis is
     IERC20 public degis;
 
     // Farming pool
-    IFarmingPool farmingPool;
+    IFarmingPool public farmingPool;
 
     // Max veDEG to staked degis ratio
     // Max veDEG amount = maxCap * degis staked
@@ -227,6 +227,8 @@ contract VoteEscrowedDegis is
         // Request degis from user
         degis.safeTransferFrom(msg.sender, address(this), _amount);
     }
+
+    function depositMaxTime() external nonReentrant whenNotPaused {}
 
     /// @notice claims accumulated veDEG
     function claim() public nonReentrant whenNotPaused {
