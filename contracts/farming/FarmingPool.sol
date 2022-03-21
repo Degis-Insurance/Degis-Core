@@ -69,6 +69,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+
     event StartTimestampChanged(uint256 startTimestamp);
     event Stake(address staker, uint256 poolId, uint256 amount);
     event Withdraw(address staker, uint256 poolId, uint256 amount);

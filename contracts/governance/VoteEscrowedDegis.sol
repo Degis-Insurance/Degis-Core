@@ -12,13 +12,12 @@ import "./libraries/Math.sol";
 
 /**
  * @title Vote Escrowed Degis
- * @notice The staking contract for DEG -> veDEG, also the token used for governance.
- * If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
- * If you unstake any amount of degis, you loose all of your veDEG.
- * ERC721 staking does not affect generation nor cap for the moment, but it will in a future upgrade.
- * Note that it's ownable and the owner wields tremendous power. The ownership
- * will be transferred to a governance smart contract once Platypus is sufficiently
- * distributed and the community can show to govern itself.
+ * @notice The staking contract for DEG -> veDEG
+ *         VeDEG:
+ *            - Boosting the farming reward
+ *            - Governance
+ *         If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
+ *         If you unstake any amount of degis, you will lose all of your veDEG tokens
  */
 contract VoteEscrowedDegis is
     Initializable,
@@ -39,11 +38,11 @@ contract VoteEscrowedDegis is
     // Degis token
     IERC20 public degis;
 
-    /// @notice max veDEG to staked degis ratio
-    /// Note if user has 10 degis staked, they can only have a max of 10 * maxCap veDEG in balance
+    // Max veDEG to staked degis ratio
+    // Max veDEG amount = maxCap * degis staked
     uint256 public maxCap;
 
-    /// @notice the rate of veDEG generated per second, per degis staked
+    // Rate of veDEG generated per second, per degis staked
     uint256 public generationRate;
 
     /// @notice invVvoteThreshold threshold.
@@ -54,14 +53,17 @@ contract VoteEscrowedDegis is
     /// Formula is invVoteThreshold = (1 / th) * 100
     uint256 public invVoteThreshold;
 
-    /// @notice whitelist wallet checker
-    /// @dev contract addresses are by default unable to stake degis, they must be previously whitelisted to stake degis
+    // Whitelist contract checker
+    // Contract addresses are by default unable to stake degis, they must be whitelisted
     Whitelist public whitelist;
 
-    /// @notice user info mapping
+    // User info
     mapping(address => UserInfo) public users;
 
-    /// @notice events describing staking, unstaking and claiming
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event Staked(address indexed user, uint256 indexed amount);
     event Unstaked(address indexed user, uint256 indexed amount);
     event Claimed(address indexed user, uint256 indexed amount);
@@ -151,15 +153,6 @@ contract VoteEscrowedDegis is
         return users[_addr].amount;
     }
 
-    /// @dev explicity override multiple inheritance
-    function totalSupply()
-        public
-        view
-        override(VeERC20Upgradeable)
-        returns (uint256)
-    {
-        return super.totalSupply();
-    }
 
     /// @dev explicity override multiple inheritance
     function balanceOf(address account)
