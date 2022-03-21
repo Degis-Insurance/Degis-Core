@@ -8,6 +8,10 @@ import "../utils/OwnableWithoutContext.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 
+import "../libraries/Math.sol";
+
+import "../governance/interfaces/IVeDEG.sol";
+
 /**
  * @title  Farming Pool
  * @notice This contract is for LPToken mining on Degis
@@ -25,6 +29,9 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // The reward token is degis
     IDegisToken public degis;
 
+    // The bonus reward depends on veDEG
+    IVeDEG public veDEG;
+
     uint256 public constant SCALE = 1e12;
 
     // PoolId starts from 1
@@ -35,10 +42,13 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     uint256 public startTimestamp;
 
     struct PoolInfo {
-        address lpToken;
-        uint256 degisPerSecond;
-        uint256 lastRewardTimestamp;
-        uint256 accDegisPerShare;
+        address lpToken; // LPToken address
+        uint256 basicDegisPerSecond; // Basic Reward speed
+        uint256 bonusDegisPerSecond; // Bonus reward speed
+        uint256 lastRewardTimestamp; // Last reward timestamp
+        uint256 accDegisPerShare; // Accumulated degis per share (for those without veDEG boosting)
+        uint256 accDegisPerBonusShare; // Accumulated degis per bonus share (for those with veDEG boosting)
+        uint256 totalBonus; // Total bonus factors
     }
     PoolInfo[] public poolList;
 
@@ -51,7 +61,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     struct UserInfo {
         uint256 rewardDebt; // degis reward debt
         uint256 stakingBalance; // the amount of a user's staking in the pool
-        uint256 bonus; // user bonus point 
+        uint256 bonus; // user bonus point (by veDEG balance)
     }
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
@@ -73,18 +83,33 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         uint256 poolId,
         uint256 pendingReward
     );
-    event NewPoolAdded(address lpToken, uint256 degisPerSecond);
+    event NewPoolAdded(
+        address lpToken,
+        uint256 basicDegisPerSecond,
+        uint256 bonusDegisPerSecond
+    );
     event FarmingPoolStarted(uint256 poolId, uint256 timestamp);
     event FarmingPoolStopped(uint256 poolId, uint256 timestamp);
-    event DegisRewardChanged(uint256 poolId, uint256 degisPerSecond);
-    event PoolUpdated(uint256 poolId);
+    event DegisRewardChanged(
+        uint256 poolId,
+        uint256 basicDegisPerSecond,
+        uint256 bonusDegisPerSecond
+    );
+    event PoolUpdated(
+        uint256 poolId,
+        uint256 accDegisPerShare,
+        uint256 accDegisPerBonusShare
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _degis) OwnableWithoutContext(msg.sender) {
+    constructor(address _degis, address _veDEG)
+        OwnableWithoutContext(msg.sender)
+    {
         degis = IDegisToken(_degis);
+        veDEG = IVeDEG(_veDEG);
 
         // Start from 1
         _nextPoolId = 1;
@@ -92,9 +117,12 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         poolList.push(
             PoolInfo({
                 lpToken: address(0),
-                degisPerSecond: 0,
+                basicDegisPerSecond: 0,
+                bonusDegisPerSecond: 0,
                 lastRewardTimestamp: 0,
-                accDegisPerShare: 0
+                accDegisPerShare: 0,
+                accDegisPerBonusShare: 0,
+                totalBonus: 0
             })
         );
     }
@@ -147,7 +175,9 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         // Total lp token balance
         uint256 lp_balance = IERC20(poolInfo.lpToken).balanceOf(address(this));
 
+        // Accumulated shares to be calculated
         uint256 accDegisPerShare = poolInfo.accDegisPerShare;
+        uint256 accDegisPerBonusShare = poolInfo.accDegisPerBonusShare;
 
         if (lp_balance == 0) return 0;
         else {
@@ -156,15 +186,26 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
                 // Deigs amount given to this pool
                 uint256 timePassed = block.timestamp -
                     poolInfo.lastRewardTimestamp;
-                uint256 degisReward = poolInfo.degisPerSecond * timePassed;
-
+                uint256 basicReward = poolInfo.basicDegisPerSecond * timePassed;
                 // Update accDegisPerShare
                 // LPToken may have different decimals
-                accDegisPerShare += (degisReward * SCALE) / lp_balance;
+                accDegisPerShare += (basicReward * SCALE) / lp_balance;
+
+                // If there is any bonus reward
+                if (poolInfo.totalBonus > 0) {
+                    uint256 bonusReward = poolInfo.bonusDegisPerSecond *
+                        timePassed;
+                    accDegisPerBonusShare +=
+                        (bonusReward * SCALE) /
+                        poolInfo.totalBonus;
+                }
             }
 
             // If the pool has stopped, not update the info
-            uint256 pending = (user.stakingBalance * accDegisPerShare) /
+            uint256 pending = (user.stakingBalance *
+                accDegisPerShare +
+                user.bonus *
+                accDegisPerBonusShare) /
                 SCALE -
                 user.rewardDebt;
 
@@ -230,22 +271,25 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Add a new lp to the pool
+     * @notice Add a new lp into the pool
      * @dev Can only be called by the owner
+     *      The reward speed can be 0 and set later by setDegisReward function
      * @param _lpToken LP token address
-     * @param _degisPerSecond Reward distribution per second for this new pool
+     * @param _basicDegisPerSecond Basic reward speed(per second) for this new pool
+     * @param _bonusDegisPerSecond Bonus reward speed(per second) for this new pool
      * @param _withUpdate Whether update all pools' status
      */
     function add(
         address _lpToken,
-        uint256 _degisPerSecond,
+        uint256 _basicDegisPerSecond,
+        uint256 _bonusDegisPerSecond,
         bool _withUpdate
     ) public notZeroAddress(_lpToken) onlyOwner whenNotPaused {
         // Check if already exists, if the poolId is 0, that means not in the pool
-        require(
-            !_alreadyInPool(_lpToken),
-            "This lptoken is already in the farming pool"
-        );
+        require(!_alreadyInPool(_lpToken), "Already in the pool");
+
+        if (_bonusDegisPerSecond > 0)
+            require(_basicDegisPerSecond > 0, "Only bonus");
 
         if (_withUpdate) {
             massUpdatePools();
@@ -259,49 +303,62 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         poolList.push(
             PoolInfo({
                 lpToken: _lpToken,
-                degisPerSecond: _degisPerSecond,
+                basicDegisPerSecond: _basicDegisPerSecond,
+                bonusDegisPerSecond: _bonusDegisPerSecond,
                 lastRewardTimestamp: lastRewardTimestamp,
-                accDegisPerShare: 0
+                accDegisPerShare: 0,
+                accDegisPerBonusShare: 0,
+                totalBonus: 0
             })
         );
 
         // Store the poolId and set the farming status to true
-        if (_degisPerSecond > 0) isFarming[_nextPoolId] = true;
+        if (_basicDegisPerSecond > 0) isFarming[_nextPoolId] = true;
 
         poolMapping[_lpToken] = _nextPoolId++;
 
-        emit NewPoolAdded(_lpToken, _degisPerSecond);
+        emit NewPoolAdded(_lpToken, _basicDegisPerSecond, _bonusDegisPerSecond);
     }
 
     /**
      * @notice Update the degisPerSecond for a specific pool (set to 0 to stop farming)
      * @param _poolId Id of the farming pool
-     * @param _degisPerSecond New reward amount per block
-     * @param _withUpdate Whether update all the pool
+     * @param _basicDegisPerSecond New basic reward amount per second
+     * @param _bonusDegisPerSecond New bonus reward amount per second
+     * @param _withUpdate Whether update all pools
      */
     function setDegisReward(
         uint256 _poolId,
-        uint256 _degisPerSecond,
+        uint256 _basicDegisPerSecond,
+        uint256 _bonusDegisPerSecond,
         bool _withUpdate
     ) public onlyOwner whenNotPaused {
         // Ensure there already exists this pool
         require(poolList[_poolId].lastRewardTimestamp != 0, "Pool not exists");
 
+        if (_bonusDegisPerSecond > 0)
+            require(_basicDegisPerSecond > 0, "Only bonus");
+
         if (_withUpdate) massUpdatePools();
         else updatePool(_poolId);
 
         // Not farming now + reward > 0 => Restart
-        if (isFarming[_poolId] == false && _degisPerSecond > 0) {
+        if (isFarming[_poolId] == false && _basicDegisPerSecond > 0) {
             isFarming[_poolId] = true;
             emit FarmingPoolStarted(_poolId, block.timestamp);
         }
 
-        if (_degisPerSecond == 0) {
+        if (_basicDegisPerSecond == 0) {
             isFarming[_poolId] = false;
             emit FarmingPoolStopped(_poolId, block.timestamp);
         } else {
-            poolList[_poolId].degisPerSecond = _degisPerSecond;
-            emit DegisRewardChanged(_poolId, _degisPerSecond);
+            poolList[_poolId].basicDegisPerSecond = _basicDegisPerSecond;
+            poolList[_poolId].bonusDegisPerSecond = _bonusDegisPerSecond;
+            emit DegisRewardChanged(
+                _poolId,
+                _basicDegisPerSecond,
+                _bonusDegisPerSecond
+            );
         }
     }
 
@@ -327,7 +384,10 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         // First distribute the reward if exists
         if (user.stakingBalance > 0) {
-            uint256 pending = (user.stakingBalance * pool.accDegisPerShare) /
+            uint256 pending = (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
                 SCALE -
                 user.rewardDebt;
 
@@ -345,7 +405,21 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         );
 
         user.stakingBalance += actualAmount;
-        user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
+
+        // Update the user's bonus
+        uint256 oldBonus = user.bonus;
+        user.bonus = Math.sqrt(
+            user.stakingBalance * veDEG.balanceOf(msg.sender)
+        );
+        // Update the pool's total bonus
+        pool.totalBonus += user.bonus - oldBonus;
+
+        user.rewardDebt =
+            (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
+            SCALE;
 
         emit Stake(msg.sender, _poolId, actualAmount);
     }
@@ -371,15 +445,15 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         // Users can withdraw even after the pool stopped
         if (isFarming[_poolId]) updatePool(_poolId);
 
-        uint256 pending = (user.stakingBalance * pool.accDegisPerShare) /
+        uint256 pending = (user.stakingBalance *
+            pool.accDegisPerShare +
+            user.bonus *
+            pool.accDegisPerBonusShare) /
             SCALE -
             user.rewardDebt;
 
         uint256 reward = _safeDegisTransfer(msg.sender, pending);
         emit Harvest(msg.sender, msg.sender, _poolId, reward);
-
-        user.stakingBalance -= _amount;
-        user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
 
         uint256 actualAmount = _safeLPTransfer(
             true,
@@ -387,6 +461,23 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             msg.sender,
             _amount
         );
+
+        user.stakingBalance -= actualAmount;
+
+        // Update the user's bonus
+        uint256 oldBonus = user.bonus;
+        user.bonus = Math.sqrt(
+            user.stakingBalance * veDEG.balanceOf(msg.sender)
+        );
+        // Update the pool's total bonus
+        pool.totalBonus += user.bonus - oldBonus;
+
+        user.rewardDebt =
+            (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
+            SCALE;
 
         emit Withdraw(msg.sender, _poolId, actualAmount);
     }
@@ -407,19 +498,27 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         PoolInfo memory pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][msg.sender];
 
-        uint256 pendingReward = (user.stakingBalance * pool.accDegisPerShare) /
+        uint256 pendingReward = (user.stakingBalance *
+            pool.accDegisPerShare +
+            user.bonus *
+            pool.accDegisPerBonusShare) /
             SCALE -
             user.rewardDebt;
 
-        // Effects
-        user.rewardDebt = (user.stakingBalance * pool.accDegisPerShare) / SCALE;
+        require(pendingReward > 0, "No pending reward");
 
-        // Interactions
-        if (pendingReward != 0) {
-            degis.safeTransfer(_to, pendingReward);
-        }
+        // Update the reward debt
+        user.rewardDebt =
+            (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
+            SCALE;
 
-        emit Harvest(msg.sender, _to, _poolId, pendingReward);
+        // Transfer the reward
+        uint256 reward = _safeDegisTransfer(_to, pendingReward);
+
+        emit Harvest(msg.sender, _to, _poolId, reward);
     }
 
     /**
@@ -441,16 +540,30 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         }
 
         uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
-        uint256 degisReward = timePassed * pool.degisPerSecond;
+
+        uint256 basicReward = timePassed * pool.basicDegisPerSecond;
+        uint256 bonusReward = timePassed * pool.bonusDegisPerSecond;
+
+        pool.accDegisPerShare += (basicReward * SCALE) / lpSupply;
+
+        if (pool.totalBonus == 0) {
+            pool.accDegisPerBonusShare = 0;
+        } else {
+            pool.accDegisPerBonusShare +=
+                (bonusReward * SCALE) /
+                pool.totalBonus;
+        }
 
         // Don't forget to set the farming pool as minter
-        degis.mintDegis(address(this), degisReward);
-
-        pool.accDegisPerShare += (degisReward * SCALE) / lpSupply;
+        degis.mintDegis(address(this), basicReward + bonusReward);
 
         pool.lastRewardTimestamp = block.timestamp;
 
-        emit PoolUpdated(_poolId);
+        emit PoolUpdated(
+            _poolId,
+            pool.accDegisPerShare,
+            pool.accDegisPerBonusShare
+        );
     }
 
     /**
@@ -461,6 +574,46 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         for (uint256 poolId = 0; poolId < length; poolId++) {
             if (isFarming[poolId] == false) continue;
             else updatePool(poolId);
+        }
+    }
+
+    function updateBonus(address _user, uint256 _newVeDEGBalance) external {
+        require(msg.sender == address(veDEG), "Only veDEG contract");
+
+        // loop over each pool : beware gas cost!
+        uint256 length = poolList.length;
+
+        for (uint256 poolId; poolId < length; ++poolId) {
+            // Skip if the pool is not farming
+            if (!isFarming[poolId]) continue;
+
+            UserInfo storage user = userInfo[poolId][_user];
+            // Skip if user doesn't have any deposit in the pool
+            if (user.stakingBalance == 0) continue;
+
+            PoolInfo storage pool = poolList[poolId];
+
+            // first, update pool
+            updatePool(poolId);
+
+            // get oldFactor
+            uint256 oldFactor = user.bonus; // get old factor
+            // calculate newFactor
+            uint256 newFactor = Math.sqrt(
+                _newVeDEGBalance * user.stakingBalance
+            );
+            // update user factor
+            user.bonus = newFactor;
+            // update reward debt, take into account newFactor
+            user.rewardDebt =
+                (user.stakingBalance *
+                    pool.accDegisPerShare +
+                    newFactor *
+                    pool.accDegisPerBonusShare) /
+                SCALE;
+
+            // Update the pool's total bonus
+            pool.totalBonus += newFactor - oldFactor;
         }
     }
 
