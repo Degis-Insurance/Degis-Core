@@ -39,6 +39,8 @@ contract VoteEscrowedDegis is
     }
 
     // Degis token
+    // IERC20 public constant degis =
+    //     IERC20(0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645);
     IERC20 public degis;
 
     // Farming pool
