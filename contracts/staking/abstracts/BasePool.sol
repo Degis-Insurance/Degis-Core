@@ -208,6 +208,27 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         lastRewardBlock = block.number;
     }
 
+    function updatePoolWithFee(uint256 _fee) internal {
+        if (block.number < lastRewardBlock || block.number < startBlock) return;
+
+        uint256 balance = IERC20(poolToken).balanceOf(address(this));
+
+        if (balance == 0) {
+            lastRewardBlock = block.number;
+            return;
+        }
+
+        uint256 blocks = block.number - lastRewardBlock;
+
+        uint256 degisReward = blocks * degisPerBlock + _fee;
+
+        IStakingPoolFactory(factory).mintReward(address(this), degisReward);
+
+        accDegisPerWeight += rewardToWeight(degisReward, totalWeight);
+
+        lastRewardBlock = block.number;
+    }
+
     function _stake(
         address _user,
         uint256 _amount,
