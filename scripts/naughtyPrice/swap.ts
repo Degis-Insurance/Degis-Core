@@ -1,7 +1,9 @@
-import { formatEther, formatUnits } from "ethers/lib/utils";
+import { formatUnits } from "ethers/lib/utils";
 import hre from "hardhat";
 import { getLatestBlockTimestamp, stablecoinToWei } from "../../test/utils";
 import {
+  MockUSD,
+  MockUSD__factory,
   NaughtyFactory,
   NaughtyFactory__factory,
   NaughtyPair,
@@ -64,11 +66,11 @@ async function main() {
 
   const now = await getLatestBlockTimestamp(ethers.provider);
 
-  const usd = new ethers.Contract(
-    usdAddress,
-    ["function approve(address,uint256)"],
-    dev_account
+  const MockUSD: MockUSD__factory = await hre.ethers.getContractFactory(
+    "MockUSD"
   );
+  const usd: MockUSD = MockUSD.attach(usdAddress);
+
   await usd.approve(core.address, stablecoinToWei("100"));
   await core.deposit(policyTokenName, usdAddress, stablecoinToWei("100"));
 
@@ -78,23 +80,23 @@ async function main() {
     dev_account
   );
   await NPPolicyToken.approve(router.address, stablecoinToWei("100"));
-  await usd.approve(router.address, stablecoinToWei("100"));
 
+  const usd_balance_b = await usd.balanceOf(dev_account.address);
   //Address to add
-  const tx = await router.addLiquidity(
+  const tx = await router.swapExactTokensforTokens(
+    stablecoinToWei("20"),
+    stablecoinToWei("2"),
     policyTokenInfo.policyTokenAddress,
     usdAddress,
-    stablecoinToWei("100"),
-    stablecoinToWei("100"),
-    stablecoinToWei("80"),
-    stablecoinToWei("80"),
     dev_account.address,
     now + 3000
   );
   console.log("tx details:", await tx.wait());
 
-  const lp_balance = await pair.balanceOf(dev_account.address);
-  console.log("LP Balance: ", formatUnits(lp_balance, 6));
+  const usd_balance_a = await usd.balanceOf(dev_account.address);
+
+  console.log("usd get Balance before: ", formatUnits(usd_balance_b, 6));
+  console.log("usd get Balance after: ", formatUnits(usd_balance_a, 6));
 }
 
 main()

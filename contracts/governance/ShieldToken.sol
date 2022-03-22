@@ -14,15 +14,17 @@ import {Math} from "../libraries/Math.sol";
 import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
 
 /**
- * @title Vote Escrowed Degis
- * @notice The staking contract for DEG -> veDEG
- *         VeDEG:
+ * @title Shield Token Contract
+ * @notice The staking contract for DEG -> SHIELD
+ *         SHIELD:
  *            - Boosting the farming reward
  *            - Governance
- *         If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
- *         If you unstake any amount of degis, you will lose all of your veDEG tokens
+ *            - Participate in Initial Liquidity Matching (naughty price)
+ *            - etc.
+ *         If you stake degis, you generate Shield at the current `generationRate` until you reach `maxCap`
+ *         If you unstake any amount of degis, you will lose all of your Shield tokens
  */
-contract VoteEscrowedDegis is
+contract ShieldToken is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -34,7 +36,7 @@ contract VoteEscrowedDegis is
     struct UserInfo {
         // degis staked by user
         uint256 amount;
-        // time of last veDEG claim or first deposit if user has not claimed yet
+        // time of last Shield claim or first deposit if user has not claimed yet
         uint256 lastRelease;
     }
 
@@ -46,11 +48,11 @@ contract VoteEscrowedDegis is
     // Farming pool
     IFarmingPool public farmingPool;
 
-    // Max veDEG to staked degis ratio
-    // Max veDEG amount = maxCap * degis staked
+    // Max Shield to staked degis ratio
+    // Max Shield amount = maxCap * degis staked
     uint256 public maxCapRatio;
 
-    // Rate of veDEG generated per second, per degis staked
+    // Rate of Shield generated per second, per degis staked
     uint256 public generationRate;
 
     // Whitelist contract checker
@@ -83,13 +85,13 @@ contract VoteEscrowedDegis is
     {
         require(address(_degis) != address(0), "zero address");
 
-        // Initialize veDEG
-        __ERC20_init("Vote Escrowed DEG", "veDEG");
+        // Initialize Shield
+        __ERC20_init("Shield Token", "SLD");
         __Ownable_init();
         __ReentrancyGuard_init_unchained();
         __Pausable_init_unchained();
 
-        // Set generationRate (veDEG per sec per degis staked)
+        // Set generationRate (Shield per sec per degis staked)
         generationRate = 10**18;
 
         // Set maxCap ratio
@@ -118,7 +120,7 @@ contract VoteEscrowedDegis is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Calculate the amount of veDEG that can be claimed by user
+     * @notice Calculate the amount of Shield that can be claimed by user
      * @param _user User address
      */
     function claimable(address _user) public view returns (uint256) {
@@ -132,17 +134,17 @@ contract VoteEscrowedDegis is
         // calculate pending amount
         uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
 
-        // get user's veDEG balance
-        uint256 userVeDEGBalance = balanceOf(_user);
+        // get user's Shield balance
+        uint256 userShieldBalance = balanceOf(_user);
 
-        // user veDEG balance cannot go above user.amount * maxCap
-        uint256 veDEGCap = user.amount * maxCapRatio;
+        // user Shield balance cannot go above user.amount * maxCap
+        uint256 ShieldCap = user.amount * maxCapRatio;
 
         // first, check that user hasn't reached the max limit yet
-        if (userVeDEGBalance < veDEGCap) {
+        if (userShieldBalance < ShieldCap) {
             // then, check if pending amount will make user balance overpass maximum amount
-            if (userVeDEGBalance + pending > veDEGCap) {
-                return veDEGCap - userVeDEGBalance;
+            if (userShieldBalance + pending > ShieldCap) {
+                return ShieldCap - userShieldBalance;
             } else {
                 return pending;
             }
@@ -203,7 +205,7 @@ contract VoteEscrowedDegis is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Depisit degis for veDEG
+     * @notice Depisit degis for Shield
      * @param _amount Amount to deposit
      */
     function deposit(uint256 _amount)
@@ -215,7 +217,7 @@ contract VoteEscrowedDegis is
         require(_amount > 0, "Zero amount");
 
         if (users[msg.sender].amount > 0) {
-            // If the user has amount deposited, claim veDEG
+            // If the user has amount deposited, claim Shield
             _claim(msg.sender);
 
             // Update the amount
@@ -230,9 +232,13 @@ contract VoteEscrowedDegis is
         degis.safeTransferFrom(msg.sender, address(this), _amount);
     }
 
-    function depositMaxTime() external nonReentrant whenNotPaused {}
+    function depositMaxTime(uint256 _amount)
+        external
+        nonReentrant
+        whenNotPaused
+    {}
 
-    /// @notice claims accumulated veDEG
+    /// @notice claims accumulated Shield
     function claim() public nonReentrant whenNotPaused {
         require(users[msg.sender].amount > 0, "user has no stake");
 
@@ -241,7 +247,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Withdraw degis token
-     * @dev User will lose all veDEG once he withdrawed
+     * @dev User will lose all Shield once he withdrawed
      * @param _amount Amount to withdraw
      */
     function withdraw(uint256 _amount) external nonReentrant whenNotPaused {
@@ -254,10 +260,10 @@ contract VoteEscrowedDegis is
         // update his balance before burning or sending back degis
         users[msg.sender].amount -= _amount;
 
-        // get user veDEG balance that must be burned
-        uint256 userVeDEGBalance = balanceOf(msg.sender);
+        // get user Shield balance that must be burned
+        uint256 userShieldBalance = balanceOf(msg.sender);
 
-        _burn(msg.sender, userVeDEGBalance);
+        _burn(msg.sender, userShieldBalance);
 
         // send back the staked degis
         degis.safeTransfer(msg.sender, _amount);
@@ -268,7 +274,7 @@ contract VoteEscrowedDegis is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Finish claiming veDEG
+     * @notice Finish claiming Shield
      * @param _user User address
      */
     function _claim(address _user) internal {
@@ -287,7 +293,7 @@ contract VoteEscrowedDegis is
      * @notice Update the bonus in farming pool
      * @dev Every time when token is transferred (balance change)
      * @param _user User address
-     * @param _newBalance New veDEG balance
+     * @param _newBalance New Shield balance
      */
     function _afterTokenOperation(address _user, uint256 _newBalance)
         internal

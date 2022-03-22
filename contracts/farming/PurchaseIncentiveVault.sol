@@ -6,9 +6,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
-
 import "../utils/Pausable.sol";
-
 import "../libraries/SafePRBMath.sol";
 
 /**
@@ -61,16 +59,14 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
 
-    // User address => Pending rewards
-    mapping(address => uint256) public userRewards;
-
-    mapping(address => uint256) public userLastRewardRound;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event DegisRewardChanged(uint256 oldPerRound, uint256 newPerRound);
+    event DegisRewardChanged(
+        uint256 oldRewardPerRound,
+        uint256 newRewardPerRound
+    );
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
     event MaxRoundChanged(uint256 oldMaxRound, uint256 newMaxRound);
     event Stake(
