@@ -77,8 +77,8 @@ contract PolicyCore is Ownable {
     // Lottery address
     address public lottery;
 
-    // Emergency pool contract address
-    address public emergencyPool;
+    // Income sharing contract address
+    address public incomeSharing;
 
     // Naughty Router contract address
     address public naughtyRouter;
@@ -133,7 +133,7 @@ contract PolicyCore is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     event LotteryChanged(address newLotteryAddress);
-    event EmergencyPoolChanged(address newEmergencyPool);
+    event IncomeSharingChanged(address newIncomeSharing);
     event NaughtyRouterChanged(address newRouter);
     event PolicyTokenDeployed(
         string tokenName,
@@ -397,11 +397,11 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Change the address of emergency pool
-     * @param _emergencyPool Address of the new emergencyPool
+     * @param _incomeSharing Address of the new incomeSharing
      */
-    function setEmergencyPool(address _emergencyPool) external onlyOwner {
-        emergencyPool = _emergencyPool;
-        emit EmergencyPoolChanged(_emergencyPool);
+    function setIncomeSharing(address _incomeSharing) external onlyOwner {
+        incomeSharing = _incomeSharing;
+        emit IncomeSharingChanged(_incomeSharing);
     }
 
     /**
@@ -894,8 +894,8 @@ contract PolicyCore is Ownable {
      */
     function collectIncome(address _stablecoin) public {
         require(
-            lottery != address(0) && emergencyPool != address(0),
-            "Please set the lottery & emergencyPool address"
+            lottery != address(0) && incomeSharing != address(0),
+            "Please set the lottery & incomeSharing address"
         );
 
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
@@ -906,7 +906,7 @@ contract PolicyCore is Ownable {
         );
 
         IERC20(_stablecoin).safeTransfer(lottery, amountToLottery);
-        IERC20(_stablecoin).safeTransfer(emergencyPool, amountToEmergency);
+        IERC20(_stablecoin).safeTransfer(incomeSharing, amountToEmergency);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -978,10 +978,10 @@ contract PolicyCore is Ownable {
     /**
      * @notice Generate the policy token name
      * @param _tokenName Name of the stike token (BTC, ETH, AVAX...)
-     * @param _decimals Decimals of the name generation (0,1=>1)
+     * @param _decimals Decimals of the name generation (0,1=>1, 2=>2)
      * @param _strikePrice Strike price of the policy (18 decimals)
      * @param _isCall The policy's payoff is triggered when higher(true) or lower(false)
-     * @param _round Round of the policy (e.g. 2112, 2201)
+     * @param _round Round of the policy, named by <month><day> (e.g. 0320, 1215)
      */
     function _generateName(
         string memory _tokenName,
