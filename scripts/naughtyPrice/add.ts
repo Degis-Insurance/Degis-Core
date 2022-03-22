@@ -1,8 +1,6 @@
 import hre from "hardhat";
 import { getLatestBlockTimestamp, stablecoinToWei } from "../../test/utils";
 import {
-  FarmingPool,
-  FarmingPool__factory,
   NaughtyFactory,
   NaughtyFactory__factory,
   NaughtyPair,

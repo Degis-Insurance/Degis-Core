@@ -11,20 +11,20 @@ import {
 import { parseUnits } from "ethers/lib/utils";
 import { toBN } from "../../test/utils";
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
+import { Contract } from "ethers";
 
 task("deployNPToken", "Deploy a new naughty price token")
   .addParam("name", "Strike token asset", null, types.string)
   .addParam("stablecoin", "Stablecoin asset", null, types.string)
   .addParam("k", "Strike price", null, types.string)
   .addParam(
-    "nameDecimals",
+    "namedecimals",
     "Decimals of this policy token name",
     null,
     types.int
   )
-  .addParam("tokenDecimals", "Decimals of this policy token", null, types.int)
   .addParam("iscall", "Whether it is a call token", null, types.int)
-  .addParam("round", "Round of this token's insurance", null, types.int)
+  .addParam("round", "Round of this token's insurance", null, types.string)
   .addParam("deadline", "Deadline of this token's swapping", null, types.int)
   .addParam(
     "settletime",
@@ -47,25 +47,30 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.round;
     console.log("Generated policy toke name: ", policyTokenName);
 
-    const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
-    console.log("Stablecoin address: ", stablecoinAddress);
+    let stablecoinAddress: string;
 
     const { network } = hre;
+
+    const addressList = readAddressList();
+    const tokenList = readNaughtyTokenList();
+
+    if (network.name == "avax" || network.name == "avaxTest") {
+      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+    } else stablecoinAddress = addressList[network.name].MockUSD;
+
+    console.log("Stablecoin address: ", stablecoinAddress);
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The default signer is: ", dev_account.address);
 
-    const stablecoinInstance = new ethers.Contract(
+    const stablecoinInstance: Contract = new ethers.Contract(
       stablecoinAddress,
-      "function decimals() public view returns (uint8)",
+      ["function decimals() public view returns (uint8)"],
       dev_account
     );
     const stablecoinDecimals = await stablecoinInstance.decimals();
     console.log("Stablecoin decimals: ", stablecoinDecimals);
-
-    const addressList = readAddressList();
-    const tokenList = readNaughtyTokenList();
 
     const policyCoreAddress = addressList[network.name].PolicyCore;
     console.log(
@@ -81,7 +86,7 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.name,
       stablecoinAddress,
       boolisCall,
-      taskArgs.nameDecimals,
+      taskArgs.namedecimals,
       stablecoinDecimals,
       parseUnits(taskArgs.k),
       taskArgs.round,

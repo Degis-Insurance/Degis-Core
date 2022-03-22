@@ -15,6 +15,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const DegisToken = await get("DegisToken");
 
+  console.log("DegisTOken address: ", DegisToken.address);
+
   const farmingPool = await deploy("FarmingPool", {
     contract: "FarmingPool",
     from: deployer,

@@ -132,6 +132,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
         count: 20,
       },
+      gasPrice: 88000000000,
     },
   },
   gasReporter: {

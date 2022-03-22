@@ -437,7 +437,7 @@ contract PolicyCore is Ownable {
         uint256 _nameDecimals,
         uint256 _tokenDecimals,
         uint256 _strikePrice,
-        uint256 _round,
+        string memory _round,
         uint256 _deadline,
         uint256 _settleTimestamp
     ) external onlyOwner {
@@ -988,7 +988,7 @@ contract PolicyCore is Ownable {
         uint256 _decimals,
         uint256 _strikePrice,
         bool _isCall,
-        uint256 _round
+        string memory _round
     ) public pure returns (string memory) {
         // The direction is "H"(Call) or "L"(Put)
         string memory direction = _isCall ? "H" : "L";
@@ -1014,7 +1014,7 @@ contract PolicyCore is Ownable {
                 "_",
                 direction,
                 "_",
-                _round.uintToString()
+                _round
             )
         );
         return name;

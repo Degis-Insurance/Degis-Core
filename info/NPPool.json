@@ -1,7 +1,15 @@
 {
-  "fuji": {},
-  "avax": {},
-  "avaxTest": {},
-  "localhost": {},
-  "rinkeby": {}
+	"fuji": {},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {
+		"AVAX_100.0_L_0322": {
+			"poolAddress": "0xeF97B05E1efd1264E797ffa4EBaF8aDC3EA6cF1a",
+			"policyTokenAddress": "0xe877FbAeA642776a6Fa48D3228643448A78092C4",
+			"stablecoinAddress": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+			"poolDeadline": "1648033200",
+			"feeRate": 20
+		}
+	},
+	"rinkeby": {}
 }
