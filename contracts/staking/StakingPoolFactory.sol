@@ -11,13 +11,9 @@ contract StakingPoolFactory is Ownable {
     struct PoolData {
         // @dev pool token address (Degis / Degis LP Token)
         address poolToken;
-        // @dev pool address
         address poolAddress;
-        // @dev start block
-        uint256 startBlock;
-        // @dev pool weight
-        uint256 degisPerBlock;
-        // @dev flash pool flag
+        uint256 startTimestamp;
+        uint256 degisPerSecond; // Reward speed
         bool isFlashPool;
     }
 
@@ -39,21 +35,21 @@ contract StakingPoolFactory is Ownable {
      * @param by who deploys a new pool
      * @param poolToken pool token address
      * @param poolAddress deployed pool instance address
-     * @param degisPerBlock pool weight
+     * @param degisPerSecond Degis per second, reward speed
      * @param isFlashPool flag indicating if pool is a flash pool
      */
     event PoolRegistered(
         address indexed by,
         address indexed poolToken,
         address indexed poolAddress,
-        uint256 degisPerBlock,
+        uint256 degisPerSecond,
         bool isFlashPool
     );
 
     /**
      * @notice Change the degis reward for pool
      */
-    event DegisPerBlockChanged(address pool, uint256 degisPerBlock);
+    event DegisPerSecondChanged(address pool, uint256 degisPerSecond);
 
     /**
      * @dev Creates/deploys a factory instance
@@ -87,16 +83,16 @@ contract StakingPoolFactory is Ownable {
         // via the pool interface (IPool)
         address poolToken = IPool(poolAddr).poolToken();
         bool isFlashPool = IPool(poolAddr).isFlashPool();
-        uint256 startBlock = IPool(poolAddr).startBlock();
-        uint256 degisPerBlock = IPool(poolAddr).degisPerBlock();
+        uint256 startTimestamp = IPool(poolAddr).startTimestamp();
+        uint256 degisPerSecond = IPool(poolAddr).degisPerSecond();
 
         // create the in-memory structure and return it
         return
             PoolData({
                 poolToken: poolToken,
                 poolAddress: poolAddr,
-                startBlock: startBlock,
-                degisPerBlock: degisPerBlock,
+                startTimestamp: startTimestamp,
+                degisPerSecond: degisPerSecond,
                 isFlashPool: isFlashPool
             });
     }
@@ -108,15 +104,15 @@ contract StakingPoolFactory is Ownable {
     /**
      * @notice Set degis per block
      * @param _pool Address of the staking pool
-     * @param _degisPerBlock Degis reward per block
+     * @param _degisPerSecond Degis reward per block
      */
-    function setDegisPerBlock(address _pool, uint256 _degisPerBlock)
+    function setDegisPerSecond(address _pool, uint256 _degisPerSecond)
         external
         onlyOwner
     {
-        BasePool(_pool).setDegisPerBlock(_degisPerBlock);
+        BasePool(_pool).setDegisPerSecond(_degisPerSecond);
 
-        emit DegisPerBlockChanged(_pool, _degisPerBlock);
+        emit DegisPerSecondChanged(_pool, _degisPerSecond);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -125,25 +121,25 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @dev Creates a staking pool and registers it within the factory
-     * @param poolToken pool token address
-     * @param startBlock init block to be used for the pool created
-     * @param degisPerBlock weight of the pool to be created
-     * @param isFlashPool Whether it is a flash pool
+     * @param _poolToken pool token address
+     * @param _startTimestamp init block to be used for the pool created
+     * @param _degisPerSecond weight of the pool to be created
+     * @param _isFlashPool Whether it is a flash pool
      */
     function createPool(
-        address poolToken,
-        uint256 startBlock,
-        uint256 degisPerBlock,
-        bool isFlashPool
+        address _poolToken,
+        uint256 _startTimestamp,
+        uint256 _degisPerSecond,
+        bool _isFlashPool
     ) external onlyOwner {
         // create/deploy new core pool instance
         IPool pool = new CoreStakingPool(
             degisToken,
-            poolToken,
+            _poolToken,
             address(this),
-            startBlock,
-            degisPerBlock,
-            isFlashPool
+            _startTimestamp,
+            _degisPerSecond,
+            _isFlashPool
         );
 
         // register it within a factory
@@ -163,7 +159,7 @@ contract StakingPoolFactory is Ownable {
         // via the pool interface (IPool)
         address poolToken = IPool(_poolAddr).poolToken();
         bool isFlashPool = IPool(_poolAddr).isFlashPool();
-        uint256 degisPerBlock = IPool(_poolAddr).degisPerBlock();
+        uint256 degisPerSecond = IPool(_poolAddr).degisPerSecond();
 
         // ensure that the pool is not already registered within the factory
         require(
@@ -181,7 +177,7 @@ contract StakingPoolFactory is Ownable {
             msg.sender,
             poolToken,
             _poolAddr,
-            degisPerBlock,
+            degisPerSecond,
             isFlashPool
         );
     }

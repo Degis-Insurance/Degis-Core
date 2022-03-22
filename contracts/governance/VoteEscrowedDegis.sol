@@ -63,6 +63,7 @@ contract VoteEscrowedDegis is
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+    event GenerationRateChanged(uint256 oldRate, uint256 newRate);
 
     event Staked(address indexed user, uint256 indexed amount);
     event Unstaked(address indexed user, uint256 indexed amount);
@@ -89,7 +90,7 @@ contract VoteEscrowedDegis is
         __Pausable_init_unchained();
 
         // Set generationRate (veDEG per sec per degis staked)
-        generationRate = 10**15;
+        generationRate = 10**18;
 
         // Set maxCap ratio
         maxCapRatio = 100;
@@ -193,6 +194,7 @@ contract VoteEscrowedDegis is
             _generationRate > 0,
             "Generation rate should be greater than 0"
         );
+        emit GenerationRateChanged(generationRate, _generationRate);
         generationRate = _generationRate;
     }
 

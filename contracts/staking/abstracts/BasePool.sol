@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../../libraries/SafePRBMath.sol";
 
+import "hardhat/console.sol";
+
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
     using SafePRBMath for uint256;
@@ -28,7 +30,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // Reward token: degis
     address public degisToken;
 
-    uint256 public startBlock;
+    uint256 public startTimestamp;
 
     // Degis reward speed
     uint256 public degisPerSecond;
@@ -79,7 +81,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         address _degisToken,
         address _poolToken,
         address _factory,
-        uint256 _startBlock,
+        uint256 _startTimestamp,
         uint256 _degisPerSecond,
         bool _isFlashPool
     ) {
@@ -90,9 +92,11 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
         degisPerSecond = _degisPerSecond;
 
-        startBlock = _startBlock;
+        startTimestamp = _startTimestamp;
 
-        // lastRewardTimestamp = block.timestamp > startBlock ? block.timestamp : startBlock;
+        lastRewardTimestamp = block.timestamp > _startTimestamp
+            ? block.timestamp
+            : _startTimestamp;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -119,7 +123,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function pendingRewards(address _user) external view returns (uint256) {
         if (
             block.timestamp < lastRewardTimestamp ||
-            block.timestamp < startBlock
+            block.timestamp < startTimestamp
         ) return 0;
 
         uint256 blocks = block.timestamp - lastRewardTimestamp;
@@ -159,7 +163,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-    function setdegisPerSecond(uint256 _degisPerSecond) external onlyFactory {
+    function setDegisPerSecond(uint256 _degisPerSecond) external onlyFactory {
         degisPerSecond = _degisPerSecond;
     }
 
@@ -201,10 +205,12 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function _updatePoolWithFee(uint256 _fee) internal {
         if (
             block.timestamp < lastRewardTimestamp ||
-            block.timestamp < startBlock
+            block.timestamp < startTimestamp
         ) return;
 
         uint256 balance = IERC20(poolToken).balanceOf(address(this));
+
+        console.log(balance);
 
         if (balance == 0) {
             lastRewardTimestamp = block.timestamp;
@@ -214,6 +220,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         uint256 timePassed = block.timestamp - lastRewardTimestamp;
 
         uint256 degisReward = timePassed * degisPerSecond + _fee;
+
+        console.log(degisReward);
 
         IStakingPoolFactory(factory).mintReward(address(this), degisReward);
 
@@ -227,7 +235,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         uint256 _amount,
         uint256 _lockUntil
     ) internal virtual nonReentrant {
-        require(block.timestamp > startBlock, "Pool not started yet");
+        require(block.timestamp > startTimestamp, "Pool not started yet");
         require(_amount > 0, "Zero amount");
         require(
             _lockUntil == 0 ||
@@ -236,9 +244,12 @@ abstract contract BasePool is IPool, ReentrancyGuard {
             "Invalid lock interval"
         );
 
-        // Charge deposit fee and distribute to previous stakers
-        uint256 depositFee = (_amount * fee) / 100;
-        _updatePoolWithFee(depositFee);
+        uint256 depositFee;
+        if (IERC20(poolToken).balanceOf(address(this)) > 0) {
+            // Charge deposit fee and distribute to previous stakers
+            depositFee = (_amount * fee) / 100;
+            _updatePoolWithFee(depositFee);
+        }
 
         UserInfo storage user = users[_user];
 

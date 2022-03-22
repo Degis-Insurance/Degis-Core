@@ -70,6 +70,9 @@ describe("Farming Pool", function () {
 
     // Add minter role for farming pool contract
     await degis.addMinter(pool.address);
+
+    // Set veDEG address in farming
+    await pool.setVeDEG(veDEG.address);
   });
 
   describe("Deployment", function () {
@@ -495,13 +498,18 @@ describe("Farming Pool", function () {
     });
 
     it("should be able to get bonus reward", async function () {
+      await veDEG.claim();
+      await veDEG.connect(user1).claim();
+
+      // 2 seconds reward: 2 x 1 x 100 = 200 veDEG
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("200"));
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("200"));
+
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
       await pool.stake(1, toWei("100"));
 
       await mineBlocks(1);
-
-      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("5"));
 
       const poolInfo = await pool.poolList(1);
       console.log(poolInfo);

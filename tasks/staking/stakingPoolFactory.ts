@@ -13,13 +13,13 @@ import { formatEther, parseUnits } from "ethers/lib/utils";
 
 task("setStakingReward", "Set the degis reward of a staking pool")
   .addParam("pool", "Address of the pool", null, types.string)
-  .addParam("reward", "Degis reward per block", null, types.int)
+  .addParam("reward", "Degis reward per second", null, types.int)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolAddress = taskArgs.pool;
-    const degisPerBlock = taskArgs.reward;
+    const degisPerSecond = taskArgs.reward;
     console.log("Pool address to be set: ", poolAddress);
-    console.log("New reward speed: ", degisPerBlock, "degis/block");
+    console.log("New reward speed: ", degisPerSecond, "degis/second");
 
     const { network } = hre;
 
@@ -38,9 +38,9 @@ task("setStakingReward", "Set the degis reward of a staking pool")
     );
 
     // Set the start block
-    const tx = await factory.setDegisPerBlock(
+    const tx = await factory.setDegisPerSecond(
       poolAddress,
-      parseUnits(degisPerBlock.toString())
+      parseUnits(degisPerSecond.toString())
     );
     console.log("Tx details: ", await tx.wait());
 
@@ -48,7 +48,7 @@ task("setStakingReward", "Set the degis reward of a staking pool")
     const stakingPool: CoreStakingPool__factory =
       await hre.ethers.getContractFactory("CoreStakingPool");
     const pool: CoreStakingPool = stakingPool.attach(poolAddress);
-    const degisR = await pool.degisPerBlock();
+    const degisR = await pool.degisPerSecond();
     console.log("Degis reward after set: ", formatEther(degisR));
   });
 

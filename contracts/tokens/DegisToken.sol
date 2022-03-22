@@ -28,7 +28,7 @@ contract DegisToken is ERC20PermitWithMultipleMinters {
     // ************************************* Modifiers **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Degis toke has a hard cap of 100 million
+    // Degis token has a hard cap of 100 million
     modifier notExceedCap(uint256 _amount) {
         require(
             totalSupply() + _amount <= CAP,

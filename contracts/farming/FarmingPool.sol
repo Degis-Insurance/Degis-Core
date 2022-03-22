@@ -571,15 +571,24 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
     /**
      * @notice Update all farming pools (except for those stopped ones)
+     * @dev Can be called by anyone
+     *      Only update those active pools
      */
     function massUpdatePools() public {
         uint256 length = poolList.length;
-        for (uint256 poolId = 0; poolId < length; poolId++) {
+        for (uint256 poolId; poolId < length; poolId++) {
             if (isFarming[poolId] == false) continue;
             else updatePool(poolId);
         }
     }
 
+    /**
+     * @notice Update a user's bonus
+     * @dev When veDEG has balance change
+     *      Only called by veDEG contract
+     * @param _user User address
+     * @param _newVeDEGBalance New veDEG balance
+     */
     function updateBonus(address _user, uint256 _newVeDEGBalance) external {
         require(msg.sender == address(veDEG), "Only veDEG contract");
 

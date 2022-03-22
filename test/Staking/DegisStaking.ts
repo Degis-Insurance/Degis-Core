@@ -79,11 +79,11 @@ describe("Degis Staking", function () {
     });
 
     it("should be able to check the pool's information", async function () {
-      const blockNumber = await ethers.provider.getBlockNumber();
+      const blockTimestamp = await getLatestBlockTimestamp(ethers.provider);
 
       await factory.createPool(
         poolToken.address,
-        blockNumber,
+        blockTimestamp,
         toWei("1"),
         false
       );
@@ -101,27 +101,21 @@ describe("Degis Staking", function () {
       const poolInfo = await factory.getPoolData(poolToken.address);
       expect(poolInfo.poolAddress).to.equal(contractAddress);
       expect(poolInfo.poolToken).to.equal(poolToken.address);
-      expect(poolInfo.startBlock).to.equal(blockNumber);
-      expect(poolInfo.degisPerBlock).to.equal(toWei("1"));
+      expect(poolInfo.startTimestamp).to.equal(blockTimestamp);
+      expect(poolInfo.degisPerSecond).to.equal(toWei("1"));
       expect(poolInfo.isFlashPool).to.equal(false);
     });
   });
 
   describe("Pool Functions", async function () {
     let poolAddress: string;
-    let blockNumber: number;
+    let delay: number;
     let now: number;
 
     beforeEach(async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
-      blockNumber = await getLatestBlockNumber(ethers.provider);
 
-      await factory.createPool(
-        poolToken.address,
-        blockNumber,
-        toWei("1"),
-        false
-      );
+      await factory.createPool(poolToken.address, now, toWei("1"), false);
 
       poolAddress = await factory.getPoolAddress(poolToken.address);
 
@@ -130,7 +124,8 @@ describe("Degis Staking", function () {
       await poolToken.mint(dev_account.address, toWei("100000"));
       await poolToken.approve(poolAddress, toWei("1000"));
 
-      await setNextBlockTime(now + 60);
+      delay = 60;
+      await setNextBlockTime(now + delay);
     });
 
     it("should be able to stake pool tokens and check the user status", async function () {
@@ -156,7 +151,7 @@ describe("Degis Staking", function () {
     it("should not be able to stake tokens before the pool starts", async function () {
       await factory.createPool(
         testAddress.address,
-        blockNumber + 200,
+        now + 200,
         toWei("1"),
         false
       );
@@ -184,18 +179,28 @@ describe("Degis Staking", function () {
 
       await pool.harvest();
       expect(await degis.balanceOf(dev_account.address)).to.equal(
-        toWei((blocknum + 1).toString())
+        toWei((blocknum + delay).toString())
       );
     });
 
     it("should be able to withdraw pool tokens and get reward", async function () {
+      console.log("now", now);
       await pool.stake(toWei("100"), now + 6000);
+      const time1 = await getLatestBlockTimestamp(ethers.provider);
+      console.log("time1", time1);
 
       await setNextBlockTime(now + 6000);
 
-      await pool.unstake(0, toWei("10"));
+      const time3 = await getLatestBlockTimestamp(ethers.provider);
+      console.log("time3", time3);
 
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
+      await pool.unstake(0, toWei("10"));
+      const time2 = await getLatestBlockTimestamp(ethers.provider);
+      console.log("time2", time2);
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei((time2 - time1 - 1 + delay).toString())
+      );
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
         toWei("99910")
       );

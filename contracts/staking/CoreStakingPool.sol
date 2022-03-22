@@ -14,7 +14,7 @@ contract CoreStakingPool is Ownable, BasePool {
         address _poolToken,
         address _factory,
         uint256 _startBlock,
-        uint256 _degisPerBlock,
+        uint256 _degisPerSecond,
         bool _isFlashPool
     )
         Ownable(msg.sender)
@@ -23,7 +23,7 @@ contract CoreStakingPool is Ownable, BasePool {
             _poolToken,
             _factory,
             _startBlock,
-            _degisPerBlock,
+            _degisPerSecond,
             _isFlashPool
         )
     {}
