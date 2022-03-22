@@ -13,35 +13,35 @@ import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 
 // tasks;
-// import "./tasks/clearRecord";
+import "./tasks/clearRecord";
 
-// // Farming Tasks
-// import "./tasks/farming/farmingPool";
-// import "./tasks/farming/purchaseIncentive";
+// Farming Tasks
+import "./tasks/farming/farmingPool";
+import "./tasks/farming/purchaseIncentive";
 
-// // Miserable Flight Tasks
-// import "./tasks/misrableFlight/sigManager";
-// import "./tasks/misrableFlight/setAddress";
-// import "./tasks/misrableFlight/policyFlow";
-// import "./tasks/misrableFlight/insurancePool";
-// import "./tasks/misrableFlight/flightOracle";
+// Miserable Flight Tasks
+import "./tasks/misrableFlight/sigManager";
+import "./tasks/misrableFlight/setAddress";
+import "./tasks/misrableFlight/policyFlow";
+import "./tasks/misrableFlight/insurancePool";
+import "./tasks/misrableFlight/flightOracle";
 
-// // Naughty Price Tasks
-// import "./tasks/naughtyPrice/setAddress";
-// import "./tasks/naughtyPrice/settleResult";
-// import "./tasks/naughtyPrice/deployToken";
-// import "./tasks/naughtyPrice/deployPool";
-// import "./tasks/naughtyPrice/addStablecoin";
+// Naughty Price Tasks
+import "./tasks/naughtyPrice/setAddress";
+import "./tasks/naughtyPrice/settleResult";
+import "./tasks/naughtyPrice/deployToken";
+import "./tasks/naughtyPrice/deployPool";
+import "./tasks/naughtyPrice/addStablecoin";
 
-// // Lucky Box Tasks
-// import "./tasks/lucky/setAddress";
-// import "./tasks/lucky/degisLottery";
+// Lucky Box Tasks
+import "./tasks/lucky/setAddress";
+import "./tasks/lucky/degisLottery";
 
-// // Token Tasks
-// import "./tasks/tokens/addMinterBurner";
+// Token Tasks
+import "./tasks/tokens/addMinterBurner";
 
-// // Staking Tasks
-// import "./tasks/staking/stakingPoolFactory";
+// Staking Tasks
+import "./tasks/staking/stakingPoolFactory";
 
 dotenv.config();
 
