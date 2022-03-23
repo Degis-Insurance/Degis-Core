@@ -6,7 +6,7 @@ import "./IVeERC20.sol";
 /**
  * @dev Interface of the VePtp
  */
-interface IShield is IVeERC20 {
+interface IVeDEG is IVeERC20 {
     function isUser(address _addr) external view returns (bool);
 
     function deposit(uint256 _amount) external;

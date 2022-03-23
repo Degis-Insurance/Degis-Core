@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "../utils/OwnableWithoutContext.sol";
-import "@openzeppelin/contracts/security/Pausable.sol";
-import "../tokens/interfaces/IDegisToken.sol";
-import "../libraries/Math.sol";
-import {IShield} from "../governance/interfaces/IShield.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
+import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
+import {Math} from "../libraries/Math.sol";
+import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
 
 /**
  * @title  Farming Pool
@@ -28,8 +28,8 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // The reward token is degis
     IDegisToken public degis;
 
-    // The bonus reward depends on Shield
-    IShield public Shield;
+    // The bonus reward depends on veDEG
+    IVeDEG public veDEG;
 
     // SCALE/Precision used for calculating rewards
     uint256 public constant SCALE = 1e12;
@@ -46,8 +46,8 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         uint256 basicDegisPerSecond; // Basic Reward speed
         uint256 bonusDegisPerSecond; // Bonus reward speed
         uint256 lastRewardTimestamp; // Last reward timestamp
-        uint256 accDegisPerShare; // Accumulated degis per share (for those without Shield boosting)
-        uint256 accDegisPerBonusShare; // Accumulated degis per bonus share (for those with Shield boosting)
+        uint256 accDegisPerShare; // Accumulated degis per share (for those without veDEG boosting)
+        uint256 accDegisPerBonusShare; // Accumulated degis per bonus share (for those with veDEG boosting)
         uint256 totalBonus; // Total bonus factors
     }
     PoolInfo[] public poolList;
@@ -61,7 +61,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     struct UserInfo {
         uint256 rewardDebt; // degis reward debt
         uint256 stakingBalance; // the amount of a user's staking in the pool
-        uint256 bonus; // user bonus point (by Shield balance)
+        uint256 bonus; // user bonus point (by veDEG balance)
     }
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
@@ -245,8 +245,8 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
         _unpause();
     }
 
-    function setShield(address _Shield) external onlyOwner {
-        Shield = IShield(_Shield);
+    function setVeDEG(address _veDEG) external onlyOwner {
+        veDEG = IVeDEG(_veDEG);
     }
 
     /**
@@ -408,10 +408,10 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         user.stakingBalance += actualAmount;
 
-        if (address(Shield) != address(0)) {
-            // Update the user's bonus if Shield boosting is on
+        if (address(veDEG) != address(0)) {
+            // Update the user's bonus if veDEG boosting is on
             uint256 oldBonus = user.bonus;
-            user.bonus = (user.stakingBalance * Shield.balanceOf(msg.sender))
+            user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
             pool.totalBonus += user.bonus - oldBonus;
@@ -467,10 +467,10 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
         user.stakingBalance -= actualAmount;
 
-        // Update the user's bonus when Shield boosting is on
-        if (address(Shield) != address(0)) {
+        // Update the user's bonus when veDEG boosting is on
+        if (address(veDEG) != address(0)) {
             uint256 oldBonus = user.bonus;
-            user.bonus = (user.stakingBalance * Shield.balanceOf(msg.sender))
+            user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
             pool.totalBonus += user.bonus - oldBonus;
@@ -585,13 +585,13 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
 
     /**
      * @notice Update a user's bonus
-     * @dev When Shield has balance change
-     *      Only called by Shield contract
+     * @dev When veDEG has balance change
+     *      Only called by veDEG contract
      * @param _user User address
-     * @param _newShieldBalance New Shield balance
+     * @param _newVeDEGBalance New veDEG balance
      */
-    function updateBonus(address _user, uint256 _newShieldBalance) external {
-        require(msg.sender == address(Shield), "Only Shield contract");
+    function updateBonus(address _user, uint256 _newVeDEGBalance) external {
+        require(msg.sender == address(veDEG), "Only veDEG contract");
 
         // loop over each pool : beware gas cost!
         uint256 length = poolList.length;
@@ -612,8 +612,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             // get oldFactor
             uint256 oldFactor = user.bonus; // get old factor
             // calculate newFactor
-            uint256 newFactor = (_newShieldBalance * user.stakingBalance)
-                .sqrt();
+            uint256 newFactor = (_newVeDEGBalance * user.stakingBalance).sqrt();
             // update user factor
             user.bonus = newFactor;
             // update reward debt, take into account newFactor

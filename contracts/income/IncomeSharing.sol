@@ -16,7 +16,23 @@ contract IncomeSharing {
     }
     mapping(address => UserInfo) public users;
 
+    struct RoundInfo {
+        uint256 totalShares;
+        uint256 totalWeight;
+        uint256 startTimestamp;
+        uint256 endTimestamp;
+    }
+    mapping(uint256 => RoundInfo) public rounds;
+
     uint256 public currentRound;
+
+    function getRoundInfo(uint256 _round)
+        external
+        view
+        returns (RoundInfo memory)
+    {
+        return rounds[_round];
+    }
 
     function deposit(uint256 _amount) public {
         degis.safeTransferFrom(msg.sender, address(this), _amount);

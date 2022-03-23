@@ -14,17 +14,17 @@ import {Math} from "../libraries/Math.sol";
 import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
 
 /**
- * @title Shield Token Contract
- * @notice The staking contract for DEG -> SHIELD
- *         SHIELD:
+ * @title Vote Escrowed Degis
+ * @notice The staking contract for DEG -> veDEG
+ *         veDEG:
  *            - Boosting the farming reward
  *            - Governance
  *            - Participate in Initial Liquidity Matching (naughty price)
  *            - etc.
- *         If you stake degis, you generate Shield at the current `generationRate` until you reach `maxCap`
- *         If you unstake any amount of degis, you will lose all of your Shield tokens
+ *         If you stake degis, you generate veDEG at the current `generationRate` until you reach `maxCap`
+ *         If you unstake any amount of degis, you will lose all of your veDEG tokens
  */
-contract ShieldToken is
+contract VoteEscrowedDegis is
     Initializable,
     OwnableUpgradeable,
     ReentrancyGuardUpgradeable,
@@ -36,7 +36,7 @@ contract ShieldToken is
     struct UserInfo {
         // degis staked by user
         uint256 amount;
-        // time of last Shield claim or first deposit if user has not claimed yet
+        // time of last veDEG claim or first deposit if user has not claimed yet
         uint256 lastRelease;
     }
 
@@ -48,11 +48,11 @@ contract ShieldToken is
     // Farming pool
     IFarmingPool public farmingPool;
 
-    // Max Shield to staked degis ratio
-    // Max Shield amount = maxCap * degis staked
+    // Max veDEG to staked degis ratio
+    // Max veDEG amount = maxCap * degis staked
     uint256 public maxCapRatio;
 
-    // Rate of Shield generated per second, per degis staked
+    // Rate of veDEG generated per second, per degis staked
     uint256 public generationRate;
 
     // Whitelist contract checker
@@ -71,10 +71,6 @@ contract ShieldToken is
     event Unstaked(address indexed user, uint256 indexed amount);
     event Claimed(address indexed user, uint256 indexed amount);
 
-    /// @notice events describing NFT staking and unstaking
-    event StakedNft(address indexed user, uint256 indexed nftId);
-    event UnstakedNft(address indexed user, uint256 indexed nftId);
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -85,13 +81,13 @@ contract ShieldToken is
     {
         require(address(_degis) != address(0), "zero address");
 
-        // Initialize Shield
-        __ERC20_init("Shield Token", "SLD");
+        // Initialize veDEG
+        __ERC20_init("Vote Escrowed Degis", "veDEG");
         __Ownable_init();
         __ReentrancyGuard_init_unchained();
         __Pausable_init_unchained();
 
-        // Set generationRate (Shield per sec per degis staked)
+        // Set generationRate (veDEG per sec per degis staked)
         generationRate = 10**18;
 
         // Set maxCap ratio
@@ -120,7 +116,7 @@ contract ShieldToken is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Calculate the amount of Shield that can be claimed by user
+     * @notice Calculate the amount of veDEG that can be claimed by user
      * @param _user User address
      */
     function claimable(address _user) public view returns (uint256) {
@@ -134,17 +130,17 @@ contract ShieldToken is
         // calculate pending amount
         uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
 
-        // get user's Shield balance
-        uint256 userShieldBalance = balanceOf(_user);
+        // get user's veDEG balance
+        uint256 userVeDEGBalance = balanceOf(_user);
 
-        // user Shield balance cannot go above user.amount * maxCap
-        uint256 ShieldCap = user.amount * maxCapRatio;
+        // user veDEG balance cannot go above user.amount * maxCap
+        uint256 veDEGCap = user.amount * maxCapRatio;
 
         // first, check that user hasn't reached the max limit yet
-        if (userShieldBalance < ShieldCap) {
+        if (userVeDEGBalance < veDEGCap) {
             // then, check if pending amount will make user balance overpass maximum amount
-            if (userShieldBalance + pending > ShieldCap) {
-                return ShieldCap - userShieldBalance;
+            if (userVeDEGBalance + pending > veDEGCap) {
+                return veDEGCap - userVeDEGBalance;
             } else {
                 return pending;
             }
@@ -205,7 +201,7 @@ contract ShieldToken is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Depisit degis for Shield
+     * @notice Depisit degis for veDEG
      * @param _amount Amount to deposit
      */
     function deposit(uint256 _amount)
@@ -217,7 +213,7 @@ contract ShieldToken is
         require(_amount > 0, "Zero amount");
 
         if (users[msg.sender].amount > 0) {
-            // If the user has amount deposited, claim Shield
+            // If the user has amount deposited, claim veDEG
             _claim(msg.sender);
 
             // Update the amount
@@ -238,7 +234,7 @@ contract ShieldToken is
         whenNotPaused
     {}
 
-    /// @notice claims accumulated Shield
+    /// @notice claims accumulated veDEG
     function claim() public nonReentrant whenNotPaused {
         require(users[msg.sender].amount > 0, "user has no stake");
 
@@ -247,7 +243,7 @@ contract ShieldToken is
 
     /**
      * @notice Withdraw degis token
-     * @dev User will lose all Shield once he withdrawed
+     * @dev User will lose all veDEG once he withdrawed
      * @param _amount Amount to withdraw
      */
     function withdraw(uint256 _amount) external nonReentrant whenNotPaused {
@@ -260,10 +256,10 @@ contract ShieldToken is
         // update his balance before burning or sending back degis
         users[msg.sender].amount -= _amount;
 
-        // get user Shield balance that must be burned
-        uint256 userShieldBalance = balanceOf(msg.sender);
+        // get user veDEG balance that must be burned
+        uint256 userVeDEGBalance = balanceOf(msg.sender);
 
-        _burn(msg.sender, userShieldBalance);
+        _burn(msg.sender, userVeDEGBalance);
 
         // send back the staked degis
         degis.safeTransfer(msg.sender, _amount);
@@ -274,7 +270,7 @@ contract ShieldToken is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Finish claiming Shield
+     * @notice Finish claiming veDEG
      * @param _user User address
      */
     function _claim(address _user) internal {
@@ -293,7 +289,7 @@ contract ShieldToken is
      * @notice Update the bonus in farming pool
      * @dev Every time when token is transferred (balance change)
      * @param _user User address
-     * @param _newBalance New Shield balance
+     * @param _newBalance New veDEG balance
      */
     function _afterTokenOperation(address _user, uint256 _newBalance)
         internal

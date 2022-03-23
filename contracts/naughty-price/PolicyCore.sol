@@ -92,9 +92,10 @@ contract PolicyCore is Ownable {
         uint256 deadline;
         uint256 settleTimestamp;
     }
-    // Policy toke name => Policy token information
+    // Policy token name => Policy token information
     mapping(string => PolicyTokenInfo) public policyTokenInfoMapping;
 
+    // Policy token address => Policy token name
     mapping(address => string) public policyTokenAddressToName;
 
     // Policy token name list
@@ -126,7 +127,7 @@ contract PolicyCore is Ownable {
     mapping(address => SettlementInfo) public settleResult;
 
     mapping(address => uint256) public pendingIncomeToLottery;
-    mapping(address => uint256) public pendingIncomeToEmergency;
+    mapping(address => uint256) public pendingIncomeToSharing;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
@@ -360,6 +361,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Get the information about all the tokens
+     * @dev Include all active&expired tokens
      * @return tokensInfo Token information list
      */
     function getAllTokens() external view returns (PolicyTokenInfo[] memory) {
@@ -378,7 +380,7 @@ contract PolicyCore is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Add a newly supported stablecoin
+     * @notice Add a new supported stablecoin
      * @param _newStablecoin Address of the new stablecoin
      */
     function addStablecoin(address _newStablecoin) external onlyOwner {
@@ -420,13 +422,14 @@ contract PolicyCore is Ownable {
     /**
      * @notice Deploy a new policy token and return the token address
      * @dev Only the owner can deploy new policy token
-     *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
+     *      The name form is like "AVAX_50_L_2203" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _stablecoin Address of the stablecoin (Just for check decimals here)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
      * @param _nameDecimals Decimals of this token's name (0~18)
      * @param _tokenDecimals Decimals of this token's value (0~18) (same as paired stablecoin)
      * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
+     * @param _round Round of the token (e.g. 2203 -> expired at 22 March)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      */
@@ -453,6 +456,7 @@ contract PolicyCore is Ownable {
         require(_deadline > block.timestamp, "Wrong deadline");
         require(_settleTimestamp >= _deadline, "Wrong settleTimestamp");
 
+        // Generate the policy token name
         string memory policyTokenName = _generateName(
             _tokenName,
             _nameDecimals,
@@ -592,7 +596,7 @@ contract PolicyCore is Ownable {
     }
 
     /**
-     * @notice Burn policy tokens and redeem USDT
+     * @notice Burn policy tokens and redeem stablecoins
      * @dev Redeem happens before the deadline and is different from claim/settle
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stablecoin
@@ -615,13 +619,13 @@ contract PolicyCore is Ownable {
             "User's quota not sufficient"
         );
 
+        // Update quota
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
-        if (userQuota[msg.sender][policyTokenAddress] == 0)
-            delete userQuota[msg.sender][policyTokenAddress];
-
+        // Transfer back the stablecoin
         IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
 
+        // Burn the policy tokens
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
         policyToken.burn(msg.sender, _amount);
 
@@ -658,19 +662,19 @@ contract PolicyCore is Ownable {
             "Only call this function when the event does not happen"
         );
 
+        uint256 quota = userQuota[msg.sender][policyTokenAddress];
         // User must have quota because this is for depositors when event not happens
         require(
-            userQuota[msg.sender][policyTokenAddress] > 0,
+            quota > 0,
             "No quota, you did not deposit and mint policy tokens before"
         );
 
         // Charge 1% Fee when redeem / claim
-        uint256 amount = userQuota[msg.sender][policyTokenAddress];
-        uint256 amountWithFee = (amount * 990) / 1000;
-        uint256 amountToCollect = amount - amountWithFee;
+        uint256 amountWithFee = (quota * 990) / 1000;
+        uint256 amountToCollect = quota - amountWithFee;
 
         pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToEmergency[_stablecoin] +=
+        pendingIncomeToSharing[_stablecoin] +=
             amountToCollect -
             (amountToCollect * 8) /
             10;
@@ -728,7 +732,7 @@ contract PolicyCore is Ownable {
 
         // Update pending income record
         pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToEmergency[_stablecoin] +=
+        pendingIncomeToSharing[_stablecoin] +=
             amountToCollect -
             (amountToCollect * 8) /
             10;
@@ -765,6 +769,7 @@ contract PolicyCore is Ownable {
             originalTokenName
         );
 
+        // Record the price
         result.alreadySettled = true;
         result.price = price;
 
@@ -780,13 +785,14 @@ contract PolicyCore is Ownable {
 
         bool isHappened = (situationT1 || situationT2) ? true : false;
 
+        // Record the result
         result.isHappened = isHappened;
 
         emit FinalResultSettled(_policyTokenName, price, isHappened);
     }
 
     /**
-     * @notice Settle the policies when then insurance event do not happen
+     * @notice Settle the policies for the users when insurance events do not happen
      *         Funds are automatically distributed back to the depositors
      * @dev    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
      * @param _policyTokenName Name of policy token
@@ -842,7 +848,7 @@ contract PolicyCore is Ownable {
 
             // Update pending income record
             pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-            pendingIncomeToEmergency[_stablecoin] +=
+            pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
                 (amountToCollect * 8) /
                 10;
@@ -873,7 +879,7 @@ contract PolicyCore is Ownable {
 
             // Update pending income record
             pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-            pendingIncomeToEmergency[_stablecoin] +=
+            pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
                 (amountToCollect * 8) /
                 10;
@@ -899,14 +905,14 @@ contract PolicyCore is Ownable {
         );
 
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
-        uint256 amountToEmergency = pendingIncomeToEmergency[_stablecoin];
+        uint256 amountToSharing = pendingIncomeToSharing[_stablecoin];
         require(
-            amountToLottery > 0 && amountToEmergency > 0,
+            amountToLottery > 0 && amountToSharing > 0,
             "No pending income"
         );
 
         IERC20(_stablecoin).safeTransfer(lottery, amountToLottery);
-        IERC20(_stablecoin).safeTransfer(incomeSharing, amountToEmergency);
+        IERC20(_stablecoin).safeTransfer(incomeSharing, amountToSharing);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -940,8 +946,8 @@ contract PolicyCore is Ownable {
         IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
+        
         // Mint new policy tokens
-        // Amount need to be transferred
         policyToken.mint(_user, _amount);
 
         emit Deposit(_user, _policyTokenName, _stablecoin, _amount);

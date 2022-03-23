@@ -25,4 +25,11 @@ interface IPolicyCore {
         external
         view
         returns (bool);
+
+    function delegateDeposit(
+        string memory _policyTokenName,
+        address _stablecoin,
+        uint256 _amount,
+        address _user
+    ) external;
 }

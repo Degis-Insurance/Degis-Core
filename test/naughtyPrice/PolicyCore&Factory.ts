@@ -19,7 +19,6 @@ import {
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
-  formatEther,
   getCreate2Address,
   keccak256,
   parseUnits,
@@ -82,7 +81,7 @@ describe("Policy Core and Naughty Factory", function () {
     await factory.setPolicyCoreAddress(core.address);
 
     await core.setLottery(lottery.address);
-    await core.setEmergencyPool(emergencyPool.address);
+    await core.setIncomeSharing(emergencyPool.address);
 
     now = await getLatestBlockTimestamp(ethers.provider);
     deadline = now + 30000;
@@ -121,11 +120,11 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await core.lottery()).to.equal(stablecoin.address);
     });
 
-    it("should be able to set a new emergencyPool", async function () {
-      await expect(core.setEmergencyPool(testAddress.address))
-        .to.emit(core, "EmergencyPoolChanged")
+    it("should be able to set a new incomeSharing address", async function () {
+      await expect(core.setIncomeSharing(testAddress.address))
+        .to.emit(core, "IncomeSharingChanged")
         .withArgs(testAddress.address);
-      expect(await core.emergencyPool()).to.equal(testAddress.address);
+      expect(await core.incomeSharing()).to.equal(testAddress.address);
     });
 
     it("should be able to set the core address in factory", async function () {
@@ -139,6 +138,22 @@ describe("Policy Core and Naughty Factory", function () {
   });
 
   describe("Deploy tokens and pools", function () {
+    it("should be able to generate name", async function () {
+      const strikeToken = "AVAX";
+      const k = toWei("80.12");
+      const decimals = 2;
+      const round = "2203";
+
+      const name = await core._generateName(
+        strikeToken,
+        decimals,
+        k,
+        false,
+        round
+      );
+
+      expect(name).to.equal("AVAX_80.12_L_2203");
+    });
     it("should be able to generate correct names with decimals", async function () {
       const policyTokenName = "BTC_5.5656_L_2112";
 
@@ -167,7 +182,7 @@ describe("Policy Core and Naughty Factory", function () {
           4,
           6,
           parseUnits("5.5656"),
-          2112,
+          "2112",
           toBN(deadline),
           toBN(settleTimestamp)
         )
@@ -185,7 +200,7 @@ describe("Policy Core and Naughty Factory", function () {
           19, // wrong decimals
           6,
           parseUnits("5.5656"),
-          2112,
+          "2112",
           toBN(deadline),
           toBN(settleTimestamp)
         )
@@ -201,7 +216,7 @@ describe("Policy Core and Naughty Factory", function () {
           18,
           parseUnits("5.565656565656565656"),
           false,
-          2112
+          "2112"
         )
       ).to.equal(policyTokenName);
 
@@ -230,7 +245,7 @@ describe("Policy Core and Naughty Factory", function () {
           18,
           6,
           parseUnits("5.565656565656565656"),
-          2112,
+          "2112",
           toBN(deadline),
           toBN(settleTimestamp)
         )
@@ -267,7 +282,11 @@ describe("Policy Core and Naughty Factory", function () {
 
       const salt = solidityKeccak256(["string"], [policyTokenName]);
 
-      const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH_2);
+      const address = getCreate2Address(
+        factory.address,
+        salt,
+        INIT_CODE_HASH_2
+      );
 
       await expect(
         core.deployPolicyToken(
@@ -277,7 +296,7 @@ describe("Policy Core and Naughty Factory", function () {
           0,
           decimals,
           parseUnits("24000"),
-          2112,
+          "2112",
           toBN(deadline),
           toBN(settleTimestamp)
         )
@@ -309,7 +328,7 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         6,
         parseUnits("24000"),
-        2112,
+        "2112",
         toBN(deadline),
         toBN(settleTimestamp)
       );
@@ -362,7 +381,7 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         6,
         parseUnits("24000"),
-        2112,
+        "2112",
         toBN(deadline),
         toBN(settleTimestamp)
       );
@@ -375,9 +394,7 @@ describe("Policy Core and Naughty Factory", function () {
     });
     it("should be able to stake usd and get policytokens", async function () {
       // dev_account deposit
-      await usd.approve(core.address, stablecoinToWei("10000"), {
-        from: dev_account.address,
-      });
+      await usd.approve(core.address, stablecoinToWei("10000"));
       await core.deposit(
         policyTokenName,
         usd.address,
@@ -450,7 +467,7 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         6,
         parseUnits("24000"),
-        2112,
+        "2112",
         toBN(deadline),
         toBN(settleTimestamp)
       );
@@ -461,9 +478,7 @@ describe("Policy Core and Naughty Factory", function () {
         policyTokenInfo.policyTokenAddress
       );
 
-      await usd.approve(core.address, stablecoinToWei("10000"), {
-        from: dev_account.address,
-      });
+      await usd.approve(core.address, stablecoinToWei("10000"));
       await core.deposit(
         policyTokenName,
         usd.address,
@@ -495,9 +510,7 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.settleFinalResult(policyTokenName);
 
-      await core.redeemAfterSettlement(policyTokenName, usd.address, {
-        from: dev_account.address,
-      });
+      await core.redeemAfterSettlement(policyTokenName, usd.address);
 
       expect(
         await core.getUserQuota(
@@ -518,9 +531,7 @@ describe("Policy Core and Naughty Factory", function () {
         dev_account.address
       );
 
-      await core.claim(policyTokenName, usd.address, policyTokenBalance, {
-        from: dev_account.address,
-      });
+      await core.claim(policyTokenName, usd.address, policyTokenBalance);
 
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
         0
@@ -601,7 +612,7 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         6,
         parseUnits("24000"),
-        2112,
+        "2112",
         toBN(deadline),
         toBN(settleTimestamp)
       );
@@ -612,7 +623,7 @@ describe("Policy Core and Naughty Factory", function () {
         0,
         6,
         parseUnits("24000"),
-        2112,
+        "2112",
         toBN(deadline),
         toBN(settleTimestamp)
       );
@@ -631,9 +642,7 @@ describe("Policy Core and Naughty Factory", function () {
         policyTokenInfo_L.policyTokenAddress
       );
 
-      await usd.approve(core.address, stablecoinToWei("20000"), {
-        from: dev_account.address,
-      });
+      await usd.approve(core.address, stablecoinToWei("20000"));
       await core.deposit(
         policyTokenName_H,
         usd.address,

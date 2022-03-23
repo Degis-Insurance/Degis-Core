@@ -103,6 +103,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Only the factory can call some functions
+     */
     modifier onlyFactory() {
         require(msg.sender == factory, "Only factory");
         _;

@@ -1,7 +1,15 @@
 {
 	"fuji": {},
 	"avax": {},
-	"avaxTest": {},
+	"avaxTest": {
+		"AVAX_83.68_L_2303": {
+			"poolAddress": "0xF1b92bCBb2Dc78C7429098e534B22888516495CA",
+			"policyTokenAddress": "0xAb18588c032751B21F1C37Ac7eA813d4dEdcA124",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1648094400",
+			"feeRate": 50
+		}
+	},
 	"localhost": {
 		"AVAX_100.0_L_0322": {
 			"poolAddress": "0xAfC9Cfe6A28c0F6C880f91610E03b4b0128F7755",
