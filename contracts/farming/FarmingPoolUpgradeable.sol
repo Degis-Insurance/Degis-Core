@@ -22,9 +22,10 @@ pragma solidity ^0.8.10;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
 import {Math} from "../libraries/Math.sol";
 import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
@@ -39,7 +40,12 @@ import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
  *         The extra reward is shared by those staking lptokens with veDEG balances
  *         Every time the veDEG balance change, the reward will be updated
  */
-contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
+contract FarmingPoolUpgradeable is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable,
+    PausableUpgradeable
+{
     using SafeERC20 for IERC20;
     using SafeERC20 for IDegisToken;
     using Math for uint256;
@@ -126,7 +132,13 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _degis) OwnableWithoutContext(msg.sender) {
+    function initialize(address _degis) public initializer {
+        require(_degis != address(0), "zero address");
+
+        __Ownable_init();
+        __ReentrancyGuard_init_unchained();
+        __Pausable_init_unchained();
+
         degis = IDegisToken(_degis);
 
         // Start from 1

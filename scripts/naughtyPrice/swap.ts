@@ -1,5 +1,6 @@
 import { formatUnits } from "ethers/lib/utils";
 import hre from "hardhat";
+import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 import { getLatestBlockTimestamp, stablecoinToWei } from "../../test/utils";
 import {
   MockUSD,
@@ -19,14 +20,15 @@ async function main() {
   const addressList = readAddressList();
 
   const { getNamedAccounts, network } = hre;
-  console.log("You are adding new pools at the ", network.name, " network");
+  console.log("You are swapping at the network ", network.name, " network");
 
   const routerAddress = addressList[network.name].NaughtyRouter;
   const coreAddress = addressList[network.name].PolicyCore;
-  const usdAddress = addressList[network.name].MockUSD;
+  //   const usdAddress = addressList[network.name].MockUSD;
+  const usdAddress = getTokenAddressOnAVAX("USDC.e");
   const factoryAddress = addressList[network.name].NaughtyFactory;
 
-  console.log("The farming pool address of this network is: ", routerAddress);
+  console.log("The router address of this network is: ", routerAddress);
 
   // Named accounts
   const { deployer } = await getNamedAccounts();
@@ -50,7 +52,7 @@ async function main() {
     await hre.ethers.getContractFactory("NaughtyFactory");
   const factory: NaughtyFactory = NaughtyFactory.attach(factoryAddress);
 
-  const policyTokenName = "AVAX_100.0_L_0322";
+  const policyTokenName = "AVAX_83.68_L_2303";
 
   const policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
 
@@ -71,23 +73,25 @@ async function main() {
   );
   const usd: MockUSD = MockUSD.attach(usdAddress);
 
-  await usd.approve(core.address, stablecoinToWei("100"));
-  await core.deposit(policyTokenName, usdAddress, stablecoinToWei("100"));
+  await usd.approve(router.address, stablecoinToWei("100"));
 
-  const NPPolicyToken = new ethers.Contract(
-    policyTokenInfo.policyTokenAddress,
-    ["function approve(address,uint256)"],
-    dev_account
-  );
-  await NPPolicyToken.approve(router.address, stablecoinToWei("100"));
+  //   await usd.approve(core.address, stablecoinToWei("100"));
+  //   await core.deposit(policyTokenName, usdAddress, stablecoinToWei("100"));
+
+  //   const NPPolicyToken = new ethers.Contract(
+  //     policyTokenInfo.policyTokenAddress,
+  //     ["function approve(address,uint256)"],
+  //     dev_account
+  //   );
+  //   await NPPolicyToken.approve(router.address, stablecoinToWei("100"));
 
   const usd_balance_b = await usd.balanceOf(dev_account.address);
   //Address to add
   const tx = await router.swapExactTokensforTokens(
-    stablecoinToWei("20"),
-    stablecoinToWei("2"),
-    policyTokenInfo.policyTokenAddress,
+    stablecoinToWei("0.01"),
+    stablecoinToWei("0.00001"),
     usdAddress,
+    policyTokenInfo.policyTokenAddress,
     dev_account.address,
     now + 3000
   );

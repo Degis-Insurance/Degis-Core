@@ -20,7 +20,6 @@ import {
 
 import {
   getLatestBlockTimestamp,
-  getNow,
   stablecoinToWei,
   toBN,
   toWei,
@@ -86,7 +85,7 @@ describe("Naughty Router", function () {
       0,
       6,
       toWei("24000"),
-      2112,
+      "2112",
       toBN(deadline),
       toBN(settleTimestamp)
     );
