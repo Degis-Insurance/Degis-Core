@@ -1,7 +1,13 @@
 {
 	"fuji": {},
 	"avax": {},
-	"avaxTest": {},
+	"avaxTest": {
+		"AVAX_83.68_L_2303": {
+			"address": "0xAb18588c032751B21F1C37Ac7eA813d4dEdcA124",
+			"deadline": 1648094400,
+			"settleTime": 1648108800
+		}
+	},
 	"localhost": {
 		"AVAX_100.0_L_0322": {
 			"address": "0xe877FbAeA642776a6Fa48D3228643448A78092C4",
