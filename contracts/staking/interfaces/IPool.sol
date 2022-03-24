@@ -30,8 +30,6 @@ interface IPool {
 
     function poolToken() external view returns (address);
 
-    function isFlashPool() external view returns (bool);
-
     function startTimestamp() external view returns (uint256);
 
     function degisPerSecond() external view returns (uint256);
@@ -40,7 +38,7 @@ interface IPool {
 
     function accDegisPerWeight() external view returns (uint256);
 
-    function pendingRewards(address _user) external view returns (uint256);
+    function pendingReward(address _user) external view returns (uint256);
 
     function setDegisPerSecond(uint256 _degisPerSecond) external;
 }
