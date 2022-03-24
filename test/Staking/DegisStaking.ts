@@ -22,10 +22,12 @@ describe("Degis Staking", function () {
   let MockERC20: MockERC20__factory, poolToken: MockERC20;
   let CoreStakingPool: CoreStakingPool__factory, pool: CoreStakingPool;
 
-  let dev_account: SignerWithAddress, testAddress: SignerWithAddress;
+  let dev_account: SignerWithAddress,
+    testAddress: SignerWithAddress,
+    user1: SignerWithAddress;
 
   beforeEach(async function () {
-    [dev_account, testAddress] = await ethers.getSigners();
+    [dev_account, testAddress, user1] = await ethers.getSigners();
 
     CoreStakingPool = await ethers.getContractFactory("CoreStakingPool");
 
@@ -171,6 +173,9 @@ describe("Degis Staking", function () {
       await poolToken.mint(dev_account.address, toWei("1000"));
       await poolToken.approve(poolAddress, toWei("1000"));
 
+      await poolToken.mint(user1.address, toWei("1000"));
+      await poolToken.connect(user1).approve(poolAddress, toWei("1000"));
+
       maxLockTime = 365 * 86400; // 365 days
     });
 
@@ -209,8 +214,6 @@ describe("Degis Staking", function () {
         .to.emit(pool, "Stake")
         .withArgs(dev_account.address, toWei("100"), 0);
 
-      const blockTimestamp = await getLatestBlockTimestamp(ethers.provider);
-
       const userInfo = await pool.users(dev_account.address);
 
       expect(userInfo.tokenAmount).to.equal(toWei("100"));
@@ -223,6 +226,11 @@ describe("Degis Staking", function () {
       // For flexible stake, from and until arre both 0
       expect(userDeposits[0].lockedFrom).to.equal(0);
       expect(userDeposits[0].lockedUntil).to.equal(0);
+
+      await mineBlocks(1);
+      expect(await pool.pendingReward(dev_account.address)).to.equal(
+        toWei("1")
+      );
     });
 
     it("should be able to stake for 365 days and check the user status", async function () {
@@ -254,6 +262,11 @@ describe("Degis Staking", function () {
       // For flexible stake, from and until arre both 0
       expect(userDeposits[0].lockedFrom).to.equal(time_2);
       expect(userDeposits[0].lockedUntil).to.equal(time_2 + maxLockTime);
+
+      await mineBlocks(1);
+      expect(await pool.pendingReward(dev_account.address)).to.equal(
+        toWei("1")
+      );
     });
 
     it("should not be able to stake tokens before the pool starts", async function () {
@@ -342,6 +355,22 @@ describe("Degis Staking", function () {
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
         toWei("800")
       );
+    });
+
+    it("should be able to get reward with multiple players(paying staking fee)", async function () {
+      const time0 = await getLatestBlockTimestamp(ethers.provider);
+      await pool.stake(toWei("200"), 0);
+
+      const time1 = await getLatestBlockTimestamp(ethers.provider);
+      await pool.connect(user1).stake(toWei("200"), 0);
+      const time2 = await getLatestBlockTimestamp(ethers.provider);
+
+      const fee_1 = 200 * 0.02;
+
+      expect(await pool.pendingReward(dev_account.address)).to.equal(
+        toWei((time2 - time1 + fee_1).toString())
+      );
+      expect(await pool.pendingReward(user1.address)).to.equal(toWei("0"));
     });
   });
 });
