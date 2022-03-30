@@ -30,6 +30,7 @@ import "./interfaces/IPolicyCore.sol";
 
 import "../utils/Ownable.sol";
 
+import "../utils/interfaces/IERC20Decimals.sol";
 import "hardhat/console.sol";
 
 /**
@@ -303,7 +304,7 @@ contract NaughtyRouter is Ownable {
 
         _transferHelper(_tokenIn, _msgSender(), pair, amountIn);
 
-        _swap(pair, amountIn, _amountOut, isBuying, _to);
+        _swap(pair, _tokenIn, amountIn, _amountOut, isBuying, _to);
     }
 
     /**
@@ -347,7 +348,7 @@ contract NaughtyRouter is Ownable {
 
         _transferHelper(_tokenIn, _msgSender(), pair, _amountIn);
 
-        _swap(pair, _amountIn, amountOut, isBuying, _to);
+        _swap(pair, _tokenIn, _amountIn, amountOut, isBuying, _to);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -420,6 +421,7 @@ contract NaughtyRouter is Ownable {
     /**
      * @notice Finish swap process
      * @param _pair Address of the pair
+     * @param _tokenIn Address of the input token
      * @param _amountIn Amount of tokens put in
      * @param _amountOut Amount of tokens get out
      * @param _isBuying Whether this is a purchase or a sell
@@ -427,6 +429,7 @@ contract NaughtyRouter is Ownable {
      */
     function _swap(
         address _pair,
+        address _tokenIn,
         uint256 _amountIn,
         uint256 _amountOut,
         bool _isBuying,
@@ -434,7 +437,13 @@ contract NaughtyRouter is Ownable {
     ) internal {
         // Only give buyer tokens when this is a purchase
         if (_isBuying) {
-            IBuyerToken(buyerToken).mintBuyerToken(_msgSender(), _amountIn);
+            // Check the decimals
+            uint256 decimals = IERC20Decimals(_tokenIn).decimals();
+            uint256 buyerTokenAmount = _amountIn * 10**(18 - decimals);
+            IBuyerToken(buyerToken).mintBuyerToken(
+                _msgSender(),
+                buyerTokenAmount
+            );
         }
 
         // If the user is buying policies => amount1Out = 0

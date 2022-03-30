@@ -15,6 +15,10 @@ import {
   NaughtyPair,
   PriceFeedMock__factory,
   PriceFeedMock,
+  NaughtyRouter__factory,
+  NaughtyRouter,
+  BuyerToken__factory,
+  BuyerToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -36,11 +40,13 @@ import {
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
+  let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
   let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
   let PriceFeedMock: PriceFeedMock__factory, priceFeedMock: PriceFeedMock;
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
   let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
+  let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
 
   let dev_account: SignerWithAddress,
     stablecoin: SignerWithAddress,
@@ -55,8 +61,13 @@ describe("Policy Core and Naughty Factory", function () {
     [dev_account, stablecoin, user1, emergencyPool, lottery, testAddress] =
       await ethers.getSigners();
 
+    // 6 decimals for usd
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
+
+    // 18 decimals for buyer token
+    BuyerToken = await ethers.getContractFactory("BuyerToken");
+    buyerToken = await BuyerToken.deploy();
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
@@ -77,6 +88,10 @@ describe("Policy Core and Naughty Factory", function () {
     );
     await core.deployed();
     await factory.deployed();
+
+    NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
+    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+
 
     await factory.setPolicyCoreAddress(core.address);
 
@@ -126,6 +141,13 @@ describe("Policy Core and Naughty Factory", function () {
         .withArgs(testAddress.address);
       expect(await core.incomeSharing()).to.equal(testAddress.address);
     });
+
+    it("should be able to set a new router address", async function(){
+      await expect(core.setNaughtyRouter(testAddress.address))
+        .to.emit(core, "RouterChanged")
+        .withArgs(testAddress.address);
+      expect(await core.router()).to.equal(testAddress.address);
+    })
 
     it("should be able to set the core address in factory", async function () {
       await factory.setPolicyCoreAddress(core.address);

@@ -23,11 +23,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../libraries/StringsUtils.sol";
 import "../libraries/SafePRBMath.sol";
-import "../utils/Ownable.sol";
-import "../utils/interfaces/IERC20Decimals.sol";
-import "./interfaces/IPriceGetter.sol";
-import "./interfaces/INaughtyFactory.sol";
-import "./interfaces/INPPolicyToken.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
+import {IPriceGetter} from "./interfaces/IPriceGetter.sol";
+import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
+import {INPPolicyToken} from "./interfaces/INPPolicyToken.sol";
+import {INaughtyRouter} from "./interfaces/INaughtyRouter.sol";
 
 /**
  * @title  PolicyCore
@@ -83,6 +84,9 @@ contract PolicyCore is Ownable {
     // Naughty Router contract address
     address public naughtyRouter;
 
+    // Contract for initial liquidity matching
+    address public IMLContract;
+
     struct PolicyTokenInfo {
         address policyTokenAddress;
         bool isCall;
@@ -136,6 +140,7 @@ contract PolicyCore is Ownable {
     event LotteryChanged(address newLotteryAddress);
     event IncomeSharingChanged(address newIncomeSharing);
     event NaughtyRouterChanged(address newRouter);
+    event IMLChanged(address newIML);
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
@@ -147,6 +152,13 @@ contract PolicyCore is Ownable {
         address poolAddress,
         address policyTokenAddress,
         address stablecoin
+    );
+    event PoolDeployedWithInitialLiquidity(
+        address poolAddress,
+        address policyTokenAddress,
+        address stablecoin,
+        uint256 initLiquidityA,
+        uint256 initLiquidityB
     );
     event Deposit(
         address userAddress,
@@ -415,6 +427,11 @@ contract PolicyCore is Ownable {
         emit NaughtyRouterChanged(_router);
     }
 
+    function setIMLContract(address _IML) external onlyOwner {
+        IMLContract = _IML;
+        emit IMLChanged(_IML);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -505,7 +522,6 @@ contract PolicyCore is Ownable {
      * @param _stablecoin Address of the stable coin
      * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
      * @param _feeRate Fee rate given to LP holders
-     * @return poolAddress The address of the pool just deployed
      */
     function deployPool(
         string memory _policyTokenName,
@@ -517,30 +533,93 @@ contract PolicyCore is Ownable {
         onlyOwner
         validStablecoin(_stablecoin)
         deployedPolicy(_policyTokenName)
-        returns (address)
     {
         require(_poolDeadline > block.timestamp, "Wrong deadline");
         require(
             _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
             "Policy token and pool deadline not the same"
         );
-
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
+        address poolAddress = _deployPool(
+            policyTokenAddress,
+            _stablecoin,
+            _poolDeadline,
+            _feeRate,
+            0,
+            0
+        );
+
+        emit PoolDeployed(poolAddress, policyTokenAddress, _stablecoin);
+    }
+
+    function _deployPool(
+        address _policyTokenAddress,
+        address _stablecoin,
+        uint256 _poolDeadline,
+        uint256 _feeRate,
+        uint256 _initLiquidityA,
+        uint256 _initLiquidityB
+    ) internal returns (address) {
         // Deploy a new pool (policyToken <=> stablecoin)
         address poolAddress = factory.deployPool(
-            policyTokenAddress,
+            _policyTokenAddress,
             _stablecoin,
             _poolDeadline,
             _feeRate
         );
 
         // Record the mapping
-        whichStablecoin[policyTokenAddress] = _stablecoin;
+        whichStablecoin[_policyTokenAddress] = _stablecoin;
 
-        emit PoolDeployed(poolAddress, policyTokenAddress, _stablecoin);
+        if (_initLiquidityA > 0 && _initLiquidityB > 0) {
+            INaughtyRouter(naughtyRouter).addLiquidity(
+                _policyTokenAddress,
+                _stablecoin,
+                _initLiquidityA,
+                _initLiquidityB,
+                _initLiquidityA,
+                _initLiquidityB,
+                msg.sender,
+                block.timestamp + 60
+            );
+        }
 
         return poolAddress;
+    }
+
+    function deployPoolWithInitialLiquidity(
+        string memory _policyTokenName,
+        address _stablecoin,
+        uint256 _poolDeadline,
+        uint256 _feeRate,
+        uint256 _initLiquidityA,
+        uint256 _initLiquidityB
+    ) external validStablecoin(_stablecoin) deployedPolicy(_policyTokenName) {
+        require(msg.sender == IMLContract, "Only IML");
+        require(_poolDeadline > block.timestamp, "Wrong deadline");
+        require(
+            _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
+            "Policy token and pool deadline not the same"
+        );
+        address policyTokenAddress = findAddressbyName(_policyTokenName);
+
+        address poolAddress = _deployPool(
+            policyTokenAddress,
+            _stablecoin,
+            _poolDeadline,
+            _feeRate,
+            _initLiquidityA,
+            _initLiquidityB
+        );
+
+        emit PoolDeployedWithInitialLiquidity(
+            poolAddress,
+            policyTokenAddress,
+            _stablecoin,
+            _initLiquidityA,
+            _initLiquidityB
+        );
     }
 
     /**
@@ -946,7 +1025,7 @@ contract PolicyCore is Ownable {
         IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
-        
+
         // Mint new policy tokens
         policyToken.mint(_user, _amount);
 
