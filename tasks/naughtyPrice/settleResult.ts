@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 
 import { PolicyCore, PolicyCore__factory } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
+import { formatEther, formatUnits } from "ethers/lib/utils";
 
 task("settleNPToken", "Settle a naughty price token")
   .addParam("name", "token name", null, types.string)
@@ -34,4 +35,35 @@ task("settleNPToken", "Settle a naughty price token")
 
     const events = (await tx.wait()).events;
     console.log("events: ", events);
+  });
+
+task("collectIncome", "Collect income from policy core")
+  .addParam("stablecoin", "stablecoin address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const policyCoreAddress = addressList[network.name].PolicyCore;
+    console.log(
+      "The policy core address of this network is: ",
+      policyCoreAddress
+    );
+    const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
+      "PolicyCore"
+    );
+    const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
+
+    const tx = await core.collectIncome(taskArgs.stablecoin);
+    console.log("tx details:", await tx.wait());
+
+    const events = (await tx.wait()).events;
+    console.log("events: ", events);
+
+    // const balance = await core.pendingIncomeToLottery(taskArgs.stablecoin);
+    // console.log("balance: ", formatUnits(balance, 6));
   });

@@ -64,7 +64,7 @@ const config: HardhatUserConfig = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200,
+        runs: 1000,
         details: {
           yul: true,
           yulDetails: {
@@ -132,6 +132,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
         count: 20,
       },
+      // gasPrice: 88000000000,
     },
   },
   gasReporter: {

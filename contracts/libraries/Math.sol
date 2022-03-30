@@ -2,6 +2,8 @@
 pragma solidity ^0.8.10;
 
 library Math {
+    uint256 internal constant WAD = 10**18;
+
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;
     }
@@ -18,5 +20,10 @@ library Math {
         } else if (y != 0) {
             z = 1;
         }
+    }
+
+    //rounds to zero if x*y < WAD / 2
+    function wmul(uint256 x, uint256 y) internal pure returns (uint256) {
+        return ((x * y) + (WAD / 2)) / WAD;
     }
 }

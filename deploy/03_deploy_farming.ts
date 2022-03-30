@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -15,6 +15,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   const DegisToken = await get("DegisToken");
 
+  console.log("DegisToken address: ", DegisToken.address);
+
   const farmingPool = await deploy("FarmingPool", {
     contract: "FarmingPool",
     from: deployer,
@@ -22,6 +24,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   addressList[network.name].FarmingPool = farmingPool.address;
+
+  // // Always use the same proxy admin
+  // const proxyOptions: ProxyOptions = {
+  //   proxyContract: "OptimizedTransparentProxy",
+  //   viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+  //   execute: {
+  //     methodName: "initialize",
+  //     args: [DegisToken.address],
+  //   },
+  // };
+
+  // const farmingPoolUpgradeable = await deploy("FarmingPoolUpgradeable", {
+  //   contract: "FarmingPoolUpgradeable",
+  //   from: deployer,
+  //   proxy: proxyOptions,
+  //   args: [],
+  //   log: true,
+  // });
+  // addressList[network.name].FarmingPoolUpgradeable = farmingPoolUpgradeable.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);

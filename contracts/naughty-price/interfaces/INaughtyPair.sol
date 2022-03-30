@@ -4,6 +4,13 @@ pragma solidity ^0.8.10;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface INaughtyPair is IERC20 {
+    function initialize(
+        address _token0,
+        address _token1,
+        uint256 _deadline,
+        uint256 _feeRate
+    ) external;
+
     function factory() external view returns (address);
 
     function token0() external view returns (address);
@@ -30,11 +37,4 @@ interface INaughtyPair is IERC20 {
     function mint(address) external returns (uint256);
 
     function sync() external;
-
-    function initialize(
-        address _token0,
-        address _token1,
-        uint256 _deadline,
-        uint256 _feeRate
-    ) external;
 }

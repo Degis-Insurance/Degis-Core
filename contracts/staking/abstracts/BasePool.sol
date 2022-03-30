@@ -3,23 +3,24 @@ pragma solidity ^0.8.10;
 
 import "../interfaces/IPool.sol";
 import "../interfaces/IStakingPoolFactory.sol";
-
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "../../libraries/SafePRBMath.sol";
+import "hardhat/console.sol";
 
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    using SafePRBMath for uint256;
 
-    /// @dev Data structure representing token holder using a pool
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     struct UserInfo {
         uint256 tokenAmount;
         uint256 totalWeight;
-        uint256 rewardDebts;
-        // @dev An array of holder's deposits
+        uint256 rewardDebt;
+        // An array of holder's deposits
         Deposit[] deposits;
     }
     mapping(address => UserInfo) public users;
@@ -30,15 +31,14 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // Reward token: degis
     address public degisToken;
 
-    uint256 public startBlock;
+    // Reward start timestamp
+    uint256 public startTimestamp;
 
     // Degis reward speed
-    uint256 public degisPerBlock;
-
-    bool public isFlashPool;
+    uint256 public degisPerSecond;
 
     // Last check point
-    uint256 public lastRewardBlock;
+    uint256 public lastRewardTimestamp;
 
     uint256 public accDegisPerWeight;
 
@@ -47,6 +47,10 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     // Factory contract address
     address public factory;
+
+    uint256 public constant fee = 2;
+
+    // uint256 public constant SCALE = 1e12;
 
     // Weight multiplier constants
     uint256 internal constant WEIGHT_MULTIPLIER = 1e6;
@@ -70,30 +74,36 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Constructor
+     */
     constructor(
         address _degisToken,
         address _poolToken,
         address _factory,
-        uint256 _startBlock,
-        uint256 _degisPerBlock,
-        bool _isFlashPool
+        uint256 _startTimestamp,
+        uint256 _degisPerSecond
     ) {
         degisToken = _degisToken;
         poolToken = _poolToken;
         factory = _factory;
-        isFlashPool = _isFlashPool;
 
-        degisPerBlock = _degisPerBlock;
+        degisPerSecond = _degisPerSecond;
 
-        startBlock = _startBlock;
+        startTimestamp = _startTimestamp;
 
-        // lastRewardBlock = block.number > startBlock ? block.number : startBlock;
+        lastRewardTimestamp = block.timestamp > _startTimestamp
+            ? block.timestamp
+            : _startTimestamp;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Only the factory can call some functions
+     */
     modifier onlyFactory() {
         require(msg.sender == factory, "Only factory");
         _;
@@ -103,6 +113,11 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Get a user's deposit info
+     * @param _user User address
+     * @return deposits[] User's deposit info
+     */
     function getUserDeposits(address _user)
         external
         view
@@ -111,12 +126,19 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         return users[_user].deposits;
     }
 
-    function pendingRewards(address _user) external view returns (uint256) {
-        if (block.number < lastRewardBlock || block.number < startBlock)
-            return 0;
+    /**
+     * @notice Get pending rewards
+     * @param _user User address
+     * @return pendingReward User's pending rewards
+     */
+    function pendingReward(address _user) external view returns (uint256) {
+        if (
+            block.timestamp < lastRewardTimestamp ||
+            block.timestamp < startTimestamp
+        ) return 0;
 
-        uint256 blocks = block.number - lastRewardBlock;
-        uint256 degisReward = blocks * degisPerBlock;
+        uint256 blocks = block.timestamp - lastRewardTimestamp;
+        uint256 degisReward = blocks * degisPerSecond;
 
         // recalculated value for `yieldRewardsPerWeight`
         uint256 newDegisPerWeight = rewardToWeight(degisReward, totalWeight) +
@@ -126,7 +148,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         UserInfo memory user = users[_user];
 
         uint256 pending = weightToReward(user.totalWeight, newDegisPerWeight) -
-            user.rewardDebts;
+            user.rewardDebt;
 
         return pending;
     }
@@ -136,8 +158,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         pure
         returns (uint256)
     {
-        // apply the reverse formula and return
-        return (reward * REWARD_PER_WEIGHT_MULTIPLIER).div(rewardPerWeight);
+        return (reward * REWARD_PER_WEIGHT_MULTIPLIER) / rewardPerWeight;
     }
 
     function weightToReward(uint256 weight, uint256 rewardPerWeight)
@@ -145,84 +166,125 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         pure
         returns (uint256)
     {
-        // apply the formula and return
-        return weight.mul(rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        return (weight * rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
-    function setDegisPerBlock(uint256 _degisPerBlock) external onlyFactory {
-        degisPerBlock = _degisPerBlock;
+    function setDegisPerSecond(uint256 _degisPerSecond) external onlyFactory {
+        degisPerSecond = _degisPerSecond;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Stake tokens
+     * @param _amount Amount of tokens to stake
+     * @param _lockUntil Lock until timestamp
+     */
     function stake(uint256 _amount, uint256 _lockUntil) external {
-        // delegate call to an internal function
         _stake(msg.sender, _amount, _lockUntil);
     }
 
+    /**
+     * @notice Unstake tokens
+     * @param _depositId Deposit id to be unstaked
+     * @param _amount Amount of tokens to unstake
+     */
     function unstake(uint256 _depositId, uint256 _amount) external {
-        // delegate call to an internal function
         _unstake(msg.sender, _depositId, _amount);
     }
 
     function harvest() external {
+        // First update the pool
         updatePool();
 
         UserInfo storage user = users[msg.sender];
 
         // calculate pending yield rewards, this value will be returned
-        uint256 _pendingReward = _pendingRewards(msg.sender);
+        uint256 pending = _pendingReward(msg.sender);
+        console.log("Pending");
+        console.log(pending);
 
-        if (_pendingReward == 0) return;
+        if (pending == 0) return;
 
-        _safeDegisTransfer(msg.sender, _pendingReward);
+        _safeDegisTransfer(msg.sender, pending);
 
-        user.rewardDebts = weightToReward(user.totalWeight, accDegisPerWeight);
+        user.rewardDebt = weightToReward(user.totalWeight, accDegisPerWeight);
 
-        emit Harvest(msg.sender, _pendingReward);
+        emit Harvest(msg.sender, pending);
     }
 
     function updatePool() public {
-        if (block.number < lastRewardBlock || block.number < startBlock) return;
+        _updatePoolWithFee(0);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Update pool status with fee (if any)
+     * @param _fee Fee to be distributed
+     */
+    function _updatePoolWithFee(uint256 _fee) internal {
+        if (block.timestamp <= lastRewardTimestamp) return;
 
         uint256 balance = IERC20(poolToken).balanceOf(address(this));
 
         if (balance == 0) {
-            lastRewardBlock = block.number;
+            lastRewardTimestamp = block.timestamp;
             return;
         }
 
-        uint256 blocks = block.number - lastRewardBlock;
+        uint256 timePassed = block.timestamp - lastRewardTimestamp;
 
-        uint256 degisReward = blocks * degisPerBlock;
+        // There is _fee when staking
+        uint256 degisReward = timePassed * degisPerSecond + _fee;
 
+        console.log("Degis Reward");
+        console.log(_fee);
+        console.log(block.timestamp);
+        console.log(lastRewardTimestamp);
+        console.log(degisReward);
+
+        // Mint reward to this staking pool
         IStakingPoolFactory(factory).mintReward(address(this), degisReward);
 
         accDegisPerWeight += rewardToWeight(degisReward, totalWeight);
 
-        lastRewardBlock = block.number;
+        lastRewardTimestamp = block.timestamp;
     }
 
+    /**
+     * @notice Finish stake process
+     * @param _user User address
+     * @param _amount Amount of tokens to stake
+     * @param _lockUntil Lock until timestamp
+     */
     function _stake(
         address _user,
         uint256 _amount,
         uint256 _lockUntil
     ) internal virtual nonReentrant {
-        require(block.number > startBlock, "Pool not started yet");
+        require(block.timestamp > startTimestamp, "Pool not started yet");
         require(_amount > 0, "Zero amount");
         require(
-            _lockUntil == 0 ||
-                (_lockUntil > block.timestamp &&
-                    _lockUntil - block.timestamp <= 365 days),
+            _lockUntil == 0 || (_lockUntil > block.timestamp),
             "Invalid lock interval"
         );
+        if (_lockUntil >= block.timestamp + 365 days)
+            _lockUntil = block.timestamp + 365 days;
 
-        updatePool();
+        uint256 depositFee;
+        if (IERC20(poolToken).balanceOf(address(this)) > 0) {
+            // Charge deposit fee and distribute to previous stakers
+            depositFee = (_amount * fee) / 100;
+            _updatePoolWithFee(depositFee);
+        } else updatePool();
 
         UserInfo storage user = users[_user];
 
@@ -234,10 +296,15 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         transferPoolTokenFrom(msg.sender, address(this), _amount);
         uint256 newBalance = IERC20(poolToken).balanceOf(address(this));
 
-        uint256 addedAmount = newBalance - previousBalance;
+        // Actual amount is without the fee
+        uint256 addedAmount = newBalance - previousBalance - depositFee;
 
         uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
         uint256 lockUntil = _lockUntil;
+
+        console.log("lock until");
+        console.log(lockUntil);
+        console.log(lockFrom);
 
         uint256 stakeWeight = timeToWeight(lockUntil - lockFrom) * addedAmount;
 
@@ -257,7 +324,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         // update user record
         user.tokenAmount += addedAmount;
         user.totalWeight += stakeWeight;
-        user.rewardDebts = weightToReward(user.totalWeight, accDegisPerWeight);
+        user.rewardDebt = weightToReward(user.totalWeight, accDegisPerWeight);
 
         // update global variable
         totalWeight += stakeWeight;
@@ -267,7 +334,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     }
 
     /**
-     * @dev Used internally, mostly by children implementations, see unstake()
+     * @notice Finish unstake process
      * @param _user User address
      * @param _depositId deposit ID to unstake from, zero-indexed
      * @param _amount amount of tokens to unstake
@@ -311,7 +378,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         // update user record
         user.tokenAmount -= _amount;
         user.totalWeight = user.totalWeight - previousWeight + newWeight;
-        user.rewardDebts = weightToReward(user.totalWeight, accDegisPerWeight);
+        user.rewardDebt = weightToReward(user.totalWeight, accDegisPerWeight);
 
         // update global variable
         totalWeight -= (previousWeight - newWeight);
@@ -324,6 +391,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     }
 
     /**
+     * @notice Lock time => Lock weight
      * @dev 1 year = 2e6
      *      1 week = 1e6
      *      2 weeks = 1e6 * ( 1 + 1 / 365)
@@ -333,41 +401,61 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         pure
         returns (uint256 _weight)
     {
-        _weight = (_length / 365 days) * WEIGHT_MULTIPLIER + WEIGHT_MULTIPLIER;
+        _weight =
+            ((_length * WEIGHT_MULTIPLIER) / 365 days) +
+            WEIGHT_MULTIPLIER;
     }
 
-    function _pendingRewards(address _staker)
+    /**
+     * @notice Check pending reward after update
+     * @param _user User address
+     */
+    function _pendingReward(address _user)
         internal
         view
         returns (uint256 pending)
     {
         // read user data structure into memory
-        UserInfo memory user = users[_staker];
+        UserInfo memory user = users[_user];
+
+        console.log("In pending");
+        console.log(user.totalWeight);
+        console.log(user.rewardDebt);
+        console.log(accDegisPerWeight);
 
         // and perform the calculation using the values read
         return
             weightToReward(user.totalWeight, accDegisPerWeight) -
-            user.rewardDebts;
+            user.rewardDebt;
     }
 
-    // ---------------------------------------------------------------------------------------- //
-    // *********************************** Internal Functions ********************************* //
-    // ---------------------------------------------------------------------------------------- //
-
+    /**
+     * @notice Distribute reward to staker
+     * @param _user User address
+     */
     function _distributeReward(address _user) internal {
-        uint256 pendingReward = _pendingRewards(_user);
+        uint256 pending = _pendingReward(_user);
 
-        if (pendingReward == 0) return;
+        if (pending == 0) return;
         else {
-            _safeDegisTransfer(_user, pendingReward);
+            _safeDegisTransfer(_user, pending);
         }
     }
 
+    /**
+     * @notice Transfer pool token from pool to user
+     */
     function transferPoolToken(address _to, uint256 _value) internal {
         // just delegate call to the target
         IERC20(poolToken).safeTransfer(_to, _value);
     }
 
+    /**
+     * @notice Transfer pool token from user to pool
+     * @param _from User address
+     * @param _to Pool address
+     * @param _value Amount of tokens to transfer
+     */
     function transferPoolTokenFrom(
         address _from,
         address _to,

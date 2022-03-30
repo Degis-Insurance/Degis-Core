@@ -1,65 +1,68 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 
-import "../utils/Ownable.sol";
-import "./interfaces/IPool.sol";
-import "./CoreStakingPool.sol";
-import "../tokens/interfaces/IDegisToken.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {IPool} from "./interfaces/IPool.sol";
+import {BasePool, CoreStakingPool} from "./CoreStakingPool.sol";
+import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
 
 contract StakingPoolFactory is Ownable {
-    /// @dev Auxiliary data structure used only in getPoolData() view function
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // Pool data info
     struct PoolData {
-        // @dev pool token address (Degis / Degis LP Token)
-        address poolToken;
-        // @dev pool address
-        address poolAddress;
-        // @dev start block
-        uint256 startBlock;
-        // @dev pool weight
-        uint256 degisPerBlock;
-        // @dev flash pool flag
-        bool isFlashPool;
+        address poolToken; // pool token address (Degis / Degis LP Token)
+        address poolAddress; // pool address (deployed by factory)
+        uint256 startTimestamp; // pool start timestamp
+        uint256 degisPerSecond; // reward speed
     }
 
     address public degisToken;
 
-    /// @dev Pool token address  => pool address
+    // Pool token address  => pool address
     mapping(address => address) public pools;
 
-    /// @dev Keeps track of registered pool addresses, pool address -> whether exists
+    // Pool address -> whether exists
     mapping(address => bool) public poolExists;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    /**
-     * @dev Fired in createPool() and _registerPool()
-     *
-     * @param by who deploys a new pool
-     * @param poolToken pool token address
-     * @param poolAddress deployed pool instance address
-     * @param degisPerBlock pool weight
-     * @param isFlashPool flag indicating if pool is a flash pool
-     */
     event PoolRegistered(
         address indexed by,
         address indexed poolToken,
         address indexed poolAddress,
-        uint256 degisPerBlock,
-        bool isFlashPool
+        uint256 degisPerSecond
     );
 
-    /**
-     * @notice Change the degis reward for pool
-     */
-    event DegisPerBlockChanged(address pool, uint256 degisPerBlock);
+    event DegisPerSecondChanged(address pool, uint256 degisPerSecond);
 
-    /**
-     * @dev Creates/deploys a factory instance
-     *
-     * @param _degisToken Degis token address
-     */
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     constructor(address _degisToken) Ownable(msg.sender) {
         degisToken = _degisToken;
     }
@@ -68,10 +71,23 @@ contract StakingPoolFactory is Ownable {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getPoolAddress(address poolToken) external view returns (address) {
-        return pools[poolToken];
+    /**
+     * @notice Get the pool address from pool token address
+     * @param _poolToken Pool token address
+     */
+    function getPoolAddress(address _poolToken)
+        external
+        view
+        returns (address)
+    {
+        return pools[_poolToken];
     }
 
+    /**
+     * @notice Get pool data from pool token address
+     * @param _poolToken Pool token address
+     * @return poolData Pool data struct
+     */
     function getPoolData(address _poolToken)
         public
         view
@@ -86,18 +102,16 @@ contract StakingPoolFactory is Ownable {
         // read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(poolAddr).poolToken();
-        bool isFlashPool = IPool(poolAddr).isFlashPool();
-        uint256 startBlock = IPool(poolAddr).startBlock();
-        uint256 degisPerBlock = IPool(poolAddr).degisPerBlock();
+        uint256 startTimestamp = IPool(poolAddr).startTimestamp();
+        uint256 degisPerSecond = IPool(poolAddr).degisPerSecond();
 
         // create the in-memory structure and return it
         return
             PoolData({
                 poolToken: poolToken,
                 poolAddress: poolAddr,
-                startBlock: startBlock,
-                degisPerBlock: degisPerBlock,
-                isFlashPool: isFlashPool
+                startTimestamp: startTimestamp,
+                degisPerSecond: degisPerSecond
             });
     }
 
@@ -106,17 +120,17 @@ contract StakingPoolFactory is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Set degis per block
+     * @notice Set degis per second for a pool
      * @param _pool Address of the staking pool
-     * @param _degisPerBlock Degis reward per block
+     * @param _degisPerSecond Degis reward per second
      */
-    function setDegisPerBlock(address _pool, uint256 _degisPerBlock)
+    function setDegisPerSecond(address _pool, uint256 _degisPerSecond)
         external
         onlyOwner
     {
-        BasePool(_pool).setDegisPerBlock(_degisPerBlock);
+        BasePool(_pool).setDegisPerSecond(_degisPerSecond);
 
-        emit DegisPerBlockChanged(_pool, _degisPerBlock);
+        emit DegisPerSecondChanged(_pool, _degisPerSecond);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -124,26 +138,24 @@ contract StakingPoolFactory is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @dev Creates a staking pool and registers it within the factory
-     * @param poolToken pool token address
-     * @param startBlock init block to be used for the pool created
-     * @param degisPerBlock weight of the pool to be created
-     * @param isFlashPool Whether it is a flash pool
+     * @notice Creates a staking pool and registers it within the factory
+     * @dev Only called by the owner
+     * @param _poolToken Pool token address
+     * @param _startTimestamp Start timestamp for reward
+     * @param _degisPerSecond Reward speed
      */
     function createPool(
-        address poolToken,
-        uint256 startBlock,
-        uint256 degisPerBlock,
-        bool isFlashPool
+        address _poolToken,
+        uint256 _startTimestamp,
+        uint256 _degisPerSecond
     ) external onlyOwner {
         // create/deploy new core pool instance
         IPool pool = new CoreStakingPool(
             degisToken,
-            poolToken,
+            _poolToken,
             address(this),
-            startBlock,
-            degisPerBlock,
-            isFlashPool
+            _startTimestamp,
+            _degisPerSecond
         );
 
         // register it within a factory
@@ -159,30 +171,26 @@ contract StakingPoolFactory is Ownable {
      * @param _poolAddr Address of the already deployed pool instance
      */
     function _registerPool(address _poolAddr) internal {
-        // read pool information from the pool smart contract
+        // Read pool information from the pool smart contract
         // via the pool interface (IPool)
         address poolToken = IPool(_poolAddr).poolToken();
-        bool isFlashPool = IPool(_poolAddr).isFlashPool();
-        uint256 degisPerBlock = IPool(_poolAddr).degisPerBlock();
+        uint256 degisPerSecond = IPool(_poolAddr).degisPerSecond();
 
-        // ensure that the pool is not already registered within the factory
+        // Ensure that the pool is not already registered within the factory
         require(
             pools[poolToken] == address(0),
             "This pool is already registered"
         );
 
-        // create pool structure, register it within the factory
+        // Record
         pools[poolToken] = _poolAddr;
         poolExists[_poolAddr] = true;
-        // update total pool weight of the factory
 
-        // emit an event
         emit PoolRegistered(
             msg.sender,
             poolToken,
             _poolAddr,
-            degisPerBlock,
-            isFlashPool
+            degisPerSecond
         );
     }
 
@@ -193,10 +201,10 @@ contract StakingPoolFactory is Ownable {
      * @param _amount Amount of degis tokens to mint
      */
     function mintReward(address _to, uint256 _amount) external {
-        // verify that sender is a pool registered withing the factory
+        // Verify that sender is a pool registered withing the factory
         require(poolExists[msg.sender], "Only called from pool");
 
-        // mint degis tokens as required
+        // Mint degis tokens as required
         IDegisToken(degisToken).mintDegis(_to, _amount);
     }
 }

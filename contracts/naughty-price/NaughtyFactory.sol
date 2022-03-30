@@ -1,4 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
@@ -54,19 +73,13 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Ensure the policyCore address is already set
-     * @dev The naughty pair token may not have minter without this modifier
-     */
-    modifier alreadySetPolicyCore() {
-        require(policyCore != address(0), "Please set the policyCore address");
-        _;
-    }
-
-    /**
      * @notice Only called by policyCore contract
      */
     modifier onlyPolicyCore() {
-        require(msg.sender == policyCore, "Only called by policyCore contract");
+        require(
+            policyCore != address(0) && msg.sender == policyCore,
+            "Only called by policyCore contract"
+        );
         _;
     }
 
@@ -75,35 +88,28 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Next token to be deployed
-     * @return Latest token address
+     * @notice Get the latest token address just deployed
+     * @return tokenAddress Latest token address
      */
     function getLatestTokenAddress() external view returns (address) {
-        uint256 currentToken = _nextId - 1;
-        return allTokens[currentToken];
+        uint256 currentTokenId = _nextId - 1;
+        return allTokens[currentTokenId];
     }
 
     /**
      * @notice Get the INIT_CODE_HASH for policy tokens with parameters
-     * @param _policyTokenName Name of the policy token to be deployed
+     * @dev For test/task convinience, pre-compute the address
+     *      Ethers.js:
+     *      Address = ethers.utils.getCreate2Address(factory address, salt, INIT_CODE_HASH)
+     * @param _tokenName Name of the policy token to be deployed
+     * @param _decimals Token decimals of this policy token
      */
     function getInitCodeHashForPolicyToken(
-        string memory _policyTokenName,
-        uint256 _tokenDecimals
-    ) external view returns (bytes32) {
-        bytes memory bytecode = type(NPPolicyToken).creationCode;
-        return
-            keccak256(
-                abi.encodePacked(
-                    bytecode,
-                    abi.encode(
-                        _policyTokenName,
-                        _policyTokenName,
-                        policyCore,
-                        _tokenDecimals
-                    )
-                )
-            );
+        string memory _tokenName,
+        uint256 _decimals
+    ) public view returns (bytes32) {
+        bytes memory bytecode = _getPolicyTokenBytecode(_tokenName, _decimals);
+        return keccak256(bytecode);
     }
 
     /**
@@ -136,7 +142,9 @@ contract NaughtyFactory is OwnableWithoutContext {
 
     /**
      * @notice Remember to call this function to set the policyCore address
-     *         < PolicyCore should be the owner of policyToken >
+     * @dev    Only callable by the owner
+     *         < PolicyCore should be the minter of policyToken >
+     *         < This process is done inside constructor >
      * @param _policyCore Address of policyCore contract
      */
     function setPolicyCoreAddress(address _policyCore) external onlyOwner {
@@ -150,27 +158,50 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ---------------------------------------------------------------------------------------- //
 
     /**
+     * @notice For each round we need to first create the policytoken(ERC20)
+     * @param _policyTokenName Name of the policyToken
+     * @param _decimals Decimals of the policyToken
+     * @return tokenAddress PolicyToken address
+     */
+    function deployPolicyToken(
+        string memory _policyTokenName,
+        uint256 _decimals
+    ) external onlyPolicyCore returns (address) {
+        bytes32 salt = keccak256(abi.encodePacked(_policyTokenName));
+
+        bytes memory bytecode = _getPolicyTokenBytecode(
+            _policyTokenName,
+            _decimals
+        );
+
+        address _policTokenAddress = _deploy(bytecode, salt);
+
+        allTokens.push(_policTokenAddress);
+
+        _nextId++;
+
+        return _policTokenAddress;
+    }
+
+    /**
      * @notice After deploy the policytoken and get the address,
      *         we deploy the policyToken - stablecoin pool contract
      * @param _policyTokenAddress Address of policy token
      * @param _stablecoin Address of the stable coin
      * @param _deadline Deadline of the pool
      * @param _feeRate Fee rate given to LP holders
-     * @return Address of the pool
+     * @return poolAddress Address of the pool
      */
     function deployPool(
         address _policyTokenAddress,
         address _stablecoin,
         uint256 _deadline,
         uint256 _feeRate
-    ) external alreadySetPolicyCore onlyPolicyCore returns (address) {
+    ) public onlyPolicyCore returns (address) {
         bytes memory bytecode = type(NaughtyPair).creationCode;
 
         bytes32 salt = keccak256(
-            abi.encodePacked(
-                _policyTokenAddress.addressToString(),
-                _stablecoin.addressToString()
-            )
+            abi.encodePacked(_policyTokenAddress, _stablecoin)
         );
 
         address _poolAddress = _deploy(bytecode, salt);
@@ -189,38 +220,15 @@ contract NaughtyFactory is OwnableWithoutContext {
         return _poolAddress;
     }
 
-    /**
-     * @notice For each round we need to first create the policytoken(ERC20)
-     * @param _policyTokenName Name of the policyToken
-     * @param _decimals Decimals of the policyToken
-     * @return PolicyToken address
-     */
-    function deployPolicyToken(
-        string memory _policyTokenName,
-        uint256 _decimals
-    ) external alreadySetPolicyCore onlyPolicyCore returns (address) {
-        bytes32 salt = keccak256(abi.encodePacked(_policyTokenName));
-
-        bytes memory bytecode = getPolicyTokenBytecode(
-            _policyTokenName,
-            _decimals
-        );
-
-        address _policTokenAddress = _deploy(bytecode, salt);
-
-        allTokens.push(_policTokenAddress);
-
-        _nextId++;
-
-        return _policTokenAddress;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Deploy function with create2
+     * @param code Byte code of the contract (creation code)
+     * @param salt Salt for the deployment
+     * @return addr The deployed contract address
      */
     function _deploy(bytes memory code, bytes32 salt)
         internal
@@ -235,15 +243,14 @@ contract NaughtyFactory is OwnableWithoutContext {
     }
 
     /**
-     * @notice Get the policyToken bytecode (with parameters)
-     * @dev It is public for test convinience
+     * @notice Get the policyToken bytecode (with constructor parameters)
      * @param _tokenName Name of policyToken
+     * @param _decimals Decimals of policyToken
      */
-    function getPolicyTokenBytecode(string memory _tokenName, uint256 _decimals)
-        public
-        view
-        returns (bytes memory)
-    {
+    function _getPolicyTokenBytecode(
+        string memory _tokenName,
+        uint256 _decimals
+    ) internal view returns (bytes memory) {
         bytes memory bytecode = type(NPPolicyToken).creationCode;
 
         // Encodepacked the parameters

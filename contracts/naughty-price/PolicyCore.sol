@@ -77,8 +77,8 @@ contract PolicyCore is Ownable {
     // Lottery address
     address public lottery;
 
-    // Emergency pool contract address
-    address public emergencyPool;
+    // Income sharing contract address
+    address public incomeSharing;
 
     // Naughty Router contract address
     address public naughtyRouter;
@@ -92,9 +92,10 @@ contract PolicyCore is Ownable {
         uint256 deadline;
         uint256 settleTimestamp;
     }
-    // Policy toke name => Policy token information
+    // Policy token name => Policy token information
     mapping(string => PolicyTokenInfo) public policyTokenInfoMapping;
 
+    // Policy token address => Policy token name
     mapping(address => string) public policyTokenAddressToName;
 
     // Policy token name list
@@ -126,14 +127,14 @@ contract PolicyCore is Ownable {
     mapping(address => SettlementInfo) public settleResult;
 
     mapping(address => uint256) public pendingIncomeToLottery;
-    mapping(address => uint256) public pendingIncomeToEmergency;
+    mapping(address => uint256) public pendingIncomeToSharing;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     event LotteryChanged(address newLotteryAddress);
-    event EmergencyPoolChanged(address newEmergencyPool);
+    event IncomeSharingChanged(address newIncomeSharing);
     event NaughtyRouterChanged(address newRouter);
     event PolicyTokenDeployed(
         string tokenName,
@@ -360,6 +361,7 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Get the information about all the tokens
+     * @dev Include all active&expired tokens
      * @return tokensInfo Token information list
      */
     function getAllTokens() external view returns (PolicyTokenInfo[] memory) {
@@ -378,7 +380,7 @@ contract PolicyCore is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Add a newly supported stablecoin
+     * @notice Add a new supported stablecoin
      * @param _newStablecoin Address of the new stablecoin
      */
     function addStablecoin(address _newStablecoin) external onlyOwner {
@@ -397,11 +399,11 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Change the address of emergency pool
-     * @param _emergencyPool Address of the new emergencyPool
+     * @param _incomeSharing Address of the new incomeSharing
      */
-    function setEmergencyPool(address _emergencyPool) external onlyOwner {
-        emergencyPool = _emergencyPool;
-        emit EmergencyPoolChanged(_emergencyPool);
+    function setIncomeSharing(address _incomeSharing) external onlyOwner {
+        incomeSharing = _incomeSharing;
+        emit IncomeSharingChanged(_incomeSharing);
     }
 
     /**
@@ -420,13 +422,14 @@ contract PolicyCore is Ownable {
     /**
      * @notice Deploy a new policy token and return the token address
      * @dev Only the owner can deploy new policy token
-     *      The name form is like "AVAX_50_L_202101" and is built inside the contract.
+     *      The name form is like "AVAX_50_L_2203" and is built inside the contract.
      * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _stablecoin Address of the stablecoin (Just for check decimals here)
      * @param _isCall The policy is for higher or lower than the strike price (call / put)
      * @param _nameDecimals Decimals of this token's name (0~18)
      * @param _tokenDecimals Decimals of this token's value (0~18) (same as paired stablecoin)
      * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
+     * @param _round Round of the token (e.g. 2203 -> expired at 22 March)
      * @param _deadline Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      */
@@ -437,7 +440,7 @@ contract PolicyCore is Ownable {
         uint256 _nameDecimals,
         uint256 _tokenDecimals,
         uint256 _strikePrice,
-        uint256 _round,
+        string memory _round,
         uint256 _deadline,
         uint256 _settleTimestamp
     ) external onlyOwner {
@@ -453,6 +456,7 @@ contract PolicyCore is Ownable {
         require(_deadline > block.timestamp, "Wrong deadline");
         require(_settleTimestamp >= _deadline, "Wrong settleTimestamp");
 
+        // Generate the policy token name
         string memory policyTokenName = _generateName(
             _tokenName,
             _nameDecimals,
@@ -592,7 +596,7 @@ contract PolicyCore is Ownable {
     }
 
     /**
-     * @notice Burn policy tokens and redeem USDT
+     * @notice Burn policy tokens and redeem stablecoins
      * @dev Redeem happens before the deadline and is different from claim/settle
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the stablecoin
@@ -615,13 +619,13 @@ contract PolicyCore is Ownable {
             "User's quota not sufficient"
         );
 
+        // Update quota
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
-        if (userQuota[msg.sender][policyTokenAddress] == 0)
-            delete userQuota[msg.sender][policyTokenAddress];
-
+        // Transfer back the stablecoin
         IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
 
+        // Burn the policy tokens
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
         policyToken.burn(msg.sender, _amount);
 
@@ -658,19 +662,19 @@ contract PolicyCore is Ownable {
             "Only call this function when the event does not happen"
         );
 
+        uint256 quota = userQuota[msg.sender][policyTokenAddress];
         // User must have quota because this is for depositors when event not happens
         require(
-            userQuota[msg.sender][policyTokenAddress] > 0,
+            quota > 0,
             "No quota, you did not deposit and mint policy tokens before"
         );
 
         // Charge 1% Fee when redeem / claim
-        uint256 amount = userQuota[msg.sender][policyTokenAddress];
-        uint256 amountWithFee = (amount * 990) / 1000;
-        uint256 amountToCollect = amount - amountWithFee;
+        uint256 amountWithFee = (quota * 990) / 1000;
+        uint256 amountToCollect = quota - amountWithFee;
 
         pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToEmergency[_stablecoin] +=
+        pendingIncomeToSharing[_stablecoin] +=
             amountToCollect -
             (amountToCollect * 8) /
             10;
@@ -728,7 +732,7 @@ contract PolicyCore is Ownable {
 
         // Update pending income record
         pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToEmergency[_stablecoin] +=
+        pendingIncomeToSharing[_stablecoin] +=
             amountToCollect -
             (amountToCollect * 8) /
             10;
@@ -765,6 +769,7 @@ contract PolicyCore is Ownable {
             originalTokenName
         );
 
+        // Record the price
         result.alreadySettled = true;
         result.price = price;
 
@@ -780,13 +785,14 @@ contract PolicyCore is Ownable {
 
         bool isHappened = (situationT1 || situationT2) ? true : false;
 
+        // Record the result
         result.isHappened = isHappened;
 
         emit FinalResultSettled(_policyTokenName, price, isHappened);
     }
 
     /**
-     * @notice Settle the policies when then insurance event do not happen
+     * @notice Settle the policies for the users when insurance events do not happen
      *         Funds are automatically distributed back to the depositors
      * @dev    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
      * @param _policyTokenName Name of policy token
@@ -842,7 +848,7 @@ contract PolicyCore is Ownable {
 
             // Update pending income record
             pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-            pendingIncomeToEmergency[_stablecoin] +=
+            pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
                 (amountToCollect * 8) /
                 10;
@@ -873,7 +879,7 @@ contract PolicyCore is Ownable {
 
             // Update pending income record
             pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-            pendingIncomeToEmergency[_stablecoin] +=
+            pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
                 (amountToCollect * 8) /
                 10;
@@ -894,19 +900,19 @@ contract PolicyCore is Ownable {
      */
     function collectIncome(address _stablecoin) public {
         require(
-            lottery != address(0) && emergencyPool != address(0),
-            "Please set the lottery & emergencyPool address"
+            lottery != address(0) && incomeSharing != address(0),
+            "Please set the lottery & incomeSharing address"
         );
 
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
-        uint256 amountToEmergency = pendingIncomeToEmergency[_stablecoin];
+        uint256 amountToSharing = pendingIncomeToSharing[_stablecoin];
         require(
-            amountToLottery > 0 && amountToEmergency > 0,
+            amountToLottery > 0 && amountToSharing > 0,
             "No pending income"
         );
 
         IERC20(_stablecoin).safeTransfer(lottery, amountToLottery);
-        IERC20(_stablecoin).safeTransfer(emergencyPool, amountToEmergency);
+        IERC20(_stablecoin).safeTransfer(incomeSharing, amountToSharing);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -940,8 +946,8 @@ contract PolicyCore is Ownable {
         IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
+        
         // Mint new policy tokens
-        // Amount need to be transferred
         policyToken.mint(_user, _amount);
 
         emit Deposit(_user, _policyTokenName, _stablecoin, _amount);
@@ -978,31 +984,30 @@ contract PolicyCore is Ownable {
     /**
      * @notice Generate the policy token name
      * @param _tokenName Name of the stike token (BTC, ETH, AVAX...)
-     * @param _decimals Decimals of the name generation (0,1=>1)
+     * @param _decimals Decimals of the name generation (0,1=>1, 2=>2)
      * @param _strikePrice Strike price of the policy (18 decimals)
      * @param _isCall The policy's payoff is triggered when higher(true) or lower(false)
-     * @param _round Round of the policy (e.g. 2112, 2201)
+     * @param _round Round of the policy, named by <month><day> (e.g. 0320, 1215)
      */
     function _generateName(
         string memory _tokenName,
         uint256 _decimals,
         uint256 _strikePrice,
         bool _isCall,
-        uint256 _round
+        string memory _round
     ) public pure returns (string memory) {
         // The direction is "H"(Call) or "L"(Put)
         string memory direction = _isCall ? "H" : "L";
 
         // Integer part of the strike price (12e18 => 12)
         uint256 intPart = _strikePrice / 1e18;
+        require(intPart > 0, "Invalid int part");
+
         // Decimal part of the strike price (1234e16 => 34)
         // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
         uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
-
-        require(
-            intPart > 0 && decimalPart > 0,
-            "Int part and decimal part should > 0"
-        );
+        if (_decimals >= 2)
+            require(decimalPart > 10**(_decimals - 1), "Invalid decimal part");
 
         // Combine the string
         string memory name = string(
@@ -1015,7 +1020,7 @@ contract PolicyCore is Ownable {
                 "_",
                 direction,
                 "_",
-                _round.uintToString()
+                _round
             )
         );
         return name;

@@ -13,6 +13,7 @@ import {
   NaughtyFactory__factory,
   NaughtyFactory,
 } from "../../typechain";
+import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 
 task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
   .addParam("name", "Policy token name", null, types.string)
@@ -22,7 +23,6 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
   .setAction(async (taskArgs, hre) => {
     // Get args
     const tokenName = taskArgs.name;
-    const stablecoinAddress = taskArgs.stablecoin;
     const poolDeadline = taskArgs.deadline;
     const feeRate = taskArgs.fee;
     console.log("Policy token name is: ", tokenName);
@@ -36,6 +36,13 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
 
     const addressList = readAddressList();
     const poolList = readNaughtyPoolList();
+
+    let stablecoinAddress: string;
+    if (network.name == "avax" || network.name == "avaxTest") {
+      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+    } else stablecoinAddress = addressList[network.name].MockUSD;
+
+    console.log("Stablecoin address: ", stablecoinAddress);
 
     const policyCoreAddress = addressList[network.name].PolicyCore;
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(

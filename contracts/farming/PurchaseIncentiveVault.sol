@@ -1,4 +1,22 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
@@ -6,17 +24,20 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import "../utils/Ownable.sol";
-
 import "../utils/Pausable.sol";
-
 import "../libraries/SafePRBMath.sol";
 
 /**
  * @title  Purchase Incentive Vault
- * @notice This is the purchase incentive vault for staking buyer tokens.
- *         Users first stake their buyer tokens and wait for distribution.
- *         About every 24 hours, the reward will be calculated to users' account.
- *         After disrtribution, users' reward balance will update but they still need to manually claim the reward.
+ * @notice This is the purchase incentive vault for staking buyer tokens
+ *         Users first stake their buyer tokens and wait for distribution
+ *         About every 24 hours, the reward will be calculated to users' account
+ *         After disrtribution, reward will be updated
+ *              but it still need to be manually claimed.
+ *
+ *         Buyer tokens can only be used once
+ *         You can withdraw your buyer token within the same round (current round)
+ *         They can not be withdrawed if the round was settled
  */
 contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IBuyerToken;
@@ -25,6 +46,8 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    string public constant name = "Degis Purchase Incentive Vault";
 
     // Other contracts
     IBuyerToken buyerToken;
@@ -61,16 +84,14 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
 
-    // User address => Pending rewards
-    mapping(address => uint256) public userRewards;
-
-    mapping(address => uint256) public userLastRewardRound;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event DegisRewardChanged(uint256 oldPerRound, uint256 newPerRound);
+    event DegisRewardChanged(
+        uint256 oldRewardPerRound,
+        uint256 newRewardPerRound
+    );
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
     event MaxRoundChanged(uint256 oldMaxRound, uint256 newMaxRound);
     event Stake(
@@ -233,23 +254,19 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     function stake(uint256 _amount) external nonReentrant whenNotPaused {
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 vaultBalanceBefore = buyerToken.balanceOf(address(this));
         buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
-        uint256 vaultBalanceAfter = buyerToken.balanceOf(address(this));
-
-        uint256 actualAmount = vaultBalanceAfter - vaultBalanceBefore;
 
         // If the user has not staked in this round, record this new user
         if (userSharesInRound[_msgSender()][currentRound] == 0) {
             roundInfo[currentRound].users.push(_msgSender());
         }
 
-        userSharesInRound[_msgSender()][currentRound] += actualAmount;
+        userSharesInRound[_msgSender()][currentRound] += _amount;
 
         uint256 length = userInfo[_msgSender()].pendingRounds.length;
 
-        // Initialize the last reward round
-        if (length == 0) userInfo[_msgSender()].lastRewardRoundIndex = 0;
+        // // Initialize the last reward round
+        // if (length == 0) userInfo[_msgSender()].lastRewardRoundIndex = 0;
 
         // Only add the round if it's not in the array
         if (
@@ -260,9 +277,9 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
         ) userInfo[_msgSender()].pendingRounds.push(currentRound);
 
         // Update the total shares
-        roundInfo[currentRound].shares += actualAmount;
+        roundInfo[currentRound].shares += _amount;
 
-        emit Stake(_msgSender(), currentRound, actualAmount);
+        emit Stake(_msgSender(), currentRound, _amount);
     }
 
     /**

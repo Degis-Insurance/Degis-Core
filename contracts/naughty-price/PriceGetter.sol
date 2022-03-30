@@ -1,4 +1,23 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
@@ -45,9 +64,7 @@ contract PriceGetter is Ownable {
      * @notice Constructor function, initialize some price feed
      */
     constructor() Ownable(msg.sender) {
-        // At first, launch three kind of pools
-
-        // Uncomment below when launched on Avalanche Fuji
+        // Avalanche data feed addresses and decimals
         priceFeedInfo["AVAX"] = PriceFeedInfo(
             0x0A77230d17318075983913bC2145DB16C7366156,
             8

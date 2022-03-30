@@ -16,14 +16,18 @@ const farmingPoolList = readFarmingPoolList();
 task("addFarmingPool", "Add new farming pool")
   .addParam("name", "The name of the new farming pool", "unnamed", types.string)
   .addParam("address", "The pool's address to be added", null, types.string)
-  .addParam("reward", "Initial degis reward per block", null, types.int)
+  .addParam("reward", "Initial degis reward per second", null, types.int)
+  .addParam("bonus", "Bonus degis reward per second", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const poolName = taskArgs.name;
     const lptokenAddress = taskArgs.address;
-    const degisPerBlock = taskArgs.reward;
+    const basicDegisPerSecond = taskArgs.reward;
+    const bonusDegisPerSecond = taskArgs.bonus;
+
     console.log("The pool name is: ", poolName);
     console.log("Pool address to be added: ", lptokenAddress);
-    console.log("Reward speed: ", degisPerBlock, "degis/block");
+    console.log("Basic reward speed: ", basicDegisPerSecond, "degis/second");
+    console.log("Bonus reward speed: ", bonusDegisPerSecond, "degis/second");
 
     const { network } = hre;
 
@@ -33,7 +37,9 @@ task("addFarmingPool", "Add new farming pool")
 
     const farmingPoolAddress = addressList[network.name].FarmingPool;
     console.log(
-      "The farming pool address of this network is: ",
+      "The farming pool address of ",
+      network.name,
+      " is: ",
       farmingPoolAddress
     );
     const FarmingPool: FarmingPool__factory =
@@ -42,7 +48,8 @@ task("addFarmingPool", "Add new farming pool")
 
     const tx = await farmingPool.add(
       lptokenAddress,
-      parseUnits(degisPerBlock.toString()),
+      parseUnits(basicDegisPerSecond.toString()),
+      parseUnits(bonusDegisPerSecond.toString()),
       false
     );
     console.log("tx details: ", await tx.wait());
@@ -57,22 +64,28 @@ task("addFarmingPool", "Add new farming pool")
       name: poolName,
       address: lptokenAddress,
       poolId: poolId.toNumber(),
-      reward: degisPerBlock,
+      reward: formatEther(poolInfo.basicDegisPerSecond),
+      bonus: formatEther(poolInfo.bonusDegisPerSecond),
     };
     farmingPoolList[network.name][poolId.toNumber()] = poolObject;
+
     console.log("Farming pool list now: ", farmingPoolList);
     storeFarmingPoolList(farmingPoolList);
   });
 
 task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
   .addParam("id", "Pool id", null, types.int)
-  .addParam("reward", "Degis reward per block", null, types.int)
+  .addParam("reward", "Basic Degis reward per second", null, types.int)
+  .addParam("bonus", "Bonus reward per second", null, types.int)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolId = taskArgs.id;
-    const degisPerBlock = taskArgs.reward;
+    const basicDegisPerSecond = taskArgs.reward;
+    const bonusDegisPerSecond = taskArgs.bonus;
+
     console.log("Pool id to be set: ", poolId);
-    console.log("New reward speed: ", degisPerBlock, "degis/block");
+    console.log("New reward speed: ", basicDegisPerSecond, "degis/second");
+    console.log("New Bonus speed: ", bonusDegisPerSecond, "degis/second");
 
     const { network } = hre;
 
@@ -82,7 +95,9 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
 
     const farmingPoolAddress = addressList[network.name].FarmingPool;
     console.log(
-      "The farming pool address of this network is: ",
+      "The farming pool address of ",
+      network.name,
+      " is: ",
       farmingPoolAddress
     );
     const FarmingPool: FarmingPool__factory =
@@ -92,20 +107,28 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     // Set the start block
     const tx = await farmingPool.setDegisReward(
       poolId,
-      parseUnits(degisPerBlock.toString()),
+      parseUnits(basicDegisPerSecond.toString()),
+      parseUnits(bonusDegisPerSecond.toString()),
       false
     );
-    console.log("Tx details: ", await tx.wait());
+    console.log("Tx hash: ", (await tx.wait()).transactionHash);
 
     // Check the result
     const poolInfo = await farmingPool.poolList(poolId);
     console.log(
-      "Degis reward after set: ",
-      formatEther(poolInfo.degisPerBlock)
+      "Degis reward after set: basic - ",
+      formatEther(poolInfo.basicDegisPerSecond),
+      " bonus - ",
+      formatEther(poolInfo.bonusDegisPerSecond)
     );
 
     // Store the new farming pool
-    farmingPoolList[network.name][poolId].reward = degisPerBlock;
+    farmingPoolList[network.name][poolId].reward = formatEther(
+      poolInfo.basicDegisPerSecond
+    );
+    farmingPoolList[network.name][poolId].bonus = formatEther(
+      poolInfo.bonusDegisPerSecond
+    );
     console.log("Farming pool list now: ", farmingPoolList);
     storeFarmingPoolList(farmingPoolList);
   });
@@ -133,10 +156,10 @@ task("setFarmingStartBlock", "Set the start block of farming")
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
-    const tx = await farmingPool.setStartBlock(startBlock);
+    const tx = await farmingPool.setStartTimestamp(startBlock);
     console.log("Tx details: ", await tx.wait());
 
     // Check the result
-    const startBlockResult = await farmingPool.startBlock();
+    const startBlockResult = await farmingPool.startTimestamp();
     console.log("Start block for farming: ", startBlockResult.toNumber());
   });

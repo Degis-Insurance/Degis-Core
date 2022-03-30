@@ -1,8 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+
+/*
+ //======================================================================\\
+ //======================================================================\\
+    *******         **********     ***********     *****     ***********
+    *      *        *              *                 *       *
+    *        *      *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     *              *                 *       *
+    *         *     **********     *       *****     *       ***********
+    *         *     *              *         *       *                 *
+    *         *     *              *         *       *                 *
+    *        *      *              *         *       *                 *
+    *      *        *              *         *       *                 *
+    *******         **********     ***********     *****     ***********
+ \\======================================================================//
+ \\======================================================================//
+*/
+
 pragma solidity ^0.8.10;
 
-import "../utils/Ownable.sol";
-import "./abstracts/BasePool.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {BasePool} from "./abstracts/BasePool.sol";
 
 contract CoreStakingPool is Ownable, BasePool {
     // ---------------------------------------------------------------------------------------- //
@@ -13,18 +32,16 @@ contract CoreStakingPool is Ownable, BasePool {
         address _degisToken,
         address _poolToken,
         address _factory,
-        uint256 _startBlock,
-        uint256 _degisPerBlock,
-        bool _isFlashPool
+        uint256 _startTimestamp,
+        uint256 _degisPerSecond
     )
         Ownable(msg.sender)
         BasePool(
             _degisToken,
             _poolToken,
             _factory,
-            _startBlock,
-            _degisPerBlock,
-            _isFlashPool
+            _startTimestamp,
+            _degisPerSecond
         )
     {}
 
@@ -34,6 +51,9 @@ contract CoreStakingPool is Ownable, BasePool {
 
     /**
      * @notice Stake function, will call the stake in BasePool
+     * @param _user User address
+     * @param _amount Amount to stake
+     * @param _lockUntil Lock until timestamp (0 means flexible staking)
      */
     function _stake(
         address _user,
@@ -45,6 +65,9 @@ contract CoreStakingPool is Ownable, BasePool {
 
     /**
      * @notice Unstake function, will check some conditions and call the unstake in BasePool
+     * @param _user User address
+     * @param _depositId Deposit id
+     * @param _amount Amount to unstake
      */
     function _unstake(
         address _user,

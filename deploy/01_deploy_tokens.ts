@@ -36,16 +36,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].BuyerToken = buyerToken.address;
 
-  // Deploy emergency pool contract
-  // No constructor args
-  const emergency = await deploy("EmergencyPool", {
-    contract: "EmergencyPool",
-    from: deployer,
-    args: [],
-    log: true,
-  });
-  addressList[network.name].EmergencyPool = emergency.address;
-
   if (network.name == "avax") {
     const IERC20ABI = await getArtifact("ERC20").then((x) => x.abi);
 
