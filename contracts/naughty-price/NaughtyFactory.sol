@@ -197,7 +197,7 @@ contract NaughtyFactory is OwnableWithoutContext {
         address _stablecoin,
         uint256 _deadline,
         uint256 _feeRate
-    ) external onlyPolicyCore returns (address) {
+    ) public onlyPolicyCore returns (address) {
         bytes memory bytecode = type(NaughtyPair).creationCode;
 
         bytes32 salt = keccak256(

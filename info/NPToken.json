@@ -6,13 +6,12 @@
 			"address": "0xAb18588c032751B21F1C37Ac7eA813d4dEdcA124",
 			"deadline": 1648094400,
 			"settleTime": 1648108800
+		},
+		"AVAX_85.0_L_2903": {
+			"address": "0x6e9153a80ED78B469AB8E5Bf72CDd7efF9dE4da9",
+			"deadline": 1648440000,
+			"settleTime": 1648526400
 		}
 	},
-	"localhost": {
-		"AVAX_100.0_L_0322": {
-			"address": "0xe877FbAeA642776a6Fa48D3228643448A78092C4",
-			"deadline": 1648033200,
-			"settleTime": 1648033200
-		}
-	}
+	"localhost": {}
 }
