@@ -85,7 +85,7 @@ contract PolicyCore is Ownable {
     address public naughtyRouter;
 
     // Contract for initial liquidity matching
-    address public IMLContract;
+    address public ILMContract;
 
     struct PolicyTokenInfo {
         address policyTokenAddress;
@@ -140,7 +140,7 @@ contract PolicyCore is Ownable {
     event LotteryChanged(address newLotteryAddress);
     event IncomeSharingChanged(address newIncomeSharing);
     event NaughtyRouterChanged(address newRouter);
-    event IMLChanged(address newIML);
+    event ILMChanged(address newILM);
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
@@ -427,9 +427,9 @@ contract PolicyCore is Ownable {
         emit NaughtyRouterChanged(_router);
     }
 
-    function setIMLContract(address _IML) external onlyOwner {
-        IMLContract = _IML;
-        emit IMLChanged(_IML);
+    function setILMContract(address _ILM) external onlyOwner {
+        ILMContract = _ILM;
+        emit ILMChanged(_ILM);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -553,50 +553,33 @@ contract PolicyCore is Ownable {
         emit PoolDeployed(poolAddress, policyTokenAddress, _stablecoin);
     }
 
-    function _deployPool(
-        address _policyTokenAddress,
-        address _stablecoin,
-        uint256 _poolDeadline,
-        uint256 _feeRate,
-        uint256 _initLiquidityA,
-        uint256 _initLiquidityB
-    ) internal returns (address) {
-        // Deploy a new pool (policyToken <=> stablecoin)
-        address poolAddress = factory.deployPool(
-            _policyTokenAddress,
-            _stablecoin,
-            _poolDeadline,
-            _feeRate
-        );
+    error NotILM();
 
-        // Record the mapping
-        whichStablecoin[_policyTokenAddress] = _stablecoin;
-
-        if (_initLiquidityA > 0 && _initLiquidityB > 0) {
-            INaughtyRouter(naughtyRouter).addLiquidity(
-                _policyTokenAddress,
-                _stablecoin,
-                _initLiquidityA,
-                _initLiquidityB,
-                _initLiquidityA,
-                _initLiquidityB,
-                msg.sender,
-                block.timestamp + 60
-            );
-        }
-
-        return poolAddress;
-    }
-
-    function deployPoolWithInitialLiquidity(
+    /**
+     * @notice Deploy a new pool with initial liquidity
+     * @dev Can only be called by Initial Liquidity Matching contract
+     * @param _policyTokenName Name of the policy token
+     * @param _stablecoin Address of the stable coin
+     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
+     * @param _feeRate Fee rate given to LP holders
+     * @param _initLiquidityA Initial liquidity of A
+     * @param _initLiquidityB Initial liquidity of B
+     * @return poolAddress Address of the pool
+     */
+    function deployPool(
         string memory _policyTokenName,
         address _stablecoin,
         uint256 _poolDeadline,
         uint256 _feeRate,
         uint256 _initLiquidityA,
         uint256 _initLiquidityB
-    ) external validStablecoin(_stablecoin) deployedPolicy(_policyTokenName) {
-        require(msg.sender == IMLContract, "Only IML");
+    )
+        external
+        validStablecoin(_stablecoin)
+        deployedPolicy(_policyTokenName)
+        returns (address)
+    {
+        if (msg.sender != ILMContract) revert NotILM();
         require(_poolDeadline > block.timestamp, "Wrong deadline");
         require(
             _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
@@ -620,6 +603,8 @@ contract PolicyCore is Ownable {
             _initLiquidityA,
             _initLiquidityB
         );
+
+        return poolAddress;
     }
 
     /**
@@ -997,6 +982,51 @@ contract PolicyCore is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Finish deploying a pool
+     * @param _policyTokenAddress Address of the policy token
+     * @param _stablecoin Address of the stable coin
+     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
+     * @param _feeRate Fee rate given to LP holders
+     * @param _initLiquidityA Initial liquidity of A
+     * @param _initLiquidityB Initial liquidity of B
+     * @return poolAddress Address of the pool
+     */
+    function _deployPool(
+        address _policyTokenAddress,
+        address _stablecoin,
+        uint256 _poolDeadline,
+        uint256 _feeRate,
+        uint256 _initLiquidityA,
+        uint256 _initLiquidityB
+    ) internal returns (address) {
+        // Deploy a new pool (policyToken <=> stablecoin)
+        address poolAddress = factory.deployPool(
+            _policyTokenAddress,
+            _stablecoin,
+            _poolDeadline,
+            _feeRate
+        );
+
+        // Record the mapping
+        whichStablecoin[_policyTokenAddress] = _stablecoin;
+
+        if (_initLiquidityA > 0 && _initLiquidityB > 0) {
+            INaughtyRouter(naughtyRouter).addLiquidity(
+                _policyTokenAddress,
+                _stablecoin,
+                _initLiquidityA,
+                _initLiquidityB,
+                _initLiquidityA,
+                _initLiquidityB,
+                msg.sender,
+                block.timestamp + 60
+            );
+        }
+
+        return poolAddress;
+    }
 
     /**
      * @notice Finish Deposit

@@ -24,6 +24,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
   getCreate2Address,
+  Interface,
   keccak256,
   parseUnits,
   solidityKeccak256,
@@ -92,7 +93,6 @@ describe("Policy Core and Naughty Factory", function () {
     NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
     router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
 
-
     await factory.setPolicyCoreAddress(core.address);
 
     await core.setLottery(lottery.address);
@@ -142,12 +142,19 @@ describe("Policy Core and Naughty Factory", function () {
       expect(await core.incomeSharing()).to.equal(testAddress.address);
     });
 
-    it("should be able to set a new router address", async function(){
-      await expect(core.setNaughtyRouter(testAddress.address))
-        .to.emit(core, "RouterChanged")
+    it("should be able to set a new router address", async function () {
+      await expect(core.setNaughtyRouter(router.address))
+        .to.emit(core, "NaughtyRouterChanged")
+        .withArgs(router.address);
+      expect(await core.naughtyRouter()).to.equal(router.address);
+    });
+
+    it("should be able to set a new ILM contract", async function () {
+      await expect(core.setILMContract(testAddress.address))
+        .to.emit(core, "ILMChanged")
         .withArgs(testAddress.address);
-      expect(await core.router()).to.equal(testAddress.address);
-    })
+      expect(await core.ILMContract()).to.equal(testAddress.address);
+    });
 
     it("should be able to set the core address in factory", async function () {
       await factory.setPolicyCoreAddress(core.address);
@@ -196,13 +203,15 @@ describe("Policy Core and Naughty Factory", function () {
 
       const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
+      const policyTokenDecimals = await usd.decimals();
+
       await expect(
         core.deployPolicyToken(
           "BTC",
           usd.address,
           false,
           4,
-          6,
+          policyTokenDecimals,
           parseUnits("5.5656"),
           "2112",
           toBN(deadline),
@@ -210,7 +219,13 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
+        .withArgs(
+          policyTokenName,
+          address,
+          policyTokenDecimals,
+          deadline,
+          settleTimestamp
+        );
     });
 
     it("should not be able to generate names with wrong decimals", async function () {
@@ -259,13 +274,15 @@ describe("Policy Core and Naughty Factory", function () {
 
       const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
+      const policyTokenDecimals = await usd.decimals();
+
       await expect(
         core.deployPolicyToken(
           "BTC",
           usd.address,
           false,
           18,
-          6,
+          policyTokenDecimals,
           parseUnits("5.565656565656565656"),
           "2112",
           toBN(deadline),
@@ -273,7 +290,13 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
+        .withArgs(
+          policyTokenName,
+          address,
+          policyTokenDecimals,
+          deadline,
+          settleTimestamp
+        );
     });
 
     it("should be able to deploy a new policy token and get the correct address", async function () {
@@ -378,7 +401,12 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       await expect(
-        core.deployPool(policyTokenName, usd.address, toBN(deadline), 20)
+        core["deployPool(string,address,uint256,uint256)"](
+          policyTokenName,
+          usd.address,
+          toBN(deadline),
+          20
+        )
       )
         .to.emit(core, "PoolDeployed")
         .withArgs(poolAddress, policyTokenAddress, usd.address);
@@ -388,6 +416,58 @@ describe("Policy Core and Naughty Factory", function () {
         usd.address
       );
       expect(pairAddressFromFactory).to.equal(poolAddress);
+    });
+
+    it("should not be able to deploy new pool with init lp not from ILM", async function () {
+      // Preset1: Add the stablecoin (we use default mockUSD here)
+      // Preset2: Deploy a policy token
+      await core.deployPolicyToken(
+        "BTC",
+        usd.address,
+        false,
+        0,
+        6,
+        parseUnits("24000"),
+        "2112",
+        toBN(deadline),
+        toBN(settleTimestamp)
+      );
+
+      // Calculate the address
+      const policyTokenName = "BTC_24000.0_L_2112";
+
+      const policyTokenInfo = await core.policyTokenInfoMapping(
+        policyTokenName
+      );
+      const policyTokenAddress = policyTokenInfo.policyTokenAddress;
+
+      NaughtyPair = await ethers.getContractFactory("NaughtyPair");
+      const INIT_CODE_HASH = keccak256(NaughtyPair.bytecode);
+
+      const salt = solidityKeccak256(
+        ["address", "address"],
+        [policyTokenAddress, usd.address]
+      );
+
+      const poolAddress = getCreate2Address(
+        factory.address,
+        salt,
+        INIT_CODE_HASH
+      );
+
+      // const errorInterface = new Interface(["error NotILM()"]);
+      // const error = errorInterface.encodeErrorResult("NotILM", []);
+
+      await expect(
+        core["deployPool(string,address,uint256,uint256,uint256,uint256)"](
+          policyTokenName,
+          usd.address,
+          toBN(deadline),
+          20,
+          toWei("10"),
+          toWei("10")
+        )
+      ).to.be.revertedWith("NotILM");
     });
   });
   describe("Stake and Redeem policy tokens", function () {
@@ -407,7 +487,12 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(deadline),
         toBN(settleTimestamp)
       );
-      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
+      await core["deployPool(string,address,uint256,uint256)"](
+        policyTokenName,
+        usd.address,
+        toBN(deadline),
+        20
+      );
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -493,7 +578,12 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(deadline),
         toBN(settleTimestamp)
       );
-      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
+      await core["deployPool(string,address,uint256,uint256)"](
+        policyTokenName,
+        usd.address,
+        toBN(deadline),
+        20
+      );
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -650,8 +740,18 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(settleTimestamp)
       );
 
-      await core.deployPool(policyTokenName_H, usd.address, toBN(deadline), 20);
-      await core.deployPool(policyTokenName_L, usd.address, toBN(deadline), 20);
+      await core["deployPool(string,address,uint256,uint256)"](
+        policyTokenName_H,
+        usd.address,
+        toBN(deadline),
+        20
+      );
+      await core["deployPool(string,address,uint256,uint256)"](
+        policyTokenName_L,
+        usd.address,
+        toBN(deadline),
+        20
+      );
 
       policyTokenInfo_H = await core.policyTokenInfoMapping(policyTokenName_H);
       policyTokenInfo_L = await core.policyTokenInfoMapping(policyTokenName_L);

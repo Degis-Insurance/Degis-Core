@@ -90,7 +90,12 @@ describe("Naughty Router", function () {
       toBN(settleTimestamp)
     );
 
-    await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
+    await core["deployPool(string,address,uint256,uint256)"](
+      policyTokenName,
+      usd.address,
+      toBN(deadline),
+      20
+    );
 
     await router.deployed();
 
