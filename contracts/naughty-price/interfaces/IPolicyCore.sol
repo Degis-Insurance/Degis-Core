@@ -32,4 +32,11 @@ interface IPolicyCore {
         uint256 _amount,
         address _user
     ) external;
+
+    function deployPool(
+        string memory _policyTokenName,
+        address _stablecoin,
+        uint256 _poolDeadline,
+        uint256 _feeRate
+    ) external returns (address);
 }

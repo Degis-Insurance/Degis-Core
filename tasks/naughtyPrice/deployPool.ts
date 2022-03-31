@@ -51,7 +51,7 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
     // Deploy
-    const tx = await core["deployPool(string,address,uint256,uint256)"](
+    const tx = await core.deployPool(
       taskArgs.name,
       stablecoinAddress,
       taskArgs.deadline,

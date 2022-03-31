@@ -401,12 +401,7 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       await expect(
-        core["deployPool(string,address,uint256,uint256)"](
-          policyTokenName,
-          usd.address,
-          toBN(deadline),
-          20
-        )
+        core.deployPool(policyTokenName, usd.address, toBN(deadline), 20)
       )
         .to.emit(core, "PoolDeployed")
         .withArgs(poolAddress, policyTokenAddress, usd.address);
@@ -418,7 +413,7 @@ describe("Policy Core and Naughty Factory", function () {
       expect(pairAddressFromFactory).to.equal(poolAddress);
     });
 
-    it("should not be able to deploy new pool with init lp not from ILM", async function () {
+    it("should be able to deploy new pool with init lp from ILM", async function () {
       // Preset1: Add the stablecoin (we use default mockUSD here)
       // Preset2: Deploy a policy token
       await core.deployPolicyToken(
@@ -441,33 +436,48 @@ describe("Policy Core and Naughty Factory", function () {
       );
       const policyTokenAddress = policyTokenInfo.policyTokenAddress;
 
-      NaughtyPair = await ethers.getContractFactory("NaughtyPair");
-      const INIT_CODE_HASH = keccak256(NaughtyPair.bytecode);
+      // Set ILM contract in PolicyCore
+      await core.setILMContract(testAddress.address);
+      await core.setNaughtyRouter(router.address);
+      await router.setPolicyCore(core.address);
 
-      const salt = solidityKeccak256(
-        ["address", "address"],
-        [policyTokenAddress, usd.address]
-      );
+      // Mint usd and approve two contracts
+      await usd.mint(testAddress.address, stablecoinToWei("200"));
+      await usd
+        .connect(testAddress)
+        .approve(core.address, stablecoinToWei("20"));
+      await usd
+        .connect(testAddress)
+        .approve(router.address, stablecoinToWei("20"));
 
-      const poolAddress = getCreate2Address(
-        factory.address,
-        salt,
-        INIT_CODE_HASH
-      );
+      policyToken = NPPolicyToken.attach(policyTokenAddress);
+      await policyToken
+        .connect(testAddress)
+        .approve(router.address, stablecoinToWei("20"));
 
-      // const errorInterface = new Interface(["error NotILM()"]);
-      // const error = errorInterface.encodeErrorResult("NotILM", []);
+      const now = await getLatestBlockTimestamp(ethers.provider);
+
+      // Deploy a pool from testAddress(ILM) with init liquidity
+      await core
+        .connect(testAddress)
+        .deployPool(policyTokenName, usd.address, toBN(deadline), 20);
+
+      expect(await core.supportedStablecoin(usd.address)).to.be.true;
 
       await expect(
-        core["deployPool(string,address,uint256,uint256,uint256,uint256)"](
-          policyTokenName,
-          usd.address,
-          toBN(deadline),
-          20,
-          toWei("10"),
-          toWei("10")
-        )
-      ).to.be.revertedWith("NotILM");
+        router
+          .connect(testAddress)
+          .addLiquidityWithUSD(
+            policyTokenAddress,
+            usd.address,
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            testAddress.address,
+            toBN(now + 600000)
+          )
+      ).to.be.emit(router, "LiquidityAdded");
     });
   });
   describe("Stake and Redeem policy tokens", function () {
@@ -487,12 +497,7 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(deadline),
         toBN(settleTimestamp)
       );
-      await core["deployPool(string,address,uint256,uint256)"](
-        policyTokenName,
-        usd.address,
-        toBN(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -578,12 +583,7 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(deadline),
         toBN(settleTimestamp)
       );
-      await core["deployPool(string,address,uint256,uint256)"](
-        policyTokenName,
-        usd.address,
-        toBN(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
       policyTokenInfo = await core.policyTokenInfoMapping(policyTokenName);
       policyTokenInstance = NPPolicyToken.attach(
@@ -740,18 +740,8 @@ describe("Policy Core and Naughty Factory", function () {
         toBN(settleTimestamp)
       );
 
-      await core["deployPool(string,address,uint256,uint256)"](
-        policyTokenName_H,
-        usd.address,
-        toBN(deadline),
-        20
-      );
-      await core["deployPool(string,address,uint256,uint256)"](
-        policyTokenName_L,
-        usd.address,
-        toBN(deadline),
-        20
-      );
+      await core.deployPool(policyTokenName_H, usd.address, toBN(deadline), 20);
+      await core.deployPool(policyTokenName_L, usd.address, toBN(deadline), 20);
 
       policyTokenInfo_H = await core.policyTokenInfoMapping(policyTokenName_H);
       policyTokenInfo_L = await core.policyTokenInfoMapping(policyTokenName_L);

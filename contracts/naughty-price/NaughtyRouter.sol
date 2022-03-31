@@ -138,7 +138,15 @@ contract NaughtyRouter is Ownable {
         uint256 _amountBMin,
         address _to,
         uint256 _deadline
-    ) external beforeDeadline(_deadline) {
+    )
+        external
+        beforeDeadline(_deadline)
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        )
+    {
         require(_checkStablecoin(_tokenB), "Token B should be stablecoin");
 
         // Mint _amountADesired policy tokens for users
@@ -151,7 +159,7 @@ contract NaughtyRouter is Ownable {
 
         // Add liquidity
         {
-            addLiquidity(
+            (amountA, amountB, liquidity) = addLiquidity(
                 _tokenA,
                 _tokenB,
                 _amountADesired,
