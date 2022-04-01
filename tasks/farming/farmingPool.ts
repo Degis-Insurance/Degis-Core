@@ -133,11 +133,11 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     storeFarmingPoolList(farmingPoolList);
   });
 
-task("setFarmingStartBlock", "Set the start block of farming")
-  .addParam("start", "The start block", null, types.int)
+task("setFarmingStartTime", "Set the start timestamp of farming")
+  .addParam("start", "The start timestamp", null, types.int)
   .setAction(async (taskArgs, hre) => {
-    const startBlock = taskArgs.start;
-    console.log("Pool address to be added: ", startBlock);
+    const startTimestamp = taskArgs.start;
+    console.log("Pool address to be added: ", startTimestamp);
 
     const { network } = hre;
 
@@ -156,7 +156,7 @@ task("setFarmingStartBlock", "Set the start block of farming")
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
-    const tx = await farmingPool.setStartTimestamp(startBlock);
+    const tx = await farmingPool.setStartTimestamp(startTimestamp);
     console.log("Tx details: ", await tx.wait());
 
     // Check the result

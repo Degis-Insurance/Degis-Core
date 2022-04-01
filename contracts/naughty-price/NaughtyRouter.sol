@@ -19,19 +19,14 @@
 */
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../tokens/interfaces/IBuyerToken.sol";
-
-import "./interfaces/INPPolicyToken.sol";
-import "./interfaces/INaughtyPair.sol";
-import "./interfaces/INaughtyFactory.sol";
-import "./interfaces/IPolicyCore.sol";
-
-import "../utils/Ownable.sol";
-
-import "../utils/interfaces/IERC20Decimals.sol";
-import "hardhat/console.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IBuyerToken} from "../tokens/interfaces/IBuyerToken.sol";
+import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
+import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
+import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
 
 /**
  * @title  NaughtyRouter
@@ -56,6 +51,10 @@ contract NaughtyRouter is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    event PolicyCoreChanged(address oldPolicyCore, address newPolicyCore);
+
+    event BuyerTokenChanged(address oldBuyerToken, address newBuyerToken);
 
     event LiquidityAdded(
         address indexed pairAddress,
@@ -102,6 +101,7 @@ contract NaughtyRouter is Ownable {
      * @param _coreAddress Address of new policyCore
      */
     function setPolicyCore(address _coreAddress) external onlyOwner {
+        emit PolicyCoreChanged(policyCore, _coreAddress);
         policyCore = _coreAddress;
     }
 
@@ -110,6 +110,7 @@ contract NaughtyRouter is Ownable {
      * @param _buyerToken Address of new buyer token
      */
     function setBuyerToken(address _buyerToken) external onlyOwner {
+        emit BuyerTokenChanged(buyerToken, _buyerToken);
         buyerToken = _buyerToken;
     }
 
@@ -263,10 +264,6 @@ contract NaughtyRouter is Ownable {
 
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
-
-        console.log("Amount A", amountA);
-        console.log("Amount B", amountB);
-        console.log("Liquidity", _liquidity);
 
         emit LiquidityRemoved(pair, amountA, amountB, _liquidity);
     }

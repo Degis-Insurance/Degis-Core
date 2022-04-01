@@ -21,11 +21,10 @@
 pragma solidity ^0.8.10;
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/INaughtyPair.sol";
-import "./interfaces/IPolicyCore.sol";
-import "../libraries/StringsUtils.sol";
-import "../utils/OwnableWithoutContext.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
+import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
+import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
 
 /**
  * @title Naughty Factory
@@ -37,8 +36,6 @@ import "../utils/OwnableWithoutContext.sol";
  */
 
 contract NaughtyFactory is OwnableWithoutContext {
-    using StringsUtils for address;
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -148,9 +145,8 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @param _policyCore Address of policyCore contract
      */
     function setPolicyCoreAddress(address _policyCore) external onlyOwner {
-        address oldPolicyCore = policyCore;
+        emit PolicyCoreAddressChanged(policyCore, _policyCore);
         policyCore = _policyCore;
-        emit PolicyCoreAddressChanged(oldPolicyCore, _policyCore);
     }
 
     // ---------------------------------------------------------------------------------------- //

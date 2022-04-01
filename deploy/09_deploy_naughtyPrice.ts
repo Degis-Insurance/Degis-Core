@@ -1,6 +1,7 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+import { getTokenAddressOnAVAX } from "../info/tokenAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -14,7 +15,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   const BuyerToken = await get("BuyerToken");
-  const MockUSD = await get("MockUSD");
 
   const factory = await deploy("NaughtyFactory", {
     contract: "NaughtyFactory",
@@ -32,13 +32,25 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].PriceGetter = priceGetter.address;
 
-  const core = await deploy("PolicyCore", {
-    contract: "PolicyCore",
-    from: deployer,
-    args: [MockUSD.address, factory.address, priceGetter.address],
-    log: true,
-  });
-  addressList[network.name].PolicyCore = core.address;
+  if (network.name == "avax" || network.name == "avaxTest") {
+    const usdcAddress = getTokenAddressOnAVAX("USDC.e");
+    const core = await deploy("PolicyCore", {
+      contract: "PolicyCore",
+      from: deployer,
+      args: [usdcAddress, factory.address, priceGetter.address],
+      log: true,
+    });
+    addressList[network.name].PolicyCore = core.address;
+  } else {
+    const MockUSD = await get("MockUSD");
+    const core = await deploy("PolicyCore", {
+      contract: "PolicyCore",
+      from: deployer,
+      args: [MockUSD.address, factory.address, priceGetter.address],
+      log: true,
+    });
+    addressList[network.name].PolicyCore = core.address;
+  }
 
   const router = await deploy("NaughtyRouter", {
     contract: "NaughtyRouter",

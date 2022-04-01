@@ -20,16 +20,11 @@
 
 pragma solidity ^0.8.10;
 
-import "../libraries/Math.sol";
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../utils/ReentrancyGuard.sol";
-
-import "./interfaces/INaughtyFactory.sol";
-
-import "hardhat/console.sol";
+import {Math} from "../libraries/Math.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "../utils/ReentrancyGuard.sol";
 
 /**
  * @title  Naughty Pair
@@ -216,16 +211,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
         uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
 
-        console.logUint(balance0);
-        console.logUint(balance1);
-
         uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY;
 
-        console.logUint(liquidity);
-
         uint256 _totalSupply = totalSupply(); // gas savings
-
-        console.logUint(_totalSupply);
 
         // How many tokens to be sent back
         amount0 = (liquidity * balance0) / _totalSupply;
