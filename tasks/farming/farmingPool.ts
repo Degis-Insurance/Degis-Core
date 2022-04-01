@@ -16,8 +16,8 @@ const farmingPoolList = readFarmingPoolList();
 task("addFarmingPool", "Add new farming pool")
   .addParam("name", "The name of the new farming pool", "unnamed", types.string)
   .addParam("address", "The pool's address to be added", null, types.string)
-  .addParam("reward", "Initial degis reward per second", null, types.int)
-  .addParam("bonus", "Bonus degis reward per second", null, types.int)
+  .addParam("reward", "Initial degis reward per second", null, types.string)
+  .addParam("bonus", "Bonus degis reward per second", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const poolName = taskArgs.name;
     const lptokenAddress = taskArgs.address;
@@ -46,10 +46,12 @@ task("addFarmingPool", "Add new farming pool")
       await hre.ethers.getContractFactory("FarmingPool");
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
+    console.log("farming speed", parseUnits(basicDegisPerSecond).toString());
+
     const tx = await farmingPool.add(
       lptokenAddress,
-      parseUnits(basicDegisPerSecond.toString()),
-      parseUnits(bonusDegisPerSecond.toString()),
+      parseUnits(basicDegisPerSecond),
+      parseUnits(bonusDegisPerSecond),
       false
     );
     console.log("tx details: ", await tx.wait());
@@ -137,7 +139,7 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
   .addParam("start", "The start timestamp", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const startTimestamp = taskArgs.start;
-    console.log("Pool address to be added: ", startTimestamp);
+    console.log("New start timestamp: ", startTimestamp);
 
     const { network } = hre;
 
