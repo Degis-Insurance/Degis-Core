@@ -53,16 +53,14 @@ task("setStakingReward", "Set the degis reward of a staking pool")
   });
 
 task("deployStakingPool", "Deploy a new staking pool")
-  .addParam("poolToken", "Address of the pool token", null, types.string)
-  .addParam("start", "Staking pool start block", null, types.int)
-  .addParam("reward", "Degis reward per block", null, types.int)
-  .addParam("isFlash", "Whether it is a flash pool", false, types.boolean)
+  .addParam("pooltoken", "Address of the pool token", null, types.string)
+  .addParam("start", "Staking pool start timestamp", null, types.int)
+  .addParam("reward", "Degis reward per second", null, types.int)
   .setAction(async (taskArgs, hre) => {
     // Get the args
-    const poolTokenAddress = taskArgs.poolToken;
+    const poolTokenAddress = taskArgs.pooltoken;
     const startBlock = taskArgs.start;
     const degisPerBlock = taskArgs.reward;
-    const isFlashPool = taskArgs.isFlash;
 
     // Network info
     const { network } = hre;
@@ -86,8 +84,7 @@ task("deployStakingPool", "Deploy a new staking pool")
     const tx = await factory.createPool(
       poolTokenAddress,
       startBlock,
-      parseUnits(degisPerBlock.toString()),
-      isFlashPool
+      parseUnits(degisPerBlock.toString())
     );
     console.log("Tx details: ", await tx.wait());
 

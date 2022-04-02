@@ -1,5 +1,13 @@
 {
-	"fuji": {},
+	"fuji": {
+		"1": {
+			"name": "test",
+			"address": "0x79Da89DC282F71896264b5B598189956C8b22AcF",
+			"poolId": 1,
+			"reward": "1.0",
+			"bonus": "1.0"
+		}
+	},
 	"avax": {
 		"1": {
 			"name": "AVAX_94.0_L_2104",
