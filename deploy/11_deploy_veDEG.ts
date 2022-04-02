@@ -15,13 +15,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Arguments for deployment
   const degisAddress: string = addressList[network.name].DegisToken;
-  const farmingPoolAddress: string = addressList[network.name].FarmingPool;
+  const farmingPoolAddress: string =
+    addressList[network.name].FarmingPoolUpgradeable;
 
   const argsConfig = [degisAddress, farmingPoolAddress];
 
   // Always use the same proxy admin
   const proxyOptions: ProxyOptions = {
-    proxyContract: "OptimizedTransparentProxy",
+    proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
       methodName: "initialize",

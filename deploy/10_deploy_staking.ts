@@ -45,8 +45,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
-  await hre.run("addMinterBurner");
-  await hre.run("setOperator");
+  // await hre.run("addMinterBurner");
+  // await hre.run("setOperator");
 };
 
 func.tags = ["Staking"];

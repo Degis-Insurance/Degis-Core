@@ -34,6 +34,11 @@ contract EmergencyPool is Ownable {
         address indexed userAddress,
         uint256 amount
     );
+    event UseFund(
+        address indexed tokenAddress,
+        address indexed userAddress,
+        uint256 amount
+    );
 
     constructor() Ownable(msg.sender) {}
 
@@ -73,5 +78,17 @@ contract EmergencyPool is Ownable {
 
         IERC20(_tokenAddress).safeTransfer(owner(), _amount);
         emit Withdraw(_tokenAddress, owner(), _amount);
+    }
+
+    function useFund(
+        address _tokenAddress,
+        address _receiver,
+        uint256 _amount
+    ) external onlyOwner {
+        uint256 balance = IERC20(_tokenAddress).balanceOf(address(this));
+        require(_amount <= balance, "Insufficient funds");
+
+        IERC20(_tokenAddress).safeTransfer(_receiver, _amount);
+        emit UseFund(_tokenAddress, _receiver, _amount);
     }
 }

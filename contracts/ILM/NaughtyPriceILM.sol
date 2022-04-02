@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
 import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
-
 import {ILMToken as LPToken} from "./ILMToken.sol";
 
 /**
@@ -22,7 +19,7 @@ import {ILMToken as LPToken} from "./ILMToken.sol";
  *         When reach deadline
  *           - Final price of ILM = Initial price of naughty price pair = amountA/amountB
  */
-contract NaughtyPriceILM is ERC20, Ownable {
+contract NaughtyPriceILM is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     uint256 public SCALE = 1e18;
@@ -54,15 +51,29 @@ contract NaughtyPriceILM is ERC20, Ownable {
 
     event EmergencyWithdraw(address owner, uint256 amount);
 
-    constructor(address _policyCore) ERC20("ILM LP Token", "ILP") {
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    function initialize(address _policyCore) public initializer {
+        require(_policyCore != address(0), "Zero address");
+        __Ownable_init();
+
         policyCore = _policyCore;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     modifier duringILM(address _policyToken) {
         require(block.timestamp <= pairs[_policyToken].deadline, "ILM over");
         _;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
     function getPrice(address _policyTokenAddress)
         public
         view

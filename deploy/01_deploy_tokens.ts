@@ -36,7 +36,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].BuyerToken = buyerToken.address;
 
-  if (network.name == "avax") {
+  if (network.name == "avax" || network.name == "avaxTest") {
     const IERC20ABI = await getArtifact("ERC20").then((x) => x.abi);
 
     await save("USDCe", {

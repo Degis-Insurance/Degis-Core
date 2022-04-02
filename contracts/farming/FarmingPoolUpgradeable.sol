@@ -132,7 +132,7 @@ contract FarmingPoolUpgradeable is
     // ---------------------------------------------------------------------------------------- //
 
     function initialize(address _degis) public initializer {
-        require(_degis != address(0), "zero address");
+        require(_degis != address(0), "Zero address");
 
         __Ownable_init();
         __ReentrancyGuard_init_unchained();
