@@ -21,7 +21,7 @@ task("addMinterBurner", "add minter/burner manually")
       console.log("Invalid token name");
       return;
     }
-    const minterContractName = taskArgs.address;
+    const minterContractName = taskArgs.name;
 
     const addressList = readAddressList();
 
@@ -146,3 +146,5 @@ task("addAllMinterBurner", "Add minter for degis/buyer tokens").setAction(
     }
   }
 );
+
+

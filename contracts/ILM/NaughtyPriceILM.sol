@@ -34,7 +34,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 amountA;
         uint256 amountB;
     }
-    mapping(address => mapping(address => UserInfo)) users;
+    mapping(address => mapping(address => UserInfo)) public users;
 
     struct PairInfo {
         address lptoken; // lptoken address
@@ -45,11 +45,25 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 amountB; // Amount of stablecoins
     }
     // Policy Token Address => Pair Info
-    mapping(address => PairInfo) pairs;
+    mapping(address => PairInfo) public pairs;
 
     event Deposit(address policyToken, uint256 amountA, uint256 amountB);
 
     event EmergencyWithdraw(address owner, uint256 amount);
+
+    event ILMFinish(
+        address policyToken,
+        address stablecoin,
+        address poolAddress,
+        uint256 amountA,
+        uint256 amountB
+    );
+    event ILMStart(
+        address policyToken,
+        address stablecoin,
+        uint256 deadline,
+        address lptokenAddress
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -129,6 +143,13 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
         // Record the lptoken address
         pairs[_policyToken].lptoken = _lpTokenAddress;
+
+        emit ILMStart(
+            _policyToken,
+            _stablecoin,
+            block.timestamp + _time,
+            _lpTokenAddress
+        );
     }
 
     function _deployLPToken(string memory _name) internal returns (address) {
@@ -169,9 +190,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             address(this),
             block.timestamp + 60
         );
-    }
 
-    function startNaughtyPriceRound() public {}
+        emit ILMFinish(
+            _policyToken,
+            pair.stablecoin,
+            poolAddress,
+            pair.amountA,
+            pair.amountB
+        );
+    }
 
     modifier activePair(address _policyToken) {
         require(pairs[_policyToken].status == 1, "Not active pair");

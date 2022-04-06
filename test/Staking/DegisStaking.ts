@@ -355,6 +355,13 @@ describe("Degis Staking", function () {
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
         toWei("800")
       );
+
+      const user = await pool.users(dev_account.address);
+      const userWeight = user.totalWeight;
+
+      const poolWeight = await pool.totalWeight();
+
+      expect(userWeight).to.equal(poolWeight);
     });
 
     it("should be able to get reward with multiple players(paying staking fee)", async function () {

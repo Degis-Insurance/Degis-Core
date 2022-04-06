@@ -36,6 +36,7 @@ import {
   stablecoinToWei,
   toBN,
   toWei,
+  zeroAddress,
 } from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
@@ -128,31 +129,31 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to set a new lottery address", async function () {
-      await expect(core.setLottery(stablecoin.address))
+      await expect(core.setLottery(testAddress.address))
         .to.emit(core, "LotteryChanged")
-        .withArgs(stablecoin.address);
+        .withArgs(lottery.address, testAddress.address);
 
-      expect(await core.lottery()).to.equal(stablecoin.address);
+      expect(await core.lottery()).to.equal(testAddress.address);
     });
 
     it("should be able to set a new incomeSharing address", async function () {
       await expect(core.setIncomeSharing(testAddress.address))
         .to.emit(core, "IncomeSharingChanged")
-        .withArgs(testAddress.address);
+        .withArgs(emergencyPool.address, testAddress.address);
       expect(await core.incomeSharing()).to.equal(testAddress.address);
     });
 
     it("should be able to set a new router address", async function () {
       await expect(core.setNaughtyRouter(router.address))
         .to.emit(core, "NaughtyRouterChanged")
-        .withArgs(router.address);
+        .withArgs(zeroAddress(), router.address);
       expect(await core.naughtyRouter()).to.equal(router.address);
     });
 
     it("should be able to set a new ILM contract", async function () {
       await expect(core.setILMContract(testAddress.address))
         .to.emit(core, "ILMChanged")
-        .withArgs(testAddress.address);
+        .withArgs(zeroAddress(), testAddress.address);
       expect(await core.ILMContract()).to.equal(testAddress.address);
     });
 
@@ -659,10 +660,10 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
-        stablecoinToWei("20")
+        stablecoinToWei("80")
       );
       expect(await usd.balanceOf(lottery.address)).to.equal(
-        stablecoinToWei("80")
+        stablecoinToWei("20")
       );
     });
 
@@ -697,10 +698,10 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
-        stablecoinToWei("40")
+        stablecoinToWei("160")
       );
       expect(await usd.balanceOf(lottery.address)).to.equal(
-        stablecoinToWei("160")
+        stablecoinToWei("40")
       );
     });
   });

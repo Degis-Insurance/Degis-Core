@@ -32,6 +32,8 @@ import {Math} from "../libraries/Math.sol";
 
 import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Vote Escrowed Degis
  * @notice The staking contract for DEG -> veDEG
@@ -102,8 +104,8 @@ contract VoteEscrowedDegis is
     event WhiteListAdded(address newWhiteList);
     event WhiteListRemoved(address oldWhiteList);
 
-    event Staked(address indexed user, uint256 indexed amount);
-    event Unstaked(address indexed user, uint256 indexed amount);
+    event Deposit(address indexed user, uint256 indexed amount);
+    event Withdraw(address indexed user, uint256 indexed amount);
     event Claimed(address indexed user, uint256 indexed amount);
 
     event BurnVeDEG(
@@ -167,12 +169,17 @@ contract VoteEscrowedDegis is
 
         // Seconds passed since last claim
         uint256 timePassed = block.timestamp - user.lastRelease;
-
+        console.log("timepassed:", block.timestamp);
+        console.log("timepassed:", user.lastRelease);
         // calculate pending amount
         uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
 
+        console.log("pending:", pending);
+
         // get user's veDEG balance
         uint256 userVeDEGBalance = balanceOf(_user);
+
+        console.log("user balance:", userVeDEGBalance);
 
         // user veDEG balance cannot go above user.amount * maxCap
         uint256 veDEGCap = user.amount * maxCapRatio;
@@ -268,10 +275,17 @@ contract VoteEscrowedDegis is
             users[msg.sender].amount = _amount;
         }
 
+        console.log("userbalance deposit", users[msg.sender].amount);
+
         // Request degis from user
         degis.safeTransferFrom(msg.sender, address(this), _amount);
+
+        emit Deposit(msg.sender, _amount);
     }
 
+    /**
+     * @notice Deposit for the max time
+     */
     function depositMaxTime(uint256 _amount)
         external
         nonReentrant
@@ -320,6 +334,8 @@ contract VoteEscrowedDegis is
 
         // send back the staked degis
         degis.safeTransfer(msg.sender, _amount);
+
+        emit Withdraw(msg.sender, _amount);
     }
 
     function withdrawLocked() external nonReentrant whenNotPaused {
