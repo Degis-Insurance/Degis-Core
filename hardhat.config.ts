@@ -43,6 +43,8 @@ import "./tasks/tokens/addMinterBurner";
 // Staking Tasks
 import "./tasks/staking/stakingPoolFactory";
 
+import "./tasks/proxy/admin"
+
 dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to

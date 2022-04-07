@@ -5,6 +5,8 @@ import {
   DegisToken__factory,
   FarmingPool,
   FarmingPool__factory,
+  MockUSD,
+  MockUSD__factory,
   VoteEscrowedDegis,
   VoteEscrowedDegis__factory,
 } from "../../typechain";
@@ -18,9 +20,10 @@ import {
 import { BigNumberish } from "ethers";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
-describe("Farming Pool", function () {
+describe("Vote Escrowed Degis", function () {
   let FarmingPool: FarmingPool__factory, pool: FarmingPool;
   let DegisToken: DegisToken__factory, degis: DegisToken;
+  let MockUSD: MockUSD__factory, usd: MockUSD;
   let VeDEGToken: VoteEscrowedDegis__factory, veDEG: VoteEscrowedDegis;
 
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
@@ -39,6 +42,9 @@ describe("Farming Pool", function () {
   beforeEach(async function () {
     [dev_account, user1] = await ethers.getSigners();
 
+    MockUSD = await ethers.getContractFactory("MockUSD");
+    usd = await MockUSD.deploy();
+
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
 
@@ -55,8 +61,12 @@ describe("Farming Pool", function () {
     // Add minter role for farming pool contract
     await degis.addMinter(pool.address);
 
-    // Set veDEG address in farming
+    // Set veDEG address in farming pool
     await pool.setVeDEG(veDEG.address);
+
+    await usd.approve(pool.address, stablecoinToWei("100"));
+    await pool.add(usd.address, toWei("1"), toWei("1"), false);
+    await pool.stake(1, stablecoinToWei("10"));
   });
 
   describe("Deployment", function () {
@@ -95,6 +105,8 @@ describe("Farming Pool", function () {
   });
 
   describe("Deposit and Claim", function () {
+    let lockedStart: number;
+    let lockedUntil: number;
     beforeEach(async function () {
       await degis.mintDegis(dev_account.address, toWei("1000"));
       await degis.approve(veDEG.address, toWei("1000"));
@@ -103,6 +115,8 @@ describe("Farming Pool", function () {
       await expect(veDEG.deposit(toWei("100")))
         .to.emit(veDEG, "Deposit")
         .withArgs(dev_account.address, toWei("100"));
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("900"));
 
       const currentTime = await getLatestBlockTimestamp(ethers.provider);
 
@@ -147,6 +161,18 @@ describe("Farming Pool", function () {
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(
         toWei("1000")
       );
+
+      await mineBlocks(989);
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+
+      await mineBlocks(50);
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
     });
 
     it("should be able to withdraw DEG tokens", async function () {
@@ -164,6 +190,116 @@ describe("Farming Pool", function () {
         .to.emit(veDEG, "Withdraw")
         .withArgs(dev_account.address, toWei("100"));
 
+      // veDEG balance should be 0 after withdraw
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei("1000")
+      );
+    });
+
+    it("should be able to stake for max time", async function () {
+      await veDEG.depositMaxTime(toWei("100"));
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("900"));
+
+      const currentTime = await getLatestBlockTimestamp(ethers.provider);
+
+      const userInfo = await veDEG.users(dev_account.address);
+
+      const generationRate = await veDEG.generationRate();
+      const maxCapRatio = await veDEG.maxCapRatio();
+      const SCALE = await veDEG.SCALE();
+
+      const maxLockTime = maxCapRatio.mul(SCALE).div(generationRate);
+
+      expect(userInfo.amountLocked).to.equal(toWei("100"));
+      expect(userInfo.lockUntil).to.equal(
+        currentTime + 2 * maxLockTime.toNumber()
+      );
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+    });
+
+    it("should be able to have mixed deposit", async function () {
+      await veDEG.deposit(toWei("100"));
+      const firstDepositTime = await getLatestBlockTimestamp(ethers.provider);
+      await veDEG.depositMaxTime(toWei("100"));
+      const secondDepositTime = await getLatestBlockTimestamp(ethers.provider);
+
+      console.log(secondDepositTime - firstDepositTime);
+
+      const generationRate = await veDEG.generationRate();
+      const maxCapRatio = await veDEG.maxCapRatio();
+      const SCALE = await veDEG.SCALE();
+
+      const maxLockTime = maxCapRatio.mul(SCALE).div(generationRate);
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("800"));
+
+      const userInfo = await veDEG.users(dev_account.address);
+      expect(userInfo.amount).to.equal(toWei("100"));
+      expect(userInfo.amountLocked).to.equal(toWei("100"));
+      expect(userInfo.lastRelease).to.equal(firstDepositTime);
+      expect(userInfo.lockUntil).to.equal(
+        firstDepositTime + 1 + 2 * maxLockTime.toNumber()
+      );
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+
+      // await mineBlocks(2);
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10200")
+      );
+    });
+
+    it("should be able to only withdraw flexible deposit", async function () {
+      await veDEG.deposit(toWei("100"));
+      await veDEG.depositMaxTime(toWei("100"));
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("100"));
+
+      await veDEG.withdraw(toWei("100"));
+
+      // Still have the locked part
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+    });
+
+    it("should be able to withdraw locked part", async function () {
+      await veDEG.deposit(toWei("100"));
+      await veDEG.depositMaxTime(toWei("100"));
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("800"));
+
+      lockedStart = await getLatestBlockTimestamp(ethers.provider);
+
+      lockedUntil = lockedStart + 200;
+
+      // console.log(lockedUntil);
+
+      await setNextBlockTime(lockedUntil);
+
+      await veDEG.withdrawLocked();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("900"));
+
+      // Max amount
+      expect(await veDEG.claimable(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+
+      await veDEG.claim();
+
+      await veDEG.withdraw(toWei("100"));
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
     });
   });

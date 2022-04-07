@@ -104,9 +104,15 @@ contract VoteEscrowedDegis is
     event WhiteListAdded(address newWhiteList);
     event WhiteListRemoved(address oldWhiteList);
 
-    event Deposit(address indexed user, uint256 indexed amount);
-    event Withdraw(address indexed user, uint256 indexed amount);
-    event Claimed(address indexed user, uint256 indexed amount);
+    event Deposit(address indexed user, uint256 amount);
+    event DepositMaxTime(
+        address indexed user,
+        uint256 amount,
+        uint256 lockUntil
+    );
+    event Withdraw(address indexed user, uint256 amount);
+
+    event Claimed(address indexed user, uint256 amount);
 
     event BurnVeDEG(
         address indexed caller,
@@ -169,17 +175,14 @@ contract VoteEscrowedDegis is
 
         // Seconds passed since last claim
         uint256 timePassed = block.timestamp - user.lastRelease;
-        console.log("timepassed:", block.timestamp);
-        console.log("timepassed:", user.lastRelease);
+
         // calculate pending amount
         uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
 
-        console.log("pending:", pending);
-
         // get user's veDEG balance
-        uint256 userVeDEGBalance = balanceOf(_user);
-
-        console.log("user balance:", userVeDEGBalance);
+        uint256 userVeDEGBalance = balanceOf(_user) -
+            user.amountLocked *
+            maxCapRatio;
 
         // user veDEG balance cannot go above user.amount * maxCap
         uint256 veDEGCap = user.amount * maxCapRatio;
@@ -275,8 +278,6 @@ contract VoteEscrowedDegis is
             users[msg.sender].amount = _amount;
         }
 
-        console.log("userbalance deposit", users[msg.sender].amount);
-
         // Request degis from user
         degis.safeTransferFrom(msg.sender, address(this), _amount);
 
@@ -294,12 +295,17 @@ contract VoteEscrowedDegis is
         require(_amount > 0, "Zero amount");
 
         uint256 currentMaxTime = (maxCapRatio * SCALE) / generationRate;
+        uint256 lockUntil = block.timestamp + currentMaxTime * 2;
 
         users[msg.sender].amountLocked += _amount;
-        users[msg.sender].lockUntil = block.timestamp + currentMaxTime * 2;
+        users[msg.sender].lockUntil = lockUntil;
 
         // Request degis from user
         degis.safeTransferFrom(msg.sender, address(this), _amount);
+
+        _mint(msg.sender, maxCapRatio * _amount);
+
+        emit DepositMaxTime(msg.sender, _amount, lockUntil);
     }
 
     /// @notice claims accumulated veDEG
@@ -346,11 +352,11 @@ contract VoteEscrowedDegis is
             "locked time has not passed"
         );
 
+        _burn(msg.sender, user.amountLocked * maxCapRatio);
+
         // update his balance before burning or sending back degis
         users[msg.sender].amountLocked = 0;
         users[msg.sender].lockUntil = 0;
-
-        _burn(msg.sender, user.amountLocked);
 
         // send back the staked degis
         degis.safeTransfer(msg.sender, user.amountLocked);

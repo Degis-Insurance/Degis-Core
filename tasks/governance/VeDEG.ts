@@ -5,6 +5,8 @@ import "@nomiclabs/hardhat-ethers";
 import {
   FarmingPool,
   FarmingPool__factory,
+  ProxyAdmin,
+  ProxyAdmin__factory,
   VoteEscrowedDegis,
   VoteEscrowedDegis__factory,
 } from "../../typechain";
@@ -39,3 +41,23 @@ task("setGenerationRate", "Set the generation rate of veDEG")
     const tx = await veDEG.setGenerationRate(parseUnits(taskArgs.rate));
     console.log("tx details: ", await tx.wait());
   });
+
+
+  task("upgradeVeDEG", "Upgrade veDEG implementation")
+  .setAction(async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const veProxyAddress = addressList[network.name].VoteEscrowedDegis;
+    const ProxyAdminAddress = addressList[network.name].ProxyAdmin;
+
+    const proxyAdmin: ProxyAdmin__factory =
+      await hre.ethers.getContractFactory("ProxyAdmin");
+    const admin: ProxyAdmin = proxyAdmin.attach(ProxyAdminAddress);
+
+    // const tx = await admin.upgradeAndCall(veProxyAddress, implementation, );
+    // console.log("tx details: ", await tx.wait());
+  })

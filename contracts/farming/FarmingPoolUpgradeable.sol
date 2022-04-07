@@ -445,7 +445,7 @@ contract FarmingPoolUpgradeable is
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -504,7 +504,7 @@ contract FarmingPoolUpgradeable is
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus+ user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -655,7 +655,7 @@ contract FarmingPoolUpgradeable is
                 SCALE;
 
             // Update the pool's total bonus
-            pool.totalBonus += newFactor - oldFactor;
+            pool.totalBonus = pool.totalBonus + newFactor - oldFactor;
         }
     }
 

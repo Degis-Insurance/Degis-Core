@@ -434,7 +434,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -493,7 +493,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -644,7 +644,7 @@ contract FarmingPool is OwnableWithoutContext, ReentrancyGuard, Pausable {
                 SCALE;
 
             // Update the pool's total bonus
-            pool.totalBonus += newFactor - oldFactor;
+            pool.totalBonus = pool.totalBonus + newFactor - oldFactor;
         }
     }
 
