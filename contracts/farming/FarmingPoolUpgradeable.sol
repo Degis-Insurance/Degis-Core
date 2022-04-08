@@ -96,6 +96,8 @@ contract FarmingPoolUpgradeable is
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
+    mapping(uint256 => mapping(address => uint256)) public extraClaimable;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -235,7 +237,8 @@ contract FarmingPoolUpgradeable is
                 accDegisPerShare +
                 user.bonus *
                 accDegisPerBonusShare) /
-                SCALE -
+                SCALE +
+                extraClaimable[_poolId][_user] -
                 user.rewardDebt;
 
             return pending;
@@ -421,10 +424,14 @@ contract FarmingPoolUpgradeable is
                 pool.accDegisPerShare +
                 user.bonus *
                 pool.accDegisPerBonusShare) /
-                SCALE -
+                SCALE +
+                extraClaimable[_poolId][msg.sender] -
                 user.rewardDebt;
 
-            // Real reward amount
+            // Clear the extra record (has been distributed)
+            extraClaimable[_poolId][msg.sender] = 0;
+
+            // Real reward amount by safe transfer
             uint256 reward = _safeDegisTransfer(msg.sender, pending);
             emit Harvest(msg.sender, msg.sender, _poolId, reward);
         }
@@ -483,9 +490,14 @@ contract FarmingPoolUpgradeable is
             pool.accDegisPerShare +
             user.bonus *
             pool.accDegisPerBonusShare) /
-            SCALE -
+            SCALE +
+            extraClaimable[_poolId][msg.sender] -
             user.rewardDebt;
 
+        // Clear the extra record (has been distributed)
+        extraClaimable[_poolId][msg.sender] = 0;
+
+        // Real reward amount by safe transfer
         uint256 reward = _safeDegisTransfer(msg.sender, pending);
         emit Harvest(msg.sender, msg.sender, _poolId, reward);
 
@@ -504,7 +516,7 @@ contract FarmingPoolUpgradeable is
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus = pool.totalBonus+ user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -639,6 +651,15 @@ contract FarmingPoolUpgradeable is
 
             // first, update pool
             updatePool(poolId);
+
+            // Update the extra claimable amount
+            uint256 pending = (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
+                SCALE -
+                user.rewardDebt;
+            extraClaimable[poolId][_user] += pending;
 
             // get oldFactor
             uint256 oldFactor = user.bonus; // get old factor

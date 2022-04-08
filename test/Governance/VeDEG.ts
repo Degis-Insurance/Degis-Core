@@ -4,6 +4,8 @@ import {
   DegisToken,
   DegisToken__factory,
   FarmingPool,
+  FarmingPoolUpgradeable,
+  FarmingPoolUpgradeable__factory,
   FarmingPool__factory,
   MockUSD,
   MockUSD__factory,
@@ -21,7 +23,8 @@ import { BigNumberish } from "ethers";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
 describe("Vote Escrowed Degis", function () {
-  let FarmingPool: FarmingPool__factory, pool: FarmingPool;
+  let FarmingPool: FarmingPoolUpgradeable__factory,
+    pool: FarmingPoolUpgradeable;
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let VeDEGToken: VoteEscrowedDegis__factory, veDEG: VoteEscrowedDegis;
@@ -48,9 +51,10 @@ describe("Vote Escrowed Degis", function () {
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
 
-    FarmingPool = await ethers.getContractFactory("FarmingPool");
-    pool = await FarmingPool.deploy(degis.address);
+    FarmingPool = await ethers.getContractFactory("FarmingPoolUpgradeable");
+    pool = await FarmingPool.deploy();
     await pool.deployed();
+    await pool.initialize(degis.address);
 
     VeDEGToken = await ethers.getContractFactory("VoteEscrowedDegis");
     veDEG = await VeDEGToken.deploy();
@@ -63,10 +67,6 @@ describe("Vote Escrowed Degis", function () {
 
     // Set veDEG address in farming pool
     await pool.setVeDEG(veDEG.address);
-
-    await usd.approve(pool.address, stablecoinToWei("100"));
-    await pool.add(usd.address, toWei("1"), toWei("1"), false);
-    await pool.stake(1, stablecoinToWei("10"));
   });
 
   describe("Deployment", function () {
@@ -301,6 +301,58 @@ describe("Vote Escrowed Degis", function () {
 
       await veDEG.withdraw(toWei("100"));
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+    });
+  });
+
+  describe("Work with Farming Pool", function () {
+    beforeEach(async function () {
+      await usd.approve(pool.address, stablecoinToWei("100"));
+      await pool.add(usd.address, toWei("1"), toWei("1"), false);
+
+      await degis.mintDegis(dev_account.address, toWei("1000"));
+      await degis.approve(veDEG.address, toWei("1000"));
+    });
+
+    it("should be able to get basic rewards when no veDEG staking", async function () {
+      await pool.stake(1, stablecoinToWei("10"));
+
+      await mineBlocks(10);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("10")
+      );
+    });
+
+    it("should be able to get bonus reward when have veDEG", async function () {
+      // block 0
+      await pool.stake(1, stablecoinToWei("10"));
+      // block 1
+      await veDEG.deposit(toWei("100"));
+
+      await mineBlocks(9);
+      // block 10
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("10")
+      );
+
+      await veDEG.claim();
+      // block 11
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("1000")
+      );
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("900"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("12")
+      );
+      expect(await pool.extraClaimable(1, dev_account.address)).to.equal(
+        toWei("10")
+      );
+
+      await mineBlocks(10);
+
+      // block 21
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("31")
+      );
     });
   });
 });

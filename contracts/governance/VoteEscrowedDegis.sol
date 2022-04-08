@@ -96,6 +96,7 @@ contract VoteEscrowedDegis is
     // Contract addresses are by default unable to stake degis, they must be whitelisted
     mapping(address => bool) whitelist;
 
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -213,6 +214,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Add a new whitelist address
+     * @param _account Address to add
      */
     function addWhitelist(address _account) external onlyOwner {
         whitelist[_account] = true;
@@ -221,6 +223,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Remove a new whitelist address
+     * @param _account Address to remove
      */
     function removeWhitelist(address _account) external onlyOwner {
         whitelist[_account] = false;
@@ -239,7 +242,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Set generationRate
-     * @param _generationRate the new generation rate
+     * @param _generationRate New generation rate
      */
     function setGenerationRate(uint256 _generationRate) external onlyOwner {
         require(
@@ -256,6 +259,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Depisit degis for veDEG
+     * @dev Only EOA or whitelisted contract address
      * @param _amount Amount to deposit
      */
     function deposit(uint256 _amount)
@@ -286,6 +290,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Deposit for the max time
+     * @dev Release the max amount one time
      */
     function depositMaxTime(uint256 _amount)
         external
@@ -308,7 +313,9 @@ contract VoteEscrowedDegis is
         emit DepositMaxTime(msg.sender, _amount, lockUntil);
     }
 
-    /// @notice claims accumulated veDEG
+    /**
+     * @notice Claims accumulated veDEG for flex deposit
+     */
     function claim() public nonReentrant whenNotPaused {
         require(users[msg.sender].amount > 0, "user has no stake");
 
@@ -344,6 +351,9 @@ contract VoteEscrowedDegis is
         emit Withdraw(msg.sender, _amount);
     }
 
+    /**
+     * @notice Withdraw all the locked veDEG
+     */
     function withdrawLocked() external nonReentrant whenNotPaused {
         UserInfo memory user = users[msg.sender];
         require(user.amountLocked > 0, "user has no locked DEG");
@@ -395,6 +405,13 @@ contract VoteEscrowedDegis is
         farmingPool.updateBonus(_user, _newBalance);
     }
 
+    /**
+     * @notice Burn veDEG
+     * @dev Only whitelisted contract
+     *      For future use, some contracts may need veDEG for entrance
+     * @param _to Address to burn
+     * @param _amount Amount to burn
+     */
     function burnVeDEG(address _to, uint256 _amount) public {
         // Only whitelisted contract can burn veDEG
         require(whitelist[msg.sender], "Not whitelisted");
