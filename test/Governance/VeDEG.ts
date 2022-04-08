@@ -341,10 +341,10 @@ describe("Vote Escrowed Degis", function () {
       );
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("900"));
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
-        toWei("12")
+        toWei("11")
       );
       expect(await pool.extraClaimable(1, dev_account.address)).to.equal(
-        toWei("10")
+        toWei("11")
       );
 
       await mineBlocks(10);
@@ -352,6 +352,48 @@ describe("Vote Escrowed Degis", function () {
       // block 21
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("31")
+      );
+    });
+
+    it("should be able to reserve bonus when no veDEG", async function () {
+      // block 0
+      await pool.stake(1, stablecoinToWei("10"));
+      // block 1
+      await veDEG.deposit(toWei("100"));
+
+      // block 10
+      await mineBlocks(9);
+      // block 10
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("10")
+      );
+
+      // block 11
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("1000"));
+
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("11")
+      );
+
+      // block 15
+      await mineBlocks(4);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("19"))
+
+      // block 16
+      await veDEG.withdraw(toWei("100"));
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("21")
+      );
+      expect(await pool.extraClaimable(1, dev_account.address)).to.equal(
+        toWei("21")
+      );
+
+      await pool.harvest(1, dev_account.address);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei("1022")
       );
     });
   });

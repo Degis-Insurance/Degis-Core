@@ -549,7 +549,8 @@ contract FarmingPoolUpgradeable is
             pool.accDegisPerShare +
             user.bonus *
             pool.accDegisPerBonusShare) /
-            SCALE -
+            SCALE +
+            extraClaimable[_poolId][msg.sender] -
             user.rewardDebt;
 
         require(pendingReward > 0, "No pending reward");
