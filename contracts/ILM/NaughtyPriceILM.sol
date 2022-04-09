@@ -6,6 +6,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
 import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
+import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
 import {ILMToken as LPToken} from "./ILMToken.sol";
 
 /**
@@ -47,7 +48,12 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // Policy Token Address => Pair Info
     mapping(address => PairInfo) public pairs;
 
-    event Deposit(address policyToken, uint256 amountA, uint256 amountB);
+    event Deposit(
+        address indexed policyToken,
+        address indexed stablecoin,
+        uint256 amountA,
+        uint256 amountB
+    );
 
     event EmergencyWithdraw(address owner, uint256 amount);
 
@@ -69,11 +75,18 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    function initialize(address _policyCore) public initializer {
-        require(_policyCore != address(0), "Zero address");
+    function initialize(address _policyCore, address _router)
+        public
+        initializer
+    {
+        require(
+            _policyCore != address(0) && _router != address(0),
+            "Zero address"
+        );
         __Ownable_init();
 
         policyCore = _policyCore;
+        naughtyRouter = _router;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -144,6 +157,11 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         // Record the lptoken address
         pairs[_policyToken].lptoken = _lpTokenAddress;
 
+        // Pre-approve the stablecoin for later deposit
+        IERC20(_stablecoin).approve(naughtyRouter, type(uint256).max);
+        IERC20(_stablecoin).approve(policyCore, type(uint256).max);
+        INaughtyPair(_policyToken).approve(naughtyRouter, type(uint256).max);
+
         emit ILMStart(
             _policyToken,
             _stablecoin,
@@ -152,19 +170,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         );
     }
 
-    function _deployLPToken(string memory _name) internal returns (address) {
-        address lpTokenAddress = address(
-            new LPToken(address(this), _name, _name)
-        );
-        return lpTokenAddress;
-    }
+    error ILM__NotDeadline();
 
-    function finishILM(address _policyToken) external activePair(_policyToken) {
+    function finishILM(address _policyToken, uint256 _deadlineForSwap)
+        external
+        activePair(_policyToken)
+    {
         // Pair status is 1 and passed deadline => can finish ILM
-        require(
-            block.timestamp > pairs[_policyToken].deadline,
-            "Still before deadline"
-        );
+        if (block.timestamp <= pairs[_policyToken].deadline)
+            revert ILM__NotDeadline();
 
         pairs[_policyToken].status = 2;
 
@@ -176,7 +190,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         address poolAddress = IPolicyCore(policyCore).deployPool(
             policyTokenName,
             pair.stablecoin,
-            pair.deadline,
+            _deadlineForSwap,
             50 // 5%
         );
 
@@ -229,7 +243,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         address lpToken = pairs[_policyToken].lptoken;
         LPToken(lpToken).mint(msg.sender, _amountA + _amountB);
 
-        emit Deposit(_policyToken, _amountA, _amountB);
+        emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
     }
 
     function withdraw(
@@ -280,6 +294,21 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Deploy the new lp token for a round
+     * @param _name Name of the lp token
+     * @return lpTokenAddress Address of the lp token
+     */
+    function _deployLPToken(string memory _name) internal returns (address) {
+        address lpTokenAddress = address(
+            new LPToken(address(this), _name, _name)
+        );
+        return lpTokenAddress;
+    }
+
+    /**
+     * @notice Update the user amount of both sides
+     */
     function _updateUserAmount(
         address _user,
         address _policyToken,

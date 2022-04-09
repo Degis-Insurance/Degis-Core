@@ -44,7 +44,7 @@ import {
   zeroAddress,
 } from "../utils";
 
-describe("Policy Core and Naughty Factory", function () {
+describe("Initial Liquidity Matching", function () {
   let ILMContract: NaughtyPriceILM__factory, ILM: NaughtyPriceILM;
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
@@ -87,6 +87,10 @@ describe("Policy Core and Naughty Factory", function () {
       priceFeedMock.address
     );
 
+    NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
+    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+    await router.setPolicyCore(core.address);
+
     await factory.setPolicyCoreAddress(core.address);
 
     await core.setLottery(dev_account.address);
@@ -96,7 +100,10 @@ describe("Policy Core and Naughty Factory", function () {
     ILM = await ILMContract.deploy();
     await ILM.deployed();
 
-    await ILM.initialize(core.address);
+    await ILM.initialize(core.address, router.address);
+
+    await core.setILMContract(ILM.address);
+    await core.setNaughtyRouter(router.address);
   });
 
   describe("Deployment", function () {
@@ -109,10 +116,11 @@ describe("Policy Core and Naughty Factory", function () {
     });
   });
 
-  describe("Start ILM", function () {
+  describe("Start & Stop & Use ILM", function () {
     let policyTokenName: string, tokenDecimals: number, round: string;
     let policyTokenAddress: string;
     const ILM_TIME = 86400;
+    const SWAP_TIME = 86400;
     beforeEach(async function () {
       // Deploy a new policy token
       const now = await getLatestBlockTimestamp(ethers.provider);
@@ -129,14 +137,11 @@ describe("Policy Core and Naughty Factory", function () {
         tokenDecimals,
         toWei("100"),
         round,
-        now + 60000,
-        now + 60000
+        now + 86400 * 10,
+        now + 86400 * 10
       );
 
       policyTokenAddress = await core.findAddressbyName(policyTokenName);
-
-      // Mint usd
-      await usd.mint(user1.address, stablecoinToWei("100000"));
     });
 
     it("should not be able to start a new round ILM by non-owner", async function () {
@@ -159,6 +164,7 @@ describe("Policy Core and Naughty Factory", function () {
     it("should be able to start a new round ILM", async function () {
       const startTime = await getLatestBlockTimestamp(ethers.provider);
       const nonce = await ethers.provider.getTransactionCount(ILM.address);
+      // lp token address deployed by ILM contract
       const lptokenAddress = getContractAddress({
         from: ILM.address,
         nonce: nonce,
@@ -186,6 +192,116 @@ describe("Policy Core and Naughty Factory", function () {
 
       expect(await ILMToken.name()).to.equal("ILM-" + policyTokenName);
       expect(await ILMToken.symbol()).to.equal("ILM-" + policyTokenName);
+    });
+    it("should be able to deposit into current round ILM", async function () {
+      await ILM.startILM(policyTokenAddress, usd.address, ILM_TIME);
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await expect(
+        ILM.deposit(
+          policyTokenAddress,
+          usd.address,
+          stablecoinToWei("100"),
+          stablecoinToWei("100")
+        )
+      )
+        .to.emit(ILM, "Deposit")
+        .withArgs(
+          policyTokenAddress,
+          usd.address,
+          stablecoinToWei("100"),
+          stablecoinToWei("100")
+        );
+
+      const ILMPairInfo = await ILM.pairs(policyTokenAddress);
+      const ILMToken_Factory: ILMToken__factory =
+        await ethers.getContractFactory("ILMToken");
+      const ILMToken: ILMToken = ILMToken_Factory.attach(ILMPairInfo.lptoken);
+
+      // Get lp token
+      expect(await ILMToken.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("200")
+      );
+
+      // Record the amount
+      const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
+      expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
+      expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
+      expect(userInfo.totalDeposit).to.equal(stablecoinToWei("200"));
+
+      const pairInfo = await ILM.pairs(policyTokenAddress);
+      expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
+      expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
+
+      // Calculate the price
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1"));
+
+      // Another user
+      await usd.mint(user1.address, stablecoinToWei("300"));
+      await usd.connect(user1).approve(ILM.address, stablecoinToWei("300"));
+      await ILM.connect(user1).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("200"),
+        stablecoinToWei("100")
+      );
+
+      expect(await ILMToken.balanceOf(user1.address)).to.equal(
+        stablecoinToWei("300")
+      );
+
+      // Record the amount
+      const userInfo_2 = await ILM.users(user1.address, policyTokenAddress);
+      expect(userInfo_2.amountA).to.equal(stablecoinToWei("200"));
+      expect(userInfo_2.amountB).to.equal(stablecoinToWei("100"));
+      expect(userInfo_2.totalDeposit).to.equal(stablecoinToWei("300"));
+
+      const pairInfo_2 = await ILM.pairs(policyTokenAddress);
+      expect(pairInfo_2.amountA).to.equal(stablecoinToWei("300"));
+      expect(pairInfo_2.amountB).to.equal(stablecoinToWei("200"));
+
+      // Calculate the price
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1.5"));
+    });
+
+    it("should be able to stop current round ILM", async function () {
+      await ILM.startILM(policyTokenAddress, usd.address, ILM_TIME);
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+
+      await expect(
+        ILM.finishILM(policyTokenAddress, SWAP_TIME)
+      ).to.be.revertedWith(customErrorMsg("'ILM__NotDeadline()'"));
+
+      const deadlineForPolicyToken = (
+        await core.policyTokenInfoMapping(policyTokenName)
+      ).deadline;
+
+      await setNextBlockTime(startTime + ILM_TIME + 100);
+      await expect(
+        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken)
+      ).to.be.revertedWith("Zero Amount");
+
+      // Deposit some usd
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await ILM.deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+      await expect(
+        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken)
+      ).to.emit(ILM, "ILMFinish");
+
+      const naughtyPairAddress = await factory.getPairAddress(
+        policyTokenAddress,
+        usd.address
+      );
+      NaughtyPair = await ethers.getContractFactory("NaughtyPair");
+      const naughtyPair = NaughtyPair.attach(naughtyPairAddress);
+
+      const reserves = await naughtyPair.getReserves();
+      expect(reserves[0]).to.equal(stablecoinToWei("100"));
+      expect(reserves[1]).to.equal(stablecoinToWei("100"));
     });
   });
 });

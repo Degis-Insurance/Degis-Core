@@ -587,6 +587,7 @@ contract PolicyCore is Ownable {
         beforeDeadline(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
+        require(_amount > 0, "Zero Amount");
         _deposit(_policyTokenName, _stablecoin, _amount, msg.sender);
     }
 
@@ -612,6 +613,7 @@ contract PolicyCore is Ownable {
             msg.sender == naughtyRouter,
             "Only the router contract can delegate"
         );
+        require(_amount > 0, "Zero Amount");
 
         _deposit(_policyTokenName, _stablecoin, _amount, _user);
 

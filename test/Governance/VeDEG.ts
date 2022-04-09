@@ -370,7 +370,9 @@ describe("Vote Escrowed Degis", function () {
 
       // block 11
       await veDEG.claim();
-      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("1000"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("1000")
+      );
 
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("11")
@@ -378,7 +380,9 @@ describe("Vote Escrowed Degis", function () {
 
       // block 15
       await mineBlocks(4);
-      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("19"))
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("19")
+      );
 
       // block 16
       await veDEG.withdraw(toWei("100"));
@@ -396,6 +400,30 @@ describe("Vote Escrowed Degis", function () {
         toWei("1022")
       );
     });
+  });
+
+  describe("Whitelist contract burn veDEG", function () {
+    beforeEach(async function () {
+      await usd.approve(pool.address, stablecoinToWei("100"));
+      await pool.add(usd.address, toWei("1"), toWei("1"), false);
+
+      await degis.mintDegis(dev_account.address, toWei("1000"));
+      await degis.approve(veDEG.address, toWei("1000"));
+
+      await veDEG.addWhitelist(user1.address);
+    });
+    it("should be able to burn veDEG as entrance", async function(){
+      await veDEG.deposit(toWei("100"));
+      
+
+      await mineBlocks(100);
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("10000"));
+
+      await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"))
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("9900"));
+    })
   });
 });
 
