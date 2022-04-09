@@ -77,6 +77,9 @@ contract IncomeSharing is OwnableUpgradeable {
         return rounds[_round];
     }
 
+    /**
+     * @notice Start a new round
+     */
     function startRound(uint256 _amount, uint256 _length) public onlyOwner {
         if (_amount > usd.balanceOf(address(this))) revert NotEnoughUSD();
         if (block.timestamp <= rounds[currentRound].endTimestamp)

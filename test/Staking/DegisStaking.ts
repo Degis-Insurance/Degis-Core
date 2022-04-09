@@ -379,6 +379,10 @@ describe("Degis Staking", function () {
       );
       expect(await pool.pendingReward(user1.address)).to.equal(toWei("0"));
     });
+
+    it("should be able to check pending reward", async function () {
+      expect(await pool.pendingReward(dev_account.address)).to.equal(0);
+    });
   });
 });
 

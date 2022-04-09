@@ -159,7 +159,7 @@ describe("Initial Liquidity Matching", function () {
       const wrongStablecoin = buyerToken.address;
       await expect(
         ILM.startILM(policyTokenAddress, wrongStablecoin, ILM_TIME)
-      ).to.be.revertedWith(customErrorMsg("'StablecoinNotSupport()'"));
+      ).to.be.revertedWith(customErrorMsg("'ILM__StablecoinNotSupport()'"));
     });
     it("should be able to start a new round ILM", async function () {
       const startTime = await getLatestBlockTimestamp(ethers.provider);
@@ -169,12 +169,14 @@ describe("Initial Liquidity Matching", function () {
         from: ILM.address,
         nonce: nonce,
       });
-      await expect(ILM.startILM(policyTokenAddress, usd.address, ILM_TIME))
+      await expect(
+        ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME)
+      )
         .to.emit(ILM, "ILMStart")
         .withArgs(
           policyTokenAddress,
           usd.address,
-          startTime + 1 + ILM_TIME, // latest time stamp is startTime + 1
+          startTime + ILM_TIME, // latest time stamp is startTime + 1
           lptokenAddress
         );
 
@@ -182,7 +184,7 @@ describe("Initial Liquidity Matching", function () {
 
       expect(ILMPairInfo.status).to.equal(1);
       expect(ILMPairInfo.lptoken).to.equal(lptokenAddress);
-      expect(ILMPairInfo.deadline).to.equal(startTime + 1 + ILM_TIME);
+      expect(ILMPairInfo.ILMDeadline).to.equal(startTime + ILM_TIME);
       expect(ILMPairInfo.amountA).to.equal(0);
       expect(ILMPairInfo.amountB).to.equal(0);
 
@@ -263,22 +265,96 @@ describe("Initial Liquidity Matching", function () {
       expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1.5"));
     });
 
+    it("should be able to withdraw from current round ILM", async function () {
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await ILM.deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      const ILMPairInfo = await ILM.pairs(policyTokenAddress);
+      const ILMToken_Factory: ILMToken__factory =
+        await ethers.getContractFactory("ILMToken");
+      const ILMToken: ILMToken = ILMToken_Factory.attach(ILMPairInfo.lptoken);
+
+      // Get lp token
+      expect(await ILMToken.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("200")
+      );
+
+      // Record the amount
+      const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
+      expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
+      expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
+      expect(userInfo.totalDeposit).to.equal(stablecoinToWei("200"));
+
+      const pairInfo = await ILM.pairs(policyTokenAddress);
+      expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
+      expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
+
+      // Calculate the price
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1"));
+
+      // Another user
+      await expect(
+        ILM.withdraw(
+          policyTokenAddress,
+          usd.address,
+          stablecoinToWei("20"),
+          stablecoinToWei("60")
+        )
+      )
+        .to.emit(ILM, "Withdraw")
+        .withArgs(
+          policyTokenAddress,
+          usd.address,
+          dev_account.address,
+          stablecoinToWei("20"),
+          stablecoinToWei("60")
+        );
+
+      expect(await ILMToken.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("120")
+      );
+
+      // Record the amount
+      const userInfo_2 = await ILM.users(
+        dev_account.address,
+        policyTokenAddress
+      );
+      expect(userInfo_2.amountA).to.equal(stablecoinToWei("80"));
+      expect(userInfo_2.amountB).to.equal(stablecoinToWei("40"));
+      expect(userInfo_2.totalDeposit).to.equal(stablecoinToWei("120"));
+
+      const pairInfo_2 = await ILM.pairs(policyTokenAddress);
+      expect(pairInfo_2.amountA).to.equal(stablecoinToWei("80"));
+      expect(pairInfo_2.amountB).to.equal(stablecoinToWei("40"));
+
+      // Calculate the price
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("2"));
+    });
+
     it("should be able to stop current round ILM", async function () {
-      await ILM.startILM(policyTokenAddress, usd.address, ILM_TIME);
+      const initTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, initTime + ILM_TIME);
       const startTime = await getLatestBlockTimestamp(ethers.provider);
 
       await expect(
         ILM.finishILM(policyTokenAddress, SWAP_TIME)
-      ).to.be.revertedWith(customErrorMsg("'ILM__NotDeadline()'"));
+      ).to.be.revertedWith(customErrorMsg("'ILM__RoundNotOver()'"));
 
       const deadlineForPolicyToken = (
         await core.policyTokenInfoMapping(policyTokenName)
       ).deadline;
 
-      await setNextBlockTime(startTime + ILM_TIME + 100);
+      await setNextBlockTime(initTime + ILM_TIME + 100);
       await expect(
         ILM.finishILM(policyTokenAddress, deadlineForPolicyToken)
-      ).to.be.revertedWith("Zero Amount");
+      ).to.be.revertedWith(customErrorMsg("'ILM__NoDeposit()'"));
 
       // Deposit some usd
       await usd.approve(ILM.address, stablecoinToWei("200"));
@@ -302,6 +378,37 @@ describe("Initial Liquidity Matching", function () {
       const reserves = await naughtyPair.getReserves();
       expect(reserves[0]).to.equal(stablecoinToWei("100"));
       expect(reserves[1]).to.equal(stablecoinToWei("100"));
+
+      // Other normal user can interact with router
+      NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
+      policyToken = NPPolicyToken.attach(policyTokenAddress);
+      await usd.approve(core.address, stablecoinToWei("1000"));
+      await core.deposit(policyTokenName, usd.address, stablecoinToWei("1000"));
+      await policyToken.approve(router.address, stablecoinToWei("1000"));
+      await usd.approve(router.address, stablecoinToWei("1000"));
+      const currentTime = await getLatestBlockTimestamp(ethers.provider);
+
+      await expect(
+        router.addLiquidity(
+          policyTokenAddress,
+          usd.address,
+          stablecoinToWei("100"),
+          stablecoinToWei("100"),
+          stablecoinToWei("80"),
+          stablecoinToWei("80"),
+          dev_account.address,
+          currentTime + 300
+        )
+      ).to.emit(router, "LiquidityAdded");
+
+      await router.swapTokensforExactTokens(
+        stablecoinToWei("2"),
+        stablecoinToWei("1"),
+        policyTokenAddress,
+        usd.address,
+        dev_account.address,
+        currentTime + 300
+      );
     });
   });
 });

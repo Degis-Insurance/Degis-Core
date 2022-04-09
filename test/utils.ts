@@ -14,7 +14,6 @@ export const formatStablecoin = (stablecoinAmount: string) => {
   return ethers.utils.formatUnits(stablecoinAmount, 6);
 };
 
-
 export const zeroAddress = () => {
   return ethers.constants.AddressZero;
 };
@@ -49,4 +48,8 @@ export const getNow = () => {
 
 export const toBN = (normalNumber: number) => {
   return ethers.BigNumber.from(normalNumber);
+};
+
+export const customErrorMsg = (msg: string) => {
+  return "custom error " + msg;
 };

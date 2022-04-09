@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -133,7 +132,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function pendingReward(address _user) external view returns (uint256) {
         if (
             block.timestamp < lastRewardTimestamp ||
-            block.timestamp < startTimestamp
+            block.timestamp < startTimestamp ||
+            totalWeight == 0
         ) return 0;
 
         uint256 blocks = block.timestamp - lastRewardTimestamp;
@@ -292,7 +292,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
         uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
         uint256 lockUntil = _lockUntil;
-   
+
         uint256 stakeWeight = timeToWeight(lockUntil - lockFrom) * addedAmount;
 
         // makes sure stakeWeight is valid

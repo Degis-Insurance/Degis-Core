@@ -2,6 +2,16 @@
 pragma solidity ^0.8.10;
 
 interface IPolicyCore {
+    struct PolicyTokenInfo {
+        address policyTokenAddress;
+        bool isCall;
+        uint256 nameDecimals; // decimals of the name generation
+        uint256 tokenDecimals; // decimals of the policy token
+        uint256 strikePrice;
+        uint256 deadline;
+        uint256 settleTimestamp;
+    }
+
     /**
      * @notice Find the address by its name
      */
@@ -39,4 +49,9 @@ interface IPolicyCore {
         uint256 _poolDeadline,
         uint256 _feeRate
     ) external returns (address);
+
+    function getPolicyTokenInfo(string memory _policyTokenName)
+        external
+        view
+        returns (PolicyTokenInfo memory);
 }

@@ -36,4 +36,14 @@ interface INaughtyRouter {
             uint256 amountB,
             uint256 liquidity
         );
+
+    function removeLiquidity(
+        address _tokenA,
+        address _tokenB,
+        uint256 _liquidity,
+        uint256 _amountAMin,
+        uint256 _amountBMin,
+        address _to,
+        uint256 _deadline
+    ) external returns (uint256 amountA, uint256 amountB);
 }

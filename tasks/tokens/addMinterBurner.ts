@@ -56,16 +56,40 @@ task("addMinterBurner", "add minter/burner manually")
     }
   });
 
-subtask("addFarmingMinter", "Add degis minter to farming contract").setAction(
+task("addStakingMinter", "add staking minter manually")
+  .addParam("address", "staking minter address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const minterAddress = taskArgs.address;
+
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    // Get the token contract instance
+    const DegisToken: DegisToken__factory = await hre.ethers.getContractFactory(
+      "DegisToken"
+    );
+    const degis: DegisToken = DegisToken.attach(
+      addressList[network.name]["DegisToken"]
+    );
+
+    const isAlready = await degis.isMinter(minterAddress);
+    if (!isAlready) {
+      const tx = await degis.addMinter(minterAddress);
+      console.log(await tx.wait());
+    }
+  });
+
+task("addFarmingMinter", "Add degis minter to farming contract").setAction(
   async (_, hre) => {
     const { network } = hre;
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const addressList = readAddressList();
-    const farmingPoolAddress = addressList[network.name].FarmingPool;
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     const degisTokenAddress = addressList[network.name].DegisToken;
 
     // Get the contract instance
@@ -146,5 +170,3 @@ task("addAllMinterBurner", "Add minter for degis/buyer tokens").setAction(
     }
   }
 );
-
-
