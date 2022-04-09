@@ -95,7 +95,7 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const farmingPoolAddress = addressList[network.name].FarmingPool;
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
       "The farming pool address of ",
       network.name,
@@ -103,7 +103,7 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
       farmingPoolAddress
     );
     const FarmingPool: FarmingPool__factory =
-      await hre.ethers.getContractFactory("FarmingPool");
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
@@ -147,14 +147,14 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const farmingPoolAddress = addressList[network.name].FarmingPool;
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
       "The farming pool address of this network is: ",
       farmingPoolAddress
     );
 
     const FarmingPool: FarmingPool__factory =
-      await hre.ethers.getContractFactory("FarmingPool");
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block

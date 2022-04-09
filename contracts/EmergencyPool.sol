@@ -80,6 +80,12 @@ contract EmergencyPool is Ownable {
         emit Withdraw(_tokenAddress, owner(), _amount);
     }
 
+    /**
+     * @notice Use emergency pool fund
+     * @param _tokenAddress Address of the ERC20 token
+     * @param _receiver Address of the receiver
+     * @param _amount The amount to use    
+     */
     function useFund(
         address _tokenAddress,
         address _receiver,

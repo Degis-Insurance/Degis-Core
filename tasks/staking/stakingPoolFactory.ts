@@ -55,12 +55,12 @@ task("setStakingReward", "Set the degis reward of a staking pool")
 task("deployStakingPool", "Deploy a new staking pool")
   .addParam("pooltoken", "Address of the pool token", null, types.string)
   .addParam("start", "Staking pool start timestamp", null, types.int)
-  .addParam("reward", "Degis reward per second", null, types.int)
+  .addParam("reward", "Degis reward per second", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolTokenAddress = taskArgs.pooltoken;
     const startBlock = taskArgs.start;
-    const degisPerBlock = taskArgs.reward;
+    const degisPerSecond = taskArgs.reward;
 
     // Network info
     const { network } = hre;
@@ -84,7 +84,7 @@ task("deployStakingPool", "Deploy a new staking pool")
     const tx = await factory.createPool(
       poolTokenAddress,
       startBlock,
-      parseUnits(degisPerBlock.toString())
+      parseUnits(degisPerSecond)
     );
     console.log("Tx details: ", await tx.wait());
 

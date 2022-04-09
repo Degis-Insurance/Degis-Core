@@ -43,7 +43,8 @@ import "./tasks/tokens/addMinterBurner";
 // Staking Tasks
 import "./tasks/staking/stakingPoolFactory";
 
-import "./tasks/proxy/admin"
+import "./tasks/proxy/admin";
+import "./tasks/governance/VeDEG";
 
 dotenv.config();
 

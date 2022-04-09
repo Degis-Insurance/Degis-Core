@@ -23,9 +23,6 @@ const farmingPoolList = readFarmingPoolList();
 task("setGenerationRate", "Set the generation rate of veDEG")
   .addParam("rate", "The generation rate", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const startTimestamp = taskArgs.start;
-    console.log("New start timestamp: ", startTimestamp);
-
     const { network } = hre;
 
     // Signers
@@ -40,11 +37,13 @@ task("setGenerationRate", "Set the generation rate of veDEG")
 
     const tx = await veDEG.setGenerationRate(parseUnits(taskArgs.rate));
     console.log("tx details: ", await tx.wait());
+
+    const newRate = await veDEG.generationRate();
+    console.log("new rate: ", newRate.toString());
   });
 
-
-  task("upgradeVeDEG", "Upgrade veDEG implementation")
-  .setAction(async (_, hre) => {
+task("upgradeVeDEG", "Upgrade veDEG implementation").setAction(
+  async (_, hre) => {
     const { network } = hre;
 
     // Signers
@@ -54,10 +53,12 @@ task("setGenerationRate", "Set the generation rate of veDEG")
     const veProxyAddress = addressList[network.name].VoteEscrowedDegis;
     const ProxyAdminAddress = addressList[network.name].ProxyAdmin;
 
-    const proxyAdmin: ProxyAdmin__factory =
-      await hre.ethers.getContractFactory("ProxyAdmin");
+    const proxyAdmin: ProxyAdmin__factory = await hre.ethers.getContractFactory(
+      "ProxyAdmin"
+    );
     const admin: ProxyAdmin = proxyAdmin.attach(ProxyAdminAddress);
 
     // const tx = await admin.upgradeAndCall(veProxyAddress, implementation, );
     // console.log("tx details: ", await tx.wait());
-  })
+  }
+);

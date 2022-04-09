@@ -19,11 +19,11 @@
 	},
 	"avaxTest": {
 		"1": {
-			"name": "AVAX_83.68_L_2303",
-			"address": "0xF1b92bCBb2Dc78C7429098e534B22888516495CA",
+			"name": "AVAX_84.0_L_2104",
+			"address": "0x2c4086e3Afd6E780d5173E68B22320284f44129d",
 			"poolId": 1,
-			"reward": "1.0",
-			"bonus": "1.0"
+			"reward": "0.11574",
+			"bonus": "0.11574"
 		},
 		"2": {
 			"name": "AVAX_85.0_L_2903",
