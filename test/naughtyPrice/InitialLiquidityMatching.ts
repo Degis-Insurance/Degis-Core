@@ -37,6 +37,7 @@ import {
 } from "ethers/lib/utils";
 
 import {
+  formatStablecoin,
   getLatestBlockTimestamp,
   stablecoinToWei,
   toBN,
@@ -196,7 +197,8 @@ describe("Initial Liquidity Matching", function () {
       expect(await ILMToken.symbol()).to.equal("ILM-" + policyTokenName);
     });
     it("should be able to deposit into current round ILM", async function () {
-      await ILM.startILM(policyTokenAddress, usd.address, ILM_TIME);
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
       await usd.approve(ILM.address, stablecoinToWei("200"));
       await expect(
         ILM.deposit(
@@ -409,6 +411,79 @@ describe("Initial Liquidity Matching", function () {
         dev_account.address,
         currentTime + 300
       );
+    });
+
+    it("should be able to claim back liquidity by ILM contract", async function () {
+      // Start ILM
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
+
+      // Two users deposit liquidity
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await ILM.deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      await usd.mint(user1.address, stablecoinToWei("200"));
+      await usd.connect(user1).approve(ILM.address, stablecoinToWei("200"));
+      await ILM.connect(user1).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      // Finish ILM and put liquidity into swap pool
+      const deadlineForPolicyToken = (
+        await core.policyTokenInfoMapping(policyTokenName)
+      ).deadline;
+      await setNextBlockTime(startTime + ILM_TIME + 100);
+      await ILM.finishILM(policyTokenAddress, deadlineForPolicyToken);
+
+      const naughtyPairAddress = await factory.getPairAddress(
+        policyTokenAddress,
+        usd.address
+      );
+      NaughtyPair = await ethers.getContractFactory("NaughtyPair");
+      const naughtyPair = NaughtyPair.attach(naughtyPairAddress);
+
+      const reserves = await naughtyPair.getReserves();
+      expect(reserves[0]).to.equal(stablecoinToWei("200"));
+      expect(reserves[1]).to.equal(stablecoinToWei("200"));
+
+      // Claim back ILM liquidity
+      await ILM.claim(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("80"), // Slippage
+        stablecoinToWei("80") // Slippage
+      );
+
+      NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
+      policyToken = NPPolicyToken.attach(policyTokenAddress);
+
+      const bal1 = await policyToken.balanceOf(dev_account.address);
+      console.log(
+        "policy token balance of dev_account: ",
+        formatStablecoin(bal1.toString())
+      );
+      expect(bal1.gt(stablecoinToWei("99.9"))).to.be.true;
+      const bal2 = await usd.balanceOf(dev_account.address);
+      console.log(
+        "usd balance of dev_account: ",
+        formatStablecoin(bal2.toString())
+      );
+      expect(bal2.gt(stablecoinToWei("99899"))).to.be.true;
+
+      // expect(
+      //   await policyToken.balanceOf(dev_account.address)
+      // ).to.be.greaterThanOrEqual(stablecoinToWei("99"));
+      // expect(await usd.balanceOf(dev_account.address)).to.be.greaterThanOrEqual(
+      //   stablecoinToWei("99899")
+      // );
     });
   });
 });

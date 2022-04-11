@@ -40,7 +40,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     enum Status {
         BeforeStart,
         Active,
-        Finished
+        Finished,
+        Stopped
     }
     struct PairInfo {
         Status status; // 0: before start 1: active 2: finished
@@ -166,6 +167,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         amountB = users[_user][_policyToken].amountB;
     }
 
+    function emergencyStop(address _policyToken) external onlyOwner {
+        pairs[_policyToken].status = Status.Stopped;
+    }
+
+    function emergencyRestart(address _policyToken) external onlyOwner {
+        pairs[_policyToken].status = Status.Active;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -207,17 +216,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         string memory LPTokenName = string(
             abi.encodePacked("ILM-", policyTokenName)
         );
-        address _lpTokenAddress = _deployLPToken(LPTokenName);
+        address lpTokenAddress = _deployLPToken(LPTokenName);
 
         // Record the lptoken address
-        pairs[_policyToken].lptoken = _lpTokenAddress;
+        pairs[_policyToken].lptoken = lpTokenAddress;
 
         // Pre-approve the stablecoin for later deposit
         IERC20(_stablecoin).approve(naughtyRouter, type(uint256).max);
         IERC20(_stablecoin).approve(policyCore, type(uint256).max);
         IERC20(_policyToken).approve(naughtyRouter, type(uint256).max);
 
-        emit ILMStart(_policyToken, _stablecoin, _ILMDeadline, _lpTokenAddress);
+        emit ILMStart(_policyToken, _stablecoin, _ILMDeadline, lpTokenAddress);
     }
 
     /**
@@ -230,6 +239,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         activePair(_policyToken)
     {
         PairInfo memory pair = pairs[_policyToken];
+
         // Pair status is 1 and passed deadline => can finish ILM
         if (block.timestamp <= pair.ILMDeadline) revert ILM__RoundNotOver();
         if (pair.amountA + pair.amountB == 0) revert ILM__NoDeposit();
@@ -246,6 +256,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             50 // 5%
         );
         pairs[_policyToken].naughtyPairAddress = poolAddress;
+
+        // Approval prepration for withdraw liquidity
+        INaughtyPair(poolAddress).approve(naughtyRouter, type(uint256).max);
 
         INaughtyRouter(naughtyRouter).addLiquidityWithUSD(
             _policyToken,
@@ -269,6 +282,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Deposit stablecoin and choose the price
+     * @dev Deposit only check the pair status not the deadline
+     *      There may be a zero ILM and we still need to deposit some asset to make it start
      * @param _policyToken Policy token address
      * @param _stablecoin Stablecoin address
      * @param _amountA Amount of policy token (virtual)
@@ -303,6 +318,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Withdraw stablecoins
+     * @dev Only checks the status not the deadline
      * @param _policyToken Policy token address
      * @param _stablecoin Stablecoin address
      * @param _amountA Amount of policy token (virtual)
@@ -313,7 +329,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         address _stablecoin,
         uint256 _amountA,
         uint256 _amountB
-    ) public duringILM(_policyToken) {
+    ) public activePair(_policyToken) {
         uint256 userDeposit = users[msg.sender][_policyToken].totalDeposit;
         if (userDeposit == 0) revert ILM__NoDeposit();
         if (_amountA + _amountB > userDeposit) revert ILM__NotEnoughDeposit();
@@ -344,10 +360,10 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @param _stablecoin Stablecoin address
      */
     function withdrawAll(address _policyToken, address _stablecoin) external {
-        UserInfo memory user = users[msg.sender][_policyToken];
-        if (user.totalDeposit == 0) revert ILM__NoDeposit();
+        uint256 amounAMax = users[msg.sender][_policyToken].amountA;
+        uint256 amounBMax = users[msg.sender][_policyToken].amountB;
 
-        withdraw(_policyToken, _stablecoin, user.amountA, user.amountB);
+        withdraw(_policyToken, _stablecoin, amounAMax, amounBMax);
     }
 
     function claim(

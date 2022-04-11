@@ -412,18 +412,18 @@ describe("Vote Escrowed Degis", function () {
 
       await veDEG.addWhitelist(user1.address);
     });
-    it("should be able to burn veDEG as entrance", async function(){
+    it("should be able to burn veDEG as entrance", async function () {
       await veDEG.deposit(toWei("100"));
-      
 
       await mineBlocks(100);
+      await veDEG.claim();
 
-      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("10000"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("10000"));
 
-      await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"))
+      await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"));
 
-      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("9900"));
-    })
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("9900"));
+    });
   });
 });
 
