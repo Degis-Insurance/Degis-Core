@@ -96,7 +96,15 @@ contract FarmingPoolUpgradeable is
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
+    // Extra claimable balance when updating bonus from veDEG
     mapping(uint256 => mapping(address => uint256)) public extraClaimable;
+
+    // Reward speed change with liquidity inside contract
+    uint256[] thresholdBasic;
+    uint256[] piecewiseBasic;
+
+    uint256[] thresholdBonus;
+    uint256[] piecewiseBonus;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -553,6 +561,8 @@ contract FarmingPoolUpgradeable is
             extraClaimable[_poolId][msg.sender] -
             user.rewardDebt;
 
+        extraClaimable[_poolId][msg.sender] = 0;
+
         require(pendingReward > 0, "No pending reward");
 
         // Update the reward debt
@@ -606,6 +616,11 @@ contract FarmingPoolUpgradeable is
         degis.mintDegis(address(this), basicReward + bonusReward);
 
         pool.lastRewardTimestamp = block.timestamp;
+
+        // Update the new reward speed
+        // Only if the threshold are already set
+        if (thresholdBasic.length > 0 || thresholdBonus.length > 0)
+            _updateRewardSpeed(_poolId);
 
         emit PoolUpdated(
             _poolId,
@@ -747,5 +762,48 @@ contract FarmingPoolUpgradeable is
             _out
                 ? poolBalanceBefore - poolBalanceAfter
                 : poolBalanceAfter - poolBalanceBefore;
+    }
+
+    function _updateRewardSpeed(uint256 _poolId) internal {
+        uint256 currentBasicBalance = IERC20(poolList[_poolId].lpToken)
+            .balanceOf(address(this));
+        uint256 currentBounusBalance = poolList[_poolId].totalBonus;
+
+        (
+            uint256 basicRewardSpeed,
+            uint256 bonusRewardSpeed
+        ) = _calculateRewardSpeed(currentBasicBalance, currentBounusBalance);
+
+        poolList[_poolId].basicDegisPerSecond = basicRewardSpeed;
+        poolList[_poolId].bonusDegisPerSecond = bonusRewardSpeed;
+    }
+
+    /**
+     * @notice Calculate the reward speed
+     * @param _basic Basic balance = lp token balance
+     * @param _bonus Bonus balance = total bonus
+     * @return basicSpeed The basic reward speed
+     * @return bonusSpeed The bonus reward speed
+     */
+    function _calculateRewardSpeed(uint256 _basic, uint256 _bonus)
+        internal
+        view
+        returns (uint256 basicSpeed, uint256 bonusSpeed)
+    {
+        uint256 lengthBasic = thresholdBasic.length;
+        for (uint256 i = lengthBasic - 1; i > 0; --i) {
+            if (_basic > thresholdBasic[i]) {
+                basicSpeed = piecewiseBasic[i];
+                break;
+            } else continue;
+        }
+
+        uint256 lengthBonus = thresholdBonus.length;
+        for (uint256 i = lengthBonus - 1; i > 0; --i) {
+            if (_bonus > thresholdBonus[i]) {
+                bonusSpeed = piecewiseBonus[i];
+                break;
+            } else continue;
+        }
     }
 }

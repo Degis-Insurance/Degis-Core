@@ -96,6 +96,8 @@ contract VoteEscrowedDegis is
     // Contract addresses are by default unable to stake degis, they must be whitelisted
     mapping(address => bool) whitelist;
 
+    // Locked amount
+    mapping(address => uint256) public locked;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -116,6 +118,18 @@ contract VoteEscrowedDegis is
     event Claimed(address indexed user, uint256 amount);
 
     event BurnVeDEG(
+        address indexed caller,
+        address indexed user,
+        uint256 amount
+    );
+
+    event LockVeDEG(
+        address indexed caller,
+        address indexed user,
+        uint256 amount
+    );
+
+    event UnlockVeDEG(
         address indexed caller,
         address indexed user,
         uint256 amount
@@ -405,6 +419,15 @@ contract VoteEscrowedDegis is
         farmingPool.updateBonus(_user, _newBalance);
     }
 
+    function _lock(address _to, uint256 _amount) internal {
+        locked[_to] += _amount;
+    }
+
+    function _unlock(address _to, uint256 _amount) internal {
+        require(locked[_to] >= _amount, "Not enough locked amount");
+        locked[_to] -= _amount;
+    }
+
     /**
      * @notice Burn veDEG
      * @dev Only whitelisted contract
@@ -418,5 +441,21 @@ contract VoteEscrowedDegis is
 
         _burn(_to, _amount);
         emit BurnVeDEG(msg.sender, _to, _amount);
+    }
+
+    function lockVeDEG(address _to, uint256 _amount) public {
+        // Only whitelisted contract can burn veDEG
+        require(whitelist[msg.sender], "Not whitelisted");
+
+        _lock(_to, _amount);
+        emit LockVeDEG(msg.sender, _to, _amount);
+    }
+
+    function unlockVeDEG(address _to, uint256 _amount) public {
+        // Only whitelisted contract can burn veDEG
+        require(whitelist[msg.sender], "Not whitelisted");
+
+        _lock(_to, _amount);
+        emit UnlockVeDEG(msg.sender, _to, _amount);
     }
 }

@@ -91,7 +91,7 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
 
     // Addresses to be set
     const naughtyRouterAddress = addressList[network.name].NaughtyRouter;
-    const incomeSharingAddress = addressList[network.name].IncomeSharing;
+    const incomeSharingAddress = addressList[network.name].EmergencyPool;
     const lotteryAddress = addressList[network.name].DegisLottery;
 
     // Get policy core contract instance

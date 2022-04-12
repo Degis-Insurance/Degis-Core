@@ -18,6 +18,7 @@ contract VeERC20Upgradeable is Initializable, ContextUpgradeable, IVeERC20 {
 
     string private _name;
     string private _symbol;
+
     /**
      * @dev Emitted when `value` tokens are burned and minted
      */
