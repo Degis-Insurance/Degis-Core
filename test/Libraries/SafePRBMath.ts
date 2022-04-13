@@ -15,7 +15,7 @@ describe("SafePRBMath Library", function () {
     [dev_account] = await ethers.getSigners();
 
     const pubLib = await ethers.getContractFactory("PublicLib");
-    console.log("pubLib", pubLib);
+    // console.log("pubLib", pubLib);
 
     SafePRBMathTester = await ethers.getContractFactory("SafePRBMathTester");
     tester = await SafePRBMathTester.deploy();

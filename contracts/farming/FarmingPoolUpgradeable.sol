@@ -29,6 +29,8 @@ import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
 import {Math} from "../libraries/Math.sol";
 import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title  Farming Pool
  * @notice This contract is for LPToken mining on Degis
@@ -100,11 +102,9 @@ contract FarmingPoolUpgradeable is
     mapping(uint256 => mapping(address => uint256)) public extraClaimable;
 
     // Reward speed change with liquidity inside contract
-    uint256[] thresholdBasic;
-    uint256[] piecewiseBasic;
-
-    uint256[] thresholdBonus;
-    uint256[] piecewiseBonus;
+    mapping(uint256 => uint256[]) public thresholdBasic;
+    mapping(uint256 => uint256[]) public piecewiseBasic;
+    uint256 public currentRewardLevel;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -308,6 +308,15 @@ contract FarmingPoolUpgradeable is
 
         startTimestamp = _startTimestamp;
         emit StartTimestampChanged(_startTimestamp);
+    }
+
+    function setPiecewise(
+        uint256 _poolId,
+        uint256[] calldata _threshold,
+        uint256[] calldata _reward
+    ) external onlyOwner {
+        thresholdBasic[_poolId] = _threshold;
+        piecewiseBasic[_poolId] = _reward;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -619,8 +628,7 @@ contract FarmingPoolUpgradeable is
 
         // Update the new reward speed
         // Only if the threshold are already set
-        if (thresholdBasic.length > 0 || thresholdBonus.length > 0)
-            _updateRewardSpeed(_poolId);
+        if (thresholdBasic[_poolId].length > 0) _updateRewardSpeed(_poolId);
 
         emit PoolUpdated(
             _poolId,
@@ -767,43 +775,18 @@ contract FarmingPoolUpgradeable is
     function _updateRewardSpeed(uint256 _poolId) internal {
         uint256 currentBasicBalance = IERC20(poolList[_poolId].lpToken)
             .balanceOf(address(this));
-        uint256 currentBounusBalance = poolList[_poolId].totalBonus;
 
-        (
-            uint256 basicRewardSpeed,
-            uint256 bonusRewardSpeed
-        ) = _calculateRewardSpeed(currentBasicBalance, currentBounusBalance);
+        uint256 basicRewardSpeed;
+
+        for (uint256 i = thresholdBasic[_poolId].length - 1; i >= 0; i--) {
+            if (currentBasicBalance >= thresholdBasic[_poolId][i]) {
+                console.log("piecewise:", piecewiseBasic[_poolId][i]);
+                console.log("piecewise:", thresholdBasic[_poolId][i]);
+                basicRewardSpeed = piecewiseBasic[_poolId][i];
+                break;
+            } else continue;
+        }
 
         poolList[_poolId].basicDegisPerSecond = basicRewardSpeed;
-        poolList[_poolId].bonusDegisPerSecond = bonusRewardSpeed;
-    }
-
-    /**
-     * @notice Calculate the reward speed
-     * @param _basic Basic balance = lp token balance
-     * @param _bonus Bonus balance = total bonus
-     * @return basicSpeed The basic reward speed
-     * @return bonusSpeed The bonus reward speed
-     */
-    function _calculateRewardSpeed(uint256 _basic, uint256 _bonus)
-        internal
-        view
-        returns (uint256 basicSpeed, uint256 bonusSpeed)
-    {
-        uint256 lengthBasic = thresholdBasic.length;
-        for (uint256 i = lengthBasic - 1; i > 0; --i) {
-            if (_basic > thresholdBasic[i]) {
-                basicSpeed = piecewiseBasic[i];
-                break;
-            } else continue;
-        }
-
-        uint256 lengthBonus = thresholdBonus.length;
-        for (uint256 i = lengthBonus - 1; i > 0; --i) {
-            if (_bonus > thresholdBonus[i]) {
-                bonusSpeed = piecewiseBonus[i];
-                break;
-            } else continue;
-        }
     }
 }
