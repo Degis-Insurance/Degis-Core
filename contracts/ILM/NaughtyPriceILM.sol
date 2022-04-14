@@ -10,6 +10,8 @@ import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
 import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
 import {ILMToken as LPToken} from "./ILMToken.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Naughty Price Initial Liquidity Matching
  * @notice Naughty Price timeline: 1 -- 14 -- 5
@@ -35,6 +37,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     struct UserInfo {
         uint256 amountA;
         uint256 amountB;
+        uint256 degisAmount;
         uint256 degisDebt;
     }
     mapping(address => mapping(address => UserInfo)) public users;
@@ -317,14 +320,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         if (_stablecoin != pairs[_policyToken].stablecoin)
             revert ILM__StablecoinNotPaired();
 
+        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
+        _updateAmount(_policyToken, _amountA, _amountB, true);
+
         // Every 100usd pay 1 degis
         uint256 decimalDiff = 18 - IERC20Decimals(_stablecoin).decimals();
         uint256 degisToPay = ((_amountA + _amountB) * 10**decimalDiff) / 100;
-        _updateDebt(_policyToken, degisToPay);
+        _updateDebt(_policyToken, degisToPay, decimalDiff);
         IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
-
-        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
-        _updateAmount(_policyToken, _amountA, _amountB, true);
 
         // Transfer tokens
         IERC20(_stablecoin).safeTransferFrom(
@@ -340,21 +343,40 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
     }
 
-    function _updateDebt(address _policyToken, uint256 _amount) internal {
-        if (IERC20(degis).balanceOf(address(this)) == 0) return;
+    function _updateDebt(
+        address _policyToken,
+        uint256 _amount,
+        uint256 _decimalDiff
+    ) internal {
+        PairInfo storage pair = pairs[_policyToken];
+        if (IERC20(degis).balanceOf(address(this)) == 0) {
+            pair.accDegisPerShare = SCALE;
+            return;
+        }
+
+        console.log("decimal diff", _decimalDiff);
 
         uint256 feeToPay = (_amount * fee) / 100;
 
-        pairs[_policyToken].accDegisPerShare +=
-            (feeToPay * SCALE) /
-            IERC20(degis).balanceOf(address(this));
+        if (feeToPay > 0) {
+            pair.accDegisPerShare +=
+                (feeToPay * SCALE) /
+                IERC20(degis).balanceOf(address(this));
 
-        UserInfo storage user = users[msg.sender][_policyToken];
+            console.log("accDegisPershare", pair.accDegisPerShare);
 
-        // Update the debt
-        user.degisDebt =
-            pairs[_policyToken].accDegisPerShare *
-            (user.amountA + user.amountB);
+            UserInfo storage user = users[msg.sender][_policyToken];
+            user.degisAmount += _amount;
+
+            // Update the debt
+            user.degisDebt =
+                (pair.accDegisPerShare * user.degisAmount) /
+                SCALE;
+            console.log("user a", user.amountA);
+            console.log("user b", user.amountB);
+
+            console.log("user debt", user.degisDebt);
+        }
     }
 
     /**
@@ -371,12 +393,19 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 _amountA,
         uint256 _amountB
     ) public activePair(_policyToken) {
-        uint256 userDeposit = users[msg.sender][_policyToken].amountA +
-            users[msg.sender][_policyToken].amountB;
+        UserInfo memory user = users[msg.sender][_policyToken];
 
         // Check if the user has enough tokens to withdraw
-        if (userDeposit == 0) revert ILM__NoDeposit();
-        if (_amountA + _amountB > userDeposit) revert ILM__NotEnoughDeposit();
+        if (user.amountA + user.amountB == 0) revert ILM__NoDeposit();
+        if (_amountA > user.amountA || _amountB > user.amountB)
+            revert ILM__NotEnoughDeposit();
+
+        uint256 degisToWithdraw = (pairs[_policyToken].accDegisPerShare *
+            user.degisAmount) /
+            SCALE -
+            user.degisDebt;
+        users[msg.sender][_policyToken].degisAmount -= degisToWithdraw;
+        IERC20(degis).safeTransfer(msg.sender, degisToWithdraw);
 
         // Update the user's amount and pool's amount
         _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, false);
@@ -388,6 +417,12 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         // Burn the lptokens
         address lpToken = pairs[_policyToken].lptoken;
         LPToken(lpToken).burn(msg.sender, _amountA + _amountB);
+
+        // Update the user debt
+        users[msg.sender][_policyToken].degisDebt =
+            (LPToken(lpToken).balanceOf(msg.sender) *
+                pairs[_policyToken].accDegisPerShare) /
+            SCALE;
 
         emit Withdraw(
             _policyToken,

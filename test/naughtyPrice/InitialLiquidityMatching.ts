@@ -228,9 +228,11 @@ describe("Initial Liquidity Matching", function () {
           stablecoinToWei("100"),
           stablecoinToWei("100")
         );
-      
+
       // Pay 1degis/100USD as entrance fee
-      expect(await degisToken.balanceOf(dev_account.address)).to.equal(toWei("98"));
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("98")
+      );
 
       const ILMPairInfo = await ILM.pairs(policyTokenAddress);
       const ILMToken_Factory: ILMToken__factory =
@@ -264,6 +266,10 @@ describe("Initial Liquidity Matching", function () {
         stablecoinToWei("100")
       );
 
+      // Pay 1degis/100USD as entrance fee
+      // 300 USD => 3 degis
+      expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("97"));
+
       expect(await ILMToken.balanceOf(user1.address)).to.equal(
         stablecoinToWei("300")
       );
@@ -279,6 +285,10 @@ describe("Initial Liquidity Matching", function () {
 
       // Calculate the price
       expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1.5"));
+
+      // related to degis
+      expect(pairInfo_2.accDegisPerShare).to.equal(toWei("1.015"));
+      expect(userInfo_2.degisDebt).to.equal(toWei("3.045"));
     });
 
     it("should be able to withdraw from current round ILM", async function () {
