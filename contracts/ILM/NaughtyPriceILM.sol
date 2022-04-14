@@ -2,6 +2,7 @@
 pragma solidity ^0.8.10;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
@@ -104,15 +105,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    function initialize(address _policyCore, address _router)
-        public
-        initializer
-    {
+    function initialize(
+        address _degis,
+        address _policyCore,
+        address _router
+    ) public initializer {
         if (_policyCore == address(0) || _router == address(0))
             revert ILM__ZeroAddress();
 
         __Ownable_init();
 
+        degis = _degis;
         policyCore = _policyCore;
         naughtyRouter = _router;
     }
@@ -315,7 +318,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             revert ILM__StablecoinNotPaired();
 
         // Every 100usd pay 1 degis
-        uint256 degisToPay = (_amountA + _amountB) / 100;
+        uint256 decimalDiff = 18 - IERC20Decimals(_stablecoin).decimals();
+        uint256 degisToPay = ((_amountA + _amountB) * 10**decimalDiff) / 100;
         _updateDebt(_policyToken, degisToPay);
         IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
 
@@ -431,7 +435,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         //     (pair.amountA + pair.amountB);
 
         uint256 userLiquidity = (LPToken(pair.lptoken).balanceOf(msg.sender) *
-            totalLiquidity) / LPToken(pair.lptoken).balanceOf(address(this));
+            totalLiquidity) / LPToken(pair.lptoken).totalSupply();
 
         (uint256 amountA, uint256 amountB) = INaughtyRouter(naughtyRouter)
             .removeLiquidity(

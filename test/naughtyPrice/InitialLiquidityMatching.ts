@@ -23,6 +23,8 @@ import {
   NaughtyPriceILM,
   ILMToken__factory,
   ILMToken,
+  DegisToken__factory,
+  DegisToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -50,6 +52,7 @@ describe("Initial Liquidity Matching", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
+  let DegisToken: DegisToken__factory, degisToken: DegisToken;
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
   let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
   let PriceFeedMock: PriceFeedMock__factory, priceFeedMock: PriceFeedMock;
@@ -69,6 +72,9 @@ describe("Initial Liquidity Matching", function () {
     // 18 decimals for buyer token
     BuyerToken = await ethers.getContractFactory("BuyerToken");
     buyerToken = await BuyerToken.deploy();
+
+    DegisToken = await ethers.getContractFactory("DegisToken");
+    degisToken = await DegisToken.deploy();
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
@@ -101,10 +107,17 @@ describe("Initial Liquidity Matching", function () {
     ILM = await ILMContract.deploy();
     await ILM.deployed();
 
-    await ILM.initialize(core.address, router.address);
+    await ILM.initialize(degisToken.address, core.address, router.address);
 
     await core.setILMContract(ILM.address);
     await core.setNaughtyRouter(router.address);
+
+    // Mint degis token as entrance
+    await degisToken.mintDegis(dev_account.address, toWei("100"));
+    await degisToken.mintDegis(user1.address, toWei("100"));
+
+    await degisToken.approve(ILM.address, toWei("100"));
+    await degisToken.connect(user1).approve(ILM.address, toWei("100"));
   });
 
   describe("Deployment", function () {
@@ -215,6 +228,9 @@ describe("Initial Liquidity Matching", function () {
           stablecoinToWei("100"),
           stablecoinToWei("100")
         );
+      
+      // Pay 1degis/100USD as entrance fee
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(toWei("98"));
 
       const ILMPairInfo = await ILM.pairs(policyTokenAddress);
       const ILMToken_Factory: ILMToken__factory =
@@ -230,7 +246,6 @@ describe("Initial Liquidity Matching", function () {
       const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
       expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
       expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
-      
 
       const pairInfo = await ILM.pairs(policyTokenAddress);
       expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
@@ -257,7 +272,6 @@ describe("Initial Liquidity Matching", function () {
       const userInfo_2 = await ILM.users(user1.address, policyTokenAddress);
       expect(userInfo_2.amountA).to.equal(stablecoinToWei("200"));
       expect(userInfo_2.amountB).to.equal(stablecoinToWei("100"));
-      
 
       const pairInfo_2 = await ILM.pairs(policyTokenAddress);
       expect(pairInfo_2.amountA).to.equal(stablecoinToWei("300"));
@@ -292,7 +306,6 @@ describe("Initial Liquidity Matching", function () {
       const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
       expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
       expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
-      
 
       const pairInfo = await ILM.pairs(policyTokenAddress);
       expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
@@ -330,7 +343,6 @@ describe("Initial Liquidity Matching", function () {
       );
       expect(userInfo_2.amountA).to.equal(stablecoinToWei("80"));
       expect(userInfo_2.amountB).to.equal(stablecoinToWei("40"));
-      
 
       const pairInfo_2 = await ILM.pairs(policyTokenAddress);
       expect(pairInfo_2.amountA).to.equal(stablecoinToWei("80"));
