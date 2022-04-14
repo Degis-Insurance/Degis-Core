@@ -23,17 +23,18 @@ import {ILMToken as LPToken} from "./ILMToken.sol";
 contract NaughtyPriceILM is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
-    uint256 public SCALE = 1e18;
+    uint256 public constant SCALE = 1e18;
+    uint256 public constant fee = 1;
 
-    address public shield;
+    address public degis;
 
     address public policyCore;
     address public naughtyRouter;
 
     struct UserInfo {
-        uint256 totalDeposit;
         uint256 amountA;
         uint256 amountB;
+        uint256 degisDebt;
     }
     mapping(address => mapping(address => UserInfo)) public users;
 
@@ -44,14 +45,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         Stopped
     }
     struct PairInfo {
-        Status status; // 0: before start 1: active 2: finished
+        Status status; // 0: before start 1: active 2: finished 3: stopped
         address lptoken; // lptoken address
-        uint256 ILMDeadline;
-        address stablecoin;
+        uint256 ILMDeadline; // deadline for initial liquidity matching
+        address stablecoin; // stablecoin address
         uint256 amountA; // Amount of policy tokens
         uint256 amountB; // Amount of stablecoins
-        uint256 totalAmount;
-        address naughtyPairAddress;
+        address naughtyPairAddress; // Naughty pair address deployed when finished ILM
+        // degis paid as fee
+        uint256 accDegisPerShare;
     }
     // Policy Token Address => Pair Info
     mapping(address => PairInfo) public pairs;
@@ -147,10 +149,23 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @notice Get the price
      * @param _policyToken Policy token address
      */
-    function getPrice(address _policyToken) public view returns (uint256) {
+    function getPrice(address _policyToken) external view returns (uint256) {
         uint256 amountA = pairs[_policyToken].amountA;
         uint256 amountB = pairs[_policyToken].amountB;
         return (amountA * SCALE) / amountB;
+    }
+
+    /**
+     * @notice Get the total amount of a pair
+     * @param _policyToken Policy token address
+     * @return totalAmount Total amount of a pair
+     */
+    function getPairTotalAmount(address _policyToken)
+        external
+        view
+        returns (uint256)
+    {
+        return pairs[_policyToken].amountA + pairs[_policyToken].amountB;
     }
 
     /**
@@ -299,6 +314,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         if (_stablecoin != pairs[_policyToken].stablecoin)
             revert ILM__StablecoinNotPaired();
 
+        // Every 100usd pay 1 degis
+        uint256 degisToPay = (_amountA + _amountB) / 100;
+        _updateDebt(_policyToken, degisToPay);
+        IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
+
+        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
+        _updateAmount(_policyToken, _amountA, _amountB, true);
+
         // Transfer tokens
         IERC20(_stablecoin).safeTransferFrom(
             msg.sender,
@@ -306,14 +329,28 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             _amountA + _amountB
         );
 
-        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
-        _updateAmount(_policyToken, _amountA, _amountB, true);
-
         // Distribute the lptoken
         address lpToken = pairs[_policyToken].lptoken;
         LPToken(lpToken).mint(msg.sender, _amountA + _amountB);
 
         emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
+    }
+
+    function _updateDebt(address _policyToken, uint256 _amount) internal {
+        if (IERC20(degis).balanceOf(address(this)) == 0) return;
+
+        uint256 feeToPay = (_amount * fee) / 100;
+
+        pairs[_policyToken].accDegisPerShare +=
+            (feeToPay * SCALE) /
+            IERC20(degis).balanceOf(address(this));
+
+        UserInfo storage user = users[msg.sender][_policyToken];
+
+        // Update the debt
+        user.degisDebt =
+            pairs[_policyToken].accDegisPerShare *
+            (user.amountA + user.amountB);
     }
 
     /**
@@ -330,7 +367,10 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 _amountA,
         uint256 _amountB
     ) public activePair(_policyToken) {
-        uint256 userDeposit = users[msg.sender][_policyToken].totalDeposit;
+        uint256 userDeposit = users[msg.sender][_policyToken].amountA +
+            users[msg.sender][_policyToken].amountB;
+
+        // Check if the user has enough tokens to withdraw
         if (userDeposit == 0) revert ILM__NoDeposit();
         if (_amountA + _amountB > userDeposit) revert ILM__NotEnoughDeposit();
 
@@ -366,6 +406,13 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         withdraw(_policyToken, _stablecoin, amounAMax, amounBMax);
     }
 
+    /**
+     * @notice Claim liquidity back
+     * @param _policyToken Policy token address
+     * @param _stablecoin Stablecoin address
+     * @param _amountAMin Minimum amount of policy token (slippage)
+     * @param _amountBMin Minimum amount of stablecoin (slippage)
+     */
     function claim(
         address _policyToken,
         address _stablecoin,
@@ -374,15 +421,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     ) external {
         UserInfo memory user = users[msg.sender][_policyToken];
 
-        if (user.totalDeposit == 0) revert ILM__NotEnoughDeposit();
+        if (user.amountA + user.amountB == 0) revert ILM__NotEnoughDeposit();
 
-        address naughtyPairAddress = pairs[_policyToken].naughtyPairAddress;
+        PairInfo memory pair = pairs[_policyToken];
 
-        uint256 totalLiquidity = INaughtyPair(naughtyPairAddress).balanceOf(
-            address(this)
-        );
-        uint256 userLiquidity = (user.totalDeposit * totalLiquidity) /
-            pairs[_policyToken].totalAmount;
+        uint256 totalLiquidity = INaughtyPair(pair.naughtyPairAddress)
+            .balanceOf(address(this));
+        // uint256 userLiquidity = (user.totalDeposit * totalLiquidity) /
+        //     (pair.amountA + pair.amountB);
+
+        uint256 userLiquidity = (LPToken(pair.lptoken).balanceOf(msg.sender) *
+            totalLiquidity) / LPToken(pair.lptoken).balanceOf(address(this));
 
         (uint256 amountA, uint256 amountB) = INaughtyRouter(naughtyRouter)
             .removeLiquidity(
@@ -396,6 +445,13 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             );
 
         delete users[msg.sender][_policyToken];
+
+        // Burn the user's lp tokens
+        LPToken(pair.lptoken).burn(
+            msg.sender,
+            LPToken(pair.lptoken).balanceOf(msg.sender)
+        );
+
         _updateAmount(_policyToken, amountA, amountB, false);
     }
 
@@ -437,11 +493,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         bool _isDeposit
     ) internal {
         if (_isDeposit) {
-            users[_user][_policyToken].totalDeposit += _amountA + _amountB;
             users[_user][_policyToken].amountA += _amountA;
             users[_user][_policyToken].amountB += _amountB;
         } else {
-            users[_user][_policyToken].totalDeposit -= _amountA + _amountB;
             users[_user][_policyToken].amountA -= _amountA;
             users[_user][_policyToken].amountB -= _amountB;
         }
@@ -462,11 +516,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         if (_isDeposit) {
             pairs[_policyToken].amountA += _amountA;
             pairs[_policyToken].amountB += _amountB;
-            pairs[_policyToken].totalAmount += _amountA + _amountB;
         } else {
             pairs[_policyToken].amountA -= _amountA;
             pairs[_policyToken].amountB -= _amountB;
-            pairs[_policyToken].totalAmount -= _amountA + _amountB;
         }
     }
 

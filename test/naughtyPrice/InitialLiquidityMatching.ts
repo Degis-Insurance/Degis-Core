@@ -230,7 +230,7 @@ describe("Initial Liquidity Matching", function () {
       const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
       expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
       expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
-      expect(userInfo.totalDeposit).to.equal(stablecoinToWei("200"));
+      
 
       const pairInfo = await ILM.pairs(policyTokenAddress);
       expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
@@ -257,7 +257,7 @@ describe("Initial Liquidity Matching", function () {
       const userInfo_2 = await ILM.users(user1.address, policyTokenAddress);
       expect(userInfo_2.amountA).to.equal(stablecoinToWei("200"));
       expect(userInfo_2.amountB).to.equal(stablecoinToWei("100"));
-      expect(userInfo_2.totalDeposit).to.equal(stablecoinToWei("300"));
+      
 
       const pairInfo_2 = await ILM.pairs(policyTokenAddress);
       expect(pairInfo_2.amountA).to.equal(stablecoinToWei("300"));
@@ -292,7 +292,7 @@ describe("Initial Liquidity Matching", function () {
       const userInfo = await ILM.users(dev_account.address, policyTokenAddress);
       expect(userInfo.amountA).to.equal(stablecoinToWei("100"));
       expect(userInfo.amountB).to.equal(stablecoinToWei("100"));
-      expect(userInfo.totalDeposit).to.equal(stablecoinToWei("200"));
+      
 
       const pairInfo = await ILM.pairs(policyTokenAddress);
       expect(pairInfo.amountA).to.equal(stablecoinToWei("100"));
@@ -330,7 +330,7 @@ describe("Initial Liquidity Matching", function () {
       );
       expect(userInfo_2.amountA).to.equal(stablecoinToWei("80"));
       expect(userInfo_2.amountB).to.equal(stablecoinToWei("40"));
-      expect(userInfo_2.totalDeposit).to.equal(stablecoinToWei("120"));
+      
 
       const pairInfo_2 = await ILM.pairs(policyTokenAddress);
       expect(pairInfo_2.amountA).to.equal(stablecoinToWei("80"));

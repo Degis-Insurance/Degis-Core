@@ -778,7 +778,7 @@ contract FarmingPoolUpgradeable is
 
         uint256 basicRewardSpeed;
 
-        for (uint256 i = thresholdBasic[_poolId].length - 1; i >= 0; i--) {
+        for (uint256 i = thresholdBasic[_poolId].length - 1; i >= 0; --i) {
             if (currentBasicBalance >= thresholdBasic[_poolId][i]) {
                 console.log("piecewise:", piecewiseBasic[_poolId][i]);
                 console.log("piecewise:", thresholdBasic[_poolId][i]);

@@ -2,13 +2,19 @@ import { subtask, task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
-import { FarmingPool, FarmingPool__factory } from "../../typechain";
+import {
+  FarmingPool,
+  FarmingPoolUpgradeable,
+  FarmingPoolUpgradeable__factory,
+  FarmingPool__factory,
+} from "../../typechain";
 import {
   readAddressList,
   readFarmingPoolList,
   storeFarmingPoolList,
 } from "../../scripts/contractAddress";
 import { parseUnits, formatEther } from "ethers/lib/utils";
+import { stablecoinToWei, toWei } from "../../test/utils";
 
 const addressList = readAddressList();
 const farmingPoolList = readFarmingPoolList();
@@ -189,4 +195,40 @@ task("setVeDEG", "Set the VeDEG of a farming pool")
 
     const tx = await farmingPool.setVeDEG(veDEGAddress);
     console.log("Tx details: ", await tx.wait());
+  });
+
+task("setPieceWise", "Set piecewise reward level for farming")
+  .addParam("pid", "Pool id", null, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const poolId = taskArgs.pid;
+    const threshold: string[] = [
+      stablecoinToWei("0"),
+      stablecoinToWei("750"),
+      stablecoinToWei("800"),
+    ];
+    const reward: string[] = [toWei("0.01"), toWei("1"), toWei("20")];
+
+    const { network } = hre;
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    console.log(
+      "The farming pool address of this network is: ",
+      farmingPoolAddress
+    );
+
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
+
+    const tx = await farmingPool.setPiecewise(poolId, threshold, reward, {
+      gasLimit: 1000000,
+      from: dev_account.address,
+    });
+
+    const thresholdBasic = await farmingPool.thresholdBasic(poolId, 1);
+    console.log("Threshold basic: ", thresholdBasic.toString());
   });

@@ -24,14 +24,16 @@
 			"poolId": 1,
 			"reward": "0.11574",
 			"bonus": "0.11574"
-		},
-		"2": {
-			"name": "AVAX_85.0_L_2903",
-			"address": "0x023737a366aC87EA4b5CBb9CA3f9710e41Cd7496",
-			"poolId": 2,
-			"reward": "1.0",
-			"bonus": "0.0"
 		}
+		
 	},
-	"localhost": {}
+	"localhost": {
+		"1": {
+			"name": "test",
+			"address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+			"poolId": 1,
+			"reward": "1.0",
+			"bonus": "1.0"
+		}
+	}
 }
