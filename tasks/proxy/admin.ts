@@ -7,7 +7,7 @@ import { ProxyAdmin, ProxyAdmin__factory } from "../../typechain";
 
 task("upgrade", "Upgrade an implementation").setAction(
   async (taskArgs, hre) => {
-    const impl = "0x2ab2d422ddcc4415957ab48200660176a13764a1";
+    const impl = "0x1a03d9d741B69a52B7D028badAfF97f6cF06A1df";
     const proxy = "0xaE4b0b9eaAe17acA2cFA4e8eF85558ECFa87dbb5";
 
     // Network info
@@ -35,3 +35,73 @@ task("upgrade", "Upgrade an implementation").setAction(
     console.log("The new implementation: ", newimp);
   }
 );
+
+task("getImpl", "Get an implementation").setAction(async (taskArgs, hre) => {
+  const proxy = "0xaE4b0b9eaAe17acA2cFA4e8eF85558ECFa87dbb5";
+
+  // Network info
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  // Get policy core contract instance
+  const proxyAdminAddress = addressList[network.name].ProxyAdmin;
+  const ProxyAdmin: ProxyAdmin__factory = await hre.ethers.getContractFactory(
+    "ProxyAdmin"
+  );
+  const admin: ProxyAdmin = ProxyAdmin.attach(proxyAdminAddress);
+
+  // Check the result
+  const newimp = await admin.getProxyImplementation(proxy);
+  console.log("The implementation: ", newimp);
+});
+
+task("Pause", "Pause a contract")
+  .addParam("contract", "The contract name",null,  types.string)
+  .setAction(async (taskArgs, hre) => {
+    const contractToPause = taskArgs.contract;
+    // Network info
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const contractAddress = addressList[network.name][contractToPause];
+    const contractFactory = await hre.ethers.getContractFactory(
+      contractToPause
+    );
+    const contract = contractFactory.attach(contractAddress);
+
+    const tx = await contract.pause();
+    console.log("Tx details: ", await tx.wait());
+  });
+
+  task("UnPause", "UnPause a contract")
+  .addParam("contract", "The contract name",null,  types.string)
+  .setAction(async (taskArgs, hre) => {
+    const contractToPause = taskArgs.contract;
+    // Network info
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const contractAddress = addressList[network.name][contractToPause];
+    const contractFactory = await hre.ethers.getContractFactory(
+      contractToPause
+    );
+    const contract = contractFactory.attach(contractAddress);
+
+    const tx = await contract.unpause();
+    console.log("Tx details: ", await tx.wait());
+  });

@@ -599,32 +599,51 @@ describe("Farming Pool Upgradeable", function () {
         [0, toWei("10"), toWei("100")],
         [toWei("1"), toWei("2"), toWei("3")]
       );
+      // Start with level 0
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
 
-      await pool.stake(1, toWei("1"));
-
-      let poolInfo: PoolInfo;
       // Deposit amount: 1 => reward 1
-      poolInfo = await pool.poolList(1);
-      expect(poolInfo.basicDegisPerSecond).to.equal(toWei("1"));
+      await pool.stake(1, toWei("1"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
 
       // Deposit amount: 10 => reward 1
       await pool.stake(1, toWei("9"));
-      poolInfo = await pool.poolList(1);
-      expect(poolInfo.basicDegisPerSecond).to.equal(toWei("1"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
 
       // Deposit amount: 11 => reward 2
-      await pool.stake(1, toWei("1"));
-      poolInfo = await pool.poolList(1);
-      expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
+      // await pool.stake(1, toWei("1"));
+      // poolInfo = await pool.poolList(1);
+      // expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
 
-      await pool.updatePool(1);
-      poolInfo = await pool.poolList(1);
-      expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
+      // await pool.updatePool(1);
+      // poolInfo = await pool.poolList(1);
+      // expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
 
-      await pool.stake(1, toWei("91"));
+      // 100
+      await pool.stake(1, toWei("90"));
       await pool.updatePool(1);
-      poolInfo = await pool.poolList(1);
-      expect(poolInfo.basicDegisPerSecond).to.equal(toWei("3"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("3"));
+
+      // 120
+      await pool.stake(1, toWei("20"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("3"));
+
+      // 90
+      await pool.withdraw(1, toWei("30"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      // 70
+      await pool.withdraw(1, toWei("20"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      // down level  9
+      await pool.withdraw(1, toWei("61"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
     });
 
     it("should be able to get correct rewards with piecewise update", async function () {
@@ -654,6 +673,30 @@ describe("Farming Pool Upgradeable", function () {
       expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
         toWei("3")
       );
+
+      // pending: 3 + 2 = 5
+      // previous balance: 6
+      // total: 11
+      await pool.withdraw(1, toWei("5"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(0);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("11"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("2")
+      );
+
+      await mineBlocks(1);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("3")
+      );
+
+      await pool.withdraw(1, toWei("2"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(0);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("15"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
     });
   });
 });

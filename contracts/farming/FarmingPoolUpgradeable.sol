@@ -29,8 +29,6 @@ import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
 import {Math} from "../libraries/Math.sol";
 import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title  Farming Pool
  * @notice This contract is for LPToken mining on Degis
@@ -40,6 +38,15 @@ import "hardhat/console.sol";
  *         VeDEG will boost the farming speed by having a extra reward type
  *         The extra reward is shared by those staking lptokens with veDEG balances
  *         Every time the veDEG balance change, the reward will be updated
+ *
+ *         The basic reward depends on the liquidity inside the pool
+ *         Update with a piecewise function
+ *         liquidity amount:   |---------------|------------------|----------------
+ *                             0           threshold 1        threshold 2
+ *          reward speed:            speed1          speed2             speed3
+ *
+ *         The speed update will be updated one tx after the last tx that triggers the threshold
+ *         The reward update will be another one tx later
  */
 contract FarmingPoolUpgradeable is
     Initializable,
@@ -628,7 +635,19 @@ contract FarmingPoolUpgradeable is
 
         // Update the new reward speed
         // Only if the threshold are already set
-        if (thresholdBasic[_poolId].length > 0) _updateRewardSpeed(_poolId);
+        if (thresholdBasic[_poolId].length > 0) {
+            uint256 currentLiquidity = thresholdBasic[_poolId][
+                currentRewardLevel
+            ];
+            if (
+                currentRewardLevel < thresholdBasic[_poolId].length - 1 &&
+                lpSupply >= thresholdBasic[_poolId][currentRewardLevel + 1]
+            ) {
+                _updateRewardSpeed(_poolId);
+            } else if (lpSupply < currentLiquidity) {
+                _updateRewardSpeed(_poolId);
+            }
+        }
 
         emit PoolUpdated(
             _poolId,
@@ -772,6 +791,10 @@ contract FarmingPoolUpgradeable is
                 : poolBalanceAfter - poolBalanceBefore;
     }
 
+    /**
+     * @notice Update the reward speed
+     * @param _poolId Pool ID
+     */
     function _updateRewardSpeed(uint256 _poolId) internal {
         uint256 currentBasicBalance = IERC20(poolList[_poolId].lpToken)
             .balanceOf(address(this));
@@ -780,9 +803,9 @@ contract FarmingPoolUpgradeable is
 
         for (uint256 i = thresholdBasic[_poolId].length - 1; i >= 0; --i) {
             if (currentBasicBalance >= thresholdBasic[_poolId][i]) {
-                console.log("piecewise:", piecewiseBasic[_poolId][i]);
-                console.log("piecewise:", thresholdBasic[_poolId][i]);
                 basicRewardSpeed = piecewiseBasic[_poolId][i];
+                // record current reward level
+                currentRewardLevel = i;
                 break;
             } else continue;
         }

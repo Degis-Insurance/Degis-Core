@@ -189,9 +189,10 @@ task("setVeDEG", "Set the VeDEG of a farming pool")
       farmingPoolAddress
     );
 
-    const FarmingPool: FarmingPool__factory =
+    const FarmingPool: FarmingPoolUpgradeable__factory =
       await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
 
     const tx = await farmingPool.setVeDEG(veDEGAddress);
     console.log("Tx details: ", await tx.wait());
@@ -203,10 +204,18 @@ task("setPieceWise", "Set piecewise reward level for farming")
     const poolId = taskArgs.pid;
     const threshold: string[] = [
       stablecoinToWei("0"),
-      stablecoinToWei("750"),
-      stablecoinToWei("800"),
+      stablecoinToWei("150000"),
+      stablecoinToWei("300000"),
+      stablecoinToWei("450000"),
+      stablecoinToWei("600000"),
     ];
-    const reward: string[] = [toWei("0.01"), toWei("1"), toWei("20")];
+    const reward: string[] = [
+      toWei("0.035"),
+      toWei("0.07"),
+      toWei("0.104"),
+      toWei("0.139"),
+      toWei("0.174"),
+    ];
 
     const { network } = hre;
     // Signers
@@ -232,3 +241,27 @@ task("setPieceWise", "Set piecewise reward level for farming")
     const thresholdBasic = await farmingPool.thresholdBasic(poolId, 1);
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
+
+task("ttt", "Set the VeDEG of a farming pool").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The dfault signer is: ", dev_account.address);
+
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    console.log(
+      "The farming pool address of this network is: ",
+      farmingPoolAddress
+    );
+
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
+
+    const poolInfo = await farmingPool.poolList(1);
+    console.log("Tx details: ", formatEther(poolInfo.bonusDegisPerSecond));
+  }
+);

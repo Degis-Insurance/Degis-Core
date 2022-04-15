@@ -8,6 +8,7 @@ import {
   DegisToken__factory,
 } from "../../typechain";
 
+// npx hardhat addMinterBurner --type minter --token d --name StakingPoolFactory --network avax
 task("addMinterBurner", "add minter/burner manually")
   .addParam("type", "minter or burner", null, types.string)
   .addParam("token", "Which token", null, types.string)

@@ -197,6 +197,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         _unstake(msg.sender, _depositId, _amount);
     }
 
+    /**
+     * @notice Harvest your staking rewards
+     */
     function harvest() external {
         // First update the pool
         updatePool();
@@ -215,6 +218,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         emit Harvest(msg.sender, pending);
     }
 
+    /**
+     * @notice Update the pool without fee
+     */
     function updatePool() public {
         _updatePoolWithFee(0);
     }
