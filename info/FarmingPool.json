@@ -10,6 +10,13 @@
 	},
 	"avax": {
 		"1": {
+			"name": "AVAX_77.0_L_0605",
+			"address": "0xE1D05A01F05D0eBfe91063E05B27c0f5142C4690",
+			"poolId": 1,
+			"reward": "0.035",
+			"bonus": "0.052"
+		},
+		"1-old": {
 			"name": "AVAX_94.0_L_2104",
 			"address": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",
 			"poolId": 1,
@@ -25,7 +32,6 @@
 			"reward": "0.11574",
 			"bonus": "0.11574"
 		}
-		
 	},
 	"localhost": {
 		"1": {

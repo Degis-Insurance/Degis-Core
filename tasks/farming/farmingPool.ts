@@ -48,9 +48,10 @@ task("addFarmingPool", "Add new farming pool")
       " is: ",
       farmingPoolAddress
     );
-    const FarmingPool: FarmingPool__factory =
+    const FarmingPool: FarmingPoolUpgradeable__factory =
       await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
 
     console.log("farming speed", parseUnits(basicDegisPerSecond).toString());
 
@@ -83,8 +84,8 @@ task("addFarmingPool", "Add new farming pool")
 
 task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
   .addParam("id", "Pool id", null, types.int)
-  .addParam("reward", "Basic Degis reward per second", null, types.int)
-  .addParam("bonus", "Bonus reward per second", null, types.int)
+  .addParam("reward", "Basic Degis reward per second", null, types.string)
+  .addParam("bonus", "Bonus reward per second", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolId = taskArgs.id;
@@ -92,8 +93,8 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const bonusDegisPerSecond = taskArgs.bonus;
 
     console.log("Pool id to be set: ", poolId);
-    console.log("New reward speed: ", basicDegisPerSecond, "degis/second");
-    console.log("New Bonus speed: ", bonusDegisPerSecond, "degis/second");
+    console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
+    console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
 
     const { network } = hre;
 
@@ -101,7 +102,7 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    const farmingPoolAddress = addressList[network.name].FarmingPool;
     console.log(
       "The farming pool address of ",
       network.name,
@@ -109,14 +110,14 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
       farmingPoolAddress
     );
     const FarmingPool: FarmingPool__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+      await hre.ethers.getContractFactory("FarmingPool");
     const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
     const tx = await farmingPool.setDegisReward(
       poolId,
-      parseUnits(basicDegisPerSecond.toString()),
-      parseUnits(bonusDegisPerSecond.toString()),
+      parseUnits(basicDegisPerSecond),
+      parseUnits(bonusDegisPerSecond),
       false
     );
     console.log("Tx hash: ", (await tx.wait()).transactionHash);
@@ -130,15 +131,15 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
       formatEther(poolInfo.bonusDegisPerSecond)
     );
 
-    // Store the new farming pool
-    farmingPoolList[network.name][poolId].reward = formatEther(
-      poolInfo.basicDegisPerSecond
-    );
-    farmingPoolList[network.name][poolId].bonus = formatEther(
-      poolInfo.bonusDegisPerSecond
-    );
-    console.log("Farming pool list now: ", farmingPoolList);
-    storeFarmingPoolList(farmingPoolList);
+    // // Store the new farming pool
+    // farmingPoolList[network.name][poolId].reward = formatEther(
+    //   poolInfo.basicDegisPerSecond
+    // );
+    // farmingPoolList[network.name][poolId].bonus = formatEther(
+    //   poolInfo.bonusDegisPerSecond
+    // );
+    // console.log("Farming pool list now: ", farmingPoolList);
+    // storeFarmingPoolList(farmingPoolList);
   });
 
 task("setFarmingStartTime", "Set the start timestamp of farming")

@@ -20,11 +20,11 @@
 pragma solidity ^0.8.10;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "../tokens/interfaces/IDegisToken.sol";
-import "../utils/Ownable.sol";
-import "../utils/Pausable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "../libraries/SafePRBMath.sol";
 
 /**
@@ -39,7 +39,11 @@ import "../libraries/SafePRBMath.sol";
  *         You can withdraw your buyer token within the same round (current round)
  *         They can not be withdrawed if the round was settled
  */
-contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
+contract PurchaseIncentiveVault is
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     using SafeERC20 for IBuyerToken;
     using SafePRBMath for uint256;
 
@@ -48,6 +52,9 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
 
     string public constant name = "Degis Purchase Incentive Vault";
+
+    // Buyer Token & Degis Token SCALE = 1e18
+    uint256 public constant SCALE = 1e18;
 
     // Other contracts
     IBuyerToken buyerToken;
@@ -65,7 +72,8 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     // Last distribution block
     uint256 public lastDistribution;
 
-    uint256 public MAX_ROUND = 50;
+    // Max round for one claim
+    uint256 public constant MAX_ROUND = 50;
 
     struct RoundInfo {
         uint256 shares;
@@ -93,7 +101,6 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
         uint256 newRewardPerRound
     );
     event DistributionIntervalChanged(uint256 oldInterval, uint256 newInterval);
-    event MaxRoundChanged(uint256 oldMaxRound, uint256 newMaxRound);
     event Stake(
         address userAddress,
         uint256 currentRound,
@@ -103,11 +110,25 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     event RewardClaimed(address userAddress, uint256 userReward);
     event RoundSettled(uint256 currentRound, uint256 blockNumber);
 
+    error PIV__NotPassedInterval();
+    error PIV__ZeroAmount();
+    error PIV__NotEnoughBuyerTokens();
+    error PIV__AlreadyDistributed();
+    error PIV__NoPendingRound();
+    error PIV__ClaimedAll();
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _buyerToken, address _degisToken) Ownable(msg.sender) {
+    function initialize(address _buyerToken, address _degisToken)
+        public
+        initializer
+    {
+        __Ownable_init();
+        __Pausable_init();
+        __ReentrancyGuard_init();
+
         // Initialize two tokens
         buyerToken = IBuyerToken(_buyerToken);
         degis = IDegisToken(_degisToken);
@@ -125,10 +146,9 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @dev Should pass the distribution interval
      */
     modifier hasPassedInterval() {
-        require(
-            block.timestamp - lastDistribution > distributionInterval,
-            "Two distributions should have an interval"
-        );
+        if (block.timestamp - lastDistribution <= distributionInterval)
+            revert PIV__NotPassedInterval();
+
         _;
     }
 
@@ -142,7 +162,7 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @return totalUsers Total amount of users in _round
      */
     function getTotalUsersInRound(uint256 _round)
-        public
+        external
         view
         returns (uint256)
     {
@@ -155,7 +175,7 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @return users All user addresses in this round
      */
     function getUsersInRound(uint256 _round)
-        public
+        external
         view
         returns (address[] memory)
     {
@@ -168,7 +188,7 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @return pendingRounds User's pending rounds
      */
     function getUserPendingRounds(address _user)
-        public
+        external
         view
         returns (uint256[] memory)
     {
@@ -178,27 +198,42 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
     /**
      * @notice Get your shares in the current round
      * @param _user Address of the user
+     * @param _round Round number
+     * @return userShares User's shares in the current round
      */
-    function getUserShares(address _user) public view returns (uint256) {
-        return userSharesInRound[_user][currentRound];
+    function getUserShares(address _user, uint256 _round)
+        external
+        view
+        returns (uint256)
+    {
+        return userSharesInRound[_user][_round];
     }
 
     /**
      * @notice Get a user's pending reward
+     * @param _user User address
      * @return userPendingReward User's pending reward
      */
-    function pendingReward() public view returns (uint256 userPendingReward) {
-        UserInfo memory user = userInfo[_msgSender()];
+    function pendingReward(address _user)
+        external
+        view
+        returns (uint256 userPendingReward)
+    {
+        UserInfo memory user = userInfo[_user];
 
+        // Total rounds that need to be distributed
         uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
+
+        // Start from last reward round index
         uint256 startIndex = user.lastRewardRoundIndex;
 
         for (uint256 i = startIndex; i < startIndex + length; i++) {
             uint256 round = user.pendingRounds[i];
 
-            userPendingReward += roundInfo[round].degisPerShare.mul(
-                userSharesInRound[_msgSender()][round]
-            );
+            userPendingReward +=
+                (roundInfo[round].degisPerShare *
+                    userSharesInRound[_user][round]) /
+                SCALE;
         }
     }
 
@@ -216,11 +251,10 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
 
     /**
      * @notice Set degis distribution per round
-     * @param _degisPerRound Degis distribution per round to be set
+     * @param _degisPerRound Degis distribution per round
      */
     function setDegisPerRound(uint256 _degisPerRound) external onlyOwner {
         emit DegisRewardChanged(degisPerRound, _degisPerRound);
-
         degisPerRound = _degisPerRound;
     }
 
@@ -230,17 +264,7 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      */
     function setDistributionInterval(uint256 _newInterval) external onlyOwner {
         emit DistributionIntervalChanged(distributionInterval, _newInterval);
-
         distributionInterval = _newInterval;
-    }
-
-    /**
-     * @notice Set the max rounds to claim rewards
-     */
-    function setMaxRound(uint256 _maxRound) external onlyOwner {
-        emit MaxRoundChanged(MAX_ROUND, _maxRound);
-
-        MAX_ROUND = _maxRound;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -252,34 +276,37 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @param _amount Amount of buyer tokens to stake
      */
     function stake(uint256 _amount) external nonReentrant whenNotPaused {
-        require(_amount > 0, "Amount must be greater than 0");
+        if (_amount == 0) revert PIV__ZeroAmount();
 
-        buyerToken.safeTransferFrom(_msgSender(), address(this), _amount);
+        // Save gas
+        uint256 round = currentRound;
 
-        // If the user has not staked in this round, record this new user
-        if (userSharesInRound[_msgSender()][currentRound] == 0) {
-            roundInfo[currentRound].users.push(_msgSender());
+        // User info of msg.sender
+        UserInfo storage user = userInfo[msg.sender];
+
+        // If the user has not staked in this round, record this new user to the users array
+        if (userSharesInRound[msg.sender][round] == 0) {
+            roundInfo[round].users.push(msg.sender);
         }
 
-        userSharesInRound[_msgSender()][currentRound] += _amount;
+        userSharesInRound[msg.sender][round] += _amount;
 
-        uint256 length = userInfo[_msgSender()].pendingRounds.length;
-
-        // // Initialize the last reward round
-        // if (length == 0) userInfo[_msgSender()].lastRewardRoundIndex = 0;
-
+        uint256 length = user.pendingRounds.length;
         // Only add the round if it's not in the array
+        // Condition 1: length == 0 => no pending rounds => add this round
+        // Condition 2: length != 0 && last pending round is not the current round => add this round
         if (
             length == 0 ||
-            (length != 0 &&
-                userInfo[_msgSender()].pendingRounds[length - 1] !=
-                currentRound)
-        ) userInfo[_msgSender()].pendingRounds.push(currentRound);
+            (length != 0 && user.pendingRounds[length - 1] != currentRound)
+        ) user.pendingRounds.push(currentRound);
 
         // Update the total shares
-        roundInfo[currentRound].shares += _amount;
+        roundInfo[round].shares += _amount;
 
-        emit Stake(_msgSender(), currentRound, _amount);
+        // Finally finish the token transfer
+        buyerToken.safeTransferFrom(msg.sender, address(this), _amount);
+
+        emit Stake(msg.sender, round, _amount);
     }
 
     /**
@@ -287,25 +314,27 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      * @param _amount Amount to redeem
      */
     function redeem(uint256 _amount) external nonReentrant whenNotPaused {
-        require(_amount > 0, "Amount must be greater than 0");
+        if (_amount == 0) revert PIV__ZeroAmount();
 
-        uint256 userBalance = userSharesInRound[_msgSender()][currentRound];
-        require(
-            userBalance >= _amount,
-            "Not enough buyer tokens for you to redeem"
-        );
+        uint256 userBalance = userSharesInRound[msg.sender][currentRound];
 
-        buyerToken.safeTransfer(_msgSender(), _amount);
+        if (userBalance < _amount) revert PIV__NotEnoughBuyerTokens();
 
-        userSharesInRound[_msgSender()][currentRound] -= _amount;
+        uint256 round = currentRound;
 
-        if (userSharesInRound[_msgSender()][currentRound] == 0) {
-            userInfo[_msgSender()].pendingRounds.pop();
+        userSharesInRound[msg.sender][round] -= _amount;
+
+        // If redeem all buyer tokens, remove this round from the user's pending rounds
+        if (userSharesInRound[msg.sender][round] == 0) {
+            userInfo[msg.sender].pendingRounds.pop();
         }
 
-        roundInfo[currentRound].shares -= _amount;
+        roundInfo[round].shares -= _amount;
 
-        emit Redeem(_msgSender(), currentRound, _amount);
+        // Finally finish the buyer token transfer
+        buyerToken.safeTransfer(msg.sender, _amount);
+
+        emit Redeem(msg.sender, round, _amount);
     }
 
     /**
@@ -314,34 +343,37 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
      */
     function settleCurrentRound() external hasPassedInterval whenNotPaused {
         RoundInfo storage info = roundInfo[currentRound];
-        require(!info.hasDistributed, "Already distributed");
+        if (info.hasDistributed) revert PIV__AlreadyDistributed();
 
         uint256 totalShares = info.shares;
 
         // If no one staked, no reward
         if (totalShares == 0) info.degisPerShare = 0;
-        else info.degisPerShare = degisPerRound.div(totalShares);
+        else info.degisPerShare = (degisPerRound * SCALE) / totalShares;
 
         info.hasDistributed = true;
 
-        emit RoundSettled(currentRound, block.timestamp);
+        // Update current round, ++ save little gas
+        ++currentRound;
 
-        currentRound += 1;
+        // Update last distribution time
         lastDistribution = block.timestamp;
+
+        emit RoundSettled(currentRound, block.timestamp);
     }
 
     /**
      * @notice User can claim his own reward
      */
-    function claimOwnReward() external nonReentrant whenNotPaused {
-        UserInfo memory user = userInfo[_msgSender()];
+    function claim() external nonReentrant whenNotPaused {
+        UserInfo memory user = userInfo[msg.sender];
 
-        require(user.pendingRounds.length != 0, "You have no shares ever");
+        if (user.pendingRounds.length == 0) revert PIV__NoPendingRound();
 
         uint256 roundsToClaim = user.pendingRounds.length -
             user.lastRewardRoundIndex;
 
-        require(roundsToClaim > 0, "Have claimed all");
+        if (roundsToClaim == 0) revert PIV__ClaimedAll();
 
         if (user.pendingRounds[user.pendingRounds.length - 1] == currentRound) {
             roundsToClaim -= 1;
@@ -349,9 +381,8 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
 
         if (roundsToClaim > MAX_ROUND) {
             roundsToClaim = MAX_ROUND;
-
-            userInfo[_msgSender()].lastRewardRoundIndex += MAX_ROUND;
-        } else userInfo[_msgSender()].lastRewardRoundIndex += roundsToClaim;
+            userInfo[msg.sender].lastRewardRoundIndex += MAX_ROUND;
+        } else userInfo[msg.sender].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
         uint256 startIndex = user.lastRewardRoundIndex;
@@ -359,11 +390,13 @@ contract PurchaseIncentiveVault is Ownable, Pausable, ReentrancyGuard {
         for (uint256 i = startIndex; i < startIndex + roundsToClaim; i++) {
             uint256 round = user.pendingRounds[i];
 
-            userPendingReward += roundInfo[round].degisPerShare.mul(
-                userSharesInRound[_msgSender()][round]
-            );
+            userPendingReward +=
+                (roundInfo[round].degisPerShare *
+                    userSharesInRound[msg.sender][round]) /
+                SCALE;
         }
 
-        degis.mintDegis(_msgSender(), userPendingReward);
+        // Mint reward to user
+        degis.mintDegis(msg.sender, userPendingReward);
     }
 }
