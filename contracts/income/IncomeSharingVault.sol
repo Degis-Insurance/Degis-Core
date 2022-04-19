@@ -5,6 +5,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
 
 /**
@@ -13,14 +14,16 @@ import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
  *         And the income will be shared by DEG holders
  *         The share will be distributed every week
  */
-contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
+contract IncomeSharingVault is
+    OwnableUpgradeable,
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     using SafeERC20 for IERC20;
 
-    uint256 public constant SCALE = 1e18;
+    uint256 public constant SCALE = 1e12;
 
-    address usd;
-    address degis;
-    IVeDEG veDEG;
+    IVeDEG public veDEG;
 
     struct PoolInfo {
         bool available;
@@ -42,7 +45,11 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
     }
     mapping(uint256 => mapping(address => UserInfo)) public users;
 
-    uint256 nextPool;
+    uint256 public nextPool;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event NewRewardPoolStart(
         uint256 poolId,
@@ -53,24 +60,55 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
     event PoolUpdated(uint256 poolId, uint256 accRewardPerSecond);
     event Harvest(address user, uint256 amount);
     event Deposit(address user, uint256 poolId, uint256 amount);
+    event Withdraw(address user, uint256 poolId, uint256 amount);
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     // Errors start with DIS(Degis Income Sharing)
+    error DIS__ZeroAmount();
     error DIS__NotEnoughVeDEG();
     error DIS__WrongSpeed();
 
-    function initialize(
-        address _degis,
-        address _usd,
-        address _veDEG
-    ) public initializer {
+    function initialize(address _veDEG) public initializer {
         __Ownable_init();
         __Pausable_init();
+        __ReentrancyGuard_init();
 
-        usd = _usd;
-        degis = _degis;
         veDEG = IVeDEG(_veDEG);
 
         nextPool = 1;
+    }
+
+    function pendingReward(uint256 _poolId, address _user)
+        external
+        view
+        returns (uint256)
+    {
+        PoolInfo memory pool = pools[_poolId];
+
+        if (
+            pool.lastRewardTimestamp == 0 ||
+            block.timestamp < pool.lastRewardTimestamp
+        ) return 0;
+
+        UserInfo memory user = users[_poolId][_user];
+
+        uint256 accRewardPerShare = pool.accRewardPerShare;
+
+        if (pool.totalAmount == 0) return 0;
+        else {
+            uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
+            uint256 reward = timePassed * pool.rewardPerSecond;
+            accRewardPerShare += (reward * SCALE) / pool.totalAmount;
+
+            uint256 pending = (user.totalAmount * accRewardPerShare) /
+                SCALE -
+                user.rewardDebt;
+
+            return pending;
+        }
     }
 
     function startPool(address _rewardToken, uint256 _roundTime)
@@ -100,7 +138,8 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
         emit RewardSpeedSet(_poolId, _rewardPerSecond);
     }
 
-    function deposit(uint256 _poolId, uint256 _amount) external {
+    function deposit(uint256 _poolId, uint256 _amount) external nonReentrant {
+        if (_amount == 0) revert DIS__ZeroAmount();
         if (veDEG.balanceOf(msg.sender) < _amount) revert DIS__NotEnoughVeDEG();
 
         updatePool(_poolId);
@@ -124,8 +163,10 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
             emit Harvest(msg.sender, reward);
         }
 
+        // Update pool amount
         pool.totalAmount += _amount;
 
+        // Update user amount
         user.totalAmount += _amount;
 
         user.rewardDebt = (pool.accRewardPerShare * user.totalAmount) / SCALE;
@@ -133,7 +174,36 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
         emit Deposit(msg.sender, _poolId, _amount);
     }
 
-    function withdraw(uint256 _poolId, uint256 _amount) external {}
+    function withdraw(uint256 _poolId, uint256 _amount) external nonReentrant {
+        if (_amount == 0) revert DIS__ZeroAmount();
+
+        PoolInfo storage pool = pools[_poolId];
+        UserInfo storage user = users[_poolId][msg.sender];
+
+        if (user.totalAmount > _amount) revert DIS__NotEnoughVeDEG();
+
+        updatePool(_poolId);
+
+        uint256 pending = pool.accRewardPerShare *
+            user.totalAmount -
+            user.rewardDebt;
+
+        uint256 reward = _safeRewardTransfer(
+            pool.rewardToken,
+            msg.sender,
+            pending
+        );
+        emit Harvest(msg.sender, reward);
+
+        // Update user info
+        user.totalAmount -= _amount;
+        user.rewardDebt = user.totalAmount * pool.accRewardPerShare;
+
+        // Unlock veDEG
+        veDEG.unlockVeDEG(msg.sender, _amount);
+
+        emit Withdraw(msg.sender, _poolId, reward);
+    }
 
     function updatePool(uint256 _poolId) public {
         PoolInfo storage pool = pools[_poolId];
@@ -151,12 +221,16 @@ contract IncomeSharingVault is OwnableUpgradeable, PausableUpgradeable {
 
         uint256 reward = timePassed * pool.rewardPerSecond;
 
-        pool.accRewardPerShare += reward / totalAmount;
+        pool.accRewardPerShare += (reward * SCALE) / totalAmount;
 
         pool.lastRewardTimestamp = block.timestamp;
 
         emit PoolUpdated(_poolId, pool.accRewardPerShare);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Finish the reward token transfer

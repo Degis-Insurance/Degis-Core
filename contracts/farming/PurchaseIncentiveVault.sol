@@ -109,6 +109,10 @@ contract PurchaseIncentiveVault is
     event RewardClaimed(address userAddress, uint256 userReward);
     event RoundSettled(uint256 currentRound, uint256 blockNumber);
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     error PIV__NotPassedInterval();
     error PIV__ZeroAmount();
     error PIV__NotEnoughBuyerTokens();
