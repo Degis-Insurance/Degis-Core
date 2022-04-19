@@ -172,7 +172,6 @@ contract IncomeSharing is OwnableUpgradeable, PausableUpgradeable {
         uint256 timePassed = block.timestamp - round.startTimestamp;
         uint256 totalReward = round.rewardPerSecond * timePassed;
 
-
         // Clear the user record
         delete users[msg.sender];
     }
@@ -192,5 +191,28 @@ contract IncomeSharing is OwnableUpgradeable, PausableUpgradeable {
         uint256 pendingIncome;
 
         usd.safeTransfer(msg.sender, pendingIncome);
+    }
+
+    /**
+     * @notice Finish the usd transfer
+     * @dev Safe means not transfer exceeds the balance of contract
+     *      Manually change the reward speed
+     * @param _to Address to transfer
+     * @param _amount Amount to transfer
+     * @return realAmount Real amount transferred
+     */
+    function safeUSDTranfer(address _to, uint256 _amount)
+        internal
+        returns (uint256)
+    {
+        uint256 balance = IERC20(usd).balanceOf(address(this));
+
+        if (_amount > balance) {
+            IERC20(usd).safeTransfer(_to, balance);
+            return balance;
+        } else {
+            IERC20(usd).safeTransfer(_to, _amount);
+            return _amount;
+        }
     }
 }

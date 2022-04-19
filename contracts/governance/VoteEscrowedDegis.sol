@@ -135,6 +135,14 @@ contract VoteEscrowedDegis is
         uint256 amount
     );
 
+    error VED__NotWhiteListed();
+    error VED__StillLocked();
+    error VED__ZeroAddress();
+    error VED__ZeroAmount();
+    error VED__NotEnoughBalance();
+
+    error VED__TimeNotPassed();
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -143,7 +151,8 @@ contract VoteEscrowedDegis is
         public
         initializer
     {
-        require(address(_degis) != address(0), "zero address");
+        if (_degis == address(0) || _farmingPool == address(0))
+            revert VED__ZeroAddress();
 
         // Initialize veDEG
         __ERC20_init("Vote Escrowed Degis", "veDEG");
@@ -170,8 +179,13 @@ contract VoteEscrowedDegis is
 
     modifier notContract(address _addr) {
         if (_addr != tx.origin) {
-            require(whitelist[_addr], "Not whitelisted");
+            if (!whitelist[_addr]) revert VED__NotWhiteListed();
         }
+        _;
+    }
+
+    modifier noLocked(address _user) {
+        if (locked[_user] > 0) revert VED__StillLocked();
         _;
     }
 
@@ -184,7 +198,7 @@ contract VoteEscrowedDegis is
      * @param _user User address
      */
     function claimable(address _user) public view returns (uint256) {
-        require(_user != address(0), "zero address");
+        if (_user == address(0)) revert VED__ZeroAddress();
 
         UserInfo memory user = users[_user];
 
@@ -249,7 +263,7 @@ contract VoteEscrowedDegis is
      * @param _maxCapRatio the new max ratio
      */
     function setMaxCapRatio(uint256 _maxCapRatio) external onlyOwner {
-        require(_maxCapRatio > 0, "Max cap ratio should be greater than zero");
+        if (_maxCapRatio == 0) revert VED__ZeroAmount();
         emit MaxCapRatioChanged(maxCapRatio, _maxCapRatio);
         maxCapRatio = _maxCapRatio;
     }
@@ -259,10 +273,7 @@ contract VoteEscrowedDegis is
      * @param _generationRate New generation rate
      */
     function setGenerationRate(uint256 _generationRate) external onlyOwner {
-        require(
-            _generationRate > 0,
-            "Generation rate should be greater than 0"
-        );
+        if (_generationRate == 0) revert VED__ZeroAmount();
         emit GenerationRateChanged(generationRate, _generationRate);
         generationRate = _generationRate;
     }
@@ -282,7 +293,7 @@ contract VoteEscrowedDegis is
         whenNotPaused
         notContract(msg.sender)
     {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0) revert VED__ZeroAmount();
 
         if (users[msg.sender].amount > 0) {
             // If the user has amount deposited, claim veDEG
@@ -311,7 +322,7 @@ contract VoteEscrowedDegis is
         nonReentrant
         whenNotPaused
     {
-        require(_amount > 0, "Zero amount");
+        if (_amount == 0) revert VED__ZeroAmount();
 
         uint256 currentMaxTime = (maxCapRatio * SCALE) / generationRate;
         uint256 lockUntil = block.timestamp + currentMaxTime * 2;
@@ -330,8 +341,8 @@ contract VoteEscrowedDegis is
     /**
      * @notice Claims accumulated veDEG for flex deposit
      */
-    function claim() public nonReentrant whenNotPaused {
-        require(users[msg.sender].amount > 0, "user has no stake");
+    function claim() public nonReentrant whenNotPaused noLocked(msg.sender) {
+        if (users[msg.sender].amount == 0) revert VED__ZeroAmount();
 
         _claim(msg.sender);
     }
@@ -341,9 +352,14 @@ contract VoteEscrowedDegis is
      * @dev User will lose all veDEG once he withdrawed
      * @param _amount Amount to withdraw
      */
-    function withdraw(uint256 _amount) external nonReentrant whenNotPaused {
-        require(_amount > 0, "Amount should be greater than zero");
-        require(users[msg.sender].amount >= _amount, "Not enough balance");
+    function withdraw(uint256 _amount)
+        external
+        nonReentrant
+        whenNotPaused
+        noLocked(msg.sender)
+    {
+        if (_amount == 0) revert VED__ZeroAmount();
+        if (users[msg.sender].amount < _amount) revert VED__NotEnoughBalance();
 
         // reset last Release timestamp
         users[msg.sender].lastRelease = block.timestamp;
@@ -368,13 +384,15 @@ contract VoteEscrowedDegis is
     /**
      * @notice Withdraw all the locked veDEG
      */
-    function withdrawLocked() external nonReentrant whenNotPaused {
+    function withdrawLocked()
+        external
+        nonReentrant
+        whenNotPaused
+        noLocked(msg.sender)
+    {
         UserInfo memory user = users[msg.sender];
-        require(user.amountLocked > 0, "user has no locked DEG");
-        require(
-            block.timestamp >= user.lockUntil,
-            "locked time has not passed"
-        );
+        if (user.amountLocked == 0) revert VED__ZeroAmount();
+        if (block.timestamp < user.lockUntil) revert VED__TimeNotPassed();
 
         _burn(msg.sender, user.amountLocked * maxCapRatio);
 
@@ -384,6 +402,49 @@ contract VoteEscrowedDegis is
 
         // send back the staked degis
         degis.safeTransfer(msg.sender, user.amountLocked);
+    }
+
+    /**
+     * @notice Lock veDEG token
+     * @dev Only whitelisted contract
+     *      Income sharing contract will lock veDEG as entrance
+     * @param _to User address
+     * @param _amount Amount to lock
+     */
+    function lockVeDEG(address _to, uint256 _amount) public {
+        // Only whitelisted contract can lock veDEG
+        if (!whitelist[msg.sender]) revert VED__NotWhiteListed();
+
+        _lock(_to, _amount);
+        emit LockVeDEG(msg.sender, _to, _amount);
+    }
+
+    /**
+     * @notice Unlock veDEG token
+     * @param _to User address
+     * @param _amount Amount to unlock
+     */
+    function unlockVeDEG(address _to, uint256 _amount) public {
+        // Only whitelisted contract can unlock veDEG
+        if (!whitelist[msg.sender]) revert VED__NotWhiteListed();
+
+        _lock(_to, _amount);
+        emit UnlockVeDEG(msg.sender, _to, _amount);
+    }
+
+    /**
+     * @notice Burn veDEG
+     * @dev Only whitelisted contract
+     *      For future use, some contracts may need veDEG for entrance
+     * @param _to Address to burn
+     * @param _amount Amount to burn
+     */
+    function burnVeDEG(address _to, uint256 _amount) public {
+        // Only whitelisted contract can burn veDEG
+        if (!whitelist[msg.sender]) revert VED__NotWhiteListed();
+
+        _burn(_to, _amount);
+        emit BurnVeDEG(msg.sender, _to, _amount);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -419,43 +480,22 @@ contract VoteEscrowedDegis is
         farmingPool.updateBonus(_user, _newBalance);
     }
 
+    /**
+     * @notice Lock veDEG token
+     * @param _to User address
+     * @param _amount Amount to lock
+     */
     function _lock(address _to, uint256 _amount) internal {
         locked[_to] += _amount;
     }
 
-    function _unlock(address _to, uint256 _amount) internal {
-        require(locked[_to] >= _amount, "Not enough locked amount");
-        locked[_to] -= _amount;
-    }
-
     /**
-     * @notice Burn veDEG
-     * @dev Only whitelisted contract
-     *      For future use, some contracts may need veDEG for entrance
-     * @param _to Address to burn
-     * @param _amount Amount to burn
+     * @notice Unlock veDEG token
+     * @param _to User address
+     * @param _amount Amount to unlock
      */
-    function burnVeDEG(address _to, uint256 _amount) public {
-        // Only whitelisted contract can burn veDEG
-        require(whitelist[msg.sender], "Not whitelisted");
-
-        _burn(_to, _amount);
-        emit BurnVeDEG(msg.sender, _to, _amount);
-    }
-
-    function lockVeDEG(address _to, uint256 _amount) public {
-        // Only whitelisted contract can burn veDEG
-        require(whitelist[msg.sender], "Not whitelisted");
-
-        _lock(_to, _amount);
-        emit LockVeDEG(msg.sender, _to, _amount);
-    }
-
-    function unlockVeDEG(address _to, uint256 _amount) public {
-        // Only whitelisted contract can burn veDEG
-        require(whitelist[msg.sender], "Not whitelisted");
-
-        _lock(_to, _amount);
-        emit UnlockVeDEG(msg.sender, _to, _amount);
+    function _unlock(address _to, uint256 _amount) internal {
+        if (locked[_to] < _amount) revert VED__NotEnoughBalance();
+        locked[_to] -= _amount;
     }
 }

@@ -19,5 +19,5 @@ interface IVeDEG is IVeERC20 {
 
     function getVotes(address _account) external view returns (uint256);
 
-    function lockVeDEG() external;
+    function lockVeDEG(address _to, uint256 _amount) external;
 }
