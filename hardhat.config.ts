@@ -39,6 +39,7 @@ import "./tasks/lucky/degisLottery";
 
 // Token Tasks
 import "./tasks/tokens/addMinterBurner";
+import "./tasks/tokens/mintToken";
 
 // Staking Tasks
 import "./tasks/staking/stakingPoolFactory";

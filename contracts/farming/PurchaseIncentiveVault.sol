@@ -19,13 +19,12 @@
 */
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "../tokens/interfaces/IBuyerToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "../libraries/SafePRBMath.sol";
 
 /**
  * @title  Purchase Incentive Vault
@@ -44,8 +43,7 @@ contract PurchaseIncentiveVault is
     PausableUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    using SafeERC20 for IBuyerToken;
-    using SafePRBMath for uint256;
+    using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -57,7 +55,7 @@ contract PurchaseIncentiveVault is
     uint256 public constant SCALE = 1e18;
 
     // Other contracts
-    IBuyerToken buyerToken;
+    IERC20 buyerToken;
     IDegisToken degis;
 
     // Current round number
@@ -73,6 +71,7 @@ contract PurchaseIncentiveVault is
     uint256 public lastDistribution;
 
     // Max round for one claim
+    // When upgrade this parameter, redeploy the contract
     uint256 public constant MAX_ROUND = 50;
 
     struct RoundInfo {
@@ -87,7 +86,7 @@ contract PurchaseIncentiveVault is
         uint256 lastRewardRoundIndex;
         uint256[] pendingRounds;
     }
-    mapping(address => UserInfo) public userInfo;
+    mapping(address => UserInfo) public users;
 
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
@@ -130,7 +129,7 @@ contract PurchaseIncentiveVault is
         __ReentrancyGuard_init();
 
         // Initialize two tokens
-        buyerToken = IBuyerToken(_buyerToken);
+        buyerToken = IERC20(_buyerToken);
         degis = IDegisToken(_degisToken);
 
         // Initialize the last distribution time
@@ -192,7 +191,7 @@ contract PurchaseIncentiveVault is
         view
         returns (uint256[] memory)
     {
-        return userInfo[_user].pendingRounds;
+        return users[_user].pendingRounds;
     }
 
     /**
@@ -219,7 +218,7 @@ contract PurchaseIncentiveVault is
         view
         returns (uint256 userPendingReward)
     {
-        UserInfo memory user = userInfo[_user];
+        UserInfo memory user = users[_user];
 
         // Total rounds that need to be distributed
         uint256 length = user.pendingRounds.length - user.lastRewardRoundIndex;
@@ -282,7 +281,7 @@ contract PurchaseIncentiveVault is
         uint256 round = currentRound;
 
         // User info of msg.sender
-        UserInfo storage user = userInfo[msg.sender];
+        UserInfo storage user = users[msg.sender];
 
         // If the user has not staked in this round, record this new user to the users array
         if (userSharesInRound[msg.sender][round] == 0) {
@@ -297,8 +296,8 @@ contract PurchaseIncentiveVault is
         // Condition 2: length != 0 && last pending round is not the current round => add this round
         if (
             length == 0 ||
-            (length != 0 && user.pendingRounds[length - 1] != currentRound)
-        ) user.pendingRounds.push(currentRound);
+            (length != 0 && user.pendingRounds[length - 1] != round)
+        ) user.pendingRounds.push(round);
 
         // Update the total shares
         roundInfo[round].shares += _amount;
@@ -316,17 +315,17 @@ contract PurchaseIncentiveVault is
     function redeem(uint256 _amount) external nonReentrant whenNotPaused {
         if (_amount == 0) revert PIV__ZeroAmount();
 
-        uint256 userBalance = userSharesInRound[msg.sender][currentRound];
+        uint256 round = currentRound;
+
+        uint256 userBalance = userSharesInRound[msg.sender][round];
 
         if (userBalance < _amount) revert PIV__NotEnoughBuyerTokens();
-
-        uint256 round = currentRound;
 
         userSharesInRound[msg.sender][round] -= _amount;
 
         // If redeem all buyer tokens, remove this round from the user's pending rounds
         if (userSharesInRound[msg.sender][round] == 0) {
-            userInfo[msg.sender].pendingRounds.pop();
+            users[msg.sender].pendingRounds.pop();
         }
 
         roundInfo[round].shares -= _amount;
@@ -353,20 +352,20 @@ contract PurchaseIncentiveVault is
 
         info.hasDistributed = true;
 
+        emit RoundSettled(currentRound, block.timestamp);
+
         // Update current round, ++ save little gas
         ++currentRound;
 
         // Update last distribution time
         lastDistribution = block.timestamp;
-
-        emit RoundSettled(currentRound, block.timestamp);
     }
 
     /**
      * @notice User can claim his own reward
      */
     function claim() external nonReentrant whenNotPaused {
-        UserInfo memory user = userInfo[msg.sender];
+        UserInfo memory user = users[msg.sender];
 
         if (user.pendingRounds.length == 0) revert PIV__NoPendingRound();
 
@@ -381,8 +380,8 @@ contract PurchaseIncentiveVault is
 
         if (roundsToClaim > MAX_ROUND) {
             roundsToClaim = MAX_ROUND;
-            userInfo[msg.sender].lastRewardRoundIndex += MAX_ROUND;
-        } else userInfo[msg.sender].lastRewardRoundIndex += roundsToClaim;
+            users[msg.sender].lastRewardRoundIndex += MAX_ROUND;
+        } else users[msg.sender].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
         uint256 startIndex = user.lastRewardRoundIndex;

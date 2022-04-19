@@ -9,7 +9,7 @@ import {
   PurchaseIncentiveVault__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { getLatestBlockTimestamp, toWei } from "../utils";
+import { customErrorMsg, getLatestBlockTimestamp, toWei } from "../utils";
 import { BigNumber } from "ethers";
 
 describe("Purcahse Incentive Vault", function () {
@@ -23,37 +23,27 @@ describe("Purcahse Incentive Vault", function () {
     user2: SignerWithAddress,
     policyflow: SignerWithAddress;
 
-  let initBlockNumber: number, initTimestamp: number;
+  let initTimestamp: number;
 
   beforeEach(async function () {
     [dev_account, user1, user2, policyflow] = await ethers.getSigners();
 
-    DegisToken = await ethers.getContractFactory("DegisToken");
-    degis = await DegisToken.deploy();
+    degis = await new DegisToken__factory(dev_account).deploy();
 
-    BuyerToken = await ethers.getContractFactory("BuyerToken");
-    buyerToken = await BuyerToken.deploy();
+    buyerToken = await new BuyerToken__factory(dev_account).deploy();
 
-    PurchaseIncentiveVault = await ethers.getContractFactory(
-      "PurchaseIncentiveVault"
-    );
-    vault = await PurchaseIncentiveVault.deploy(
-      buyerToken.address,
-      degis.address
-    );
+    vault = await new PurchaseIncentiveVault__factory(dev_account).deploy();
+    await vault.initialize(buyerToken.address, degis.address);
+
     initTimestamp = await getLatestBlockTimestamp(ethers.provider);
-    initBlockNumber = await ethers.provider.getBlockNumber();
 
-    await vault.deployed();
-
-    // Purchase incentive vault can burn buyer tokens and mint degis tokens
-    await buyerToken.addBurner(vault.address);
+    // Purchase incentive vault can mint degis tokens
     await degis.addMinter(vault.address);
 
     await buyerToken.mintBuyerToken(dev_account.address, toWei("1000"));
     await buyerToken.mintBuyerToken(user1.address, toWei("1000"));
 
-    await buyerToken.approve(vault.address, toWei("100000"));
+    await buyerToken.approve(vault.address, toWei("1000"));
     await buyerToken.connect(user1).approve(vault.address, toWei("100000"));
   });
 
@@ -77,6 +67,10 @@ describe("Purcahse Incentive Vault", function () {
     it("should set the lastDistribution correctly", async function () {
       expect(await vault.lastDistribution()).to.equal(initTimestamp);
     });
+
+    it("should be unpaused at the beginning", async function () {
+      expect(await vault.paused()).to.equal(false);
+    });
   });
 
   describe("Owner Functions", function () {
@@ -92,10 +86,15 @@ describe("Purcahse Incentive Vault", function () {
         .withArgs(0, 20);
     });
 
-    it("should be able to set max round", async function () {
-      await expect(vault.setMaxRound(20))
-        .to.emit(vault, "MaxRoundChanged")
-        .withArgs(50, 20);
+    it("should be able to pause the contract", async function () {
+      await vault.pause();
+      expect(await vault.paused()).to.equal(true);
+    });
+
+    it("should be able to unpause the contract", async function () {
+      await vault.pause();
+      await vault.unpause();
+      expect(await vault.paused()).to.equal(false);
     });
   });
 
@@ -109,7 +108,7 @@ describe("Purcahse Incentive Vault", function () {
         .withArgs(dev_account.address, currentRound, toWei("100"));
 
       // Last reward round index (inside pendingRounds)
-      const lastRewardRoundIndex = await vault.userInfo(dev_account.address);
+      const lastRewardRoundIndex = await vault.users(dev_account.address);
       expect(lastRewardRoundIndex).to.equal(0);
 
       // User shares in round
@@ -140,11 +139,11 @@ describe("Purcahse Incentive Vault", function () {
 
     it("should not be able to stake with zero amount", async function () {
       await expect(vault.stake(0)).to.be.revertedWith(
-        "Amount must be greater than 0"
+        customErrorMsg("'PIV__ZeroAmount()'")
       );
 
       await expect(vault.connect(user1).stake(0)).to.be.revertedWith(
-        "Amount must be greater than 0"
+        customErrorMsg("'PIV__ZeroAmount()'")
       );
     });
 
@@ -154,7 +153,7 @@ describe("Purcahse Incentive Vault", function () {
       await vault.stake(toWei("100"));
       await vault.stake(toWei("100"));
 
-      const lastRewardRoundIndex = await vault.userInfo(dev_account.address);
+      const lastRewardRoundIndex = await vault.users(dev_account.address);
       expect(lastRewardRoundIndex).to.equal(0);
 
       expect(
@@ -187,11 +186,14 @@ describe("Purcahse Incentive Vault", function () {
 
       // Last reward round index
       // No claim before, should be 0
-      const lastRewardRoundIndex_dev = await vault.userInfo(
+      // For dev_account
+      const lastRewardRoundIndex_dev = await vault.users(
         dev_account.address
       );
       expect(lastRewardRoundIndex_dev).to.equal(0);
-      const lastRewardRoundIndex_user1 = await vault.userInfo(user1.address);
+
+      // For user1
+      const lastRewardRoundIndex_user1 = await vault.users(user1.address);
       expect(lastRewardRoundIndex_user1).to.equal(0);
 
       // Correct user shares
@@ -241,7 +243,7 @@ describe("Purcahse Incentive Vault", function () {
       );
 
       await expect(vault.redeem(toWei("500"))).to.be.revertedWith(
-        "Not enough buyer tokens for you to redeem"
+        customErrorMsg("'PIV__NotEnoughBuyerTokens()'")
       );
 
       const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
@@ -266,7 +268,7 @@ describe("Purcahse Incentive Vault", function () {
       await vault.stake(toWei("100"));
 
       await expect(vault.redeem(0)).to.be.revertedWith(
-        "Amount must be greater than 0"
+        customErrorMsg("'PIV__ZeroAmount()'")
       );
     });
 
@@ -286,7 +288,7 @@ describe("Purcahse Incentive Vault", function () {
 
       // Redeem 500 is not possible
       await expect(vault.redeem(toWei("500"))).to.be.revertedWith(
-        "Not enough buyer tokens for you to redeem"
+        customErrorMsg("'PIV__NotEnoughBuyerTokens()'")
       );
 
       const userPendingRounds: BigNumber[] = await vault.getUserPendingRounds(
@@ -316,7 +318,6 @@ describe("Purcahse Incentive Vault", function () {
     it("should be able to settle correctly", async function () {
       await vault.stake(toWei("1"));
       await vault.connect(user1).stake(toWei("3"));
-      const blockNumber = await ethers.provider.getBlockNumber();
 
       const timestamp = await getLatestBlockTimestamp(ethers.provider);
 
@@ -335,11 +336,11 @@ describe("Purcahse Incentive Vault", function () {
       expect(roundInfo.hasDistributed).to.equal(true);
       expect(roundInfo.degisPerShare).to.equal(toWei("1"));
 
-      const lastRewardRoundIndex_dev = await vault.userInfo(
+      const lastRewardRoundIndex_dev = await vault.users(
         dev_account.address
       );
       expect(lastRewardRoundIndex_dev).to.equal(0);
-      const lastRewardRoundIndex_user1 = await vault.userInfo(
+      const lastRewardRoundIndex_user1 = await vault.users(
         dev_account.address
       );
       expect(lastRewardRoundIndex_user1).to.equal(0);
@@ -389,13 +390,13 @@ describe("Purcahse Incentive Vault", function () {
     it("should not be able to settle before passing the interval", async function () {
       await vault.settleCurrentRound();
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
-        "Two distributions should have an interval"
+        customErrorMsg("'PIV__NotPassedInterval()'")
       );
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
-        "Two distributions should have an interval"
+        customErrorMsg("'PIV__NotPassedInterval()'")
       );
     });
 
@@ -408,8 +409,8 @@ describe("Purcahse Incentive Vault", function () {
       await vault.settleCurrentRound();
 
       // Two users claim their reward
-      await vault.claimOwnReward();
-      await vault.connect(user1).claimOwnReward();
+      await vault.claim();
+      await vault.connect(user1).claim();
 
       // Check balance
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
@@ -420,10 +421,10 @@ describe("Purcahse Incentive Vault", function () {
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
 
-      await vault.claimOwnReward();
+      await vault.claim();
 
-      await expect(vault.claimOwnReward()).to.be.revertedWith(
-        "Have claimed all"
+      await expect(vault.claim()).to.be.revertedWith(
+        customErrorMsg("'PIV__ClaimedAll()'")
       );
     });
 
@@ -432,7 +433,7 @@ describe("Purcahse Incentive Vault", function () {
       await vault.settleCurrentRound();
 
       await vault.stake(toWei("1"));
-      await vault.claimOwnReward();
+      await vault.claim();
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("4"));
 
@@ -440,37 +441,31 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
-      await vault.claimOwnReward();
+      await vault.claim();
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("12"));
     });
 
     it("should be able to claim with max round amount", async function () {
-      await vault.setMaxRound(2);
+      // MAX_ROUND = 50
+      for (let i = 0; i < 50; i++) {
+        await vault.stake(toWei("1"));
+        await vault.settleCurrentRound();
+      }
+
+      // MAX_ROUND + 1
+      await vault.stake(toWei("1"));
+      await vault.settleCurrentRound();
+
+      // Get 50 round rewards
+      await vault.claim();
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("200"));
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
 
-      await vault.stake(toWei("1"));
-
-      await vault.claimOwnReward();
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("4"));
-
-      await vault.settleCurrentRound();
-
-      await vault.stake(toWei("1"));
-      await vault.settleCurrentRound();
-
-      await vault.stake(toWei("1"));
-      await vault.settleCurrentRound();
-
-      // Max Round = 2, This time only claim rewards of 2 rounds(8)
-      await vault.claimOwnReward();
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("12"));
-
-      // Claim the remaining rewards(4)
-      await vault.claimOwnReward();
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("16"));
+      await vault.claim();
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("208"));
     });
 
     it("should be able to claim by user himself after several rounds - all", async function () {
@@ -481,8 +476,8 @@ describe("Purcahse Incentive Vault", function () {
         await vault.settleCurrentRound();
       }
 
-      await vault.claimOwnReward();
-      await vault.connect(user1).claimOwnReward();
+      await vault.claim();
+      await vault.connect(user1).claim();
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(
         toWei(times.toString())
@@ -496,8 +491,8 @@ describe("Purcahse Incentive Vault", function () {
         await vault.connect(user1).stake(toWei("3"));
         await vault.settleCurrentRound();
       }
-      await vault.claimOwnReward();
-      await vault.connect(user1).claimOwnReward();
+      await vault.claim();
+      await vault.connect(user1).claim();
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(
         toWei((times * 2).toString())
@@ -506,11 +501,11 @@ describe("Purcahse Incentive Vault", function () {
         toWei((6 * times).toString())
       );
 
-      await expect(vault.claimOwnReward()).to.be.revertedWith(
-        "Have claimed all"
+      await expect(vault.claim()).to.be.revertedWith(
+        customErrorMsg("'PIV__ClaimedAll()'")
       );
-      await expect(vault.connect(user1).claimOwnReward()).to.be.revertedWith(
-        "Have claimed all"
+      await expect(vault.connect(user1).claim()).to.be.revertedWith(
+        customErrorMsg("'PIV__ClaimedAll()'")
       );
     });
 
@@ -524,18 +519,18 @@ describe("Purcahse Incentive Vault", function () {
         await vault.settleCurrentRound();
       }
 
-      await vault.claimOwnReward();
-      await vault.connect(user1).claimOwnReward();
+      await vault.claim();
+      await vault.connect(user1).claim();
 
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("10"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("6"));
 
-      await expect(vault.claimOwnReward()).to.be.revertedWith(
-        "Have claimed all"
+      await expect(vault.claim()).to.be.revertedWith(
+        customErrorMsg("'PIV__ClaimedAll()'")
       );
 
-      await expect(vault.connect(user1).claimOwnReward()).to.be.revertedWith(
-        "Have claimed all"
+      await expect(vault.connect(user1).claim()).to.be.revertedWith(
+        customErrorMsg("'PIV__ClaimedAll()'")
       );
     });
 
@@ -546,8 +541,10 @@ describe("Purcahse Incentive Vault", function () {
         await vault.connect(user1).stake(toWei("3"));
         await vault.settleCurrentRound();
       }
-      expect(await vault.pendingReward()).to.equal(toWei(times.toString()));
-      expect(await vault.connect(user1).pendingReward()).to.equal(
+      expect(await vault.pendingReward(dev_account.address)).to.equal(
+        toWei(times.toString())
+      );
+      expect(await vault.pendingReward(user1.address)).to.equal(
         toWei((3 * times).toString())
       );
     });
@@ -570,9 +567,7 @@ describe("Purcahse Incentive Vault", function () {
         "Pausable: paused"
       );
 
-      await expect(vault.claimOwnReward()).to.be.revertedWith(
-        "Pausable: paused"
-      );
+      await expect(vault.claim()).to.be.revertedWith("Pausable: paused");
 
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
         "Pausable: paused"

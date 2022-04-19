@@ -27,7 +27,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     uint256 public constant SCALE = 1e18;
-    uint256 public constant fee = 1;
+    uint256 public constant FEE_DENOMINATOR = 100;
+    uint256 public constant MINIMUM_AMOUNT = 1e6;
 
     address public degis;
 
@@ -37,7 +38,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     struct UserInfo {
         uint256 amountA;
         uint256 amountB;
-        uint256 degisAmount;
         uint256 degisDebt;
     }
     mapping(address => mapping(address => UserInfo)) public users;
@@ -316,67 +316,76 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 _amountA,
         uint256 _amountB
     ) external activePair(_policyToken) {
-        if (_amountA == 0 || _amountB == 0) revert ILM__ZeroAmount();
+        if (_amountA + _amountB < MINIMUM_AMOUNT) revert ILM__ZeroAmount();
         if (_stablecoin != pairs[_policyToken].stablecoin)
             revert ILM__StablecoinNotPaired();
 
-        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
-        _updateAmount(_policyToken, _amountA, _amountB, true);
+        uint256 amountToDeposit = _amountA + _amountB;
 
         // Every 100usd pay 1 degis
         uint256 decimalDiff = 18 - IERC20Decimals(_stablecoin).decimals();
-        uint256 degisToPay = ((_amountA + _amountB) * 10**decimalDiff) / 100;
-        _updateDebt(_policyToken, degisToPay, decimalDiff);
+        uint256 degisToPay = (amountToDeposit * 10**decimalDiff) /
+            FEE_DENOMINATOR;
+        _updateDebt(_policyToken, amountToDeposit, degisToPay);
         IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
+
+        // Update the status
+        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
+        _updateAmount(_policyToken, _amountA, _amountB, true);
 
         // Transfer tokens
         IERC20(_stablecoin).safeTransferFrom(
             msg.sender,
             address(this),
-            _amountA + _amountB
+            amountToDeposit
         );
 
         // Distribute the lptoken
         address lpToken = pairs[_policyToken].lptoken;
-        LPToken(lpToken).mint(msg.sender, _amountA + _amountB);
+        LPToken(lpToken).mint(msg.sender, amountToDeposit);
 
         emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
     }
 
     function _updateDebt(
         address _policyToken,
-        uint256 _amount,
-        uint256 _decimalDiff
+        uint256 _usdAmount,
+        uint256 _degAmount
     ) internal {
         PairInfo storage pair = pairs[_policyToken];
-        if (IERC20(degis).balanceOf(address(this)) == 0) {
-            pair.accDegisPerShare = SCALE;
+
+        uint256 degBalance = IERC20(degis).balanceOf(address(this));
+
+        // If this is the first user, accDegisPerShare = 1e18
+        // No debt
+        if (degBalance == 0) {
+            pair.accDegisPerShare = SCALE / FEE_DENOMINATOR;
             return;
         }
 
-        console.log("decimal diff", _decimalDiff);
+        uint256 currentUSDBalance = IERC20(pair.stablecoin).balanceOf(
+            address(this)
+        );
 
-        uint256 feeToPay = (_amount * fee) / 100;
+        UserInfo storage user = users[msg.sender][_policyToken];
 
-        if (feeToPay > 0) {
-            pair.accDegisPerShare +=
-                (feeToPay * SCALE) /
-                IERC20(degis).balanceOf(address(this));
+        // Update accDegisPerShare first
+        pair.accDegisPerShare += (_degAmount * SCALE) / currentUSDBalance;
 
-            console.log("accDegisPershare", pair.accDegisPerShare);
-
-            UserInfo storage user = users[msg.sender][_policyToken];
-            user.degisAmount += _amount;
-
-            // Update the debt
-            user.degisDebt =
-                (pair.accDegisPerShare * user.degisAmount) /
-                SCALE;
-            console.log("user a", user.amountA);
-            console.log("user b", user.amountB);
-
-            console.log("user debt", user.degisDebt);
+        uint256 currentUserDeposit = user.amountA + user.amountB;
+        // If user has deposited before, distribute the deg reward first
+        // Pending reward is calculated with the new degisPerShare value
+        if (currentUserDeposit > 0) {
+            uint256 pendingReward = currentUserDeposit *
+                pair.accDegisPerShare -
+                user.degisDebt;
+            IERC20(degis).safeTransfer(msg.sender, pendingReward);
         }
+
+        // Update user debt
+        user.degisDebt =
+            pair.accDegisPerShare *
+            (currentUserDeposit + _usdAmount);
     }
 
     /**
@@ -395,16 +404,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     ) public activePair(_policyToken) {
         UserInfo memory user = users[msg.sender][_policyToken];
 
+        uint256 amountToWithdraw = _amountA + _amountB;
+
         // Check if the user has enough tokens to withdraw
         if (user.amountA + user.amountB == 0) revert ILM__NoDeposit();
         if (_amountA > user.amountA || _amountB > user.amountB)
             revert ILM__NotEnoughDeposit();
 
         uint256 degisToWithdraw = (pairs[_policyToken].accDegisPerShare *
-            user.degisAmount) /
+            (user.amountA + user.amountB)) /
             SCALE -
             user.degisDebt;
-        users[msg.sender][_policyToken].degisAmount -= degisToWithdraw;
         IERC20(degis).safeTransfer(msg.sender, degisToWithdraw);
 
         // Update the user's amount and pool's amount
@@ -412,15 +422,16 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         _updateAmount(_policyToken, _amountA, _amountB, false);
 
         // Transfer stablecoins back to user
-        _safeTokenTransfer(_stablecoin, msg.sender, _amountA + _amountB);
+        _safeTokenTransfer(_stablecoin, msg.sender, amountToWithdraw);
 
         // Burn the lptokens
         address lpToken = pairs[_policyToken].lptoken;
-        LPToken(lpToken).burn(msg.sender, _amountA + _amountB);
+        LPToken(lpToken).burn(msg.sender, amountToWithdraw);
 
         // Update the user debt
         users[msg.sender][_policyToken].degisDebt =
-            (LPToken(lpToken).balanceOf(msg.sender) *
+            ((users[msg.sender][_policyToken].amountA +
+                users[msg.sender][_policyToken].amountB) *
                 pairs[_policyToken].accDegisPerShare) /
             SCALE;
 

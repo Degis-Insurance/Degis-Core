@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -16,10 +16,20 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const DegisToken = await get("DegisToken");
   const BuyerToken = await get("BuyerToken");
 
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "TransparentUpgradeableProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      methodName: "initialize",
+      args: [BuyerToken.address, DegisToken.address],
+    },
+  };
+
   const purchaseIncentive = await deploy("PurchaseIncentiveVault", {
     contract: "PurchaseIncentiveVault",
     from: deployer,
-    args: [BuyerToken.address, DegisToken.address],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].PurchaseIncentiveVault = purchaseIncentive.address;
