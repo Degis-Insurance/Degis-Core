@@ -298,6 +298,16 @@ describe("Farming Pool Upgradeable", function () {
         .withArgs(dev_account.address, 1, toWei("100"));
     });
 
+    it("should be able to deposit lptokens and get user balance", async function () {
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+
+      await pool.stake(1, toWei("100"));
+      expect(await pool.getUserBalance(1, dev_account.address)).to.equal(
+        toWei("100")
+      );
+    });
+
     it("should be able to deposit lptokens with 6 decimals", async function () {
       await lptoken_3.mint(dev_account.address, stablecoinToWei("1000"));
       await lptoken_3.approve(pool.address, stablecoinToWei("1000"));

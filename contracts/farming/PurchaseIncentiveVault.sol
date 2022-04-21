@@ -91,6 +91,9 @@ contract PurchaseIncentiveVault is
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
 
+    mapping(uint256 => uint256[]) threshold;
+    mapping(uint256 => uint256[]) piecewise;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
