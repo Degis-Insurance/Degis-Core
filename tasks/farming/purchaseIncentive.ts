@@ -9,6 +9,7 @@ import {
 import { readAddressList } from "../../scripts/contractAddress";
 
 import { formatEther, parseUnits } from "ethers/lib/utils";
+import { toWei } from "../../test/utils";
 
 task(
   "settlePurchaseIncentive",
@@ -92,3 +93,41 @@ task(
     const disInterval = await vault.distributionInterval();
     console.log("Distribution interval in vault: ", disInterval);
   });
+
+task(
+  "setPieceWise-Purchase",
+  "Set the threshold and piecewise reward"
+).setAction(async (taskArgs, hre) => {
+  const threshold = [0, toWei("100"), toWei("500"), toWei("1000")];
+  const pieceWise = [toWei("100"), toWei("500"), toWei("1000"), toWei("5000")];
+
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The dfault signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+  const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
+
+  console.log(
+    "The purchase incentive vault address of this network is: ",
+    vaultAddress
+  );
+
+  const PurchaseIncentiveVault: PurchaseIncentiveVault__factory =
+    await hre.ethers.getContractFactory("PurchaseIncentiveVault");
+  const vault: PurchaseIncentiveVault =
+    PurchaseIncentiveVault.attach(vaultAddress);
+
+  // Set
+  const tx = await vault.setPiecewise(threshold, pieceWise);
+  console.log("Tx details:", await tx.wait());
+
+  // Check the result
+  const degisR = await vault.getRewardPerRound();
+  console.log("Degis reward in vault: ", degisR);
+
+  const disInterval = await vault.distributionInterval();
+  console.log("Distribution interval in vault: ", disInterval);
+});

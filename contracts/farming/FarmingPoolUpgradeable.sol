@@ -317,6 +317,12 @@ contract FarmingPoolUpgradeable is
         emit StartTimestampChanged(_startTimestamp);
     }
 
+    /**
+     * @notice Set piecewise reward and threshold
+     * @param _poolId Id of the pool
+     * @param _threshold Piecewise threshold
+     * @param _reward Piecewise reward
+     */
     function setPiecewise(
         uint256 _poolId,
         uint256[] calldata _threshold,

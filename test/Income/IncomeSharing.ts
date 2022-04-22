@@ -16,6 +16,7 @@ import {
   VoteEscrowedDegis__factory,
 } from "../../typechain";
 import { customErrorMsg, mineBlocks, stablecoinToWei, toWei } from "../utils";
+import { parseUnits } from "ethers/lib/utils";
 
 describe("Income Sharing", function () {
   let income: IncomeSharingVault;
@@ -158,10 +159,6 @@ describe("Income Sharing", function () {
 
       const lockedNum = await veDEG.locked(dev_account.address);
       expect(lockedNum).to.equal(deposit_num);
-
-      await expect(veDEG.withdrawLocked()).to.be.revertedWith(
-        customErrorMsg("'VED__StillLocked()'")
-      );
     });
 
     it("should be able to get reward after deposit", async function () {
@@ -195,6 +192,22 @@ describe("Income Sharing", function () {
       );
     });
 
+    it("should be able to get reward when stake/withdraw with multiple users", async function () {
+      const deposit_num = toWei("100");
+      await veDEG.addWhitelist(income.address);
+
+      await income.deposit(1, deposit_num);
+
+      await income.connect(user1).deposit(1, deposit_num);
+
+      await income.deposit(1, deposit_num);
+      // Initial balance 100001
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("100001.5")
+      );
+
+    });
+
     it("should be able to harvest reward", async function () {
       const deposit_num = toWei("100");
       await veDEG.addWhitelist(income.address);
@@ -204,6 +217,34 @@ describe("Income Sharing", function () {
       await income.harvest(1, dev_account.address);
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("100001")
+      );
+
+      await income.harvest(1, dev_account.address);
+      expect(await usd.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("100002")
+      );
+    });
+
+    it("should be able to manually update a pool", async function () {
+      const deposit_num = toWei("100");
+      await veDEG.addWhitelist(income.address);
+
+      await income.deposit(1, deposit_num);
+
+      // accRewardPerShare = 1e6 * 1e18 / 1e20 = 1e4
+      await expect(income.updatePool(1))
+        .to.emit(income, "PoolUpdated")
+        .withArgs(1, parseUnits("1", 4));
+    });
+
+    it("should not be able to withdraw veDEG when deposit into incomesharing", async function () {
+      const deposit_num = toWei("100");
+      await veDEG.addWhitelist(income.address);
+
+      await income.deposit(1, deposit_num);
+
+      await expect(veDEG.withdrawLocked()).to.be.revertedWith(
+        customErrorMsg("'VED__StillLocked()'")
       );
     });
   });

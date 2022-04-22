@@ -7,8 +7,8 @@ import { ProxyAdmin, ProxyAdmin__factory } from "../../typechain";
 
 task("upgrade", "Upgrade an implementation").setAction(
   async (taskArgs, hre) => {
-    const impl = "0x1a03d9d741B69a52B7D028badAfF97f6cF06A1df";
-    const proxy = "0xaE4b0b9eaAe17acA2cFA4e8eF85558ECFa87dbb5";
+    const impl = "0xb9b21a5c89E8db9663cB61aAb77a3f5737259759";
+    const proxy = "0x1d51dc899D66cf2E6a5b81C933a0BdCBC06347de";
 
     // Network info
     const { network } = hre;
@@ -61,7 +61,7 @@ task("getImpl", "Get an implementation").setAction(async (taskArgs, hre) => {
 });
 
 task("Pause", "Pause a contract")
-  .addParam("contract", "The contract name",null,  types.string)
+  .addParam("contract", "The contract name", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const contractToPause = taskArgs.contract;
     // Network info
@@ -83,8 +83,8 @@ task("Pause", "Pause a contract")
     console.log("Tx details: ", await tx.wait());
   });
 
-  task("UnPause", "UnPause a contract")
-  .addParam("contract", "The contract name",null,  types.string)
+task("UnPause", "UnPause a contract")
+  .addParam("contract", "The contract name", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const contractToPause = taskArgs.contract;
     // Network info

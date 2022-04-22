@@ -13,8 +13,7 @@ import { customErrorMsg, getLatestBlockTimestamp, toWei } from "../utils";
 import { BigNumber } from "ethers";
 
 describe("Purcahse Incentive Vault", function () {
-  let PurchaseIncentiveVault: PurchaseIncentiveVault__factory,
-    vault: PurchaseIncentiveVault;
+  let vault: PurchaseIncentiveVault;
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
 
@@ -96,6 +95,12 @@ describe("Purcahse Incentive Vault", function () {
       await vault.unpause();
       expect(await vault.paused()).to.equal(false);
     });
+
+    it("should be able to set the piecewise reward", async function () {
+      let threshold = [toWei("1"), toWei("2"), toWei("3")];
+      let reward = [toWei("1"), toWei("2"), toWei("3")];
+      await vault.setPiecewise(threshold, reward);
+    });
   });
 
   describe("Stake and Redeem", function () {
@@ -126,7 +131,7 @@ describe("Purcahse Incentive Vault", function () {
       expect(userPendingRounds[0]).to.equal(currentRound);
 
       // Round info
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
       expect(roundInfo.shares).to.equal(toWei("100"));
       expect(roundInfo.degisPerShare).to.equal(0);
       expect(roundInfo.hasDistributed).to.equal(false);
@@ -167,7 +172,7 @@ describe("Purcahse Incentive Vault", function () {
       expect(userPendingRounds[0]).to.equal(currentRound);
 
       // Round info
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
       expect(roundInfo.shares).to.equal(toWei("200"));
       expect(roundInfo.degisPerShare).to.equal(0);
       expect(roundInfo.hasDistributed).to.equal(false);
@@ -187,9 +192,7 @@ describe("Purcahse Incentive Vault", function () {
       // Last reward round index
       // No claim before, should be 0
       // For dev_account
-      const lastRewardRoundIndex_dev = await vault.users(
-        dev_account.address
-      );
+      const lastRewardRoundIndex_dev = await vault.users(dev_account.address);
       expect(lastRewardRoundIndex_dev).to.equal(0);
 
       // For user1
@@ -216,7 +219,7 @@ describe("Purcahse Incentive Vault", function () {
       expect(userPendingRounds_user1[0]).to.equal(currentRound);
 
       // Round info
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
       expect(roundInfo.shares).to.equal(toWei("200"));
       expect(roundInfo.degisPerShare).to.equal(0);
       expect(roundInfo.hasDistributed).to.equal(false);
@@ -252,7 +255,7 @@ describe("Purcahse Incentive Vault", function () {
       expect(userPendingRounds.length).to.equal(0);
 
       // Round info
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
       expect(roundInfo.shares).to.equal(0);
       expect(roundInfo.degisPerShare).to.equal(0);
       expect(roundInfo.hasDistributed).to.equal(false);
@@ -331,18 +334,14 @@ describe("Purcahse Incentive Vault", function () {
       expect(await vault.currentRound()).to.equal(currentRound + 1);
       expect(await vault.lastDistribution()).to.equal(timestamp + 1);
 
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
       expect(roundInfo.shares).to.equal(toWei("4"));
       expect(roundInfo.hasDistributed).to.equal(true);
       expect(roundInfo.degisPerShare).to.equal(toWei("1"));
 
-      const lastRewardRoundIndex_dev = await vault.users(
-        dev_account.address
-      );
+      const lastRewardRoundIndex_dev = await vault.users(dev_account.address);
       expect(lastRewardRoundIndex_dev).to.equal(0);
-      const lastRewardRoundIndex_user1 = await vault.users(
-        dev_account.address
-      );
+      const lastRewardRoundIndex_user1 = await vault.users(dev_account.address);
       expect(lastRewardRoundIndex_user1).to.equal(0);
     });
 
@@ -352,7 +351,6 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.stake(toWei("1"));
       await vault.connect(user1).stake(toWei("3"));
-      const blockNumber = await ethers.provider.getBlockNumber();
 
       const timestamp = await getLatestBlockTimestamp(ethers.provider);
 
@@ -366,7 +364,7 @@ describe("Purcahse Incentive Vault", function () {
       expect(await vault.currentRound()).to.equal(currentRound + 1);
       expect(await vault.lastDistribution()).to.equal(timestamp + 1);
 
-      const roundInfo = await vault.roundInfo(currentRound);
+      const roundInfo = await vault.rounds(currentRound);
 
       expect(roundInfo.shares).to.equal(toWei("4"));
       expect(roundInfo.hasDistributed).to.equal(true);
@@ -572,6 +570,226 @@ describe("Purcahse Incentive Vault", function () {
       await expect(vault.settleCurrentRound()).to.be.revertedWith(
         "Pausable: paused"
       );
+    });
+  });
+
+  describe("Piecewise", function () {
+    let distributionInterval = 1;
+    let degisPerRound = toWei("2");
+
+    beforeEach(async function () {
+      await vault.setDegisPerRound(degisPerRound);
+      await vault.setDistributionInterval(distributionInterval);
+
+      const threshold = [0, toWei("10"), toWei("100")];
+      const piecewise = [toWei("4"), toWei("8"), toWei("12")];
+
+      await vault.setPiecewise(threshold, piecewise);
+    });
+
+    it("should be able to get piecewise reward correctly", async function () {
+      expect(await vault.getRewardPerRound()).to.equal(toWei("4"));
+
+      await vault.stake(toWei("5"));
+      expect(await vault.getRewardPerRound()).to.equal(toWei("4"));
+
+      await vault.stake(toWei("5"));
+      expect(await vault.getRewardPerRound()).to.equal(toWei("8"));
+
+      await vault.stake(toWei("90"));
+      expect(await vault.getRewardPerRound()).to.equal(toWei("12"));
+
+      await vault.stake(toWei("600"));
+      expect(await vault.getRewardPerRound()).to.equal(toWei("12"));
+    });
+
+    it("should be able to settle with piecewise reward", async function () {
+      let timestamp, currentRound;
+      //
+      // Level 1 -------------------
+      //
+      await vault.stake(toWei("1"));
+      await vault.connect(user1).stake(toWei("3"));
+
+      timestamp = await getLatestBlockTimestamp(ethers.provider);
+      currentRound = (await vault.currentRound()).toNumber();
+
+      // Each block, timestamp + 1
+      await expect(vault.settleCurrentRound())
+        .to.emit(vault, "RoundSettled")
+        .withArgs(currentRound, timestamp + 1);
+
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
+      expect(await vault.lastDistribution()).to.equal(timestamp + 1);
+
+      const roundInfo = await vault.rounds(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("4"));
+      expect(roundInfo.hasDistributed).to.equal(true);
+      expect(roundInfo.degisPerShare).to.equal(toWei("1"));
+
+      // Last reward round index
+      expect(await vault.users(dev_account.address)).to.equal(0);
+      expect(await vault.users(user1.address)).to.equal(0);
+
+      //
+      // Level 2 -------------------
+      //
+      await vault.stake(toWei("4"));
+      await vault.connect(user1).stake(toWei("12"));
+      timestamp = await getLatestBlockTimestamp(ethers.provider);
+
+      currentRound = (await vault.currentRound()).toNumber();
+
+      // Each block, timestamp + 1
+      await expect(vault.settleCurrentRound())
+        .to.emit(vault, "RoundSettled")
+        .withArgs(currentRound, timestamp + 1);
+
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
+      expect(await vault.lastDistribution()).to.equal(timestamp + 1);
+
+      const roundInfo_level2 = await vault.rounds(currentRound);
+      expect(roundInfo_level2.shares).to.equal(toWei("16"));
+      expect(roundInfo_level2.hasDistributed).to.equal(true);
+      expect(roundInfo_level2.degisPerShare).to.equal(toWei("0.5"));
+
+      // Last reward round index
+      expect(await vault.users(dev_account.address)).to.equal(0);
+      expect(await vault.users(user1.address)).to.equal(0);
+
+      //
+      // Level 3 -------------------
+      //
+      await vault.stake(toWei("40"));
+      await vault.connect(user1).stake(toWei("120"));
+      timestamp = await getLatestBlockTimestamp(ethers.provider);
+
+      currentRound = (await vault.currentRound()).toNumber();
+
+      // Each block, timestamp + 1
+      await expect(vault.settleCurrentRound())
+        .to.emit(vault, "RoundSettled")
+        .withArgs(currentRound, timestamp + 1);
+
+      expect(await vault.currentRound()).to.equal(currentRound + 1);
+      expect(await vault.lastDistribution()).to.equal(timestamp + 1);
+
+      const roundInfo_level3 = await vault.rounds(currentRound);
+      expect(roundInfo_level3.shares).to.equal(toWei("160"));
+      expect(roundInfo_level3.hasDistributed).to.equal(true);
+      expect(roundInfo_level3.degisPerShare).to.equal(toWei("0.075"));
+
+      // Last reward round index
+      expect(await vault.users(dev_account.address)).to.equal(0);
+      expect(await vault.users(user1.address)).to.equal(0);
+    });
+
+    it("should be able to claim reward with piecewise", async function () {
+      //
+      // Level 1 -------------------
+      //
+      await vault.stake(toWei("1"));
+      await vault.connect(user1).stake(toWei("3"));
+
+      // Settlement
+      await vault.settleCurrentRound();
+
+      // Two users claim their reward
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      // Check balance
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("3"));
+
+      //
+      // Level 2 -------------------
+      //
+      await vault.stake(toWei("4"));
+      await vault.connect(user1).stake(toWei("12"));
+
+      // Settlement
+      await vault.settleCurrentRound();
+
+      // Two users claim their reward
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      // Check balance
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("3"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("9"));
+
+      //
+      // Level 3 -------------------
+      //
+      await vault.stake(toWei("30"));
+      await vault.connect(user1).stake(toWei("90"));
+
+      // Settlement
+      await vault.settleCurrentRound();
+
+      // Two users claim their reward
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      // Check balance
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("18"));
+    });
+
+    it("should be able to settle without setting piecewise", async function () {
+      const threshold: any = [];
+      const piecewise: any = [];
+
+      await vault.setPiecewise(threshold, piecewise);
+
+      expect(await vault.getRewardPerRound()).to.equal(toWei("2"));
+
+      await vault.stake(toWei("1"));
+      await vault.connect(user1).stake(toWei("1"));
+      const currentRound = await vault.currentRound();
+
+      await vault.settleCurrentRound();
+
+      const roundInfo = await vault.rounds(currentRound);
+      expect(roundInfo.shares).to.equal(toWei("2"));
+      expect(roundInfo.hasDistributed).to.equal(true);
+      expect(roundInfo.degisPerShare).to.equal(toWei("1"));
+    });
+
+    it("should be able to claim reward with piecewise", async function () {
+      await vault.stake(toWei("1"));
+      await vault.connect(user1).stake(toWei("1"));
+
+      await vault.settleCurrentRound();
+
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("2"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("2"));
+
+      await vault.stake(toWei("20"));
+      await vault.connect(user1).stake(toWei("20"));
+
+      await vault.settleCurrentRound();
+
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("6"));
+
+      await vault.stake(toWei("100"));
+      await vault.connect(user1).stake(toWei("100"));
+
+      await vault.settleCurrentRound();
+
+      await vault.claim();
+      await vault.connect(user1).claim();
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("12"));
+      expect(await degis.balanceOf(user1.address)).to.equal(toWei("12"));
     });
   });
 });

@@ -199,7 +199,7 @@ task("setVeDEG", "Set the VeDEG of a farming pool")
     console.log("Tx details: ", await tx.wait());
   });
 
-task("setPieceWise", "Set piecewise reward level for farming")
+task("setPieceWise-Farming", "Set piecewise reward level for farming")
   .addParam("pid", "Pool id", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const poolId = taskArgs.pid;

@@ -80,7 +80,7 @@ contract PurchaseIncentiveVault is
         bool hasDistributed;
         uint256 degisPerShare;
     }
-    mapping(uint256 => RoundInfo) public roundInfo;
+    mapping(uint256 => RoundInfo) public rounds;
 
     struct UserInfo {
         uint256 lastRewardRoundIndex;
@@ -91,8 +91,8 @@ contract PurchaseIncentiveVault is
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
 
-    mapping(uint256 => uint256[]) threshold;
-    mapping(uint256 => uint256[]) piecewise;
+    uint256[] threshold;
+    uint256[] piecewise;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -172,7 +172,7 @@ contract PurchaseIncentiveVault is
         view
         returns (uint256)
     {
-        return roundInfo[_round].users.length;
+        return rounds[_round].users.length;
     }
 
     /**
@@ -185,7 +185,7 @@ contract PurchaseIncentiveVault is
         view
         returns (address[] memory)
     {
-        return roundInfo[_round].users;
+        return rounds[_round].users;
     }
 
     /**
@@ -237,9 +237,33 @@ contract PurchaseIncentiveVault is
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=
-                (roundInfo[round].degisPerShare *
+                (rounds[round].degisPerShare *
                     userSharesInRound[_user][round]) /
                 SCALE;
+        }
+    }
+
+    /**
+     * @notice Get degis reward per round
+     * @dev Depends on the total shares in this round
+     * @return rewardPerRound Degis reward per round
+     */
+    function getRewardPerRound() public view returns (uint256 rewardPerRound) {
+        uint256 buyerBalance = rounds[currentRound].shares;
+
+        uint256[] memory thresholdM = threshold;
+
+        if (thresholdM.length == 0) rewardPerRound = degisPerRound;
+        else {
+            for (uint256 i = thresholdM.length - 1; i >= 0; ) {
+                if (buyerBalance >= thresholdM[i]) {
+                    rewardPerRound = piecewise[i];
+                    break;
+                }
+                unchecked {
+                    --i;
+                }
+            }
         }
     }
 
@@ -273,6 +297,19 @@ contract PurchaseIncentiveVault is
         distributionInterval = _newInterval;
     }
 
+    /**
+     * @notice Set the threshold and piecewise reward
+     * @param _threshold The threshold
+     * @param _reward The piecewise reward
+     */
+    function setPiecewise(
+        uint256[] calldata _threshold,
+        uint256[] calldata _reward
+    ) external onlyOwner {
+        threshold = _threshold;
+        piecewise = _reward;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -292,7 +329,7 @@ contract PurchaseIncentiveVault is
 
         // If the user has not staked in this round, record this new user to the users array
         if (userSharesInRound[msg.sender][round] == 0) {
-            roundInfo[round].users.push(msg.sender);
+            rounds[round].users.push(msg.sender);
         }
 
         userSharesInRound[msg.sender][round] += _amount;
@@ -307,7 +344,7 @@ contract PurchaseIncentiveVault is
         ) user.pendingRounds.push(round);
 
         // Update the total shares
-        roundInfo[round].shares += _amount;
+        rounds[round].shares += _amount;
 
         // Finally finish the token transfer
         buyerToken.safeTransferFrom(msg.sender, address(this), _amount);
@@ -335,7 +372,7 @@ contract PurchaseIncentiveVault is
             users[msg.sender].pendingRounds.pop();
         }
 
-        roundInfo[round].shares -= _amount;
+        rounds[round].shares -= _amount;
 
         // Finally finish the buyer token transfer
         buyerToken.safeTransfer(msg.sender, _amount);
@@ -348,14 +385,15 @@ contract PurchaseIncentiveVault is
      * @dev Callable by any address, must pass the distribution interval
      */
     function settleCurrentRound() external hasPassedInterval whenNotPaused {
-        RoundInfo storage info = roundInfo[currentRound];
+        RoundInfo storage info = rounds[currentRound];
         if (info.hasDistributed) revert PIV__AlreadyDistributed();
 
         uint256 totalShares = info.shares;
+        uint256 totalReward = getRewardPerRound();
 
         // If no one staked, no reward
         if (totalShares == 0) info.degisPerShare = 0;
-        else info.degisPerShare = (degisPerRound * SCALE) / totalShares;
+        else info.degisPerShare = (totalReward * SCALE) / totalShares;
 
         info.hasDistributed = true;
 
@@ -397,7 +435,7 @@ contract PurchaseIncentiveVault is
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=
-                (roundInfo[round].degisPerShare *
+                (rounds[round].degisPerShare *
                     userSharesInRound[msg.sender][round]) /
                 SCALE;
         }
