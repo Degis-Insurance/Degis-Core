@@ -26,14 +26,21 @@ import "hardhat/console.sol";
 contract NaughtyPriceILM is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     uint256 public constant SCALE = 1e18;
     uint256 public constant FEE_DENOMINATOR = 100;
     uint256 public constant MINIMUM_AMOUNT = 1e6;
+    uint256 public constant MAX_UINT256 = type(uint256).max;
 
     address public degis;
 
     address public policyCore;
     address public naughtyRouter;
+
+    address public emergencyPool;
 
     struct UserInfo {
         uint256 amountA;
@@ -57,10 +64,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 amountB; // Amount of stablecoins
         address naughtyPairAddress; // Naughty pair address deployed when finished ILM
         // degis paid as fee
+        uint256 degisAmount;
         uint256 accDegisPerShare;
     }
     // Policy Token Address => Pair Info
     mapping(address => PairInfo) public pairs;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event Deposit(
         address indexed policyToken,
@@ -91,6 +103,12 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 deadline,
         address lptokenAddress
     );
+    event Harvest(address user, uint256 reward);
+    event Claim(address user, uint256 amountA, uint256 amountB);
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Errors ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     error ILM__WrongILMDeadline();
     error ILM__ZeroAddress();
@@ -111,7 +129,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     function initialize(
         address _degis,
         address _policyCore,
-        address _router
+        address _router,
+        address _emergencyPool
     ) public initializer {
         if (_policyCore == address(0) || _router == address(0))
             revert ILM__ZeroAddress();
@@ -121,6 +140,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         degis = _degis;
         policyCore = _policyCore;
         naughtyRouter = _router;
+
+        emergencyPool = _emergencyPool;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -154,6 +175,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     /**
      * @notice Get the price
      * @param _policyToken Policy token address
+     * @return price Price of the token pair
      */
     function getPrice(address _policyToken) external view returns (uint256) {
         uint256 amountA = pairs[_policyToken].amountA;
@@ -188,10 +210,18 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         amountB = users[_user][_policyToken].amountB;
     }
 
+    /**
+     * @notice Emergency stop ILM
+     * @param _policyToken Policy token address to be stopped
+     */
     function emergencyStop(address _policyToken) external onlyOwner {
         pairs[_policyToken].status = Status.Stopped;
     }
 
+    /**
+     * @notice Emergency restart ILM
+     * @param _policyToken Policy token address to be restarted
+     */
     function emergencyRestart(address _policyToken) external onlyOwner {
         pairs[_policyToken].status = Status.Active;
     }
@@ -202,6 +232,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Start a new ILM round
+     * @dev A new lp token will be deployed when starting a new ILM round
+     *      It will have a special farming reward pool
      * @param _policyToken Policy token address
      * @param _stablecoin Stablecoin address
      * @param _ILMDeadline Deadline of ILM period
@@ -211,7 +243,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         address _stablecoin,
         uint256 _ILMDeadline
     ) external onlyOwner {
-        // Check if this policy token exists
+        // Get policy token name & Check if this policy token exists
         // The check is inside policy core contract
         string memory policyTokenName = IPolicyCore(policyCore)
             .findNamebyAddress(_policyToken);
@@ -228,10 +260,11 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         ).deadline;
         if (_ILMDeadline >= policyTokenDeadline) revert ILM__WrongILMDeadline();
 
+        PairInfo storage pair = pairs[_policyToken];
         // Update the status
-        pairs[_policyToken].status = Status.Active;
-        pairs[_policyToken].stablecoin = _stablecoin;
-        pairs[_policyToken].ILMDeadline = _ILMDeadline;
+        pair.status = Status.Active;
+        pair.stablecoin = _stablecoin;
+        pair.ILMDeadline = _ILMDeadline;
 
         // Deploy a new ERC20 LP Token
         string memory LPTokenName = string(
@@ -240,47 +273,56 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         address lpTokenAddress = _deployLPToken(LPTokenName);
 
         // Record the lptoken address
-        pairs[_policyToken].lptoken = lpTokenAddress;
+        pair.lptoken = lpTokenAddress;
 
         // Pre-approve the stablecoin for later deposit
-        IERC20(_stablecoin).approve(naughtyRouter, type(uint256).max);
-        IERC20(_stablecoin).approve(policyCore, type(uint256).max);
-        IERC20(_policyToken).approve(naughtyRouter, type(uint256).max);
+        IERC20(_stablecoin).approve(naughtyRouter, MAX_UINT256);
+        IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
+        IERC20(_policyToken).approve(naughtyRouter, MAX_UINT256);
 
         emit ILMStart(_policyToken, _stablecoin, _ILMDeadline, lpTokenAddress);
     }
 
     /**
-     * @notice Finish a round of ILM and deploy the swap pool
+     * @notice Finish a round of ILM
+     * @dev The swap pool for the protection token will be deployed with inital liquidity\
+     *      The amount of initial liquidity will be the total amount of the pair
+     *      Can be called by any address
      * @param _policyToken Policy token address
      * @param _deadlineForSwap Pool deadline
+     * @param _feeRate Fee rate of the swap pool
      */
-    function finishILM(address _policyToken, uint256 _deadlineForSwap)
-        external
-        activePair(_policyToken)
-    {
+    function finishILM(
+        address _policyToken,
+        uint256 _deadlineForSwap,
+        uint256 _feeRate
+    ) external activePair(_policyToken) {
         PairInfo memory pair = pairs[_policyToken];
 
         // Pair status is 1 and passed deadline => can finish ILM
         if (block.timestamp <= pair.ILMDeadline) revert ILM__RoundNotOver();
         if (pair.amountA + pair.amountB == 0) revert ILM__NoDeposit();
 
+        // Update the status of this pair
         pairs[_policyToken].status = Status.Finished;
 
         string memory policyTokenName = IPolicyCore(policyCore)
             .findNamebyAddress(_policyToken);
 
+        // Deploy a new pool and return the pool address
         address poolAddress = IPolicyCore(policyCore).deployPool(
             policyTokenName,
             pair.stablecoin,
             _deadlineForSwap,
-            50 // 5%
+            _feeRate // maximum = 1000 = 100%
         );
         pairs[_policyToken].naughtyPairAddress = poolAddress;
 
         // Approval prepration for withdraw liquidity
-        INaughtyPair(poolAddress).approve(naughtyRouter, type(uint256).max);
+        INaughtyPair(poolAddress).approve(naughtyRouter, MAX_UINT256);
 
+        // Add initial liquidity to the pool
+        // Zero slippage
         INaughtyRouter(naughtyRouter).addLiquidityWithUSD(
             _policyToken,
             pair.stablecoin,
@@ -305,6 +347,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @notice Deposit stablecoin and choose the price
      * @dev Deposit only check the pair status not the deadline
      *      There may be a zero ILM and we still need to deposit some asset to make it start
+     *      Anyone wants to enter ILM need to pay some DEG as entrance fee
+     *      The ratio is 100:1(usd:deg) and your fee is distributed to the users prior to you
      * @param _policyToken Policy token address
      * @param _stablecoin Stablecoin address
      * @param _amountA Amount of policy token (virtual)
@@ -326,8 +370,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 decimalDiff = 18 - IERC20Decimals(_stablecoin).decimals();
         uint256 degisToPay = (amountToDeposit * 10**decimalDiff) /
             FEE_DENOMINATOR;
-        _updateDebt(_policyToken, amountToDeposit, degisToPay);
-        IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
+        _updateWhenDeposit(_policyToken, amountToDeposit, degisToPay);
 
         // Update the status
         _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
@@ -347,30 +390,32 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
     }
 
-    function _updateDebt(
+    /**
+     * @notice Update debt & fee distribution
+     * @param _policyToken Policy token address
+     * @param _usdAmount Amount of stablecoins input
+     * @param _degAmount Amount of degis input
+     */
+    function _updateWhenDeposit(
         address _policyToken,
         uint256 _usdAmount,
         uint256 _degAmount
     ) internal {
         PairInfo storage pair = pairs[_policyToken];
 
-        uint256 degBalance = IERC20(degis).balanceOf(address(this));
-
-        // If this is the first user, accDegisPerShare = 1e18
+        // If this is the first user, accDegisPerShare = 1e16
         // No debt
-        if (degBalance == 0) {
+        if (pair.degisAmount == 0) {
             pair.accDegisPerShare = SCALE / FEE_DENOMINATOR;
             return;
         }
 
-        uint256 currentUSDBalance = IERC20(pair.stablecoin).balanceOf(
-            address(this)
-        );
-
         UserInfo storage user = users[msg.sender][_policyToken];
 
         // Update accDegisPerShare first
-        pair.accDegisPerShare += (_degAmount * SCALE) / currentUSDBalance;
+        pair.accDegisPerShare +=
+            (_degAmount * SCALE) /
+            (pair.amountA + pair.amountB);
 
         uint256 currentUserDeposit = user.amountA + user.amountB;
         // If user has deposited before, distribute the deg reward first
@@ -379,13 +424,22 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             uint256 pendingReward = currentUserDeposit *
                 pair.accDegisPerShare -
                 user.degisDebt;
-            IERC20(degis).safeTransfer(msg.sender, pendingReward);
+
+            uint256 reward = _safeTokenTransfer(
+                degis,
+                msg.sender,
+                pendingReward
+            );
+            emit Harvest(msg.sender, reward);
         }
 
         // Update user debt
         user.degisDebt =
             pair.accDegisPerShare *
             (currentUserDeposit + _usdAmount);
+
+        // Transfer degis token
+        IERC20(degis).safeTransferFrom(msg.sender, address(this), _degAmount);
     }
 
     /**
@@ -404,35 +458,41 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     ) public activePair(_policyToken) {
         UserInfo memory user = users[msg.sender][_policyToken];
 
-        uint256 amountToWithdraw = _amountA + _amountB;
-
         // Check if the user has enough tokens to withdraw
         if (user.amountA + user.amountB == 0) revert ILM__NoDeposit();
         if (_amountA > user.amountA || _amountB > user.amountB)
             revert ILM__NotEnoughDeposit();
 
-        uint256 degisToWithdraw = (pairs[_policyToken].accDegisPerShare *
+        PairInfo storage pair = pairs[_policyToken];
+
+        // Update status when withdraw
+        uint256 degisToWithdraw = (pair.accDegisPerShare *
             (user.amountA + user.amountB)) /
             SCALE -
             user.degisDebt;
-        IERC20(degis).safeTransfer(msg.sender, degisToWithdraw);
+
+        if (degisToWithdraw > 0) {
+            // Degis will be withdrawed to emergency pool, not the user
+            _safeTokenTransfer(degis, emergencyPool, degisToWithdraw);
+            emit Harvest(msg.sender, degisToWithdraw);
+        }
 
         // Update the user's amount and pool's amount
         _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, false);
         _updateAmount(_policyToken, _amountA, _amountB, false);
 
-        // Transfer stablecoins back to user
+        uint256 amountToWithdraw = _amountA + _amountB;
+
+        // Withdraw stablecoins to the user
         _safeTokenTransfer(_stablecoin, msg.sender, amountToWithdraw);
 
         // Burn the lptokens
-        address lpToken = pairs[_policyToken].lptoken;
-        LPToken(lpToken).burn(msg.sender, amountToWithdraw);
+        LPToken(pair.lptoken).burn(msg.sender, amountToWithdraw);
 
         // Update the user debt
-        users[msg.sender][_policyToken].degisDebt =
-            ((users[msg.sender][_policyToken].amountA +
-                users[msg.sender][_policyToken].amountB) *
-                pairs[_policyToken].accDegisPerShare) /
+        UserInfo storage userST = users[msg.sender][_policyToken];
+        userST.degisDebt =
+            ((userST.amountA + userST.amountB) * pair.accDegisPerShare) /
             SCALE;
 
         emit Withdraw(
@@ -473,16 +533,21 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
         if (user.amountA + user.amountB == 0) revert ILM__NotEnoughDeposit();
 
-        PairInfo memory pair = pairs[_policyToken];
+        address naughtyPair = pairs[_policyToken].naughtyPairAddress;
+        address lptoken = pairs[_policyToken].lptoken;
 
-        uint256 totalLiquidity = INaughtyPair(pair.naughtyPairAddress)
-            .balanceOf(address(this));
-        // uint256 userLiquidity = (user.totalDeposit * totalLiquidity) /
-        //     (pair.amountA + pair.amountB);
+        // Total liquidity owned by the pool
+        uint256 totalLiquidity = INaughtyPair(naughtyPair).balanceOf(
+            address(this)
+        );
 
-        uint256 userLiquidity = (LPToken(pair.lptoken).balanceOf(msg.sender) *
-            totalLiquidity) / LPToken(pair.lptoken).totalSupply();
+        // User's liquidity amount
+        uint256 userLiquidity = (LPToken(lptoken).balanceOf(msg.sender) *
+            totalLiquidity) / LPToken(lptoken).totalSupply();
 
+        _updateWhenClaim(_policyToken);
+
+        // Remove liquidity
         (uint256 amountA, uint256 amountB) = INaughtyRouter(naughtyRouter)
             .removeLiquidity(
                 _policyToken,
@@ -497,12 +562,26 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         delete users[msg.sender][_policyToken];
 
         // Burn the user's lp tokens
-        LPToken(pair.lptoken).burn(
+        LPToken(lptoken).burn(
             msg.sender,
-            LPToken(pair.lptoken).balanceOf(msg.sender)
+            LPToken(lptoken).balanceOf(msg.sender)
         );
 
-        _updateAmount(_policyToken, amountA, amountB, false);
+        emit Claim(msg.sender, amountA, amountB);
+    }
+
+    function _updateWhenClaim(address _policyToken) internal {
+        PairInfo storage pair = pairs[_policyToken];
+
+        UserInfo storage user = users[msg.sender][_policyToken];
+
+        uint256 pendingReward = ((user.amountA + user.amountB) *
+            pair.accDegisPerShare) /
+            SCALE -
+            user.degisDebt;
+
+        uint256 reward = _safeTokenTransfer(degis, msg.sender, pendingReward);
+        emit Harvest(msg.sender, reward);
     }
 
     /**
