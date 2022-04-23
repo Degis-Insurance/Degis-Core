@@ -98,7 +98,7 @@ task(
   "setPieceWise-Purchase",
   "Set the threshold and piecewise reward"
 ).setAction(async (taskArgs, hre) => {
-  const threshold = [0, toWei("100"), toWei("500"), toWei("1000")];
+  const threshold = [0, toWei("10"), toWei("50"), toWei("100")];
   const pieceWise = [toWei("100"), toWei("500"), toWei("1000"), toWei("5000")];
 
   const { network } = hre;
