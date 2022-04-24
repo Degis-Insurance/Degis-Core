@@ -203,20 +203,23 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
   .addParam("pid", "Pool id", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const poolId = taskArgs.pid;
-    const threshold: string[] = [
-      stablecoinToWei("0"),
-      stablecoinToWei("150000"),
-      stablecoinToWei("300000"),
-      stablecoinToWei("450000"),
-      stablecoinToWei("600000"),
-    ];
-    const reward: string[] = [
-      toWei("0.035"),
-      toWei("0.07"),
-      toWei("0.104"),
-      toWei("0.139"),
-      toWei("0.174"),
-    ];
+    // const threshold: string[] = [
+    //   stablecoinToWei("0"),
+    //   stablecoinToWei("150000"),
+    //   stablecoinToWei("300000"),
+    //   stablecoinToWei("450000"),
+    //   stablecoinToWei("600000"),
+    // ];
+    // const reward: string[] = [
+    //   toWei("0.035"),
+    //   toWei("0.07"),
+    //   toWei("0.104"),
+    //   toWei("0.139"),
+    //   toWei("0.174"),
+    // ];
+
+    const threshold: string[] = [stablecoinToWei("0"), stablecoinToWei("30")];
+    const reward: string[] = [toWei("1"), toWei("2")];
 
     const { network } = hre;
     // Signers
