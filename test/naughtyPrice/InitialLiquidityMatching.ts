@@ -25,6 +25,8 @@ import {
   ILMToken,
   DegisToken__factory,
   DegisToken,
+  EmergencyPool,
+  EmergencyPool__factory,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
@@ -59,8 +61,11 @@ describe("Initial Liquidity Matching", function () {
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
   let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
   let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
+  let emergencyPool: EmergencyPool;
 
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
+
+  const FEE_RATE = 50;
 
   beforeEach(async function () {
     [dev_account, user1] = await ethers.getSigners();
@@ -107,7 +112,14 @@ describe("Initial Liquidity Matching", function () {
     ILM = await ILMContract.deploy();
     await ILM.deployed();
 
-    await ILM.initialize(degisToken.address, core.address, router.address);
+    emergencyPool = await new EmergencyPool__factory(dev_account).deploy();
+
+    await ILM.initialize(
+      degisToken.address,
+      core.address,
+      router.address,
+      emergencyPool.address
+    );
 
     await core.setILMContract(ILM.address);
     await core.setNaughtyRouter(router.address);
@@ -254,7 +266,7 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1"));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
 
       // Another user
       await usd.mint(user1.address, stablecoinToWei("300"));
@@ -284,11 +296,11 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("200"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1.5"));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1.5", 12));
 
       // related to degis
-      expect(pairInfo_2.accDegisPerShare).to.equal(toWei("1.015"));
-      expect(userInfo_2.degisDebt).to.equal(toWei("3.045"));
+      expect(pairInfo_2.accDegisPerShare).to.equal(parseUnits("0.025", 24));
+      expect(userInfo_2.degisDebt).to.equal(parseUnits("7.5", 18));
     });
 
     it("should be able to withdraw from current round ILM", async function () {
@@ -322,7 +334,7 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("1"));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
 
       // Another user
       await expect(
@@ -359,7 +371,7 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("40"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(toWei("2"));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("2", 12));
     });
 
     it("should be able to stop current round ILM", async function () {
@@ -368,7 +380,7 @@ describe("Initial Liquidity Matching", function () {
       const startTime = await getLatestBlockTimestamp(ethers.provider);
 
       await expect(
-        ILM.finishILM(policyTokenAddress, SWAP_TIME)
+        ILM.finishILM(policyTokenAddress, SWAP_TIME, FEE_RATE)
       ).to.be.revertedWith(customErrorMsg("'ILM__RoundNotOver()'"));
 
       const deadlineForPolicyToken = (
@@ -377,7 +389,7 @@ describe("Initial Liquidity Matching", function () {
 
       await setNextBlockTime(initTime + ILM_TIME + 100);
       await expect(
-        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken)
+        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken, FEE_RATE)
       ).to.be.revertedWith(customErrorMsg("'ILM__NoDeposit()'"));
 
       // Deposit some usd
@@ -389,7 +401,7 @@ describe("Initial Liquidity Matching", function () {
         stablecoinToWei("100")
       );
       await expect(
-        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken)
+        ILM.finishILM(policyTokenAddress, deadlineForPolicyToken, FEE_RATE)
       ).to.emit(ILM, "ILMFinish");
 
       const naughtyPairAddress = await factory.getPairAddress(
@@ -463,7 +475,7 @@ describe("Initial Liquidity Matching", function () {
         await core.policyTokenInfoMapping(policyTokenName)
       ).deadline;
       await setNextBlockTime(startTime + ILM_TIME + 100);
-      await ILM.finishILM(policyTokenAddress, deadlineForPolicyToken);
+      await ILM.finishILM(policyTokenAddress, deadlineForPolicyToken, FEE_RATE);
 
       const naughtyPairAddress = await factory.getPairAddress(
         policyTokenAddress,

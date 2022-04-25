@@ -30,7 +30,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    uint256 public constant SCALE = 1e18;
+    uint256 public constant SCALE = 1e12;
     uint256 public constant FEE_DENOMINATOR = 100;
     uint256 public constant MINIMUM_AMOUNT = 1e6;
     uint256 public constant MAX_UINT256 = type(uint256).max;
@@ -370,7 +370,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 decimalDiff = 18 - IERC20Decimals(_stablecoin).decimals();
         uint256 degisToPay = (amountToDeposit * 10**decimalDiff) /
             FEE_DENOMINATOR;
-        _updateWhenDeposit(_policyToken, amountToDeposit, degisToPay);
+
+        _updateWhenDeposit(
+            _policyToken,
+            amountToDeposit,
+            degisToPay,
+            decimalDiff
+        );
+
+        // Update deg record and transfer degis token
+        pairs[_policyToken].degisAmount += degisToPay;
+        IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
 
         // Update the status
         _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
@@ -399,14 +409,18 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     function _updateWhenDeposit(
         address _policyToken,
         uint256 _usdAmount,
-        uint256 _degAmount
+        uint256 _degAmount,
+        uint256 _decimalDiff
     ) internal {
         PairInfo storage pair = pairs[_policyToken];
 
         // If this is the first user, accDegisPerShare = 1e16
         // No debt
         if (pair.degisAmount == 0) {
-            pair.accDegisPerShare = SCALE / FEE_DENOMINATOR;
+            pair.accDegisPerShare =
+                (SCALE * 10**_decimalDiff) /
+                FEE_DENOMINATOR;
+            console.log("accdegispershare when first", pair.accDegisPerShare);
             return;
         }
 
@@ -416,8 +430,10 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         pair.accDegisPerShare +=
             (_degAmount * SCALE) /
             (pair.amountA + pair.amountB);
+        console.log("accdegispershare", pair.accDegisPerShare);
 
         uint256 currentUserDeposit = user.amountA + user.amountB;
+
         // If user has deposited before, distribute the deg reward first
         // Pending reward is calculated with the new degisPerShare value
         if (currentUserDeposit > 0) {
@@ -435,11 +451,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
         // Update user debt
         user.degisDebt =
-            pair.accDegisPerShare *
-            (currentUserDeposit + _usdAmount);
-
-        // Transfer degis token
-        IERC20(degis).safeTransferFrom(msg.sender, address(this), _degAmount);
+            (pair.accDegisPerShare * (currentUserDeposit + _usdAmount)) /
+            SCALE;
     }
 
     /**
