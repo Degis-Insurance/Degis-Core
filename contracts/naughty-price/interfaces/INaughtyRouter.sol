@@ -46,4 +46,13 @@ interface INaughtyRouter {
         address _to,
         uint256 _deadline
     ) external returns (uint256 amountA, uint256 amountB);
+
+    function swapExactTokensforTokens(
+        uint256 _amountIn,
+        uint256 _amountOutMin,
+        address _tokenIn,
+        address _tokenOut,
+        address _to,
+        uint256 _deadline
+    ) external returns (uint256 amountOut);
 }

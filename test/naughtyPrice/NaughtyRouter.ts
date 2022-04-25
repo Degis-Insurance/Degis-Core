@@ -29,12 +29,12 @@ import {
 } from "../utils";
 
 describe("Naughty Router", function () {
-  let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
-  let MockUSD: MockUSD__factory, usd: MockUSD;
-  let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
-  let PolicyCore: PolicyCore__factory, core: PolicyCore;
-  let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
-  let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
+  let router: NaughtyRouter;
+  let usd: MockUSD;
+  let priceGetter: PriceGetter;
+  let core: PolicyCore;
+  let factory: NaughtyFactory;
+  let buyerToken: BuyerToken;
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
   let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
 
@@ -51,27 +51,24 @@ describe("Naughty Router", function () {
   beforeEach(async function () {
     [dev_account, user1, user2] = await ethers.getSigners();
 
-    NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
-    factory = await NaughtyFactory.deploy();
+    factory = await new NaughtyFactory__factory(dev_account).deploy();
 
-    MockUSD = await ethers.getContractFactory("MockUSD");
-    usd = await MockUSD.deploy();
+    usd = await new MockUSD__factory(dev_account).deploy();
 
-    PriceGetter = await ethers.getContractFactory("PriceGetter");
-    priceGetter = await PriceGetter.deploy();
+    priceGetter = await new PriceGetter__factory(dev_account).deploy();
 
-    PolicyCore = await ethers.getContractFactory("PolicyCore");
-    core = await PolicyCore.deploy(
+    core = await new PolicyCore__factory(dev_account).deploy(
       usd.address,
       factory.address,
       priceGetter.address
     );
 
-    BuyerToken = await ethers.getContractFactory("BuyerToken");
-    buyerToken = await BuyerToken.deploy();
+    buyerToken = await new BuyerToken__factory(dev_account).deploy();
 
-    NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
-    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+    router = await new NaughtyRouter__factory(dev_account).deploy(
+      factory.address,
+      buyerToken.address
+    );
 
     await core.deployed();
     await factory.deployed();
@@ -410,7 +407,7 @@ describe("Naughty Router", function () {
 
       let reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );
@@ -428,7 +425,7 @@ describe("Naughty Router", function () {
 
       reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );
@@ -453,7 +450,7 @@ describe("Naughty Router", function () {
 
       reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );
@@ -500,7 +497,7 @@ describe("Naughty Router", function () {
 
       let reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );
@@ -516,7 +513,7 @@ describe("Naughty Router", function () {
 
       reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );
@@ -543,7 +540,7 @@ describe("Naughty Router", function () {
 
       reserves = await pair.getReserves();
       console.log(
-        "reserves in pool,",
+        "      reserves in pool,",
         formatStablecoin(reserves[0]),
         formatStablecoin(reserves[1])
       );

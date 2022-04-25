@@ -40,6 +40,10 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // INIT_CODE_HASH for NaughtyPair, may be used in frontend
+    bytes32 public constant PAIR_INIT_CODE_HASH =
+        keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
+
     // PolicyToken Address => StableCoin Address => Pool Address
     mapping(address => mapping(address => address)) getPair;
 
@@ -54,16 +58,38 @@ contract NaughtyFactory is OwnableWithoutContext {
     // Address of policyCore
     address public policyCore;
 
-    // INIT_CODE_HASH for NaughtyPair, may be used in frontend
-    bytes32 public constant PAIR_INIT_CODE_HASH =
-        keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
+    // Address of income maker, part of the transaction fee will be distributed to this address
+    address public incomeMaker;
+
+    // proportion = 1 / part
+    uint256 public incomeMakerProportion;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event PolicyCoreAddressChanged(
         address oldPolicyCore,
         address newPolicyCore
     );
+    event IncomeMakerProportionChanged(
+        uint256 oldProportion,
+        uint256 newProportion
+    );
+    event IncomeMakerAddressChanged(
+        address oldIncomeMaker,
+        address newIncomeMaker
+    );
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    constructor() OwnableWithoutContext(msg.sender) {
+        // 40% of swap fee is distributed to income maker contract
+        // Can be set later
+        incomeMakerProportion = 40;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //
@@ -147,6 +173,26 @@ contract NaughtyFactory is OwnableWithoutContext {
     function setPolicyCoreAddress(address _policyCore) external onlyOwner {
         emit PolicyCoreAddressChanged(policyCore, _policyCore);
         policyCore = _policyCore;
+    }
+
+    /**
+     * @notice Set income maker proportion
+     * @dev    Only callable by the owner
+     * @param _proportion New proportion to income maker contract
+     */
+    function setIncomeMakerProportion(uint256 _proportion) external onlyOwner {
+        emit IncomeMakerProportionChanged(incomeMakerProportion, _proportion);
+        incomeMakerProportion = _proportion;
+    }
+
+    /**
+     * @notice Set income maker address
+     * @dev Only callable by the owner
+     * @param _incomeMaker New income maker address
+     */
+    function setIncomeMakerAddress(address _incomeMaker) external onlyOwner {
+        emit IncomeMakerAddressChanged(incomeMaker, _incomeMaker);
+        incomeMaker = _incomeMaker;
     }
 
     // ---------------------------------------------------------------------------------------- //

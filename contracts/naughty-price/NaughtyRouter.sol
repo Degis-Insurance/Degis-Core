@@ -88,7 +88,9 @@ contract NaughtyRouter is Ownable {
      * @param _deadLine Deadline of the pool
      */
     modifier beforeDeadline(uint256 _deadLine) {
-        require(block.timestamp < _deadLine, "expired transaction");
+        if (msg.sender != INaughtyFactory(factory).incomeMaker()) {
+            require(block.timestamp < _deadLine, "expired transaction");
+        }
         _;
     }
 
