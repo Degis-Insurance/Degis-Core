@@ -165,7 +165,7 @@ describe("Naughty Router", function () {
           pairAddress,
           stablecoinToWei("100"),
           stablecoinToWei("100"),
-          stablecoinToWei("99.999999")
+          stablecoinToWei("99.999")
         );
     });
 
@@ -215,8 +215,8 @@ describe("Naughty Router", function () {
         .to.emit(router, "LiquidityRemoved")
         .withArgs(
           pairAddress,
-          stablecoinToWei("9.999900"),
-          stablecoinToWei("9.999900"),
+          stablecoinToWei("10"),
+          stablecoinToWei("10"),
           stablecoinToWei("10")
         );
     });

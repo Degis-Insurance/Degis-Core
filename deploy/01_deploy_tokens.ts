@@ -5,6 +5,14 @@ import { getTokenAddressOnAVAX } from "../info/tokenAddress";
 
 const stablecoin: string = getTokenAddressOnAVAX("USDC.e");
 
+// Deploy Basic Tokens
+// It is a non-proxy deployment
+// Contract:
+//    - Degis Token
+//    - Buyer Token
+// Tags:
+//    - Tokens
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy, save, getArtifact } = deployments;

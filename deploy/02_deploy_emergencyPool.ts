@@ -2,6 +2,13 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
+// Deploy Emergency Pool
+// It is a non-proxy deployment
+// Contract:
+//    - Emergency Pool
+// Tags:
+//    - EmergencyPool
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy } = deployments;

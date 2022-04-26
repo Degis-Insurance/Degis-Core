@@ -1,7 +1,18 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
-import { TransparentUpgradeableProxy__factory } from "../typechain";
+
+// Deploy Farming Pool
+// It is a non-proxy(old) or a proxy deployment(new)
+// Old:
+//    - FarmingPool
+// New:
+//    - TransparentUpgradeableProxy
+//    - FarmingPoolUpgradeable
+// Tasks:
+//    - Add degis minter role to FarmingPool / FarmingPoolUpgradeable
+// Tags:
+//    - Farming
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -28,6 +39,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     });
     addressList[network.name].FarmingPool = farmingPool.address;
+    await hre.run("addMinterBurner", ["minter", "d", "FarmingPool"]);
   } else if (isProxy) {
     // const proxyArtifact = await getArtifact("TransparentUpgradeableProxy");
     // Always use the same proxy admin
@@ -49,6 +61,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     addressList[network.name].FarmingPoolUpgradeable =
       farmingPoolUpgradeable.address;
+    await hre.run("addMinterBurner", ["minter", "d", "FarmingPoolUpgradeable"]);
   }
 
   // Store the address list after deployment

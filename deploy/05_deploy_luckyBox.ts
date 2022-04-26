@@ -3,6 +3,14 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 
+// Deploy Treasury Box
+// It is a non-proxy deployment
+// Contract:
+//    - Random Number Generator
+//    - Degis Lottery
+// Tags:
+//    - Lottery
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy, get } = deployments;

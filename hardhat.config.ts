@@ -46,6 +46,7 @@ import "./tasks/staking/stakingPoolFactory";
 
 import "./tasks/proxy/admin";
 import "./tasks/governance/VeDEG";
+import "./tasks/incomeSharing/setAddress";
 
 dotenv.config();
 

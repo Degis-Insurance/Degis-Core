@@ -15,6 +15,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   const BuyerToken = await get("BuyerToken");
+  const priceGetter = await get("PriceGetter");
 
   const factory = await deploy("NaughtyFactory", {
     contract: "NaughtyFactory",
@@ -23,14 +24,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   addressList[network.name].NaughtyFactory = factory.address;
-
-  const priceGetter = await deploy("PriceGetter", {
-    contract: "PriceGetter",
-    from: deployer,
-    args: [],
-    log: true,
-  });
-  addressList[network.name].PriceGetter = priceGetter.address;
 
   if (network.name == "avax" || network.name == "avaxTest") {
     const usdcAddress = getTokenAddressOnAVAX("USDC.e");
@@ -67,6 +60,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.run("setNPFactory");
   await hre.run("setNPRouter");
   await hre.run("setNPCore");
+
+  // Add minter role to naughty router
+  await hre.run("addMinterBurner", ["minter", "b", "NaughtyRouter"]);
 };
 
 func.tags = ["NaughtyPrice"];

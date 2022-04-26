@@ -53,6 +53,7 @@ contract NaughtyFactory is OwnableWithoutContext {
     // Store all policy tokens' addresses
     address[] public allTokens;
 
+    // Next pool id to be deployed
     uint256 public _nextId;
 
     // Address of policyCore

@@ -1,18 +1,13 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
-import {
-  readAddressList,
-  storeAddressList,
-  readProxyAdmin,
-  storeProxyAdmin,
-} from "../scripts/contractAddress";
+import { DeployFunction } from "hardhat-deploy/types";
+import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
-// Deploy Proxy Admin
+// Deploy Price Getter for Naughty Price
 // It is a non-proxy deployment
 // Contract:
-//    - ProxyAdmin
+//    - PriceGetter
 // Tags:
-//    - ProxyAdmin
+//    - PriceGetter
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -24,22 +19,19 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
-  const proxyAddressList = readProxyAdmin();
 
-  // Proxy Admin contract artifact
-  const proxyAdmin = await deploy("ProxyAdmin", {
-    contract: "ProxyAdmin",
+  // Price Getter can be used multiple times
+  const priceGetter = await deploy("PriceGetter", {
+    contract: "PriceGetter",
     from: deployer,
     args: [],
     log: true,
   });
-  addressList[network.name].ProxyAdmin = proxyAdmin.address;
-  proxyAddressList[network.name] = proxyAdmin.address;
+  addressList[network.name].PriceGetter = priceGetter.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);
-  storeProxyAdmin(proxyAddressList);
 };
 
-func.tags = ["ProxyAdmin"];
+func.tags = ["PriceGetter"];
 export default func;
