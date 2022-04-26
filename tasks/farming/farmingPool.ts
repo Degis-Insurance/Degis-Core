@@ -173,11 +173,8 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
     console.log("Start block for farming: ", startBlockResult.toNumber());
   });
 
-task("setVeDEG", "Set the VeDEG of a farming pool")
-  .addParam("ve", "VeDEG", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    const veDEGAddress = taskArgs.ve;
-
+task("setVeDEG", "Set the VeDEG of a farming pool").setAction(
+  async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -190,6 +187,8 @@ task("setVeDEG", "Set the VeDEG of a farming pool")
       farmingPoolAddress
     );
 
+    const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+
     const FarmingPool: FarmingPoolUpgradeable__factory =
       await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
     const farmingPool: FarmingPoolUpgradeable =
@@ -197,7 +196,8 @@ task("setVeDEG", "Set the VeDEG of a farming pool")
 
     const tx = await farmingPool.setVeDEG(veDEGAddress);
     console.log("Tx details: ", await tx.wait());
-  });
+  }
+);
 
 task("setPieceWise-Farming", "Set piecewise reward level for farming")
   .addParam("pid", "Pool id", null, types.int)
@@ -219,7 +219,7 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     // ];
 
     const threshold: string[] = [stablecoinToWei("0"), stablecoinToWei("30")];
-    const reward: string[] = [toWei("1"), toWei("2")];
+    const reward: string[] = [toWei("0.1"), toWei("0.2")];
 
     const { network } = hre;
     // Signers

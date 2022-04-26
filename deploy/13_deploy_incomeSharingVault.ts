@@ -40,10 +40,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
-  await hre.run("setNPFactory");
-  await hre.run("setNPRouter");
-  await hre.run("setNPCore");
+  await hre.run("setIncomeSharingInCore");
 };
 
-func.tags = ["NaughtyPrice"];
+func.tags = ["IncomeSharing"];
 export default func;

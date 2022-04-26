@@ -19,6 +19,10 @@ import "hardhat/console.sol";
 contract IncomeMaker is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     uint256 public constant UINT256_MAX = type(uint256).max;
 
     INaughtyRouter public router;

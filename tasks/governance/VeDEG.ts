@@ -53,12 +53,32 @@ task("upgradeVeDEG", "Upgrade veDEG implementation").setAction(
     const veProxyAddress = addressList[network.name].VoteEscrowedDegis;
     const ProxyAdminAddress = addressList[network.name].ProxyAdmin;
 
-    const proxyAdmin: ProxyAdmin__factory = await hre.ethers.getContractFactory(
-      "ProxyAdmin"
+    const admin: ProxyAdmin = new ProxyAdmin__factory(dev_account).attach(
+      ProxyAdminAddress
     );
-    const admin: ProxyAdmin = proxyAdmin.attach(ProxyAdminAddress);
 
-    // const tx = await admin.upgradeAndCall(veProxyAddress, implementation, );
-    // console.log("tx details: ", await tx.wait());
+    const impl = "0x1A9d753531Fb240697003C78423132893dDF1902";
+
+    const tx = await admin.upgrade(veProxyAddress, impl);
+    console.log("tx details: ", await tx.wait());
   }
 );
+
+task("addWhiteList-Ve", "Add whitelist for veDEG").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+
+  const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+    dev_account
+  ).attach(veDEGAddress);
+
+  const IncomeSharingAddress = addressList[network.name].IncomeSharingVault;
+
+  const tx = await veDEG.addWhitelist(IncomeSharingAddress);
+  console.log("tx details: ", await tx.wait());
+});

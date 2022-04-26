@@ -40,6 +40,8 @@ task("addMinterBurner", "add minter/burner manually")
       return;
     }
 
+    console.log("hi")
+
     if (taskArgs.type == "minter") {
       // Add minter
       const isAlready = await token.isMinter(newMinterContract);

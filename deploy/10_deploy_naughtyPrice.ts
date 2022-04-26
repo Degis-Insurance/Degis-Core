@@ -62,7 +62,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.run("setNPCore");
 
   // Add minter role to naughty router
-  await hre.run("addMinterBurner", ["minter", "b", "NaughtyRouter"]);
+  await hre.run("addMinterBurner", {
+    type: "minter",
+    token: "b",
+    name: "NaughtyRouter",
+  });
 };
 
 func.tags = ["NaughtyPrice"];

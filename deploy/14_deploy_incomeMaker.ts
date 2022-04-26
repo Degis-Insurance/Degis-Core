@@ -44,5 +44,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await hre.run("setIncomeMakerInFactory");
 };
 
-func.tags = ["NaughtyPrice"];
+func.tags = ["IncomeMaker"];
 export default func;

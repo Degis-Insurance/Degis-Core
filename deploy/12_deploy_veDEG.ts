@@ -39,7 +39,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].VoteEscrowedDegis = veDEG.address;
 
-  //   const implAddress = veDEG.implementation;
 
   // Store the address list after deployment
   storeAddressList(addressList);

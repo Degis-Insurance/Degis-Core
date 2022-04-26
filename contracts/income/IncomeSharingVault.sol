@@ -23,6 +23,10 @@ contract IncomeSharingVault is
 {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     uint256 public constant SCALE = 1e18;
 
     uint256 public roundTime;
@@ -72,6 +76,10 @@ contract IncomeSharingVault is
     error DIS__NotEnoughVeDEG();
     error DIS__WrongSpeed();
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     function initialize(address _veDEG) public initializer {
         __Ownable_init();
         __Pausable_init();
@@ -81,6 +89,10 @@ contract IncomeSharingVault is
 
         nextPool = 1;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     function pendingReward(uint256 _poolId, address _user)
         external
@@ -122,11 +134,23 @@ contract IncomeSharingVault is
         }
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Set round time
+     * @param _roundTime Round time in seconds
+     */
     function setRoundTime(uint256 _roundTime) external onlyOwner {
         emit RoundTimeChanged(roundTime, _roundTime);
         roundTime = _roundTime;
     }
 
+    /**
+     * @notice Start a new income sharing pool
+     * @param _rewardToken Reward token address
+     */
     function startPool(address _rewardToken) external onlyOwner {
         PoolInfo storage pool = pools[nextPool++];
 
@@ -136,6 +160,11 @@ contract IncomeSharingVault is
         emit NewRewardPoolStart(nextPool - 1, _rewardToken);
     }
 
+    /**
+     * @notice Set reward speed for a pool
+     * @param _poolId Pool id
+     * @param _rewardPerSecond Reward speed
+     */
     function setRewardSpeed(uint256 _poolId, uint256 _rewardPerSecond)
         external
     {
@@ -150,6 +179,15 @@ contract IncomeSharingVault is
         emit RewardSpeedSet(_poolId, _rewardPerSecond);
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Deposit
+     * @param _poolId Pool Id
+     * @param _amount Amount of tokens to deposit
+     */
     function deposit(uint256 _poolId, uint256 _amount) external nonReentrant {
         if (!pools[_poolId].available) revert DIS__PoolNotAvailable();
         if (_amount == 0) revert DIS__ZeroAmount();
@@ -187,6 +225,11 @@ contract IncomeSharingVault is
         emit Deposit(msg.sender, _poolId, _amount);
     }
 
+    /**
+     * @notice Withdraw the reward from the pool
+     * @param _poolId Pool Id
+     * @param _amount Amount to withdraw
+     */
     function withdraw(uint256 _poolId, uint256 _amount) external nonReentrant {
         if (_amount == 0) revert DIS__ZeroAmount();
 
@@ -218,6 +261,11 @@ contract IncomeSharingVault is
         emit Withdraw(msg.sender, _poolId, reward);
     }
 
+    /**
+     * @notice Harvest income reward
+     * @param _poolId Pool Id
+     * @param _to Reward receiver address
+     */
     function harvest(uint256 _poolId, address _to)
         public
         nonReentrant
@@ -239,6 +287,10 @@ contract IncomeSharingVault is
         emit Harvest(msg.sender, _poolId, reward);
     }
 
+    /**
+     * @notice Update pool
+     * @param _poolId Pool id
+     */
     function updatePool(uint256 _poolId) public {
         PoolInfo storage pool = pools[_poolId];
 

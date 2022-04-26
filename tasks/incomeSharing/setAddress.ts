@@ -3,7 +3,12 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { NaughtyFactory, NaughtyFactory__factory } from "../../typechain";
+import {
+  NaughtyFactory,
+  NaughtyFactory__factory,
+  PolicyCore,
+  PolicyCore__factory,
+} from "../../typechain";
 
 task(
   "setIncomeMakerInFactory",
@@ -35,4 +40,41 @@ task(
     "The income maker address inside naughty factory: ",
     makerAddress
   );
+});
+
+task(
+  "setIncomeSharingInCore",
+  "Set the income sharing contract address inside policy core"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  // Addresses to be set
+  const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
+  const lotteryAddress = addressList[network.name].DegisLottery;
+
+  // Get policy core contract instance
+  const policyCoreAddress = addressList[network.name].PolicyCore;
+
+  const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
+    policyCoreAddress
+  );
+
+  const tx_setIncomeSharing = await core.setIncomeSharing(incomeSharingAddress);
+  console.log(
+    "Tx_setIncomeSharing details: ",
+    await tx_setIncomeSharing.wait()
+  );
+
+  const tx_setLottery = await core.setLottery(lotteryAddress);
+  console.log("Tx_setLottery details: ", await tx_setLottery.wait());
+
+  // Check the result
+  console.log("Degis lottery address in core: ", await core.lottery());
+  console.log("Income sharing address in core: ", await core.incomeSharing());
 });
