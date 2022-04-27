@@ -653,8 +653,11 @@ contract PolicyCore is Ownable {
         // Update quota
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
+        // Charge 1% Fee when redeem / claim
+        uint256 amountWithFee = _chargeFee(_stablecoin, _amount);
+
         // Transfer back the stablecoin
-        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
         // Burn the policy tokens
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
@@ -701,16 +704,7 @@ contract PolicyCore is Ownable {
         );
 
         // Charge 1% Fee when redeem / claim
-        uint256 amountWithFee = (quota * 990) / 1000;
-        uint256 amountToCollect = quota - amountWithFee;
-
-        pendingIncomeToLottery[_stablecoin] +=
-            (amountToCollect * toLottery) /
-            10;
-        pendingIncomeToSharing[_stablecoin] +=
-            amountToCollect -
-            (amountToCollect * toLottery) /
-            10;
+        uint256 amountWithFee = _chargeFee(_stablecoin, quota);
 
         // Send back stablecoins directly
         IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
@@ -760,17 +754,7 @@ contract PolicyCore is Ownable {
         );
 
         // Charge 1% fee
-        uint256 amountWithFee = (_amount * 990) / 1000;
-        uint256 amountToCollect = _amount - amountWithFee;
-
-        // Update pending income record
-        pendingIncomeToLottery[_stablecoin] +=
-            (amountToCollect * toLottery) /
-            10;
-        pendingIncomeToSharing[_stablecoin] +=
-            amountToCollect -
-            (amountToCollect * toLottery) /
-            10;
+        uint256 amountWithFee = _chargeFee(_stablecoin, _amount);
 
         IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
@@ -1046,6 +1030,29 @@ contract PolicyCore is Ownable {
                 amountRemaining += amount - amountWithFee;
             } else continue;
         }
+    }
+
+    /**
+     * @notice Charge fee when redeem / claim
+     * @param _stablecoin Stablecoin address
+     * @param _amount Amount to redeem / claim
+     * @return amountWithFee Amount with fee
+     */
+    function _chargeFee(address _stablecoin, uint256 _amount)
+        internal
+        returns (uint256)
+    {
+        uint256 amountWithFee = (_amount * 990) / 1000;
+        uint256 amountToCollect = _amount - amountWithFee;
+
+        uint256 amountToLottery = (amountToCollect * toLottery) / 10;
+
+        pendingIncomeToLottery[_stablecoin] += amountToLottery;
+        pendingIncomeToSharing[_stablecoin] +=
+            amountToCollect -
+            amountToLottery;
+
+        return amountWithFee;
     }
 
     /**

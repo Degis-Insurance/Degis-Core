@@ -557,13 +557,18 @@ describe("Policy Core and Naughty Factory", function () {
       await policyTokenInstance.approve(core.address, stablecoinToWei("5000"));
       await core.redeem(policyTokenName, usd.address, stablecoinToWei("5000"));
 
+      // 1% fee = 50
       expect(await usd.balanceOf(dev_account.address)).to.equal(
-        stablecoinToWei("95000")
+        stablecoinToWei("94950")
       );
 
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("5000")
       );
+
+      await core.collectIncome(usd.address);
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(stablecoinToWei("40"));
+      expect(await usd.balanceOf(lottery.address)).to.equal(stablecoinToWei("10"));
     });
   });
 
