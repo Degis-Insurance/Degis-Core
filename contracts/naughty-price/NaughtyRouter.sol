@@ -116,6 +116,15 @@ contract NaughtyRouter is Ownable {
         buyerToken = _buyerToken;
     }
 
+    /**
+     * @notice Set the address of factory
+     * @param _naughtyFactory Address of new naughty factory
+     */
+    function setNaughtyFactory(address _naughtyFactory) external onlyOwner {
+        emit BuyerTokenChanged(factory, _naughtyFactory);
+        factory = _naughtyFactory;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Helper Functions *********************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -222,7 +231,10 @@ contract NaughtyRouter is Ownable {
             );
         }
 
-        address pair = _getPairAddress(_tokenA, _tokenB);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenA,
+            _tokenB
+        );
 
         _transferHelper(_tokenA, _msgSender(), pair, amountA);
         _transferHelper(_tokenB, _msgSender(), pair, amountB);
@@ -257,7 +269,10 @@ contract NaughtyRouter is Ownable {
         beforeDeadline(_deadline)
         returns (uint256 amountA, uint256 amountB)
     {
-        address pair = _getPairAddress(_tokenA, _tokenB);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenA,
+            _tokenB
+        );
 
         INaughtyPair(pair).safeTransferFrom(_msgSender(), pair, _liquidity); // send liquidity to pair
 
@@ -288,7 +303,10 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountIn) {
-        address pair = _getPairAddress(_tokenIn, _tokenOut);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenIn,
+            _tokenOut
+        );
         require(
             block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
@@ -332,7 +350,10 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountOut) {
-        address pair = _getPairAddress(_tokenIn, _tokenOut);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenIn,
+            _tokenOut
+        );
         require(
             block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
@@ -512,24 +533,6 @@ contract NaughtyRouter is Ownable {
 
         // (Policy token reserve, stablecoin reserve)
         (reserveA, reserveB) = INaughtyPair(pairAddress).getReserves();
-    }
-
-    /**
-     * @notice Get pair address
-     * @param tokenA TokenA address
-     * @param tokenB TokenB address
-     */
-    function _getPairAddress(address tokenA, address tokenB)
-        internal
-        view
-        returns (address)
-    {
-        address pairAddress = INaughtyFactory(factory).getPairAddress(
-            tokenA,
-            tokenB
-        );
-
-        return pairAddress;
     }
 
     /**

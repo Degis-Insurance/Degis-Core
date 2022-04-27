@@ -276,7 +276,30 @@ describe("Income Sharing", function () {
         customErrorMsg("'VED__StillLocked()'")
       );
     });
-  });
 
-  describe("DEG Entrance Fee", function () {});
+    it("should be able to restart the reward speed", async function () {
+      const deposit_num = toWei("100");
+      await veDEG.addWhitelist(income.address);
+
+      await income.deposit(1, deposit_num);
+
+      await mineBlocks(5);
+
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("5")
+      );
+
+      await income.setRewardSpeed(1, stablecoinToWei("0"));
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("6")
+      );
+
+      await income.setRewardSpeed(1, stablecoinToWei("1"));
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("11")
+      );
+    });
+  });
 });

@@ -76,9 +76,6 @@ contract IncomeMaker is OwnableUpgradeable {
 
         (uint256 amount0, uint256 amount1) = pair.burn(address(this));
 
-        console.log("policy token amount", amount0);
-        console.log("usd amount", amount1);
-
         // Finish
         uint256 amountOut = _swap(
             _policyToken,
@@ -86,7 +83,6 @@ contract IncomeMaker is OwnableUpgradeable {
             amount0,
             address(this)
         );
-        console.log("swap out amount", amountOut);
 
         // Transfer all stablecoins to income sharing vault
         IERC20(_stablecoin).safeTransfer(
@@ -125,24 +121,15 @@ contract IncomeMaker is OwnableUpgradeable {
 
         (uint256 reserve0, uint256 reserve1) = pair.getReserves();
 
-        console.log("reserve0", reserve0);
-        console.log("reserve1", reserve1);
-
         uint256 feeRate = pair.feeRate();
-
-        console.log("fee rate", feeRate);
 
         // Calculate amountIn - fee
         uint256 amountInWithFee = _amount * (1000 - feeRate);
-
-        console.log("amountInWithFee", amountInWithFee);
 
         // Calculate amountOut
         amountOut =
             (amountInWithFee * reserve1) /
             (reserve0 * 1000 + amountInWithFee);
-
-        console.log("amountOut", amountOut);
 
         // Transfer policy token and swap
         IERC20(_policyToken).safeTransfer(address(pair), _amount);

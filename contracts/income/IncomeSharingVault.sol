@@ -13,8 +13,18 @@ import "hardhat/console.sol";
 /**
  * @title Degis Income Sharing Contract
  * @notice This contract will receive part of the income from Degis products
- *         And the income will be shared by DEG holders
- *         The share will be distributed every week
+ *         And the income will be shared by DEG holders (in the form of veDEG)
+ *
+ *         It is designed to be an ever-lasting reward
+ *
+ *         At first the reward is USDC.e and later may be transferred to Shield
+ *         To enter the income sharing vault, you need to lock some veDEG
+ *             - When your veDEG is locked, it can not be withdrawed
+ *
+ *         The reward is distributed per second like a farming pool
+ *         The income will come from (to be updated)
+ *             - IncomeMaker: Collect swap fee in naughty price pool
+ *             - PolicyCore: Collect deposit/redeem fee in policy core
  */
 contract IncomeSharingVault is
     OwnableUpgradeable,
@@ -94,6 +104,12 @@ contract IncomeSharingVault is
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Pending reward
+     * @param _poolId Pool Id
+     * @param _user User address
+     * @return pendingReward Amount of pending reward
+     */
     function pendingReward(uint256 _poolId, address _user)
         external
         view
@@ -106,25 +122,16 @@ contract IncomeSharingVault is
             block.timestamp < pool.lastRewardTimestamp
         ) return 0;
 
-        UserInfo memory user = users[_poolId][_user];
-
         uint256 accRewardPerShare = pool.accRewardPerShare;
-
-        console.log("pool amount", pool.totalAmount);
 
         if (pool.totalAmount == 0) return 0;
         else {
+            UserInfo memory user = users[_poolId][_user];
+
             uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
-
-            console.log("timePassed", timePassed);
-
             uint256 reward = timePassed * pool.rewardPerSecond;
 
-            console.log("reward", reward);
-
             accRewardPerShare += (reward * SCALE) / pool.totalAmount;
-
-            console.log("acc", accRewardPerShare);
 
             uint256 pending = (user.totalAmount * accRewardPerShare) /
                 SCALE -
@@ -140,6 +147,7 @@ contract IncomeSharingVault is
 
     /**
      * @notice Set round time
+     * @dev Round time is only used for checking reward speed
      * @param _roundTime Round time in seconds
      */
     function setRoundTime(uint256 _roundTime) external onlyOwner {
@@ -149,6 +157,9 @@ contract IncomeSharingVault is
 
     /**
      * @notice Start a new income sharing pool
+     * @dev Normally there will be two pools
+     *          - USDC.e as reward (1)
+     *          - Shield as reward (2)
      * @param _rewardToken Reward token address
      */
     function startPool(address _rewardToken) external onlyOwner {
@@ -168,7 +179,11 @@ contract IncomeSharingVault is
     function setRewardSpeed(uint256 _poolId, uint256 _rewardPerSecond)
         external
     {
+        updatePool(_poolId);
+
         PoolInfo memory pool = pools[_poolId];
+
+        // Ensure there is enough reward for this round
         if (
             roundTime * _rewardPerSecond >
             IERC20(pool.rewardToken).balanceOf(address(this))
@@ -193,7 +208,7 @@ contract IncomeSharingVault is
         if (_amount == 0) revert DIS__ZeroAmount();
         if (veDEG.balanceOf(msg.sender) < _amount) revert DIS__NotEnoughVeDEG();
 
-        updatePool(_poolId);
+         updatePool(_poolId);
 
         // Lock some veDEG to participate
         veDEG.lockVeDEG(msg.sender, _amount);
@@ -297,16 +312,18 @@ contract IncomeSharingVault is
         if (block.timestamp <= pool.lastRewardTimestamp) return;
 
         uint256 totalAmount = pool.totalAmount;
+        uint256 rewardPerSecond = pool.rewardPerSecond;
 
-        if (totalAmount == 0) {
+        if (totalAmount == 0 || rewardPerSecond == 0) {
             pool.lastRewardTimestamp = block.timestamp;
             return;
         }
 
+        // Time passed in seconds and total rewards
         uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
+        uint256 reward = timePassed * rewardPerSecond;
 
-        uint256 reward = timePassed * pool.rewardPerSecond;
-
+        // Remainging reward inside the pool
         uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
             address(this)
         );

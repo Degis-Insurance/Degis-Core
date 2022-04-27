@@ -562,6 +562,26 @@ describe("Farming Pool Upgradeable", function () {
         .withArgs(1, parseUnits("3", 11), 0);
     });
 
+    it("should be able to update correctly when restart a farming pool", async function () {
+      await pool.add(lptoken_1.address, toWei("1"), toWei("1"), false);
+
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+      await pool.stake(1, toWei("100"));
+
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("5"));
+
+      await pool.setDegisReward(1, 0, 0, true);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+
+      await pool.setDegisReward(1, toWei("1"), toWei("1"), true)
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("11"));
+    });
+
     it("should be able to manually mass update the pools", async function () {
       await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
 

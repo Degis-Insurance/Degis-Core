@@ -380,9 +380,6 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
                 uint256 rootK = Math.sqrt(_reserve0 * _reserve1);
                 uint256 rootKLast = Math.sqrt(_k);
 
-                console.log("rootK", rootK);
-                console.log("rootKLast", rootKLast);
-
                 if (rootK > rootKLast) {
                     uint256 numerator = totalSupply() * (rootK - rootKLast);
 
@@ -393,10 +390,7 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
                     uint256 denominator = rootK *
                         (100 / incomeMakerProportion - 1) +
                         rootKLast;
-                    console.log(
-                        "income maker proportion:",
-                        incomeMakerProportion
-                    );
+
                     uint256 liquidity = numerator / denominator;
 
                     // Mint the liquidity to income maker contract

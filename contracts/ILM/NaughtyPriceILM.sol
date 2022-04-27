@@ -371,6 +371,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 degisToPay = (amountToDeposit * 10**decimalDiff) /
             FEE_DENOMINATOR;
 
+        // Update the info about deg entrance fee when deposit
         _updateWhenDeposit(
             _policyToken,
             amountToDeposit,
@@ -378,13 +379,18 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             decimalDiff
         );
 
+        PairInfo storage pair = pairs[_policyToken];
+        UserInfo storage user = users[msg.sender][_policyToken];
+
         // Update deg record and transfer degis token
-        pairs[_policyToken].degisAmount += degisToPay;
+        pair.degisAmount += degisToPay;
         IERC20(degis).safeTransferFrom(msg.sender, address(this), degisToPay);
 
         // Update the status
-        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, true);
-        _updateAmount(_policyToken, _amountA, _amountB, true);
+        pair.amountA += _amountA;
+        pair.amountB += _amountB;
+        user.amountA += _amountA;
+        user.amountB += _amountB;
 
         // Transfer tokens
         IERC20(_stablecoin).safeTransferFrom(
@@ -420,7 +426,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             pair.accDegisPerShare =
                 (SCALE * 10**_decimalDiff) /
                 FEE_DENOMINATOR;
-            console.log("accdegispershare when first", pair.accDegisPerShare);
             return;
         }
 
@@ -430,15 +435,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         pair.accDegisPerShare +=
             (_degAmount * SCALE) /
             (pair.amountA + pair.amountB);
-        console.log("accdegispershare", pair.accDegisPerShare);
 
         uint256 currentUserDeposit = user.amountA + user.amountB;
-
         // If user has deposited before, distribute the deg reward first
         // Pending reward is calculated with the new degisPerShare value
         if (currentUserDeposit > 0) {
-            uint256 pendingReward = currentUserDeposit *
-                pair.accDegisPerShare -
+            uint256 pendingReward = (currentUserDeposit *
+                pair.accDegisPerShare) /
+                SCALE -
                 user.degisDebt;
 
             uint256 reward = _safeTokenTransfer(
@@ -469,30 +473,40 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 _amountA,
         uint256 _amountB
     ) public activePair(_policyToken) {
-        UserInfo memory user = users[msg.sender][_policyToken];
+        UserInfo memory currentUserInfo = users[msg.sender][_policyToken];
 
         // Check if the user has enough tokens to withdraw
-        if (user.amountA + user.amountB == 0) revert ILM__NoDeposit();
-        if (_amountA > user.amountA || _amountB > user.amountB)
-            revert ILM__NotEnoughDeposit();
+        if (currentUserInfo.amountA + currentUserInfo.amountB == 0)
+            revert ILM__NoDeposit();
+        if (
+            _amountA > currentUserInfo.amountA ||
+            _amountB > currentUserInfo.amountB
+        ) revert ILM__NotEnoughDeposit();
 
         PairInfo storage pair = pairs[_policyToken];
+        UserInfo storage user = users[msg.sender][_policyToken];
 
         // Update status when withdraw
         uint256 degisToWithdraw = (pair.accDegisPerShare *
-            (user.amountA + user.amountB)) /
+            (currentUserInfo.amountA + currentUserInfo.amountB)) /
             SCALE -
-            user.degisDebt;
+            currentUserInfo.degisDebt;
 
         if (degisToWithdraw > 0) {
             // Degis will be withdrawed to emergency pool, not the user
-            _safeTokenTransfer(degis, emergencyPool, degisToWithdraw);
-            emit Harvest(msg.sender, degisToWithdraw);
+            uint256 reward = _safeTokenTransfer(
+                degis,
+                emergencyPool,
+                degisToWithdraw
+            );
+            emit Harvest(emergencyPool, reward);
         }
 
         // Update the user's amount and pool's amount
-        _updateUserAmount(msg.sender, _policyToken, _amountA, _amountB, false);
-        _updateAmount(_policyToken, _amountA, _amountB, false);
+        pair.amountA -= _amountA;
+        pair.amountB -= _amountB;
+        user.amountA -= _amountA;
+        user.amountB -= _amountB;
 
         uint256 amountToWithdraw = _amountA + _amountB;
 
@@ -503,9 +517,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         LPToken(pair.lptoken).burn(msg.sender, amountToWithdraw);
 
         // Update the user debt
-        UserInfo storage userST = users[msg.sender][_policyToken];
-        userST.degisDebt =
-            ((userST.amountA + userST.amountB) * pair.accDegisPerShare) /
+        user.degisDebt =
+            ((user.amountA + user.amountB) * pair.accDegisPerShare) /
             SCALE;
 
         emit Withdraw(
@@ -622,46 +635,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             new LPToken(address(this), _name, _name)
         );
         return lpTokenAddress;
-    }
-
-    /**
-     * @notice Update the user amount of both sides
-     */
-    function _updateUserAmount(
-        address _user,
-        address _policyToken,
-        uint256 _amountA,
-        uint256 _amountB,
-        bool _isDeposit
-    ) internal {
-        if (_isDeposit) {
-            users[_user][_policyToken].amountA += _amountA;
-            users[_user][_policyToken].amountB += _amountB;
-        } else {
-            users[_user][_policyToken].amountA -= _amountA;
-            users[_user][_policyToken].amountB -= _amountB;
-        }
-    }
-
-    /**
-     * @notice Update the pool's amount
-     * @param _policyToken Policy token address
-     * @param _amountA Amount of policy token (virtual)
-     * @param _amountB Amount of stablecoin (virtual)
-     */
-    function _updateAmount(
-        address _policyToken,
-        uint256 _amountA,
-        uint256 _amountB,
-        bool _isDeposit
-    ) internal {
-        if (_isDeposit) {
-            pairs[_policyToken].amountA += _amountA;
-            pairs[_policyToken].amountB += _amountB;
-        } else {
-            pairs[_policyToken].amountA -= _amountA;
-            pairs[_policyToken].amountB -= _amountB;
-        }
     }
 
     /**

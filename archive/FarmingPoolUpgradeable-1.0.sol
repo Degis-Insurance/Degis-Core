@@ -317,12 +317,6 @@ contract FarmingPoolUpgradeable is
         emit StartTimestampChanged(_startTimestamp);
     }
 
-    /**
-     * @notice Set piecewise reward and threshold
-     * @param _poolId Id of the pool
-     * @param _threshold Piecewise threshold
-     * @param _reward Piecewise reward
-     */
     function setPiecewise(
         uint256 _poolId,
         uint256[] calldata _threshold,
@@ -330,10 +324,6 @@ contract FarmingPoolUpgradeable is
     ) external onlyOwner {
         thresholdBasic[_poolId] = _threshold;
         piecewiseBasic[_poolId] = _reward;
-
-        // If reward for mimimum level is > 0, update isFarming
-        if (_reward[0] > 0) isFarming[_poolId] = true;
-        else isFarming[_poolId] = false;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -519,9 +509,6 @@ contract FarmingPoolUpgradeable is
         // Update if the pool is still farming
         // Users can withdraw even after the pool stopped
         if (isFarming[_poolId]) updatePool(_poolId);
-        else {
-            pool.lastRewardTimestamp = block.timestamp;
-        }
 
         uint256 pending = (user.stakingBalance *
             pool.accDegisPerShare +
@@ -578,9 +565,6 @@ contract FarmingPoolUpgradeable is
     {
         // Only update the pool when it is still in farming
         if (isFarming[_poolId]) updatePool(_poolId);
-        else {
-            poolList[_poolId].lastRewardTimestamp = block.timestamp;
-        }
 
         PoolInfo memory pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][msg.sender];
@@ -679,11 +663,9 @@ contract FarmingPoolUpgradeable is
      */
     function massUpdatePools() public {
         uint256 length = poolList.length;
-        for (uint256 poolId = 1; poolId < length; ++poolId) {
-            if (isFarming[poolId] == false) {
-                poolList[poolId].lastRewardTimestamp = block.timestamp;
-                continue;
-            } else updatePool(poolId);
+        for (uint256 poolId; poolId < length; poolId++) {
+            if (isFarming[poolId] == false) continue;
+            else updatePool(poolId);
         }
     }
 

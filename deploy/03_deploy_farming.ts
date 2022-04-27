@@ -16,7 +16,7 @@ import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
-  const { deploy, get, getArtifact } = deployments;
+  const { deploy, get } = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
