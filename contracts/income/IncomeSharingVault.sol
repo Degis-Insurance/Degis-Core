@@ -208,7 +208,7 @@ contract IncomeSharingVault is
         if (_amount == 0) revert DIS__ZeroAmount();
         if (veDEG.balanceOf(msg.sender) < _amount) revert DIS__NotEnoughVeDEG();
 
-         updatePool(_poolId);
+        updatePool(_poolId);
 
         // Lock some veDEG to participate
         veDEG.lockVeDEG(msg.sender, _amount);

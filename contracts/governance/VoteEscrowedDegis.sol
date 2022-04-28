@@ -146,6 +146,7 @@ contract VoteEscrowedDegis is
     error VED__NotEnoughBalance();
 
     error VED__TimeNotPassed();
+    error VED__OverLocked();
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -415,9 +416,11 @@ contract VoteEscrowedDegis is
      * @param _to User address
      * @param _amount Amount to lock
      */
-    function lockVeDEG(address _to, uint256 _amount) public {
+    function lockVeDEG(address _to, uint256 _amount) external {
         // Only whitelisted contract can lock veDEG
         if (!whitelist[msg.sender]) revert VED__NotWhiteListed();
+
+        if (locked[_to] + _amount > balanceOf(_to)) revert VED__OverLocked();
 
         _lock(_to, _amount);
         emit LockVeDEG(msg.sender, _to, _amount);
@@ -428,11 +431,13 @@ contract VoteEscrowedDegis is
      * @param _to User address
      * @param _amount Amount to unlock
      */
-    function unlockVeDEG(address _to, uint256 _amount) public {
+    function unlockVeDEG(address _to, uint256 _amount) external {
         // Only whitelisted contract can unlock veDEG
         if (!whitelist[msg.sender]) revert VED__NotWhiteListed();
 
-        _lock(_to, _amount);
+        if (locked[_to] < _amount) revert VED__OverLocked();
+
+        _unlock(_to, _amount);
         emit UnlockVeDEG(msg.sender, _to, _amount);
     }
 

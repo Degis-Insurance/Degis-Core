@@ -8,6 +8,8 @@ import {
   NaughtyFactory__factory,
   PolicyCore,
   PolicyCore__factory,
+  VoteEscrowedDegis,
+  VoteEscrowedDegis__factory,
 } from "../../typechain";
 
 task(
@@ -77,4 +79,28 @@ task(
   // Check the result
   console.log("Degis lottery address in core: ", await core.lottery());
   console.log("Income sharing address in core: ", await core.incomeSharing());
+});
+
+task(
+  "addIncomeSharingWL",
+  "Add income sharing contract to veDEG whitelist"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  // Addresses to be set
+  const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+  const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+    dev_account
+  ).attach(veDEGAddress);
+
+  const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
+
+  const tx = await veDEG.addWhitelist(incomeSharingAddress);
+  console.log("Tx details: ", await tx.wait());
 });

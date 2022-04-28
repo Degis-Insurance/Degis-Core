@@ -16,7 +16,13 @@ import {
   VRFMock__factory,
 } from "../../typechain";
 
-import { getNow, stablecoinToWei, toWei } from "../utils";
+import {
+  getLatestBlockTimestamp,
+  getNow,
+  stablecoinToWei,
+  toWei,
+  zeroAddress,
+} from "../utils";
 
 describe("Degis Lottery", function () {
   let DegisLottery: DegisLottery__factory, lottery: DegisLottery;
@@ -71,7 +77,7 @@ describe("Degis Lottery", function () {
     it("should be able to set an operator", async function () {
       await expect(lottery.setOperatorAddress(user1.address))
         .to.emit(lottery, "OperatorAddressChanged")
-        .withArgs(user1.address);
+        .withArgs(zeroAddress(), user1.address);
     });
   });
 
@@ -126,6 +132,13 @@ describe("Degis Lottery", function () {
         3
       );
 
+      const roundWeight = (await lottery.getCurrentRoundWeight()).toNumber();
+      const weightInfo = [1 * roundWeight, 1 * roundWeight, 2 * roundWeight];
+
+      expect(userTicketInfo[0][0]).to.equal(BigNumber.from(1234));
+      expect(userTicketInfo[0][1]).to.equal(BigNumber.from(1235));
+      expect(userTicketInfo[0][2]).to.equal(BigNumber.from(1236));
+
       // console.log("user ticket numbers:", userTicketInfo[0]);
       // console.log("user ticket amounts:", userTicketInfo[1]);
       // console.log("user ticket weights:", userTicketInfo[2]);
@@ -146,19 +159,18 @@ describe("Degis Lottery", function () {
     });
 
     it("should be able to inject funds", async function () {
-      await usd.approve(lottery.address, stablecoinToWei("1000"));
-      await expect(lottery.injectFunds(stablecoinToWei("100")))
-        .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, stablecoinToWei("100"));
+      await usd.transfer(lottery.address, stablecoinToWei("100"));
 
+      await lottery.updateBalance();
       const lotteryInfo = await lottery.lotteries(currentLotteryId);
       expect(lotteryInfo.totalRewards).to.equal(stablecoinToWei("100"));
     });
 
     it("should be able to stop a lottery", async function () {
+      const now = await getLatestBlockTimestamp(ethers.provider);
       await expect(lottery.closeLottery())
         .to.emit(lottery, "LotteryClose")
-        .withArgs(currentLotteryId);
+        .withArgs(currentLotteryId, now + 1);
 
       const currentLottery = await lottery.lotteries(currentLotteryId);
 
@@ -183,16 +195,11 @@ describe("Degis Lottery", function () {
     it("should be able to inject funds when not open", async function () {
       await lottery.closeLottery();
 
-      await usd.approve(lottery.address, stablecoinToWei("1000"));
-      await expect(lottery.injectFunds(stablecoinToWei("100")))
-        .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, stablecoinToWei("100"));
+      await usd.transfer(lottery.address, stablecoinToWei("100"));
 
       await lottery.drawLottery();
 
-      await expect(lottery.injectFunds(stablecoinToWei("100")))
-        .to.emit(lottery, "LotteryFundInjection")
-        .withArgs(currentLotteryId, stablecoinToWei("100"));
+      await usd.transfer(lottery.address, stablecoinToWei("100"));
     });
   });
 
@@ -213,8 +220,7 @@ describe("Degis Lottery", function () {
       await lottery.connect(user1).buyTickets([1234, 1235], [3, 6]);
 
       // Inject funds
-      await usd.approve(lottery.address, stablecoinToWei("1000"));
-      await lottery.injectFunds(stablecoinToWei("100"));
+      await usd.transfer(lottery.address, stablecoinToWei("1000"));
 
       currentLotteryId = (await lottery.currentLotteryId()).toNumber();
     });

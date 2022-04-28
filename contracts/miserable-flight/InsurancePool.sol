@@ -424,15 +424,7 @@ contract InsurancePool is
         USDToken.safeTransfer(emergencyPool, premiumToEmergency);
 
         // Transfer some reward to lottery
-        // Check the allowance first
-        if (
-            USDToken.allowance(address(this), address(degisLottery)) <
-            10000000 ether
-        ) {
-            USDToken.approve(address(degisLottery), type(uint256).max);
-        }
-
-        degisLottery.injectFunds(premiumToLottery);
+        USDToken.safeTransfer(address(degisLottery), premiumToLottery);
 
         emit PremiumDistributed(premiumToEmergency, premiumToLottery);
 

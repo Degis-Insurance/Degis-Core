@@ -6,6 +6,7 @@ import {
   BuyerToken__factory,
   DegisToken,
   DegisToken__factory,
+  MockUSD__factory,
 } from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -27,6 +28,53 @@ task("mintBuyerToken", "mint buyer token")
       taskArgs.address,
       parseUnits(taskArgs.amount)
     );
+
+    console.log(await tx.wait());
+  });
+
+task("mintDegisToken", "mint degis token")
+  .addParam("address", "minter or burner", null, types.string)
+  .addParam("amount", "Which token", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    const [dev_account] = await hre.ethers.getSigners();
+
+    // Get the token contract instance
+    const degis = new DegisToken__factory(dev_account).attach(
+      addressList[network.name].DegisToken
+    );
+
+    // Add minter
+    const tx = await degis.mintDegis(
+      taskArgs.address,
+      parseUnits(taskArgs.amount)
+    );
+
+    console.log(await tx.wait());
+  });
+
+task("mintUSD", "mint degis token")
+  .addParam("address", "minter or burner", null, types.string)
+  .addParam("amount", "Which token", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    if (network.name == "avax" || network.name == "avaxTest") return;
+
+    const [dev_account] = await hre.ethers.getSigners();
+
+    // Get the token contract instance
+    const usd = new MockUSD__factory(dev_account).attach(
+      addressList[network.name].MockUSD
+    );
+
+    // Add minter
+    const tx = await usd.mint(taskArgs.address, parseUnits(taskArgs.amount, 6));
 
     console.log(await tx.wait());
   });

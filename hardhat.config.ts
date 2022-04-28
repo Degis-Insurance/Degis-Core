@@ -46,7 +46,10 @@ import "./tasks/staking/stakingPoolFactory";
 
 import "./tasks/proxy/admin";
 import "./tasks/governance/VeDEG";
+
+// Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";
+import "./tasks/incomeSharing/pool";
 
 dotenv.config();
 
@@ -144,7 +147,7 @@ const config: HardhatUserConfig = {
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
     currency: "USD",
-    coinmarketcap: "22d94e85-bb52-4a52-838e-1a9061e10961",
+    coinmarketcap: process.env.COINMARKETCAP,
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
