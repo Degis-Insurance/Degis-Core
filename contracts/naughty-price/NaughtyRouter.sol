@@ -19,18 +19,14 @@
 */
 pragma solidity ^0.8.10;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../tokens/interfaces/IBuyerToken.sol";
-
-import "./interfaces/INPPolicyToken.sol";
-import "./interfaces/INaughtyPair.sol";
-import "./interfaces/INaughtyFactory.sol";
-import "./interfaces/IPolicyCore.sol";
-
-import "../utils/Ownable.sol";
-
-import "hardhat/console.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IBuyerToken} from "../tokens/interfaces/IBuyerToken.sol";
+import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
+import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
+import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
 
 /**
  * @title  NaughtyRouter
@@ -55,6 +51,10 @@ contract NaughtyRouter is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    event PolicyCoreChanged(address oldPolicyCore, address newPolicyCore);
+
+    event BuyerTokenChanged(address oldBuyerToken, address newBuyerToken);
 
     event LiquidityAdded(
         address indexed pairAddress,
@@ -88,7 +88,9 @@ contract NaughtyRouter is Ownable {
      * @param _deadLine Deadline of the pool
      */
     modifier beforeDeadline(uint256 _deadLine) {
-        require(block.timestamp < _deadLine, "expired transaction");
+        if (msg.sender != INaughtyFactory(factory).incomeMaker()) {
+            require(block.timestamp < _deadLine, "expired transaction");
+        }
         _;
     }
 
@@ -101,6 +103,7 @@ contract NaughtyRouter is Ownable {
      * @param _coreAddress Address of new policyCore
      */
     function setPolicyCore(address _coreAddress) external onlyOwner {
+        emit PolicyCoreChanged(policyCore, _coreAddress);
         policyCore = _coreAddress;
     }
 
@@ -109,7 +112,17 @@ contract NaughtyRouter is Ownable {
      * @param _buyerToken Address of new buyer token
      */
     function setBuyerToken(address _buyerToken) external onlyOwner {
+        emit BuyerTokenChanged(buyerToken, _buyerToken);
         buyerToken = _buyerToken;
+    }
+
+    /**
+     * @notice Set the address of factory
+     * @param _naughtyFactory Address of new naughty factory
+     */
+    function setNaughtyFactory(address _naughtyFactory) external onlyOwner {
+        emit BuyerTokenChanged(factory, _naughtyFactory);
+        factory = _naughtyFactory;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -137,7 +150,15 @@ contract NaughtyRouter is Ownable {
         uint256 _amountBMin,
         address _to,
         uint256 _deadline
-    ) external beforeDeadline(_deadline) {
+    )
+        external
+        beforeDeadline(_deadline)
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        )
+    {
         require(_checkStablecoin(_tokenB), "Token B should be stablecoin");
 
         // Mint _amountADesired policy tokens for users
@@ -150,7 +171,7 @@ contract NaughtyRouter is Ownable {
 
         // Add liquidity
         {
-            addLiquidity(
+            (amountA, amountB, liquidity) = addLiquidity(
                 _tokenA,
                 _tokenB,
                 _amountADesired,
@@ -210,7 +231,10 @@ contract NaughtyRouter is Ownable {
             );
         }
 
-        address pair = _getPairAddress(_tokenA, _tokenB);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenA,
+            _tokenB
+        );
 
         _transferHelper(_tokenA, _msgSender(), pair, amountA);
         _transferHelper(_tokenB, _msgSender(), pair, amountB);
@@ -245,7 +269,10 @@ contract NaughtyRouter is Ownable {
         beforeDeadline(_deadline)
         returns (uint256 amountA, uint256 amountB)
     {
-        address pair = _getPairAddress(_tokenA, _tokenB);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenA,
+            _tokenB
+        );
 
         INaughtyPair(pair).safeTransferFrom(_msgSender(), pair, _liquidity); // send liquidity to pair
 
@@ -254,10 +281,6 @@ contract NaughtyRouter is Ownable {
 
         require(amountA >= _amountAMin, "Insufficient insurance token amount");
         require(amountB >= _amountBMin, "Insufficient USDT token");
-
-        console.log("Amount A", amountA);
-        console.log("Amount B", amountB);
-        console.log("Liquidity", _liquidity);
 
         emit LiquidityRemoved(pair, amountA, amountB, _liquidity);
     }
@@ -280,7 +303,10 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountIn) {
-        address pair = _getPairAddress(_tokenIn, _tokenOut);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenIn,
+            _tokenOut
+        );
         require(
             block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
@@ -303,7 +329,7 @@ contract NaughtyRouter is Ownable {
 
         _transferHelper(_tokenIn, _msgSender(), pair, amountIn);
 
-        _swap(pair, amountIn, _amountOut, isBuying, _to);
+        _swap(pair, _tokenIn, amountIn, _amountOut, isBuying, _to);
     }
 
     /**
@@ -324,7 +350,10 @@ contract NaughtyRouter is Ownable {
         address _to,
         uint256 _deadline
     ) external beforeDeadline(_deadline) returns (uint256 amountOut) {
-        address pair = _getPairAddress(_tokenIn, _tokenOut);
+        address pair = INaughtyFactory(factory).getPairAddress(
+            _tokenIn,
+            _tokenOut
+        );
         require(
             block.timestamp <= INaughtyPair(pair).deadline(),
             "This pool has been frozen for swapping"
@@ -347,7 +376,7 @@ contract NaughtyRouter is Ownable {
 
         _transferHelper(_tokenIn, _msgSender(), pair, _amountIn);
 
-        _swap(pair, _amountIn, amountOut, isBuying, _to);
+        _swap(pair, _tokenIn, _amountIn, amountOut, isBuying, _to);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -420,6 +449,7 @@ contract NaughtyRouter is Ownable {
     /**
      * @notice Finish swap process
      * @param _pair Address of the pair
+     * @param _tokenIn Address of the input token
      * @param _amountIn Amount of tokens put in
      * @param _amountOut Amount of tokens get out
      * @param _isBuying Whether this is a purchase or a sell
@@ -427,6 +457,7 @@ contract NaughtyRouter is Ownable {
      */
     function _swap(
         address _pair,
+        address _tokenIn,
         uint256 _amountIn,
         uint256 _amountOut,
         bool _isBuying,
@@ -434,7 +465,13 @@ contract NaughtyRouter is Ownable {
     ) internal {
         // Only give buyer tokens when this is a purchase
         if (_isBuying) {
-            IBuyerToken(buyerToken).mintBuyerToken(_msgSender(), _amountIn);
+            // Check the decimals
+            uint256 decimals = IERC20Decimals(_tokenIn).decimals();
+            uint256 buyerTokenAmount = _amountIn * 10**(18 - decimals);
+            IBuyerToken(buyerToken).mintBuyerToken(
+                _msgSender(),
+                buyerTokenAmount
+            );
         }
 
         // If the user is buying policies => amount1Out = 0
@@ -496,24 +533,6 @@ contract NaughtyRouter is Ownable {
 
         // (Policy token reserve, stablecoin reserve)
         (reserveA, reserveB) = INaughtyPair(pairAddress).getReserves();
-    }
-
-    /**
-     * @notice Get pair address
-     * @param tokenA TokenA address
-     * @param tokenB TokenB address
-     */
-    function _getPairAddress(address tokenA, address tokenB)
-        internal
-        view
-        returns (address)
-    {
-        address pairAddress = INaughtyFactory(factory).getPairAddress(
-            tokenA,
-            tokenB
-        );
-
-        return pairAddress;
     }
 
     /**

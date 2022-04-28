@@ -21,11 +21,10 @@
 pragma solidity ^0.8.10;
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "./interfaces/INaughtyPair.sol";
-import "./interfaces/IPolicyCore.sol";
-import "../libraries/StringsUtils.sol";
-import "../utils/OwnableWithoutContext.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
+import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
+import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
 
 /**
  * @title Naughty Factory
@@ -37,11 +36,13 @@ import "../utils/OwnableWithoutContext.sol";
  */
 
 contract NaughtyFactory is OwnableWithoutContext {
-    using StringsUtils for address;
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    // INIT_CODE_HASH for NaughtyPair, may be used in frontend
+    bytes32 public constant PAIR_INIT_CODE_HASH =
+        keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
 
     // PolicyToken Address => StableCoin Address => Pool Address
     mapping(address => mapping(address => address)) getPair;
@@ -52,21 +53,44 @@ contract NaughtyFactory is OwnableWithoutContext {
     // Store all policy tokens' addresses
     address[] public allTokens;
 
+    // Next pool id to be deployed
     uint256 public _nextId;
 
     // Address of policyCore
     address public policyCore;
 
-    // INIT_CODE_HASH for NaughtyPair, may be used in frontend
-    bytes32 public constant PAIR_INIT_CODE_HASH =
-        keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
+    // Address of income maker, part of the transaction fee will be distributed to this address
+    address public incomeMaker;
+
+    // proportion = 1 / part
+    uint256 public incomeMakerProportion;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event PolicyCoreAddressChanged(
         address oldPolicyCore,
         address newPolicyCore
     );
+    event IncomeMakerProportionChanged(
+        uint256 oldProportion,
+        uint256 newProportion
+    );
+    event IncomeMakerAddressChanged(
+        address oldIncomeMaker,
+        address newIncomeMaker
+    );
 
-    constructor() OwnableWithoutContext(msg.sender) {}
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    constructor() OwnableWithoutContext(msg.sender) {
+        // 40% of swap fee is distributed to income maker contract
+        // Can be set later
+        incomeMakerProportion = 40;
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Modifiers ************************************** //
@@ -148,9 +172,28 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @param _policyCore Address of policyCore contract
      */
     function setPolicyCoreAddress(address _policyCore) external onlyOwner {
-        address oldPolicyCore = policyCore;
+        emit PolicyCoreAddressChanged(policyCore, _policyCore);
         policyCore = _policyCore;
-        emit PolicyCoreAddressChanged(oldPolicyCore, _policyCore);
+    }
+
+    /**
+     * @notice Set income maker proportion
+     * @dev    Only callable by the owner
+     * @param _proportion New proportion to income maker contract
+     */
+    function setIncomeMakerProportion(uint256 _proportion) external onlyOwner {
+        emit IncomeMakerProportionChanged(incomeMakerProportion, _proportion);
+        incomeMakerProportion = _proportion;
+    }
+
+    /**
+     * @notice Set income maker address
+     * @dev Only callable by the owner
+     * @param _incomeMaker New income maker address
+     */
+    function setIncomeMakerAddress(address _incomeMaker) external onlyOwner {
+        emit IncomeMakerAddressChanged(incomeMaker, _incomeMaker);
+        incomeMaker = _incomeMaker;
     }
 
     // ---------------------------------------------------------------------------------------- //

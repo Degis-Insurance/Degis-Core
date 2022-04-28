@@ -19,15 +19,15 @@
 */
 
 pragma solidity ^0.8.10;
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../libraries/StringsUtils.sol";
-import "../libraries/SafePRBMath.sol";
-import "../utils/Ownable.sol";
-import "../utils/interfaces/IERC20Decimals.sol";
-import "./interfaces/IPriceGetter.sol";
-import "./interfaces/INaughtyFactory.sol";
-import "./interfaces/INPPolicyToken.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {StringsUtils} from "../libraries/StringsUtils.sol";
+import {Ownable} from "../utils/Ownable.sol";
+import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
+import {IPriceGetter} from "./interfaces/IPriceGetter.sol";
+import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
+import {INPPolicyToken} from "./interfaces/INPPolicyToken.sol";
+import {INaughtyRouter} from "./interfaces/INaughtyRouter.sol";
 
 /**
  * @title  PolicyCore
@@ -61,7 +61,6 @@ import "./interfaces/INPPolicyToken.sol";
 
 contract PolicyCore is Ownable {
     using StringsUtils for uint256;
-    using SafePRBMath for uint256;
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
@@ -82,6 +81,12 @@ contract PolicyCore is Ownable {
 
     // Naughty Router contract address
     address public naughtyRouter;
+
+    // Contract for initial liquidity matching
+    address public ILMContract;
+
+    // Income to lottery ratio (max 10)
+    uint256 public toLottery;
 
     struct PolicyTokenInfo {
         address policyTokenAddress;
@@ -133,9 +138,14 @@ contract PolicyCore is Ownable {
     // ************************************ Events ******************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event LotteryChanged(address newLotteryAddress);
-    event IncomeSharingChanged(address newIncomeSharing);
-    event NaughtyRouterChanged(address newRouter);
+    event LotteryChanged(address oldLotteryAddress, address newLotteryAddress);
+    event IncomeSharingChanged(
+        address oldIncomeSharing,
+        address newIncomeSharing
+    );
+    event NaughtyRouterChanged(address oldRouter, address newRouter);
+    event ILMChanged(address oldILM, address newILM);
+    event IncomeToLotteryChanged(uint256 oldToLottery, uint256 newToLottery);
     event PolicyTokenDeployed(
         string tokenName,
         address tokenAddress,
@@ -147,6 +157,13 @@ contract PolicyCore is Ownable {
         address poolAddress,
         address policyTokenAddress,
         address stablecoin
+    );
+    event PoolDeployedWithInitialLiquidity(
+        address poolAddress,
+        address policyTokenAddress,
+        address stablecoin,
+        uint256 initLiquidityA,
+        uint256 initLiquidityB
     );
     event Deposit(
         address userAddress,
@@ -207,6 +224,9 @@ contract PolicyCore is Ownable {
         // Initialize the interfaces
         factory = INaughtyFactory(_factory);
         priceGetter = IPriceGetter(_priceGetter);
+
+        // 20% to lottery, 80% to income sharing
+        toLottery = 2;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -393,8 +413,8 @@ contract PolicyCore is Ownable {
      * @param _lotteryAddress Address of the new lottery
      */
     function setLottery(address _lotteryAddress) external onlyOwner {
+        emit LotteryChanged(lottery, _lotteryAddress);
         lottery = _lotteryAddress;
-        emit LotteryChanged(_lotteryAddress);
     }
 
     /**
@@ -402,8 +422,8 @@ contract PolicyCore is Ownable {
      * @param _incomeSharing Address of the new incomeSharing
      */
     function setIncomeSharing(address _incomeSharing) external onlyOwner {
+        emit IncomeSharingChanged(incomeSharing, _incomeSharing);
         incomeSharing = _incomeSharing;
-        emit IncomeSharingChanged(_incomeSharing);
     }
 
     /**
@@ -411,8 +431,19 @@ contract PolicyCore is Ownable {
      * @param _router Address of the new naughty router
      */
     function setNaughtyRouter(address _router) external onlyOwner {
+        emit NaughtyRouterChanged(naughtyRouter, _router);
         naughtyRouter = _router;
-        emit NaughtyRouterChanged(_router);
+    }
+
+    function setILMContract(address _ILM) external onlyOwner {
+        emit ILMChanged(ILMContract, _ILM);
+        ILMContract = _ILM;
+    }
+
+    function setIncomeToLottery(uint256 _toLottery) external onlyOwner {
+        require(_toLottery <= 10, "Max 10");
+        emit IncomeToLotteryChanged(toLottery, _toLottery);
+        toLottery = _toLottery;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -505,7 +536,6 @@ contract PolicyCore is Ownable {
      * @param _stablecoin Address of the stable coin
      * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
      * @param _feeRate Fee rate given to LP holders
-     * @return poolAddress The address of the pool just deployed
      */
     function deployPool(
         string memory _policyTokenName,
@@ -514,29 +544,28 @@ contract PolicyCore is Ownable {
         uint256 _feeRate
     )
         external
-        onlyOwner
         validStablecoin(_stablecoin)
         deployedPolicy(_policyTokenName)
         returns (address)
     {
+        require(
+            msg.sender == owner() || msg.sender == ILMContract,
+            "Only owner or ILM"
+        );
+
         require(_poolDeadline > block.timestamp, "Wrong deadline");
         require(
             _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
             "Policy token and pool deadline not the same"
         );
-
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
-        // Deploy a new pool (policyToken <=> stablecoin)
-        address poolAddress = factory.deployPool(
+        address poolAddress = _deployPool(
             policyTokenAddress,
             _stablecoin,
             _poolDeadline,
             _feeRate
         );
-
-        // Record the mapping
-        whichStablecoin[policyTokenAddress] = _stablecoin;
 
         emit PoolDeployed(poolAddress, policyTokenAddress, _stablecoin);
 
@@ -558,6 +587,7 @@ contract PolicyCore is Ownable {
         beforeDeadline(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
+        require(_amount > 0, "Zero Amount");
         _deposit(_policyTokenName, _stablecoin, _amount, msg.sender);
     }
 
@@ -583,6 +613,7 @@ contract PolicyCore is Ownable {
             msg.sender == naughtyRouter,
             "Only the router contract can delegate"
         );
+        require(_amount > 0, "Zero Amount");
 
         _deposit(_policyTokenName, _stablecoin, _amount, _user);
 
@@ -622,8 +653,11 @@ contract PolicyCore is Ownable {
         // Update quota
         userQuota[msg.sender][policyTokenAddress] -= _amount;
 
+        // Charge 1% Fee when redeem / claim
+        uint256 amountWithFee = _chargeFee(_stablecoin, _amount);
+
         // Transfer back the stablecoin
-        IERC20(_stablecoin).safeTransfer(msg.sender, _amount);
+        IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
         // Burn the policy tokens
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
@@ -670,14 +704,7 @@ contract PolicyCore is Ownable {
         );
 
         // Charge 1% Fee when redeem / claim
-        uint256 amountWithFee = (quota * 990) / 1000;
-        uint256 amountToCollect = quota - amountWithFee;
-
-        pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToSharing[_stablecoin] +=
-            amountToCollect -
-            (amountToCollect * 8) /
-            10;
+        uint256 amountWithFee = _chargeFee(_stablecoin, quota);
 
         // Send back stablecoins directly
         IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
@@ -727,15 +754,7 @@ contract PolicyCore is Ownable {
         );
 
         // Charge 1% fee
-        uint256 amountWithFee = (_amount * 990) / 1000;
-        uint256 amountToCollect = _amount - amountWithFee;
-
-        // Update pending income record
-        pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
-        pendingIncomeToSharing[_stablecoin] +=
-            amountToCollect -
-            (amountToCollect * 8) /
-            10;
+        uint256 amountWithFee = _chargeFee(_stablecoin, _amount);
 
         IERC20(_stablecoin).safeTransfer(msg.sender, amountWithFee);
 
@@ -847,10 +866,12 @@ contract PolicyCore is Ownable {
             settleResult[policyTokenAddress].currentDistributionIndex = length;
 
             // Update pending income record
-            pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+            pendingIncomeToLottery[_stablecoin] +=
+                (amountToCollect * toLottery) /
+                10;
             pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
-                (amountToCollect * 8) /
+                (amountToCollect * toLottery) /
                 10;
 
             emit PolicyTokensSettledForUsers(
@@ -878,10 +899,12 @@ contract PolicyCore is Ownable {
                 .currentDistributionIndex = _stopIndex;
 
             // Update pending income record
-            pendingIncomeToLottery[_stablecoin] += (amountToCollect * 8) / 10;
+            pendingIncomeToLottery[_stablecoin] +=
+                (amountToCollect * toLottery) /
+                10;
             pendingIncomeToSharing[_stablecoin] +=
                 amountToCollect -
-                (amountToCollect * 8) /
+                (amountToCollect * toLottery) /
                 10;
 
             emit PolicyTokensSettledForUsers(
@@ -907,7 +930,7 @@ contract PolicyCore is Ownable {
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
         uint256 amountToSharing = pendingIncomeToSharing[_stablecoin];
         require(
-            amountToLottery > 0 && amountToSharing > 0,
+            amountToLottery > 0 || amountToSharing > 0,
             "No pending income"
         );
 
@@ -918,6 +941,34 @@ contract PolicyCore is Ownable {
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Finish deploying a pool
+     * @param _policyTokenAddress Address of the policy token
+     * @param _stablecoin Address of the stable coin
+     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
+     * @param _feeRate Fee rate given to LP holders
+     * @return poolAddress Address of the pool
+     */
+    function _deployPool(
+        address _policyTokenAddress,
+        address _stablecoin,
+        uint256 _poolDeadline,
+        uint256 _feeRate
+    ) internal returns (address) {
+        // Deploy a new pool (policyToken <=> stablecoin)
+        address poolAddress = factory.deployPool(
+            _policyTokenAddress,
+            _stablecoin,
+            _poolDeadline,
+            _feeRate
+        );
+
+        // Record the mapping
+        whichStablecoin[_policyTokenAddress] = _stablecoin;
+
+        return poolAddress;
+    }
 
     /**
      * @notice Finish Deposit
@@ -946,7 +997,7 @@ contract PolicyCore is Ownable {
         IERC20(_stablecoin).safeTransferFrom(_user, address(this), _amount);
 
         INPPolicyToken policyToken = INPPolicyToken(policyTokenAddress);
-        
+
         // Mint new policy tokens
         policyToken.mint(_user, _amount);
 
@@ -982,6 +1033,29 @@ contract PolicyCore is Ownable {
     }
 
     /**
+     * @notice Charge fee when redeem / claim
+     * @param _stablecoin Stablecoin address
+     * @param _amount Amount to redeem / claim
+     * @return amountWithFee Amount with fee
+     */
+    function _chargeFee(address _stablecoin, uint256 _amount)
+        internal
+        returns (uint256)
+    {
+        uint256 amountWithFee = (_amount * 990) / 1000;
+        uint256 amountToCollect = _amount - amountWithFee;
+
+        uint256 amountToLottery = (amountToCollect * toLottery) / 10;
+
+        pendingIncomeToLottery[_stablecoin] += amountToLottery;
+        pendingIncomeToSharing[_stablecoin] +=
+            amountToCollect -
+            amountToLottery;
+
+        return amountWithFee;
+    }
+
+    /**
      * @notice Generate the policy token name
      * @param _tokenName Name of the stike token (BTC, ETH, AVAX...)
      * @param _decimals Decimals of the name generation (0,1=>1, 2=>2)
@@ -1005,7 +1079,7 @@ contract PolicyCore is Ownable {
 
         // Decimal part of the strike price (1234e16 => 34)
         // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
-        uint256 decimalPart = _strikePrice.frac() / (10**(18 - _decimals));
+        uint256 decimalPart = _frac(_strikePrice) / (10**(18 - _decimals));
         if (_decimals >= 2)
             require(decimalPart > 10**(_decimals - 1), "Invalid decimal part");
 
@@ -1024,5 +1098,12 @@ contract PolicyCore is Ownable {
             )
         );
         return name;
+    }
+
+    function _frac(uint256 x) internal pure returns (uint256 result) {
+        uint256 SCALE = 1e18;
+        assembly {
+            result := mod(x, SCALE)
+        }
     }
 }

@@ -18,4 +18,8 @@ interface INaughtyFactory {
         uint256 _deadline,
         uint256 _feeRate
     ) external returns (address);
+
+    function incomeMaker() external view returns (address);
+
+    function incomeMakerProportion() external view returns (uint256);
 }

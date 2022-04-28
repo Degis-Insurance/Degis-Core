@@ -1,6 +1,15 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
+
+// Deploy Purchase Incentive Vault 
+// It is a proxy deployment
+//    - TransparentUpgradeableProxy
+//    - PurchaseIncentiveVault
+// Tasks:
+//    - Add degis minter role to PurchaseIncentiveVault
+// Tags:
+//    - PurchaseIncentive
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -16,16 +25,29 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const DegisToken = await get("DegisToken");
   const BuyerToken = await get("BuyerToken");
 
+  const proxyOptions: ProxyOptions = {
+    proxyContract: "TransparentUpgradeableProxy",
+    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+    execute: {
+      methodName: "initialize",
+      args: [BuyerToken.address, DegisToken.address],
+    },
+  };
+
   const purchaseIncentive = await deploy("PurchaseIncentiveVault", {
     contract: "PurchaseIncentiveVault",
     from: deployer,
-    args: [BuyerToken.address, DegisToken.address],
+    proxy: proxyOptions,
+    args: [],
     log: true,
   });
   addressList[network.name].PurchaseIncentiveVault = purchaseIncentive.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);
+
+  // Add degis minter role to purchaseIncentiveVault contract
+  await hre.run("addMinterBurner", ["minter", "d", "PurchaseIncentiveVault"]);
 };
 
 func.tags = ["PurchaseIncentive"];

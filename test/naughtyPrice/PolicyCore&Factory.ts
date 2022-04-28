@@ -15,11 +15,16 @@ import {
   NaughtyPair,
   PriceFeedMock__factory,
   PriceFeedMock,
+  NaughtyRouter__factory,
+  NaughtyRouter,
+  BuyerToken__factory,
+  BuyerToken,
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
   defaultAbiCoder,
   getCreate2Address,
+  Interface,
   keccak256,
   parseUnits,
   solidityKeccak256,
@@ -31,16 +36,19 @@ import {
   stablecoinToWei,
   toBN,
   toWei,
+  zeroAddress,
 } from "../utils";
 
 describe("Policy Core and Naughty Factory", function () {
   let PolicyCore: PolicyCore__factory, core: PolicyCore;
   let MockUSD: MockUSD__factory, usd: MockUSD;
+  let BuyerToken: BuyerToken__factory, buyerToken: BuyerToken;
   let NaughtyFactory: NaughtyFactory__factory, factory: NaughtyFactory;
   let PriceGetter: PriceGetter__factory, priceGetter: PriceGetter;
   let PriceFeedMock: PriceFeedMock__factory, priceFeedMock: PriceFeedMock;
   let NPPolicyToken: NPPolicyToken__factory, policyToken: NPPolicyToken;
   let NaughtyPair: NaughtyPair__factory, pair: NaughtyPair;
+  let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
 
   let dev_account: SignerWithAddress,
     stablecoin: SignerWithAddress,
@@ -55,8 +63,13 @@ describe("Policy Core and Naughty Factory", function () {
     [dev_account, stablecoin, user1, emergencyPool, lottery, testAddress] =
       await ethers.getSigners();
 
+    // 6 decimals for usd
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
+
+    // 18 decimals for buyer token
+    BuyerToken = await ethers.getContractFactory("BuyerToken");
+    buyerToken = await BuyerToken.deploy();
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
@@ -77,6 +90,9 @@ describe("Policy Core and Naughty Factory", function () {
     );
     await core.deployed();
     await factory.deployed();
+
+    NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
+    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
 
     await factory.setPolicyCoreAddress(core.address);
 
@@ -113,18 +129,32 @@ describe("Policy Core and Naughty Factory", function () {
     });
 
     it("should be able to set a new lottery address", async function () {
-      await expect(core.setLottery(stablecoin.address))
+      await expect(core.setLottery(testAddress.address))
         .to.emit(core, "LotteryChanged")
-        .withArgs(stablecoin.address);
+        .withArgs(lottery.address, testAddress.address);
 
-      expect(await core.lottery()).to.equal(stablecoin.address);
+      expect(await core.lottery()).to.equal(testAddress.address);
     });
 
     it("should be able to set a new incomeSharing address", async function () {
       await expect(core.setIncomeSharing(testAddress.address))
         .to.emit(core, "IncomeSharingChanged")
-        .withArgs(testAddress.address);
+        .withArgs(emergencyPool.address, testAddress.address);
       expect(await core.incomeSharing()).to.equal(testAddress.address);
+    });
+
+    it("should be able to set a new router address", async function () {
+      await expect(core.setNaughtyRouter(router.address))
+        .to.emit(core, "NaughtyRouterChanged")
+        .withArgs(zeroAddress(), router.address);
+      expect(await core.naughtyRouter()).to.equal(router.address);
+    });
+
+    it("should be able to set a new ILM contract", async function () {
+      await expect(core.setILMContract(testAddress.address))
+        .to.emit(core, "ILMChanged")
+        .withArgs(zeroAddress(), testAddress.address);
+      expect(await core.ILMContract()).to.equal(testAddress.address);
     });
 
     it("should be able to set the core address in factory", async function () {
@@ -174,13 +204,15 @@ describe("Policy Core and Naughty Factory", function () {
 
       const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
+      const policyTokenDecimals = await usd.decimals();
+
       await expect(
         core.deployPolicyToken(
           "BTC",
           usd.address,
           false,
           4,
-          6,
+          policyTokenDecimals,
           parseUnits("5.5656"),
           "2112",
           toBN(deadline),
@@ -188,7 +220,13 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
+        .withArgs(
+          policyTokenName,
+          address,
+          policyTokenDecimals,
+          deadline,
+          settleTimestamp
+        );
     });
 
     it("should not be able to generate names with wrong decimals", async function () {
@@ -237,13 +275,15 @@ describe("Policy Core and Naughty Factory", function () {
 
       const address = getCreate2Address(factory.address, salt, INIT_CODE_HASH);
 
+      const policyTokenDecimals = await usd.decimals();
+
       await expect(
         core.deployPolicyToken(
           "BTC",
           usd.address,
           false,
           18,
-          6,
+          policyTokenDecimals,
           parseUnits("5.565656565656565656"),
           "2112",
           toBN(deadline),
@@ -251,7 +291,13 @@ describe("Policy Core and Naughty Factory", function () {
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
-        .withArgs(policyTokenName, address, 6, deadline, settleTimestamp);
+        .withArgs(
+          policyTokenName,
+          address,
+          policyTokenDecimals,
+          deadline,
+          settleTimestamp
+        );
     });
 
     it("should be able to deploy a new policy token and get the correct address", async function () {
@@ -367,6 +413,73 @@ describe("Policy Core and Naughty Factory", function () {
       );
       expect(pairAddressFromFactory).to.equal(poolAddress);
     });
+
+    it("should be able to deploy new pool with init lp from ILM", async function () {
+      // Preset1: Add the stablecoin (we use default mockUSD here)
+      // Preset2: Deploy a policy token
+      await core.deployPolicyToken(
+        "BTC",
+        usd.address,
+        false,
+        0,
+        6,
+        parseUnits("24000"),
+        "2112",
+        toBN(deadline),
+        toBN(settleTimestamp)
+      );
+
+      // Calculate the address
+      const policyTokenName = "BTC_24000.0_L_2112";
+
+      const policyTokenInfo = await core.policyTokenInfoMapping(
+        policyTokenName
+      );
+      const policyTokenAddress = policyTokenInfo.policyTokenAddress;
+
+      // Set ILM contract in PolicyCore
+      await core.setILMContract(testAddress.address);
+      await core.setNaughtyRouter(router.address);
+      await router.setPolicyCore(core.address);
+
+      // Mint usd and approve two contracts
+      await usd.mint(testAddress.address, stablecoinToWei("200"));
+      await usd
+        .connect(testAddress)
+        .approve(core.address, stablecoinToWei("20"));
+      await usd
+        .connect(testAddress)
+        .approve(router.address, stablecoinToWei("20"));
+
+      policyToken = NPPolicyToken.attach(policyTokenAddress);
+      await policyToken
+        .connect(testAddress)
+        .approve(router.address, stablecoinToWei("20"));
+
+      const now = await getLatestBlockTimestamp(ethers.provider);
+
+      // Deploy a pool from testAddress(ILM) with init liquidity
+      await core
+        .connect(testAddress)
+        .deployPool(policyTokenName, usd.address, toBN(deadline), 20);
+
+      expect(await core.supportedStablecoin(usd.address)).to.be.true;
+
+      await expect(
+        router
+          .connect(testAddress)
+          .addLiquidityWithUSD(
+            policyTokenAddress,
+            usd.address,
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            stablecoinToWei("10"),
+            testAddress.address,
+            toBN(now + 600000)
+          )
+      ).to.be.emit(router, "LiquidityAdded");
+    });
   });
   describe("Stake and Redeem policy tokens", function () {
     let policyTokenName: string,
@@ -444,13 +557,18 @@ describe("Policy Core and Naughty Factory", function () {
       await policyTokenInstance.approve(core.address, stablecoinToWei("5000"));
       await core.redeem(policyTokenName, usd.address, stablecoinToWei("5000"));
 
+      // 1% fee = 50
       expect(await usd.balanceOf(dev_account.address)).to.equal(
-        stablecoinToWei("95000")
+        stablecoinToWei("94950")
       );
 
       expect(await policyTokenInstance.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("5000")
       );
+
+      await core.collectIncome(usd.address);
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(stablecoinToWei("40"));
+      expect(await usd.balanceOf(lottery.address)).to.equal(stablecoinToWei("10"));
     });
   });
 
@@ -547,10 +665,10 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
-        stablecoinToWei("20")
+        stablecoinToWei("80")
       );
       expect(await usd.balanceOf(lottery.address)).to.equal(
-        stablecoinToWei("80")
+        stablecoinToWei("20")
       );
     });
 
@@ -585,10 +703,10 @@ describe("Policy Core and Naughty Factory", function () {
 
       await core.collectIncome(usd.address);
       expect(await usd.balanceOf(emergencyPool.address)).to.equal(
-        stablecoinToWei("40")
+        stablecoinToWei("160")
       );
       expect(await usd.balanceOf(lottery.address)).to.equal(
-        stablecoinToWei("160")
+        stablecoinToWei("40")
       );
     });
   });

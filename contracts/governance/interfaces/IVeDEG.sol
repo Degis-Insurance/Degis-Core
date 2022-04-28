@@ -18,4 +18,8 @@ interface IVeDEG is IVeERC20 {
     function getStakedPtp(address _addr) external view returns (uint256);
 
     function getVotes(address _account) external view returns (uint256);
+
+    function lockVeDEG(address _to, uint256 _amount) external;
+
+    function unlockVeDEG(address _to, uint256 _amount) external;
 }

@@ -2,6 +2,18 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
+// Deploy Farming Pool
+// It is a non-proxy(old) or a proxy deployment(new)
+// Old:
+//    - FarmingPool
+// New:
+//    - TransparentUpgradeableProxy
+//    - FarmingPoolUpgradeable
+// Tasks:
+//    - Add degis minter role to FarmingPool / FarmingPoolUpgradeable
+// Tags:
+//    - Farming
+
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
   const { deploy, get } = deployments;
@@ -17,32 +29,40 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   console.log("DegisToken address: ", DegisToken.address);
 
-  const farmingPool = await deploy("FarmingPool", {
-    contract: "FarmingPool",
-    from: deployer,
-    args: [DegisToken.address],
-    log: true,
-  });
-  addressList[network.name].FarmingPool = farmingPool.address;
+  const isProxy = 1;
 
-  // // Always use the same proxy admin
-  // const proxyOptions: ProxyOptions = {
-  //   proxyContract: "OptimizedTransparentProxy",
-  //   viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
-  //   execute: {
-  //     methodName: "initialize",
-  //     args: [DegisToken.address],
-  //   },
-  // };
+  if (!isProxy) {
+    const farmingPool = await deploy("FarmingPool", {
+      contract: "FarmingPool",
+      from: deployer,
+      args: [DegisToken.address],
+      log: true,
+    });
+    addressList[network.name].FarmingPool = farmingPool.address;
+    await hre.run("addMinterBurner", ["minter", "d", "FarmingPool"]);
+  } else if (isProxy) {
+    // const proxyArtifact = await getArtifact("TransparentUpgradeableProxy");
+    // Always use the same proxy admin
+    const proxyOptions: ProxyOptions = {
+      proxyContract: "TransparentUpgradeableProxy",
+      viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+      execute: {
+        methodName: "initialize",
+        args: [DegisToken.address],
+      },
+    };
 
-  // const farmingPoolUpgradeable = await deploy("FarmingPoolUpgradeable", {
-  //   contract: "FarmingPoolUpgradeable",
-  //   from: deployer,
-  //   proxy: proxyOptions,
-  //   args: [],
-  //   log: true,
-  // });
-  // addressList[network.name].FarmingPoolUpgradeable = farmingPoolUpgradeable.address;
+    const farmingPoolUpgradeable = await deploy("FarmingPoolUpgradeable", {
+      contract: "FarmingPoolUpgradeable",
+      from: deployer,
+      proxy: proxyOptions,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].FarmingPoolUpgradeable =
+      farmingPoolUpgradeable.address;
+    await hre.run("addMinterBurner", ["minter", "d", "FarmingPoolUpgradeable"]);
+  }
 
   // Store the address list after deployment
   storeAddressList(addressList);

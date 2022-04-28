@@ -8,7 +8,8 @@ import {
 } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
+import { toWei } from "../../test/utils";
 
 task(
   "settlePurchaseIncentive",
@@ -18,7 +19,7 @@ task(
 
   // Signers
   const [dev_account] = await hre.ethers.getSigners();
-  console.log("The dfault signer is: ", dev_account.address);
+  console.log("The default signer is: ", dev_account.address);
 
   const addressList = readAddressList();
   const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
@@ -42,14 +43,14 @@ task(
 
   // Get the round after settlement
   const roundAfter = await vault.currentRound();
-  console.log("Round after settlement: ", roundAfter);
+  console.log("Round after settlement: ", roundAfter.toNumber());
 });
 
 task(
   "setVaultReward",
   "Set the reward speed and interval in purchase incentive vault"
 )
-  .addParam("reward", "Degis reward per round", null, types.int)
+  .addParam("reward", "Degis reward per round", null, types.string)
   .addParam("interval", "Interval of rounds", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const degisPerRound = taskArgs.reward;
@@ -92,3 +93,41 @@ task(
     const disInterval = await vault.distributionInterval();
     console.log("Distribution interval in vault: ", disInterval);
   });
+
+task(
+  "setPieceWise-Purchase",
+  "Set the threshold and piecewise reward"
+).setAction(async (taskArgs, hre) => {
+  const threshold = [0, toWei("10"), toWei("50"), toWei("100")];
+  const pieceWise = [toWei("100"), toWei("500"), toWei("1000"), toWei("5000")];
+
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The dfault signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+  const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
+
+  console.log(
+    "The purchase incentive vault address of this network is: ",
+    vaultAddress
+  );
+
+  const PurchaseIncentiveVault: PurchaseIncentiveVault__factory =
+    await hre.ethers.getContractFactory("PurchaseIncentiveVault");
+  const vault: PurchaseIncentiveVault =
+    PurchaseIncentiveVault.attach(vaultAddress);
+
+  // Set
+  const tx = await vault.setPiecewise(threshold, pieceWise);
+  console.log("Tx details:", await tx.wait());
+
+  // Check the result
+  const degisR = await vault.getRewardPerRound();
+  console.log("Degis reward in vault: ", degisR);
+
+  const disInterval = await vault.distributionInterval();
+  console.log("Distribution interval in vault: ", disInterval);
+});

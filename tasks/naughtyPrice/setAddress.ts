@@ -56,7 +56,6 @@ task(
 
   // Addresses to be set
   const policyCoreAddress = addressList[network.name].PolicyCore;
-  const buyerTokenAddress = addressList[network.name].BuyerToken;
 
   // Get naughty router contract instance
   const naughtyRouterAddress = addressList[network.name].NaughtyRouter;
@@ -65,11 +64,8 @@ task(
   const router: NaughtyRouter = NaughtyRouter.attach(naughtyRouterAddress);
 
   // Set
-  const tx_1 = await router.setPolicyCore(policyCoreAddress);
-  console.log("Tx details: ", await tx_1.wait());
-
-  const tx_2 = await router.setBuyerToken(buyerTokenAddress);
-  console.log("Tx details: ", await tx_2.wait());
+  const tx = await router.setPolicyCore(policyCoreAddress);
+  console.log("Tx details: ", await tx.wait());
 
   // Check the result
   const coreAddress = await router.policyCore();
@@ -91,7 +87,7 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
 
     // Addresses to be set
     const naughtyRouterAddress = addressList[network.name].NaughtyRouter;
-    const incomeSharingAddress = addressList[network.name].IncomeSharing;
+    const incomeSharingAddress = addressList[network.name].EmergencyPool;
     const lotteryAddress = addressList[network.name].DegisLottery;
 
     // Get policy core contract instance
@@ -101,19 +97,19 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
-    // Set
+    Set
     const tx_setRouter = await core.setNaughtyRouter(naughtyRouterAddress);
     console.log("Tx_setRouter details: ", await tx_setRouter.wait());
 
-    const tx_setEmergency = await core.setIncomeSharing(incomeSharingAddress);
-    console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
+    // const tx_setEmergency = await core.setIncomeSharing(incomeSharingAddress);
+    // console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
 
-    const tx_setLottery = await core.setLottery(lotteryAddress);
-    console.log("Tx_setLottery details: ", await tx_setLottery.wait());
+    // const tx_setLottery = await core.setLottery(lotteryAddress);
+    // console.log("Tx_setLottery details: ", await tx_setLottery.wait());
 
     // Check the result
     console.log("Naughty router address in core: ", await core.naughtyRouter());
-    console.log("Degis lottery address in core: ", await core.lottery());
-    console.log("Emergency pool address in core: ", await core.incomeSharing());
+    // console.log("Degis lottery address in core: ", await core.lottery());
+    // console.log("Emergency pool address in core: ", await core.incomeSharing());
   }
 );

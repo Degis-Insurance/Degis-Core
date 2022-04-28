@@ -1,3 +1,5 @@
+import { BigNumber } from "ethers";
+
 export const toWei = (etherAmount: string) => {
   return ethers.utils.parseUnits(etherAmount);
 };
@@ -6,14 +8,13 @@ export const formatTokenAmount = (amount: string) => {
   return ethers.utils.formatUnits(amount, 18);
 };
 
-export const stablecoinToWei = (stablecoinAmount: string) => {
+export const stablecoinToWei = (stablecoinAmount: string | BigNumber) => {
   return ethers.utils.parseUnits(stablecoinAmount, 6);
 };
 
-export const formatStablecoin = (stablecoinAmount: string) => {
+export const formatStablecoin = (stablecoinAmount: string | BigNumber) => {
   return ethers.utils.formatUnits(stablecoinAmount, 6);
 };
-
 
 export const zeroAddress = () => {
   return ethers.constants.AddressZero;
@@ -49,4 +50,8 @@ export const getNow = () => {
 
 export const toBN = (normalNumber: number) => {
   return ethers.BigNumber.from(normalNumber);
+};
+
+export const customErrorMsg = (msg: string) => {
+  return "custom error " + msg;
 };

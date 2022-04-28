@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-import "hardhat/console.sol";
-
 abstract contract BasePool is IPool, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -40,6 +38,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // Last check point
     uint256 public lastRewardTimestamp;
 
+    // Accumulated degis per weight till now
     uint256 public accDegisPerWeight;
 
     // Total weight in the pool
@@ -48,9 +47,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     // Factory contract address
     address public factory;
 
+    // Fees are paid to the previous stakers
     uint256 public constant fee = 2;
-
-    // uint256 public constant SCALE = 1e12;
 
     // Weight multiplier constants
     uint256 internal constant WEIGHT_MULTIPLIER = 1e6;
@@ -134,7 +132,8 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     function pendingReward(address _user) external view returns (uint256) {
         if (
             block.timestamp < lastRewardTimestamp ||
-            block.timestamp < startTimestamp
+            block.timestamp < startTimestamp ||
+            totalWeight == 0
         ) return 0;
 
         uint256 blocks = block.timestamp - lastRewardTimestamp;
@@ -198,6 +197,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         _unstake(msg.sender, _depositId, _amount);
     }
 
+    /**
+     * @notice Harvest your staking rewards
+     */
     function harvest() external {
         // First update the pool
         updatePool();
@@ -206,8 +208,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
         // calculate pending yield rewards, this value will be returned
         uint256 pending = _pendingReward(msg.sender);
-        console.log("Pending");
-        console.log(pending);
 
         if (pending == 0) return;
 
@@ -218,6 +218,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         emit Harvest(msg.sender, pending);
     }
 
+    /**
+     * @notice Update the pool without fee
+     */
     function updatePool() public {
         _updatePoolWithFee(0);
     }
@@ -244,12 +247,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
         // There is _fee when staking
         uint256 degisReward = timePassed * degisPerSecond + _fee;
-
-        console.log("Degis Reward");
-        console.log(_fee);
-        console.log(block.timestamp);
-        console.log(lastRewardTimestamp);
-        console.log(degisReward);
 
         // Mint reward to this staking pool
         IStakingPoolFactory(factory).mintReward(address(this), degisReward);
@@ -301,10 +298,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
         uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
         uint256 lockUntil = _lockUntil;
-
-        console.log("lock until");
-        console.log(lockUntil);
-        console.log(lockFrom);
 
         uint256 stakeWeight = timeToWeight(lockUntil - lockFrom) * addedAmount;
 
@@ -417,11 +410,6 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     {
         // read user data structure into memory
         UserInfo memory user = users[_user];
-
-        console.log("In pending");
-        console.log(user.totalWeight);
-        console.log(user.rewardDebt);
-        console.log(accDegisPerWeight);
 
         // and perform the calculation using the values read
         return

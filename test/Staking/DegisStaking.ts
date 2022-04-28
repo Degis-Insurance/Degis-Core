@@ -355,6 +355,13 @@ describe("Degis Staking", function () {
       expect(await poolToken.balanceOf(dev_account.address)).to.equal(
         toWei("800")
       );
+
+      const user = await pool.users(dev_account.address);
+      const userWeight = user.totalWeight;
+
+      const poolWeight = await pool.totalWeight();
+
+      expect(userWeight).to.equal(poolWeight);
     });
 
     it("should be able to get reward with multiple players(paying staking fee)", async function () {
@@ -371,6 +378,10 @@ describe("Degis Staking", function () {
         toWei((time2 - time1 + fee_1).toString())
       );
       expect(await pool.pendingReward(user1.address)).to.equal(toWei("0"));
+    });
+
+    it("should be able to check pending reward", async function () {
+      expect(await pool.pendingReward(dev_account.address)).to.equal(0);
     });
   });
 });

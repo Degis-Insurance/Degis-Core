@@ -1,6 +1,29 @@
 {
-	"fuji": {},
-	"avax": {},
+	"fuji": {
+		"AVAX_72.0_L_0105": {
+			"poolAddress": "0xaE4f8f59a53a595993Eb83e31104eef2997EfDFb",
+			"policyTokenAddress": "0xf0833fF900357Fa7ecc53Bea9193F1d4Ca4ff91C",
+			"stablecoinAddress": "0x79Da89DC282F71896264b5B598189956C8b22AcF",
+			"poolDeadline": "1651392000",
+			"feeRate": 50
+		}
+	},
+	"avax": {
+		"AVAX_94.0_L_2104": {
+			"poolAddress": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",
+			"policyTokenAddress": "0xaa99642E4bD99c99a6473d1572729A5d902F654E",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1650096000",
+			"feeRate": 50
+		},
+		"AVAX_77.0_L_0605": {
+			"poolAddress": "0xE1D05A01F05D0eBfe91063E05B27c0f5142C4690",
+			"policyTokenAddress": "0x62A73b3543D9d8CF7e18637Fb648936F2E11C9b3",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1651392000",
+			"feeRate": 50
+		}
+	},
 	"avaxTest": {
 		"AVAX_83.68_L_2303": {
 			"poolAddress": "0xF1b92bCBb2Dc78C7429098e534B22888516495CA",
@@ -14,6 +37,20 @@
 			"policyTokenAddress": "0x6e9153a80ED78B469AB8E5Bf72CDd7efF9dE4da9",
 			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"poolDeadline": "1648440000",
+			"feeRate": 50
+		},
+		"AVAX_84.0_L_2104": {
+			"poolAddress": "0x2c4086e3Afd6E780d5173E68B22320284f44129d",
+			"policyTokenAddress": "0x5c4DEcB324d8aA931dAcb1809121dB26d357e512",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1650096000",
+			"feeRate": 50
+		},
+		"AVAX_74.0_L_2704": {
+			"poolAddress": "0x61D965182bA19DEeca38AEa4b26aC16C53B1aF3D",
+			"policyTokenAddress": "0xc257444A313344875C7848a92B01453E61a619Ec",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1651046400",
 			"feeRate": 50
 		}
 	},

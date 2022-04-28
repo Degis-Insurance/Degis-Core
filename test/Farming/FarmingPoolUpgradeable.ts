@@ -22,7 +22,7 @@ import { formatEther, parseUnits } from "ethers/lib/utils";
 import { FarmingPoolUpgradeable__factory } from "../../typechain/factories/FarmingPoolUpgradeable__factory";
 import { FarmingPoolUpgradeable } from "../../typechain/FarmingPoolUpgradeable";
 
-describe("Farming Pool", function () {
+describe("Farming Pool Upgradeable", function () {
   let FarmingPool: FarmingPoolUpgradeable__factory,
     pool: FarmingPoolUpgradeable;
   let DegisToken: DegisToken__factory, degis: DegisToken;
@@ -298,6 +298,16 @@ describe("Farming Pool", function () {
         .withArgs(dev_account.address, 1, toWei("100"));
     });
 
+    it("should be able to deposit lptokens and get user balance", async function () {
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+
+      await pool.stake(1, toWei("100"));
+      expect(await pool.getUserBalance(1, dev_account.address)).to.equal(
+        toWei("100")
+      );
+    });
+
     it("should be able to deposit lptokens with 6 decimals", async function () {
       await lptoken_3.mint(dev_account.address, stablecoinToWei("1000"));
       await lptoken_3.approve(pool.address, stablecoinToWei("1000"));
@@ -493,13 +503,13 @@ describe("Farming Pool", function () {
       // Approve degis for veDEG
       await degis.approve(veDEG.address, toWei("100"));
       await degis.connect(user1).approve(veDEG.address, toWei("100"));
-
-      // Stake and get veDEG
-      await veDEG.deposit(toWei("100"));
-      await veDEG.connect(user1).deposit(toWei("100"));
     });
 
     it("should be able to get bonus reward", async function () {
+      // Stake and get veDEG
+      await veDEG.deposit(toWei("100"));
+      await veDEG.connect(user1).deposit(toWei("100"));
+
       await veDEG.claim();
       await veDEG.connect(user1).claim();
 
@@ -514,7 +524,6 @@ describe("Farming Pool", function () {
       await mineBlocks(1);
 
       const poolInfo = await pool.poolList(1);
-      console.log(poolInfo);
 
       const pending = await pool.pendingDegis(1, dev_account.address);
       console.log(formatEther(pending));
@@ -553,6 +562,26 @@ describe("Farming Pool", function () {
         .withArgs(1, parseUnits("3", 11), 0);
     });
 
+    it("should be able to update correctly when restart a farming pool", async function () {
+      await pool.add(lptoken_1.address, toWei("1"), toWei("1"), false);
+
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+      await pool.stake(1, toWei("100"));
+
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("5"));
+
+      await pool.setDegisReward(1, 0, 0, true);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+
+      await pool.setDegisReward(1, toWei("1"), toWei("1"), true)
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("11"));
+    });
+
     it("should be able to manually mass update the pools", async function () {
       await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
 
@@ -564,6 +593,140 @@ describe("Farming Pool", function () {
       await expect(pool.massUpdatePools())
         .to.emit(pool, "PoolUpdated")
         .withArgs(1, parseUnits("5", 10), 0);
+    });
+  });
+
+  describe("Piecewise reward change", function () {
+    beforeEach(async function () {
+      await pool.add(lptoken_1.address, toWei("1"), toWei("1"), false);
+
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+    });
+    it("should be able to set piecewise reward level", async function () {
+      await pool.setPiecewise(
+        1,
+        [0, toWei("10"), toWei("100")],
+        [toWei("1"), toWei("2"), toWei("3")]
+      );
+
+      const threshold_1 = await pool.thresholdBasic(1, 1);
+      expect(threshold_1).to.equal(toWei("10"));
+      const threshold_2 = await pool.thresholdBasic(1, 2);
+      expect(threshold_2).to.equal(toWei("100"));
+
+      const reward_level0 = await pool.piecewiseBasic(1, 0);
+      expect(reward_level0).to.equal(toWei("1"));
+      const reward_level1 = await pool.piecewiseBasic(1, 1);
+      expect(reward_level1).to.equal(toWei("2"));
+      const reward_level2 = await pool.piecewiseBasic(1, 2);
+      expect(reward_level2).to.equal(toWei("3"));
+    });
+
+    it("should be able to update reward level when update pools", async function () {
+      await pool.setPiecewise(
+        1,
+        [0, toWei("10"), toWei("100")],
+        [toWei("1"), toWei("2"), toWei("3")]
+      );
+      // Start with level 0
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
+
+      // Deposit amount: 1 => reward 1
+      await pool.stake(1, toWei("1"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
+
+      // Deposit amount: 10 => reward 1
+      await pool.stake(1, toWei("9"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      // Deposit amount: 11 => reward 2
+      // await pool.stake(1, toWei("1"));
+      // poolInfo = await pool.poolList(1);
+      // expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
+
+      // await pool.updatePool(1);
+      // poolInfo = await pool.poolList(1);
+      // expect(poolInfo.basicDegisPerSecond).to.equal(toWei("2"));
+
+      // 100
+      await pool.stake(1, toWei("90"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("3"));
+
+      // 120
+      await pool.stake(1, toWei("20"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("3"));
+
+      // 90
+      await pool.withdraw(1, toWei("30"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      // 70
+      await pool.withdraw(1, toWei("20"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      // down level  9
+      await pool.withdraw(1, toWei("61"));
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
+    });
+
+    it("should be able to get correct rewards with piecewise update", async function () {
+      await pool.setPiecewise(
+        1,
+        [0, toWei("10"), toWei("100")],
+        [toWei("1"), toWei("2"), toWei("3")]
+      );
+
+      await pool.stake(1, toWei("1"));
+
+      await mineBlocks(5);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("5")
+      );
+
+      await pool.stake(1, toWei("9"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(0);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
+
+      await pool.updatePool(1);
+
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("1")
+      );
+      await mineBlocks(1);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("3")
+      );
+
+      // pending: 3 + 2 = 5
+      // previous balance: 6
+      // total: 11
+      await pool.withdraw(1, toWei("5"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(0);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("11"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("2"));
+
+      await pool.updatePool(1);
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("2")
+      );
+
+      await mineBlocks(1);
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("3")
+      );
+
+      await pool.withdraw(1, toWei("2"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(0);
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("15"));
+      expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
     });
   });
 });

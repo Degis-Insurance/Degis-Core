@@ -38,6 +38,15 @@ import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
  *         VeDEG will boost the farming speed by having a extra reward type
  *         The extra reward is shared by those staking lptokens with veDEG balances
  *         Every time the veDEG balance change, the reward will be updated
+ *
+ *         The basic reward depends on the liquidity inside the pool
+ *         Update with a piecewise function
+ *         liquidity amount:   |---------------|------------------|----------------
+ *                             0           threshold 1        threshold 2
+ *          reward speed:            speed1          speed2             speed3
+ *
+ *         The speed update will be updated one tx after the last tx that triggers the threshold
+ *         The reward update will be another one tx later
  */
 contract FarmingPoolUpgradeable is
     Initializable,
@@ -96,6 +105,14 @@ contract FarmingPoolUpgradeable is
     // poolId => userAddress => userInfo
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
+    // Extra claimable balance when updating bonus from veDEG
+    mapping(uint256 => mapping(address => uint256)) public extraClaimable;
+
+    // Reward speed change with liquidity inside contract
+    mapping(uint256 => uint256[]) public thresholdBasic;
+    mapping(uint256 => uint256[]) public piecewiseBasic;
+    uint256 public currentRewardLevel;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -132,7 +149,7 @@ contract FarmingPoolUpgradeable is
     // ---------------------------------------------------------------------------------------- //
 
     function initialize(address _degis) public initializer {
-        require(_degis != address(0), "zero address");
+        require(_degis != address(0), "Zero address");
 
         __Ownable_init();
         __ReentrancyGuard_init_unchained();
@@ -235,7 +252,8 @@ contract FarmingPoolUpgradeable is
                 accDegisPerShare +
                 user.bonus *
                 accDegisPerBonusShare) /
-                SCALE -
+                SCALE +
+                extraClaimable[_poolId][_user] -
                 user.rewardDebt;
 
             return pending;
@@ -297,6 +315,25 @@ contract FarmingPoolUpgradeable is
 
         startTimestamp = _startTimestamp;
         emit StartTimestampChanged(_startTimestamp);
+    }
+
+    /**
+     * @notice Set piecewise reward and threshold
+     * @param _poolId Id of the pool
+     * @param _threshold Piecewise threshold
+     * @param _reward Piecewise reward
+     */
+    function setPiecewise(
+        uint256 _poolId,
+        uint256[] calldata _threshold,
+        uint256[] calldata _reward
+    ) external onlyOwner {
+        thresholdBasic[_poolId] = _threshold;
+        piecewiseBasic[_poolId] = _reward;
+
+        // If reward for mimimum level is > 0, update isFarming
+        if (_reward[0] > 0) isFarming[_poolId] = true;
+        else isFarming[_poolId] = false;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -421,10 +458,14 @@ contract FarmingPoolUpgradeable is
                 pool.accDegisPerShare +
                 user.bonus *
                 pool.accDegisPerBonusShare) /
-                SCALE -
+                SCALE +
+                extraClaimable[_poolId][msg.sender] -
                 user.rewardDebt;
 
-            // Real reward amount
+            // Clear the extra record (has been distributed)
+            extraClaimable[_poolId][msg.sender] = 0;
+
+            // Real reward amount by safe transfer
             uint256 reward = _safeDegisTransfer(msg.sender, pending);
             emit Harvest(msg.sender, msg.sender, _poolId, reward);
         }
@@ -445,7 +486,7 @@ contract FarmingPoolUpgradeable is
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -478,14 +519,22 @@ contract FarmingPoolUpgradeable is
         // Update if the pool is still farming
         // Users can withdraw even after the pool stopped
         if (isFarming[_poolId]) updatePool(_poolId);
+        else {
+            pool.lastRewardTimestamp = block.timestamp;
+        }
 
         uint256 pending = (user.stakingBalance *
             pool.accDegisPerShare +
             user.bonus *
             pool.accDegisPerBonusShare) /
-            SCALE -
+            SCALE +
+            extraClaimable[_poolId][msg.sender] -
             user.rewardDebt;
 
+        // Clear the extra record (has been distributed)
+        extraClaimable[_poolId][msg.sender] = 0;
+
+        // Real reward amount by safe transfer
         uint256 reward = _safeDegisTransfer(msg.sender, pending);
         emit Harvest(msg.sender, msg.sender, _poolId, reward);
 
@@ -504,7 +553,7 @@ contract FarmingPoolUpgradeable is
             user.bonus = (user.stakingBalance * veDEG.balanceOf(msg.sender))
                 .sqrt();
             // Update the pool's total bonus
-            pool.totalBonus += user.bonus - oldBonus;
+            pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
         user.rewardDebt =
@@ -529,6 +578,9 @@ contract FarmingPoolUpgradeable is
     {
         // Only update the pool when it is still in farming
         if (isFarming[_poolId]) updatePool(_poolId);
+        else {
+            poolList[_poolId].lastRewardTimestamp = block.timestamp;
+        }
 
         PoolInfo memory pool = poolList[_poolId];
         UserInfo storage user = userInfo[_poolId][msg.sender];
@@ -537,8 +589,11 @@ contract FarmingPoolUpgradeable is
             pool.accDegisPerShare +
             user.bonus *
             pool.accDegisPerBonusShare) /
-            SCALE -
+            SCALE +
+            extraClaimable[_poolId][msg.sender] -
             user.rewardDebt;
+
+        extraClaimable[_poolId][msg.sender] = 0;
 
         require(pendingReward > 0, "No pending reward");
 
@@ -594,6 +649,22 @@ contract FarmingPoolUpgradeable is
 
         pool.lastRewardTimestamp = block.timestamp;
 
+        // Update the new reward speed
+        // Only if the threshold are already set
+        if (thresholdBasic[_poolId].length > 0) {
+            uint256 currentLiquidity = thresholdBasic[_poolId][
+                currentRewardLevel
+            ];
+            if (
+                currentRewardLevel < thresholdBasic[_poolId].length - 1 &&
+                lpSupply >= thresholdBasic[_poolId][currentRewardLevel + 1]
+            ) {
+                _updateRewardSpeed(_poolId);
+            } else if (lpSupply < currentLiquidity) {
+                _updateRewardSpeed(_poolId);
+            }
+        }
+
         emit PoolUpdated(
             _poolId,
             pool.accDegisPerShare,
@@ -608,9 +679,11 @@ contract FarmingPoolUpgradeable is
      */
     function massUpdatePools() public {
         uint256 length = poolList.length;
-        for (uint256 poolId; poolId < length; poolId++) {
-            if (isFarming[poolId] == false) continue;
-            else updatePool(poolId);
+        for (uint256 poolId = 1; poolId < length; ++poolId) {
+            if (isFarming[poolId] == false) {
+                poolList[poolId].lastRewardTimestamp = block.timestamp;
+                continue;
+            } else updatePool(poolId);
         }
     }
 
@@ -640,6 +713,15 @@ contract FarmingPoolUpgradeable is
             // first, update pool
             updatePool(poolId);
 
+            // Update the extra claimable amount
+            uint256 pending = (user.stakingBalance *
+                pool.accDegisPerShare +
+                user.bonus *
+                pool.accDegisPerBonusShare) /
+                SCALE -
+                user.rewardDebt;
+            extraClaimable[poolId][_user] += pending;
+
             // get oldFactor
             uint256 oldFactor = user.bonus; // get old factor
             // calculate newFactor
@@ -655,7 +737,7 @@ contract FarmingPoolUpgradeable is
                 SCALE;
 
             // Update the pool's total bonus
-            pool.totalBonus += newFactor - oldFactor;
+            pool.totalBonus = pool.totalBonus + newFactor - oldFactor;
         }
     }
 
@@ -725,5 +807,27 @@ contract FarmingPoolUpgradeable is
             _out
                 ? poolBalanceBefore - poolBalanceAfter
                 : poolBalanceAfter - poolBalanceBefore;
+    }
+
+    /**
+     * @notice Update the reward speed
+     * @param _poolId Pool ID
+     */
+    function _updateRewardSpeed(uint256 _poolId) internal {
+        uint256 currentBasicBalance = IERC20(poolList[_poolId].lpToken)
+            .balanceOf(address(this));
+
+        uint256 basicRewardSpeed;
+
+        for (uint256 i = thresholdBasic[_poolId].length - 1; i >= 0; --i) {
+            if (currentBasicBalance >= thresholdBasic[_poolId][i]) {
+                basicRewardSpeed = piecewiseBasic[_poolId][i];
+                // record current reward level
+                currentRewardLevel = i;
+                break;
+            } else continue;
+        }
+
+        poolList[_poolId].basicDegisPerSecond = basicRewardSpeed;
     }
 }

@@ -3,7 +3,15 @@ import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 import { getTokenAddressOnAVAX } from "../info/tokenAddress";
 
-const stablecoin: string = getTokenAddressOnAVAX("USDT.e");
+const stablecoin: string = getTokenAddressOnAVAX("USDC.e");
+
+// Deploy Basic Tokens
+// It is a non-proxy deployment
+// Contract:
+//    - Degis Token
+//    - Buyer Token
+// Tags:
+//    - Tokens
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
@@ -36,15 +44,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   addressList[network.name].BuyerToken = buyerToken.address;
 
-  if (network.name == "avax") {
+  if (network.name == "avax" || network.name == "avaxTest") {
     const IERC20ABI = await getArtifact("ERC20").then((x) => x.abi);
 
-    await save("USD", {
+    await save("USDCe", {
       address: stablecoin,
       abi: IERC20ABI,
     });
 
-    addressList[network.name].USDTe = stablecoin;
+    addressList[network.name].USDCe = stablecoin;
   } else {
     const mockUSD = await deploy("MockUSD", {
       contract: "MockUSD",

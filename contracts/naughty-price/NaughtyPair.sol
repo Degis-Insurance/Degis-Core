@@ -20,15 +20,12 @@
 
 pragma solidity ^0.8.10;
 
-import "../libraries/Math.sol";
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../utils/ReentrancyGuard.sol";
-
-import "./interfaces/INaughtyFactory.sol";
-
+import {Math} from "../libraries/Math.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ReentrancyGuard} from "../utils/ReentrancyGuard.sol";
+import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
 import "hardhat/console.sol";
 
 /**
@@ -45,6 +42,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
+
+    // Minimum liquidity locked
+    uint256 public constant MINIMUM_LIQUIDITY = 10**3;
 
     // naughtyFactory contract address
     address public factory;
@@ -65,8 +65,8 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     // Fee Rate, given to LP holders (0 ~ 1000)
     uint256 public feeRate;
 
-    // Minimum liquidity locked
-    uint256 public constant MINIMUM_LIQUIDITY = 10**3;
+    // reserve0 * reserve1
+    uint256 public kLast;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -101,9 +101,12 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     /**
      * @notice Can not swap after the deadline
      * @dev Each pool will have a deadline and it was set when deployed
+     *      Does not apply to income maker contract
      */
     modifier beforeDeadline() {
-        require(block.timestamp <= deadline, "Can not swap after deadline");
+        if (msg.sender != INaughtyFactory(factory).incomeMaker()) {
+            require(block.timestamp <= deadline, "Can not swap after deadline");
+        }
         _;
     }
 
@@ -181,10 +184,15 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         uint256 amount0 = balance0 - _reserve0; // just deposit
         uint256 amount1 = balance1 - _reserve1;
 
+        // Distribute part of the fee to income maker
+        bool feeOn = _mintFee(_reserve0, _reserve1);
+
         uint256 _totalSupply = totalSupply(); // gas savings
         if (_totalSupply == 0) {
-            liquidity = Math.sqrt(amount0 * amount1 - MINIMUM_LIQUIDITY);
-            _mint(address(this), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
+            // No liquidity = First add liquidity
+            liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;
+            // Keep minimum liquidity to this contract
+            _mint(factory, MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
         } else {
             liquidity = min(
                 (amount0 * _totalSupply) / _reserve0,
@@ -196,6 +204,8 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         _mint(to, liquidity);
 
         _update(balance0, balance1);
+
+        if (feeOn) kLast = reserve0 * reserve1;
 
         emit Mint(msg.sender, amount0, amount1);
     }
@@ -211,21 +221,19 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         nonReentrant
         returns (uint256 amount0, uint256 amount1)
     {
-        // (uint112 _reserve0, uint112 _reserve1) = getReserves(); // gas savings
+        // gas savings
+        (uint112 _reserve0, uint112 _reserve1) = getReserves();
+        address _token0 = token0;
+        address _token1 = token1;
 
-        uint256 balance0 = IERC20(token0).balanceOf(address(this)); // policy token balance
-        uint256 balance1 = IERC20(token1).balanceOf(address(this)); // stablecoin balance
+        uint256 balance0 = IERC20(_token0).balanceOf(address(this)); // policy token balance
+        uint256 balance1 = IERC20(_token1).balanceOf(address(this)); // stablecoin balance
 
-        console.logUint(balance0);
-        console.logUint(balance1);
+        uint256 liquidity = balanceOf(address(this));
 
-        uint256 liquidity = balanceOf(address(this)) - MINIMUM_LIQUIDITY;
-
-        console.logUint(liquidity);
+        bool feeOn = _mintFee(_reserve0, _reserve1);
 
         uint256 _totalSupply = totalSupply(); // gas savings
-
-        console.logUint(_totalSupply);
 
         // How many tokens to be sent back
         amount0 = (liquidity * balance0) / _totalSupply;
@@ -237,12 +245,14 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
         _burn(address(this), liquidity);
 
         // Transfer tokens out and update the balance
-        IERC20(token0).safeTransfer(_to, amount0);
-        IERC20(token1).safeTransfer(_to, amount1);
-        balance0 = IERC20(token0).balanceOf(address(this));
-        balance1 = IERC20(token1).balanceOf(address(this));
+        IERC20(_token0).safeTransfer(_to, amount0);
+        IERC20(_token1).safeTransfer(_to, amount1);
+        balance0 = IERC20(_token0).balanceOf(address(this));
+        balance1 = IERC20(_token1).balanceOf(address(this));
 
         _update(balance0, balance1);
+
+        if (feeOn) kLast = reserve0 * reserve1;
 
         emit Burn(msg.sender, amount0, amount1, _to);
     }
@@ -260,10 +270,10 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     ) external beforeDeadline nonReentrant {
         require(
             _amount0Out > 0 || _amount1Out > 0,
-            "Output amount need to be >0"
+            "Output amount need to be > 0"
         );
 
-        (uint256 _reserve0, uint256 _reserve1) = getReserves(); // gas savings
+        (uint112 _reserve0, uint112 _reserve1) = getReserves(); // gas savings
         require(
             _amount0Out < _reserve0 && _amount1Out < _reserve1,
             "Not enough liquidity"
@@ -352,5 +362,43 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
      */
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;
+    }
+
+    function _mintFee(uint112 _reserve0, uint112 _reserve1)
+        private
+        returns (bool feeOn)
+    {
+        address incomeMaker = INaughtyFactory(factory).incomeMaker();
+
+        // If incomeMaker is not zero address, fee is on
+        feeOn = incomeMaker != address(0);
+
+        uint256 _k = kLast;
+
+        if (feeOn) {
+            if (_k != 0) {
+                uint256 rootK = Math.sqrt(_reserve0 * _reserve1);
+                uint256 rootKLast = Math.sqrt(_k);
+
+                if (rootK > rootKLast) {
+                    uint256 numerator = totalSupply() * (rootK - rootKLast);
+
+                    // (1 / φ) - 1
+                    // Proportion got from factory is based on 100
+                    uint256 incomeMakerProportion = INaughtyFactory(factory)
+                        .incomeMakerProportion();
+                    uint256 denominator = rootK *
+                        (100 / incomeMakerProportion - 1) +
+                        rootKLast;
+
+                    uint256 liquidity = numerator / denominator;
+
+                    // Mint the liquidity to income maker contract
+                    if (liquidity > 0) _mint(incomeMaker, liquidity);
+                }
+            }
+        } else if (_k != 0) {
+            kLast = 0;
+        }
     }
 }
