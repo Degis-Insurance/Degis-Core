@@ -9,7 +9,7 @@ import "../naughty-price/interfaces/INaughtyRouter.sol";
 import "../naughty-price/interfaces/INaughtyFactory.sol";
 import "../naughty-price/interfaces/INaughtyPair.sol";
 
-import "hardhat/console.sol";
+
 
 /**
  * @title Degis Maker Contract

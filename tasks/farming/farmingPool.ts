@@ -102,16 +102,16 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const farmingPoolAddress = addressList[network.name].FarmingPool;
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
       "The farming pool address of ",
       network.name,
       " is: ",
       farmingPoolAddress
     );
-    const FarmingPool: FarmingPool__factory =
-      await hre.ethers.getContractFactory("FarmingPool");
-    const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable = FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
     const tx = await farmingPool.setDegisReward(
@@ -246,7 +246,7 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
 
-task("ttt", "Set the VeDEG of a farming pool").setAction(
+task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   async (taskArgs, hre) => {
     const { network } = hre;
 

@@ -10,7 +10,7 @@ import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
 import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
 import {ILMToken as LPToken} from "./ILMToken.sol";
 
-import "hardhat/console.sol";
+
 
 /**
  * @title Naughty Price Initial Liquidity Matching

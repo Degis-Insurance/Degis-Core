@@ -446,7 +446,9 @@ describe("Purcahse Incentive Vault", function () {
 
     it("should be able to claim with max round amount", async function () {
       // MAX_ROUND = 50
-      for (let i = 0; i < 50; i++) {
+      const maxRound = (await vault.MAX_ROUND()).toNumber();
+      for (let i = 0; i < maxRound; i++) {
+        // Stake and settle
         await vault.stake(toWei("1"));
         await vault.settleCurrentRound();
       }
@@ -457,13 +459,18 @@ describe("Purcahse Incentive Vault", function () {
 
       // Get 50 round rewards
       await vault.claim();
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("200"));
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei((maxRound * 4).toString())
+      );
 
       await vault.stake(toWei("1"));
       await vault.settleCurrentRound();
 
+      // Another 2 rounds
       await vault.claim();
-      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("208"));
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei(((maxRound+2) * 4 ).toString())
+      );
     });
 
     it("should be able to claim by user himself after several rounds - all", async function () {
@@ -477,12 +484,17 @@ describe("Purcahse Incentive Vault", function () {
       await vault.claim();
       await vault.connect(user1).claim();
 
+      // Check balance
       expect(await degis.balanceOf(dev_account.address)).to.equal(
         toWei(times.toString())
       );
       expect(await degis.balanceOf(user1.address)).to.equal(
         toWei((3 * times).toString())
       );
+
+      // last reward round index
+      expect(await vault.users(dev_account.address)).to.equal(times);
+      expect(await vault.users(user1.address)).to.equal(times);
 
       for (let i = 0; i < times; i++) {
         await vault.stake(toWei("1"));
@@ -520,8 +532,31 @@ describe("Purcahse Incentive Vault", function () {
       await vault.claim();
       await vault.connect(user1).claim();
 
+      // Check reward balance
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("10"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("6"));
+
+      // Check last reward round index
+      expect(await vault.users(dev_account.address)).to.equal(4);
+      expect(await vault.users(user1.address)).to.equal(2);
+
+      // Check the pending rounds record
+      const pendingRounds_dev = await vault.getUserPendingRounds(
+        dev_account.address
+      );
+      const pendingRounds_user1 = await vault.getUserPendingRounds(
+        user1.address
+      );
+      expect(pendingRounds_dev.length).to.equal(4);
+      expect(pendingRounds_user1.length).to.equal(2);
+
+      expect(pendingRounds_dev[0]).to.equal(0);
+      expect(pendingRounds_dev[1]).to.equal(1);
+      expect(pendingRounds_dev[2]).to.equal(2);
+      expect(pendingRounds_dev[3]).to.equal(3);
+
+      expect(pendingRounds_user1[0]).to.equal(0);
+      expect(pendingRounds_user1[1]).to.equal(2);
 
       await expect(vault.claim()).to.be.revertedWith(
         customErrorMsg("'PIV__ClaimedAll()'")
@@ -588,17 +623,22 @@ describe("Purcahse Incentive Vault", function () {
     });
 
     it("should be able to get piecewise reward correctly", async function () {
+      // 0 - 10: 4
       expect(await vault.getRewardPerRound()).to.equal(toWei("4"));
 
+      // 0 < 5 < 10: 4
       await vault.stake(toWei("5"));
       expect(await vault.getRewardPerRound()).to.equal(toWei("4"));
 
+      // 10 <= 10 < 100: 8
       await vault.stake(toWei("5"));
       expect(await vault.getRewardPerRound()).to.equal(toWei("8"));
 
+      // 100 <= 100 < MAX: 12
       await vault.stake(toWei("90"));
       expect(await vault.getRewardPerRound()).to.equal(toWei("12"));
 
+      // 100 < 700 < MAX: 12
       await vault.stake(toWei("600"));
       expect(await vault.getRewardPerRound()).to.equal(toWei("12"));
     });
@@ -702,6 +742,9 @@ describe("Purcahse Incentive Vault", function () {
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("3"));
 
+      expect(await vault.users(dev_account.address)).to.equal(1);
+      expect(await vault.users(user1.address)).to.equal(1);
+
       //
       // Level 2 -------------------
       //
@@ -719,6 +762,9 @@ describe("Purcahse Incentive Vault", function () {
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("3"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("9"));
 
+      expect(await vault.users(dev_account.address)).to.equal(2);
+      expect(await vault.users(user1.address)).to.equal(2);
+
       //
       // Level 3 -------------------
       //
@@ -735,6 +781,9 @@ describe("Purcahse Incentive Vault", function () {
       // Check balance
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("18"));
+
+      expect(await vault.users(dev_account.address)).to.equal(3);
+      expect(await vault.users(user1.address)).to.equal(3);
     });
 
     it("should be able to settle without setting piecewise", async function () {
@@ -743,6 +792,7 @@ describe("Purcahse Incentive Vault", function () {
 
       await vault.setPiecewise(threshold, piecewise);
 
+      // Use default reward per round
       expect(await vault.getRewardPerRound()).to.equal(toWei("2"));
 
       await vault.stake(toWei("1"));
@@ -758,36 +808,51 @@ describe("Purcahse Incentive Vault", function () {
     });
 
     it("should be able to claim reward with piecewise", async function () {
+      // Level 1 reward
+      // Stake
       await vault.stake(toWei("1"));
       await vault.connect(user1).stake(toWei("1"));
 
+      // Settle
       await vault.settleCurrentRound();
 
+      // Claim
       await vault.claim();
       await vault.connect(user1).claim();
 
+      // Check level 1 reward
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("2"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("2"));
 
+      // Level 2
+      // Stake
       await vault.stake(toWei("20"));
       await vault.connect(user1).stake(toWei("20"));
 
+      // Settle
       await vault.settleCurrentRound();
 
+      // Claim
       await vault.claim();
       await vault.connect(user1).claim();
 
+      // Check level 2 reward
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("6"));
 
+      // Level 3
+      // Stake
       await vault.stake(toWei("100"));
       await vault.connect(user1).stake(toWei("100"));
 
+      // Settle
       await vault.settleCurrentRound();
 
+      // Claim
       await vault.claim();
       await vault.connect(user1).claim();
 
+      // Check level 3 reward
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("12"));
       expect(await degis.balanceOf(user1.address)).to.equal(toWei("12"));
     });

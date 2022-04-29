@@ -67,6 +67,19 @@ task(
     policyCoreAddress
   );
 
+  // const oldCore = [
+  //   "function setEmergencyPool(address)",
+  //   "function emergencyPool() returns(address)",
+  // ];
+  // const oldCoreInstance = new hre.ethers.Contract(
+  //   policyCoreAddress,
+  //   oldCore,
+  //   dev_account
+  // );
+
+  // const tx = await oldCoreInstance.setEmergencyPool(incomeSharingAddress);
+  // console.log("tx details:", await tx.wait());
+
   const tx_setIncomeSharing = await core.setIncomeSharing(incomeSharingAddress);
   console.log(
     "Tx_setIncomeSharing details: ",

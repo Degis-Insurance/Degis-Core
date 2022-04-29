@@ -56,7 +56,7 @@ task("collectIncome", "Collect income from policy core")
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );
-    const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
+    const core: any = PolicyCore.attach(policyCoreAddress);
 
     const tx = await core.collectIncome(taskArgs.stablecoin);
     console.log("tx details:", await tx.wait());
@@ -64,6 +64,26 @@ task("collectIncome", "Collect income from policy core")
     const events = (await tx.wait()).events;
     console.log("events: ", events);
 
+    // const oldCore = [
+    //   "function emergencyPool() public view returns (address)",
+    //   "function pendingIncomeToEmergency(address) public view returns(uint256)",
+    //   "function setEmergencyPool(address)",
+    // ];
+    // const oldCoreInstance = new hre.ethers.Contract(
+    //   policyCoreAddress,
+    //   oldCore,
+    //   dev_account
+    // );
+
+    // const is = await oldCoreInstance.emergencyPool();
+    // console.log("income sharing address:", is);
+
+    // const lo = await core.lottery();
+    // console.log("lottery address:", lo);
+
     // const balance = await core.pendingIncomeToLottery(taskArgs.stablecoin);
     // console.log("balance: ", formatUnits(balance, 6));
+
+    // const balance2 = await oldCoreInstance.pendingIncomeToEmergency(taskArgs.stablecoin);
+    // console.log("balance: ", formatUnits(balance2, 6));
   });

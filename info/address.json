@@ -35,7 +35,6 @@
 	},
 	"avaxTest": {
 		"DegisLottery": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
-		"IncomeSharing": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
 		"DegisToken": "0x0c1902987652d5a6168dd65ee6b2536456ef92d3",
 		"BuyerToken": "0xF0F661C2Ad10192012F827816C357574Ce4e0ECb",
 		"MockUSD": "0x1a04CDfac69c2516734Ea062689672fD9c6b7f03",
@@ -48,7 +47,8 @@
 		"FarmingPoolUpgradeable": "0xaE4b0b9eaAe17acA2cFA4e8eF85558ECFa87dbb5",
 		"StakingPoolFactory": "0xF5Dd67c703b1C4b2B47eD9E230eC3c23822fA212",
 		"VoteEscrowedDegis": "0x71220F9CFe73Fd02A4adff524BeaE689dDa78f4A",
-		"PurchaseIncentiveVault": "0x1d51dc899D66cf2E6a5b81C933a0BdCBC06347de"
+		"PurchaseIncentiveVault": "0x1d51dc899D66cf2E6a5b81C933a0BdCBC06347de",
+		"IncomeSharingVault": "0xD6E0Be5ad6a895f91049ce3FB9891232b2996f40"
 	},
 	"localhost": {
 		"ProxyAdmin": "0x5FbDB2315678afecb367f032d93F642f64180aa3",

@@ -8,8 +8,9 @@ import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 import {
   IncomeSharingVault,
   IncomeSharingVault__factory,
+  MockUSD__factory,
 } from "../../typechain";
-import { parseUnits } from "ethers/lib/utils";
+import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("startIncomeSharingPool", "Start a new income sharing pool")
   .addParam("pid", "The pool id", null, types.string)
@@ -64,9 +65,16 @@ task("setIncomeSpeed", "Set income sharing speed")
       dev_account
     ).attach(vaultAddress);
 
-    const tx = await vault.setRewardSpeed(
-      taskArgs.pid,
-      parseUnits(taskArgs.reward, 6)
+    const usd = new MockUSD__factory(dev_account).attach(
+      getTokenAddressOnAVAX("USDC.e")
     );
-    console.log("Tx details: ", await tx.wait());
+
+    const bal = await usd.balanceOf(vaultAddress);
+    console.log("USDC balance: ", formatUnits(bal, 6));
+
+    // const tx = await vault.setRewardSpeed(
+    //   taskArgs.pid,
+    //   parseUnits(taskArgs.reward, 6)
+    // );
+    // console.log("Tx details: ", await tx.wait());
   });
