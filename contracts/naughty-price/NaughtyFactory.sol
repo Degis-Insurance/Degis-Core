@@ -24,7 +24,7 @@ import "./NaughtyPair.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
 import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
-import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title Naughty Factory
@@ -35,7 +35,7 @@ import {OwnableWithoutContext} from "../utils/OwnableWithoutContext.sol";
  *      Token 0 may change but Token 1 is always stablecoin.
  */
 
-contract NaughtyFactory is OwnableWithoutContext {
+contract NaughtyFactory is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -62,7 +62,7 @@ contract NaughtyFactory is OwnableWithoutContext {
     // Address of income maker, part of the transaction fee will be distributed to this address
     address public incomeMaker;
 
-    // proportion = 1 / part
+    // Swap fee proportion to income maker
     uint256 public incomeMakerProportion;
 
     // ---------------------------------------------------------------------------------------- //
@@ -86,7 +86,8 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor() OwnableWithoutContext(msg.sender) {
+    function initialize() public initializer {
+        __Ownable_init();
         // 40% of swap fee is distributed to income maker contract
         // Can be set later
         incomeMakerProportion = 40;
@@ -100,10 +101,7 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @notice Only called by policyCore contract
      */
     modifier onlyPolicyCore() {
-        require(
-            policyCore != address(0) && msg.sender == policyCore,
-            "Only called by policyCore contract"
-        );
+        require(msg.sender == policyCore, "Only called by policyCore contract");
         _;
     }
 
@@ -112,12 +110,11 @@ contract NaughtyFactory is OwnableWithoutContext {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Get the latest token address just deployed
-     * @return tokenAddress Latest token address
+     * @notice Get the all tokens that have been deployed
+     * @return tokens All tokens
      */
-    function getLatestTokenAddress() external view returns (address) {
-        uint256 currentTokenId = _nextId - 1;
-        return allTokens[currentTokenId];
+    function getAllTokens() external view returns (address[] memory) {
+        return allTokens;
     }
 
     /**
@@ -125,6 +122,7 @@ contract NaughtyFactory is OwnableWithoutContext {
      * @dev For test/task convinience, pre-compute the address
      *      Ethers.js:
      *      Address = ethers.utils.getCreate2Address(factory address, salt, INIT_CODE_HASH)
+     *      salt = keccak256(abi.encodePacked(_policyTokenName))
      * @param _tokenName Name of the policy token to be deployed
      * @param _decimals Token decimals of this policy token
      */

@@ -283,18 +283,21 @@ describe("Income Sharing", function () {
 
       await income.deposit(1, deposit_num);
 
+      // 5 blocks reward
       await mineBlocks(5);
 
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("5")
       );
-
+        
+      // 1 block reward
       await income.setRewardSpeed(1, stablecoinToWei("0"));
       await mineBlocks(5);
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("6")
       );
 
+      // 5 blocks reward
       await income.setRewardSpeed(1, stablecoinToWei("1"));
       await mineBlocks(5);
       expect(await income.pendingReward(1, dev_account.address)).to.equal(

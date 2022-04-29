@@ -9,8 +9,6 @@ import "../naughty-price/interfaces/INaughtyRouter.sol";
 import "../naughty-price/interfaces/INaughtyFactory.sol";
 import "../naughty-price/interfaces/INaughtyPair.sol";
 
-
-
 /**
  * @title Degis Maker Contract
  * @dev This contract will receive the transaction fee from swap pool
@@ -20,10 +18,14 @@ contract IncomeMaker is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
+    // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     uint256 public constant UINT256_MAX = type(uint256).max;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     INaughtyRouter public router;
 
@@ -33,12 +35,15 @@ contract IncomeMaker is OwnableUpgradeable {
 
     uint256 public PRICE_SCALE = 1e6;
 
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     event IncomeToUSD(
         address policyTokenAddress,
         address stablecoin,
         uint256 amountOut
     );
-
     event ConvertIncome(
         address caller,
         address policyTokenAddress,
@@ -47,7 +52,18 @@ contract IncomeMaker is OwnableUpgradeable {
         uint256 stablecoinAmount, // Amount of stablecoin by burning lp tokens
         uint256 stablecoinBackAmount // Amount of stablecoin by swapping policy tokens
     );
+    event EmergencyWithdraw(address token, uint256 amount);
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Initialize function
+     * @param _router Address of the naughty router
+     * @param _factory Address of the naughty factory
+     * @param _vault Address of the income sharing vault
+     */
     function initialize(
         address _router,
         address _factory,
@@ -61,6 +77,15 @@ contract IncomeMaker is OwnableUpgradeable {
         incomeSharingVault = _vault;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Convert the income to stablecoin and transfer to the incomeSharingVault
+     * @param _policyToken Address of the policy token
+     * @param _stablecoin Address of the stablecoi
+     */
     function convertIncome(address _policyToken, address _stablecoin) external {
         // Get the pair
         INaughtyPair pair = INaughtyPair(
@@ -74,9 +99,10 @@ contract IncomeMaker is OwnableUpgradeable {
             pair.balanceOf(address(this))
         );
 
+        // Directly call the pair to burn lp tokens
         (uint256 amount0, uint256 amount1) = pair.burn(address(this));
 
-        // Finish
+        // Finish swap
         uint256 amountOut = _swap(
             _policyToken,
             _stablecoin,
@@ -99,6 +125,23 @@ contract IncomeMaker is OwnableUpgradeable {
             amountOut
         );
     }
+
+    /**
+     * @notice Emergency withdraw by the owner
+     * @param _token Address of the token
+     * @param _amount Amount of the token
+     */
+    function emergencyWithdraw(address _token, uint256 _amount)
+        external
+        onlyOwner
+    {
+        IERC20(_token).safeTransfer(msg.sender, _amount);
+        emit EmergencyWithdraw(_token, _amount);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Swap policy tokens to stablecoins
@@ -134,14 +177,5 @@ contract IncomeMaker is OwnableUpgradeable {
         // Transfer policy token and swap
         IERC20(_policyToken).safeTransfer(address(pair), _amount);
         pair.swap(0, amountOut, _to);
-    }
-
-    function distribtue() external {}
-
-    function emergencyWithdraw(address _token, uint256 _amount)
-        external
-        onlyOwner
-    {
-        IERC20(_token).safeTransfer(msg.sender, _amount);
     }
 }

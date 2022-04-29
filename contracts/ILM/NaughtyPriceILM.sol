@@ -10,8 +10,6 @@ import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
 import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
 import {ILMToken as LPToken} from "./ILMToken.sol";
 
-
-
 /**
  * @title Naughty Price Initial Liquidity Matching
  * @notice Naughty Price timeline: 1 -- 14 -- 5
@@ -27,19 +25,31 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    // Scale when calculating fee
+    uint256 public constant SCALE = 1e12;
+
+    // Degis entrance fee = 1 / 100 deposit amount
+    uint256 public constant FEE_DENOMINATOR = 100;
+
+    // Minimum deposit amount
+    uint256 public constant MINIMUM_AMOUNT = 1e6;
+
+    // Uint256 maximum value
+    uint256 public constant MAX_UINT256 = type(uint256).max;
+
+    // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    uint256 public constant SCALE = 1e12;
-    uint256 public constant FEE_DENOMINATOR = 100;
-    uint256 public constant MINIMUM_AMOUNT = 1e6;
-    uint256 public constant MAX_UINT256 = type(uint256).max;
-
+    // Degis token address
     address public degis;
 
+    // PolicyCore, Router and EmergencyPool contract address
     address public policyCore;
     address public naughtyRouter;
-
     address public emergencyPool;
 
     struct UserInfo {
@@ -47,6 +57,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 amountB;
         uint256 degisDebt;
     }
+    // user address => policy token address => user info
     mapping(address => mapping(address => UserInfo)) public users;
 
     enum Status {
@@ -55,6 +66,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         Finished,
         Stopped
     }
+
     struct PairInfo {
         Status status; // 0: before start 1: active 2: finished 3: stopped
         address lptoken; // lptoken address
@@ -87,9 +99,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         uint256 amountA,
         uint256 amountB
     );
-
     event EmergencyWithdraw(address owner, uint256 amount);
-
     event ILMFinish(
         address policyToken,
         address stablecoin,
@@ -126,6 +136,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Initialze function for proxy
+     * @dev Called only when deploying proxy contract
+     * @param _degis Degis token address
+     * @param _policyCore PolicyCore contract address
+     * @param _router NaughtyRouter contract address
+     * @param _emergencyPool EmergencyPool contract address
+     */
     function initialize(
         address _degis,
         address _policyCore,
@@ -173,7 +191,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Get the price
+     * @notice Get the current price
+     * @dev Price has a scale of 1e12
      * @param _policyToken Policy token address
      * @return price Price of the token pair
      */
@@ -191,9 +210,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     function getPairTotalAmount(address _policyToken)
         external
         view
-        returns (uint256)
+        returns (uint256 totalAmount)
     {
-        return pairs[_policyToken].amountA + pairs[_policyToken].amountB;
+        totalAmount = pairs[_policyToken].amountA + pairs[_policyToken].amountB;
     }
 
     /**
@@ -202,7 +221,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @param _policyToken Policy token address
      */
     function getUserDeposit(address _user, address _policyToken)
-        public
+        external
         view
         returns (uint256 amountA, uint256 amountB)
     {
@@ -276,11 +295,18 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         pair.lptoken = lpTokenAddress;
 
         // Pre-approve the stablecoin for later deposit
-        IERC20(_stablecoin).approve(naughtyRouter, MAX_UINT256);
-        IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
         IERC20(_policyToken).approve(naughtyRouter, MAX_UINT256);
 
         emit ILMStart(_policyToken, _stablecoin, _ILMDeadline, lpTokenAddress);
+    }
+
+    /**
+     * @notice Approve stablecoins for naughty price contracts
+     * @param _stablecoin Stablecoin address
+     */
+    function approveStablecoin(address _stablecoin) external {
+        IERC20(_stablecoin).approve(naughtyRouter, MAX_UINT256);
+        IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
     }
 
     /**
@@ -306,6 +332,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         // Update the status of this pair
         pairs[_policyToken].status = Status.Finished;
 
+        // Get policy token name
         string memory policyTokenName = IPolicyCore(policyCore)
             .findNamebyAddress(_policyToken);
 
@@ -404,59 +431,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         LPToken(lpToken).mint(msg.sender, amountToDeposit);
 
         emit Deposit(_policyToken, _stablecoin, _amountA, _amountB);
-    }
-
-    /**
-     * @notice Update debt & fee distribution
-     * @param _policyToken Policy token address
-     * @param _usdAmount Amount of stablecoins input
-     * @param _degAmount Amount of degis input
-     */
-    function _updateWhenDeposit(
-        address _policyToken,
-        uint256 _usdAmount,
-        uint256 _degAmount,
-        uint256 _decimalDiff
-    ) internal {
-        PairInfo storage pair = pairs[_policyToken];
-
-        // If this is the first user, accDegisPerShare = 1e16
-        // No debt
-        if (pair.degisAmount == 0) {
-            pair.accDegisPerShare =
-                (SCALE * 10**_decimalDiff) /
-                FEE_DENOMINATOR;
-            return;
-        }
-
-        UserInfo storage user = users[msg.sender][_policyToken];
-
-        // Update accDegisPerShare first
-        pair.accDegisPerShare +=
-            (_degAmount * SCALE) /
-            (pair.amountA + pair.amountB);
-
-        uint256 currentUserDeposit = user.amountA + user.amountB;
-        // If user has deposited before, distribute the deg reward first
-        // Pending reward is calculated with the new degisPerShare value
-        if (currentUserDeposit > 0) {
-            uint256 pendingReward = (currentUserDeposit *
-                pair.accDegisPerShare) /
-                SCALE -
-                user.degisDebt;
-
-            uint256 reward = _safeTokenTransfer(
-                degis,
-                msg.sender,
-                pendingReward
-            );
-            emit Harvest(msg.sender, reward);
-        }
-
-        // Update user debt
-        user.degisDebt =
-            (pair.accDegisPerShare * (currentUserDeposit + _usdAmount)) /
-            SCALE;
     }
 
     /**
@@ -596,20 +570,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         emit Claim(msg.sender, amountA, amountB);
     }
 
-    function _updateWhenClaim(address _policyToken) internal {
-        PairInfo storage pair = pairs[_policyToken];
-
-        UserInfo storage user = users[msg.sender][_policyToken];
-
-        uint256 pendingReward = ((user.amountA + user.amountB) *
-            pair.accDegisPerShare) /
-            SCALE -
-            user.degisDebt;
-
-        uint256 reward = _safeTokenTransfer(degis, msg.sender, pendingReward);
-        emit Harvest(msg.sender, reward);
-    }
-
     /**
      * @notice Emergency withdraw a certain token
      * @param _token Token address
@@ -658,5 +618,76 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             IERC20(_token).safeTransfer(_receiver, _amount);
             return _amount;
         }
+    }
+
+    /**
+     * @notice Update debt & fee distribution
+     * @param _policyToken Policy token address
+     * @param _usdAmount Amount of stablecoins input
+     * @param _degAmount Amount of degis input
+     */
+    function _updateWhenDeposit(
+        address _policyToken,
+        uint256 _usdAmount,
+        uint256 _degAmount,
+        uint256 _decimalDiff
+    ) internal {
+        PairInfo storage pair = pairs[_policyToken];
+
+        // If this is the first user, accDegisPerShare = 1e16
+        // No debt
+        if (pair.degisAmount == 0) {
+            pair.accDegisPerShare =
+                (SCALE * 10**_decimalDiff) /
+                FEE_DENOMINATOR;
+            return;
+        }
+
+        UserInfo storage user = users[msg.sender][_policyToken];
+
+        // Update accDegisPerShare first
+        pair.accDegisPerShare +=
+            (_degAmount * SCALE) /
+            (pair.amountA + pair.amountB);
+
+        uint256 currentUserDeposit = user.amountA + user.amountB;
+        // If user has deposited before, distribute the deg reward first
+        // Pending reward is calculated with the new degisPerShare value
+        if (currentUserDeposit > 0) {
+            uint256 pendingReward = (currentUserDeposit *
+                pair.accDegisPerShare) /
+                SCALE -
+                user.degisDebt;
+
+            uint256 reward = _safeTokenTransfer(
+                degis,
+                msg.sender,
+                pendingReward
+            );
+            emit Harvest(msg.sender, reward);
+        }
+
+        // Update user debt
+        user.degisDebt =
+            (pair.accDegisPerShare * (currentUserDeposit + _usdAmount)) /
+            SCALE;
+    }
+
+    /**
+     * @notice Update degis reward when claim
+     * @param _policyToken Policy token address
+     */
+    function _updateWhenClaim(address _policyToken) internal {
+        PairInfo storage pair = pairs[_policyToken];
+
+        UserInfo storage user = users[msg.sender][_policyToken];
+
+        uint256 pendingReward = ((user.amountA + user.amountB) *
+            pair.accDegisPerShare) /
+            SCALE -
+            user.degisDebt;
+
+        uint256 reward = _safeTokenTransfer(degis, msg.sender, pendingReward);
+        emit Harvest(msg.sender, reward);
     }
 }

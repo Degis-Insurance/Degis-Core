@@ -396,6 +396,7 @@ contract VoteEscrowedDegis is
         noLocked(msg.sender)
     {
         UserInfo memory user = users[msg.sender];
+        
         if (user.amountLocked == 0) revert VED__ZeroAmount();
         if (block.timestamp < user.lockUntil) revert VED__TimeNotPassed();
 

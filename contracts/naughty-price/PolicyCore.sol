@@ -22,12 +22,11 @@ pragma solidity ^0.8.10;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {StringsUtils} from "../libraries/StringsUtils.sol";
-import {Ownable} from "../utils/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
 import {IPriceGetter} from "./interfaces/IPriceGetter.sol";
 import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
 import {INPPolicyToken} from "./interfaces/INPPolicyToken.sol";
-import {INaughtyRouter} from "./interfaces/INaughtyRouter.sol";
 
 /**
  * @title  PolicyCore
@@ -45,6 +44,7 @@ import {INaughtyRouter} from "./interfaces/INaughtyRouter.sol";
  *         When the event happens, a PolicyToken can be burned for claiming 1 Stablecoin.
  *         When the event does not happen, the PolicyToken depositors can
  *         redeem their 1 deposited Stablecoin
+ *
  * @dev    Most of the functions to be called from outside will use the name of policyToken
  *         rather than the address (easy to read).
  *         Other variables or functions still use address to index.
@@ -59,7 +59,7 @@ import {INaughtyRouter} from "./interfaces/INaughtyRouter.sol";
  *              3. Price decimals: Always 18. The oracle result will be transferred for settlement
  */
 
-contract PolicyCore is Ownable {
+contract PolicyCore is OwnableUpgradeable {
     using StringsUtils for uint256;
     using SafeERC20 for IERC20;
 
@@ -86,7 +86,7 @@ contract PolicyCore is Ownable {
     address public ILMContract;
 
     // Income to lottery ratio (max 10)
-    uint256 public toLottery;
+    uint256 public toLotteryPart;
 
     struct PolicyTokenInfo {
         address policyTokenAddress;
@@ -209,24 +209,26 @@ contract PolicyCore is Ownable {
 
     /**
      * @notice Constructor, for some addresses
-     * @param _usdt USDT.e is the first stablecoin supported in the pool
+     * @param _usdc USDC.e is the first stablecoin supported in the pool
      * @param _factory Address of naughty factory
      * @param _priceGetter Address of the oracle contract
      */
-    constructor(
-        address _usdt,
+    function initialize(
+        address _usdc,
         address _factory,
         address _priceGetter
-    ) Ownable(msg.sender) {
+    ) public initializer {
+        __Ownable_init();
+
         // Add the first stablecoin supported
-        supportedStablecoin[_usdt] = true;
+        supportedStablecoin[_usdc] = true;
 
         // Initialize the interfaces
         factory = INaughtyFactory(_factory);
         priceGetter = IPriceGetter(_priceGetter);
 
         // 20% to lottery, 80% to income sharing
-        toLottery = 2;
+        toLotteryPart = 2;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -435,15 +437,24 @@ contract PolicyCore is Ownable {
         naughtyRouter = _router;
     }
 
+    /**
+     * @notice Change the address of ILM
+     * @param _ILM Address of the new ILM
+     */
     function setILMContract(address _ILM) external onlyOwner {
         emit ILMChanged(ILMContract, _ILM);
         ILMContract = _ILM;
     }
 
+    /**
+     * @notice Change the income part to lottery
+     * @dev The remaining part will be distributed to incomeSharing
+     * @param _toLottery Proportion to lottery
+     */
     function setIncomeToLottery(uint256 _toLottery) external onlyOwner {
         require(_toLottery <= 10, "Max 10");
-        emit IncomeToLotteryChanged(toLottery, _toLottery);
-        toLottery = _toLottery;
+        emit IncomeToLotteryChanged(toLotteryPart, _toLottery);
+        toLotteryPart = _toLottery;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -784,9 +795,7 @@ contract PolicyCore is Ownable {
         ];
 
         // Get the final price from oracle
-        uint256 price = IPriceGetter(priceGetter).getLatestPrice(
-            originalTokenName
-        );
+        uint256 price = priceGetter.getLatestPrice(originalTokenName);
 
         // Record the price
         result.alreadySettled = true;
@@ -866,13 +875,7 @@ contract PolicyCore is Ownable {
             settleResult[policyTokenAddress].currentDistributionIndex = length;
 
             // Update pending income record
-            pendingIncomeToLottery[_stablecoin] +=
-                (amountToCollect * toLottery) /
-                10;
-            pendingIncomeToSharing[_stablecoin] +=
-                amountToCollect -
-                (amountToCollect * toLottery) /
-                10;
+            _chargeFee(_stablecoin, amountToCollect);
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -899,13 +902,7 @@ contract PolicyCore is Ownable {
                 .currentDistributionIndex = _stopIndex;
 
             // Update pending income record
-            pendingIncomeToLottery[_stablecoin] +=
-                (amountToCollect * toLottery) /
-                10;
-            pendingIncomeToSharing[_stablecoin] +=
-                amountToCollect -
-                (amountToCollect * toLottery) /
-                10;
+            _chargeFee(_stablecoin, amountToCollect);
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -1045,7 +1042,7 @@ contract PolicyCore is Ownable {
         uint256 amountWithFee = (_amount * 990) / 1000;
         uint256 amountToCollect = _amount - amountWithFee;
 
-        uint256 amountToLottery = (amountToCollect * toLottery) / 10;
+        uint256 amountToLottery = (amountToCollect * toLotteryPart) / 10;
 
         pendingIncomeToLottery[_stablecoin] += amountToLottery;
         pendingIncomeToSharing[_stablecoin] +=
