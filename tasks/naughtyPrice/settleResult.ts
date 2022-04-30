@@ -48,7 +48,7 @@ task("collectIncome", "Collect income from policy core")
 
     const addressList = readAddressList();
 
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreOld;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress

@@ -25,10 +25,10 @@ task(
   const addressList = readAddressList();
 
   // Addresses to be set
-  const policyCoreAddress = addressList[network.name].PolicyCore;
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   // Get naughty factory contract instance
-  const naughtyFactoryAddress = addressList[network.name].NaughtyFactory;
+  const naughtyFactoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
   const NaughtyFactory: NaughtyFactory__factory =
     await hre.ethers.getContractFactory("NaughtyFactory");
   const factory: NaughtyFactory = NaughtyFactory.attach(naughtyFactoryAddress);
@@ -55,10 +55,10 @@ task(
   const addressList = readAddressList();
 
   // Addresses to be set
-  const policyCoreAddress = addressList[network.name].PolicyCore;
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   // Get naughty router contract instance
-  const naughtyRouterAddress = addressList[network.name].NaughtyRouter;
+  const naughtyRouterAddress = addressList[network.name].NaughtyRouterUpgradeable;
   const NaughtyRouter: NaughtyRouter__factory =
     await hre.ethers.getContractFactory("NaughtyRouter");
   const router: NaughtyRouter = NaughtyRouter.attach(naughtyRouterAddress);
@@ -86,12 +86,12 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     const addressList = readAddressList();
 
     // Addresses to be set
-    const naughtyRouterAddress = addressList[network.name].NaughtyRouter;
-    const incomeSharingAddress = addressList[network.name].EmergencyPool;
+    const naughtyRouterAddress = addressList[network.name].NaughtyRouterUpgradeable;
+    const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
     const lotteryAddress = addressList[network.name].DegisLottery;
 
     // Get policy core contract instance
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );
@@ -101,11 +101,11 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     const tx_setRouter = await core.setNaughtyRouter(naughtyRouterAddress);
     console.log("Tx_setRouter details: ", await tx_setRouter.wait());
 
-    // const tx_setEmergency = await core.setIncomeSharing(incomeSharingAddress);
-    // console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
+    const tx_setEmergency = await core.setIncomeSharing(incomeSharingAddress);
+    console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
 
-    // const tx_setLottery = await core.setLottery(lotteryAddress);
-    // console.log("Tx_setLottery details: ", await tx_setLottery.wait());
+    const tx_setLottery = await core.setLottery(lotteryAddress);
+    console.log("Tx_setLottery details: ", await tx_setLottery.wait());
 
     // Check the result
     console.log("Naughty router address in core: ", await core.naughtyRouter());

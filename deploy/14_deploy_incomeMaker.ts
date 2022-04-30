@@ -13,8 +13,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const router = await get("NaughtyRouter");
-  const factory = await get("NaughtyFactory");
+  const router = await get("NaughtyRouterUpgradeable");
+  const factory = await get("NaughtyFactoryUpgradeable");
   const vault = await get("IncomeSharingVault");
 
   // const proxyArtifact = await getArtifact("TransparentUpgradeableProxy");

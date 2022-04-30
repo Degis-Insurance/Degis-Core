@@ -25,7 +25,7 @@ import {IBuyerToken} from "../tokens/interfaces/IBuyerToken.sol";
 import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
 import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
 import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
-import {Ownable} from "../utils/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
 
 /**
@@ -35,7 +35,7 @@ import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
  *         Very similar logic with Uniswap V2.
  *
  */
-contract NaughtyRouter is Ownable {
+contract NaughtyRouter is OwnableUpgradeable {
     using SafeERC20 for IERC20;
     using SafeERC20 for INaughtyPair;
 
@@ -74,7 +74,12 @@ contract NaughtyRouter is Ownable {
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    constructor(address _factory, address _buyerToken) Ownable(msg.sender) {
+    function initialize(address _factory, address _buyerToken)
+        public
+        initializer
+    {
+        __Ownable_init();
+
         factory = _factory;
         buyerToken = _buyerToken;
     }

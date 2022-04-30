@@ -24,7 +24,7 @@ task(
 
   const addressList = readAddressList();
 
-  const factoryAddress = addressList[network.name].NaughtyFactory;
+  const factoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
 
   const factory: NaughtyFactory = new NaughtyFactory__factory(
     dev_account
@@ -61,7 +61,7 @@ task(
   const lotteryAddress = addressList[network.name].DegisLottery;
 
   // Get policy core contract instance
-  const policyCoreAddress = addressList[network.name].PolicyCore;
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
     policyCoreAddress

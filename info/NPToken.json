@@ -38,6 +38,11 @@
 			"address": "0xc257444A313344875C7848a92B01453E61a619Ec",
 			"deadline": 1651046400,
 			"settleTime": 1651046400
+		},
+		"AVAX_64.0_L_0305": {
+			"address": "0xe8518E60816dEbB1E04060081ba1B950DB391f3e",
+			"deadline": 1651564800,
+			"settleTime": 1651564800
 		}
 	},
 	"localhost": {}

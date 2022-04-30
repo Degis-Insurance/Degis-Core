@@ -72,7 +72,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     const stablecoinDecimals = await stablecoinInstance.decimals();
     console.log("Stablecoin decimals: ", stablecoinDecimals);
 
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress
