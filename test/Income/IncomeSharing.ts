@@ -185,6 +185,50 @@ describe("Income Sharing", function () {
       );
     });
 
+    it("should be able to withdraw veDEG", async function () {
+      const deposit_num = toWei("100");
+      const withdraw_num = toWei("40");
+      const remain_num = toWei("60");
+      await veDEG.addWhitelist(income.address);
+
+      // USD pool
+      await income.deposit(1, deposit_num);
+
+      // Shield pool
+      await income.deposit(2, deposit_num);
+
+      expect(await income.withdraw(1, withdraw_num))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 1, withdraw_num);
+
+      expect(await income.withdraw(2, withdraw_num))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 2, withdraw_num);
+
+      const usdPoolInfo = await income.pools(1);
+      expect(usdPoolInfo.totalAmount).to.equal(remain_num);
+      expect(usdPoolInfo.accRewardPerShare).to.equal(stablecoinToWei("0.02"));
+
+      const shieldPoolInfo = await income.pools(2);
+      expect(shieldPoolInfo.totalAmount).to.equal(remain_num);
+      expect(shieldPoolInfo.accRewardPerShare).to.equal(toWei("0.02"));
+
+      const usdUserInfo = await income.users(1, dev_account.address);
+      expect(usdUserInfo.totalAmount).to.equal(remain_num);
+
+      const shieldUserInfo = await income.users(2, dev_account.address);
+      expect(shieldUserInfo.totalAmount).to.equal(remain_num);
+
+      // Locked amount change
+      const lockedNum = await veDEG.locked(dev_account.address);
+      expect(lockedNum).to.equal(toWei("120"));
+
+      // Balance not change
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+    });
+
     it("should be able to get reward after deposit", async function () {
       const deposit_num = toWei("100");
       await veDEG.addWhitelist(income.address);
@@ -289,7 +333,7 @@ describe("Income Sharing", function () {
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("5")
       );
-        
+
       // 1 block reward
       await income.setRewardSpeed(1, stablecoinToWei("0"));
       await mineBlocks(5);

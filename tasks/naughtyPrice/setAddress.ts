@@ -16,6 +16,7 @@ task(
   "setNPFactory",
   "Set the contract addresses inside naughty factory"
 ).setAction(async (_, hre) => {
+  console.log("\n Setting Naughty Factory... \n");
   const { network } = hre;
 
   // Signers
@@ -46,6 +47,7 @@ task(
   "setNPRouter",
   "Set the contract addresses inside naughty router"
 ).setAction(async (_, hre) => {
+  console.log("\n Setting Naughty Router... \n");
   const { network } = hre;
 
   // Signers
@@ -77,6 +79,7 @@ task(
 
 task("setNPCore", "Set the contract addresses inside policy core").setAction(
   async (_, hre) => {
+    console.log("\n Setting Policy Core... \n");
     const { network } = hre;
 
     // Signers

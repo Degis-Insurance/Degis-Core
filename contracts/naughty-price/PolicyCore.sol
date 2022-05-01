@@ -874,9 +874,6 @@ contract PolicyCore is OwnableUpgradeable {
             // Update the distribution index for this policy token
             settleResult[policyTokenAddress].currentDistributionIndex = length;
 
-            // Update pending income record
-            _chargeFee(_stablecoin, amountToCollect);
-
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
                 _stablecoin,
@@ -900,9 +897,6 @@ contract PolicyCore is OwnableUpgradeable {
             // Update the distribution index for this policy token
             settleResult[policyTokenAddress]
                 .currentDistributionIndex = _stopIndex;
-
-            // Update pending income record
-            _chargeFee(_stablecoin, amountToCollect);
 
             emit PolicyTokensSettledForUsers(
                 _policyTokenName,
@@ -1017,7 +1011,8 @@ contract PolicyCore is OwnableUpgradeable {
         for (uint256 i = _start; i < _stop; i++) {
             address user = allDepositors[_policyTokenAddress][i];
             uint256 amount = userQuota[user][_policyTokenAddress];
-            uint256 amountWithFee = (amount * 990) / 1000;
+            // Charge fee
+            uint256 amountWithFee = _chargeFee(_stablecoin, amount);
 
             if (amountWithFee > 0) {
                 IERC20(_stablecoin).safeTransfer(user, amountWithFee);

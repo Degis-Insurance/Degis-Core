@@ -50,6 +50,7 @@ import "./tasks/governance/VeDEG";
 // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
+import "./tasks/incomeSharing/incomeMaker";
 
 dotenv.config();
 
@@ -132,7 +133,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
-      // gasPrice: 75000000000,
+      gasPrice: 40000000000,
     },
     avaxTest: {
       url: process.env.AVAX_URL || "",

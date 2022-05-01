@@ -71,6 +71,7 @@ describe("Income Maker", function () {
     buyerToken = await new BuyerToken__factory(dev_account).deploy();
 
     factory = await new NaughtyFactory__factory(dev_account).deploy();
+    await factory.initialize();
 
     usd = await new MockUSD__factory(dev_account).deploy();
     degis = await new DegisToken__factory(dev_account).deploy();
@@ -86,18 +87,15 @@ describe("Income Maker", function () {
     await veDEG.initialize(degis.address, farmingPool.address);
 
     // Deploy naughty router
-    router = await new NaughtyRouter__factory(dev_account).deploy(
-      factory.address,
-      buyerToken.address
-    );
-    await buyerToken.addMinter(router.address)
+    router = await new NaughtyRouter__factory(dev_account).deploy();
+    await router.deployed();
+    await router.initialize(factory.address, buyerToken.address);
+    await buyerToken.addMinter(router.address);
 
     // Deploy policy core
-    core = await new PolicyCore__factory(dev_account).deploy(
-      usd.address,
-      factory.address,
-      priceGetter.address
-    );
+    core = await new PolicyCore__factory(dev_account).deploy();
+    await core.deployed();
+    await core.initialize(usd.address, factory.address, priceGetter.address);
 
     await router.setPolicyCore(core.address);
     await factory.setPolicyCoreAddress(core.address);
@@ -204,7 +202,7 @@ describe("Income Maker", function () {
         dev_account.address
       );
 
-      console.log("lp balance", lpBalance.toNumber())
+      console.log("lp balance", lpBalance.toNumber());
 
       // Fee : 5%
       // 2% to income maker, 3% to lp

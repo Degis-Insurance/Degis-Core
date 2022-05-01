@@ -16,6 +16,7 @@ task(
   "setIncomeMakerInFactory",
   "Set the income maker address inside naughty factory"
 ).setAction(async (_, hre) => {
+  console.log("\nSetting income maker in factory...\n");
   const { network } = hre;
 
   // Signers

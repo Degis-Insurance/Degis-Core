@@ -83,6 +83,7 @@ describe("Initial Liquidity Matching", function () {
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
+    await factory.initialize();
 
     PriceGetter = await ethers.getContractFactory("PriceGetter");
     priceGetter = await PriceGetter.deploy();
@@ -93,14 +94,12 @@ describe("Initial Liquidity Matching", function () {
     NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
     PolicyCore = await ethers.getContractFactory("PolicyCore");
-    core = await PolicyCore.deploy(
-      usd.address,
-      factory.address,
-      priceFeedMock.address
-    );
+    core = await PolicyCore.deploy();
+    await core.initialize(usd.address, factory.address, priceFeedMock.address);
 
     NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
-    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+    router = await NaughtyRouter.deploy();
+    await router.initialize(factory.address, buyerToken.address);
     await router.setPolicyCore(core.address);
 
     await factory.setPolicyCoreAddress(core.address);
@@ -120,6 +119,8 @@ describe("Initial Liquidity Matching", function () {
       router.address,
       emergencyPool.address
     );
+
+    await ILM.approveStablecoin(usd.address);
 
     await core.setILMContract(ILM.address);
     await core.setNaughtyRouter(router.address);
@@ -266,7 +267,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1", 12)
+      );
 
       // Another user
       await usd.mint(user1.address, stablecoinToWei("300"));
@@ -296,7 +299,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("200"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1.5", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1.5", 12)
+      );
 
       // related to degis
       expect(pairInfo_2.accDegisPerShare).to.equal(parseUnits("0.025", 24));
@@ -334,7 +339,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1", 12)
+      );
 
       // Another user
       await expect(
@@ -371,7 +378,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("40"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("2", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("2", 12)
+      );
     });
 
     it("should be able to stop current round ILM", async function () {

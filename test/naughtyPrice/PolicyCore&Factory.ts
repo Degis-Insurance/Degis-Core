@@ -73,6 +73,7 @@ describe("Policy Core and Naughty Factory", function () {
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
+    await factory.initialize();
 
     PriceGetter = await ethers.getContractFactory("PriceGetter");
     priceGetter = await PriceGetter.deploy();
@@ -83,16 +84,14 @@ describe("Policy Core and Naughty Factory", function () {
     NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
     PolicyCore = await ethers.getContractFactory("PolicyCore");
-    core = await PolicyCore.deploy(
-      usd.address,
-      factory.address,
-      priceFeedMock.address
-    );
+    core = await PolicyCore.deploy();
+    await core.initialize(usd.address, factory.address, priceFeedMock.address);
     await core.deployed();
-    await factory.deployed();
+    
 
     NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
-    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+    router = await NaughtyRouter.deploy();
+    await router.initialize(factory.address, buyerToken.address);
 
     await factory.setPolicyCoreAddress(core.address);
 
@@ -567,8 +566,12 @@ describe("Policy Core and Naughty Factory", function () {
       );
 
       await core.collectIncome(usd.address);
-      expect(await usd.balanceOf(emergencyPool.address)).to.equal(stablecoinToWei("40"));
-      expect(await usd.balanceOf(lottery.address)).to.equal(stablecoinToWei("10"));
+      expect(await usd.balanceOf(emergencyPool.address)).to.equal(
+        stablecoinToWei("40")
+      );
+      expect(await usd.balanceOf(lottery.address)).to.equal(
+        stablecoinToWei("10")
+      );
     });
   });
 

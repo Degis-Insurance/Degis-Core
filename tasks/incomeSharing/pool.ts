@@ -9,6 +9,7 @@ import {
   IncomeSharingVault,
   IncomeSharingVault__factory,
   MockUSD__factory,
+  VoteEscrowedDegis__factory,
 } from "../../typechain";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
@@ -69,12 +70,57 @@ task("setIncomeSpeed", "Set income sharing speed")
       getTokenAddressOnAVAX("USDC.e")
     );
 
-    const bal = await usd.balanceOf(vaultAddress);
-    console.log("USDC balance: ", formatUnits(bal, 6));
+    const veDEG = new VoteEscrowedDegis__factory(dev_account).attach(
+      addressList[network.name].VoteEscrowedDegis
+    );
+
+    const tx = await vault.setRewardSpeed(
+      taskArgs.pid,
+      parseUnits(taskArgs.reward, 6)
+    );
+    console.log("Tx details: ", await tx.wait());
+  });
+
+task("getIncomeBalance", "Get balance in income sharing vault").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const vaultAddress = addressList[network.name].IncomeSharingVault;
+
+    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
+      dev_account
+    ).attach(vaultAddress);
+
+    const usd = new MockUSD__factory(dev_account).attach(
+      getTokenAddressOnAVAX("USDC.e")
+    );
+
+    const balance = await usd.balanceOf(vaultAddress);
+    console.log("Balance: ", formatUnits(balance, 6));
+
+    const user = "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E";
+    const pending = await vault.pendingReward(1, user);
+    console.log("Pending: ", formatUnits(pending, 6));
+
+    const userInfo = await vault.users(1, user);
+    console.log(formatUnits(userInfo.totalAmount,18));
+    console.log(formatUnits(userInfo.rewardDebt,18))
+
+    const pool = await vault.pools(1);
+
+    console.log(formatUnits(pool.rewardPerSecond, 6));
+    console.log(pool.lastRewardTimestamp.toNumber())
 
     // const tx = await vault.setRewardSpeed(
     //   taskArgs.pid,
     //   parseUnits(taskArgs.reward, 6)
     // );
     // console.log("Tx details: ", await tx.wait());
-  });
+  }
+);

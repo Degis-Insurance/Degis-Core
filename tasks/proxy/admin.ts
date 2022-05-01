@@ -7,8 +7,8 @@ import { ProxyAdmin, ProxyAdmin__factory } from "../../typechain";
 
 task("upgrade", "Upgrade an implementation").setAction(
   async (taskArgs, hre) => {
-    const impl = "0x83E705DF963C4632fDc7b7D159a5A42533DEF30d";
-    const proxy = "0x1d51dc899D66cf2E6a5b81C933a0BdCBC06347de";
+    const impl = "0x6b2e81889a93E38691715e7605526C8C81916Cef";
+    const proxy = "0xD6E0Be5ad6a895f91049ce3FB9891232b2996f40";
 
     // Network info
     const { network } = hre;
