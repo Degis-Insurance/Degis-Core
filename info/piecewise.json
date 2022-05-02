@@ -1,0 +1,14 @@
+{
+  "fuji": {},
+  "avax": {},
+  "avaxTest": {},
+  "localhost": {},
+  "rinkeby": {},
+  "reserve": {
+    "avax": {
+      "DegisToken": "0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645",
+      "BuyerToken": "0xf8fA2eF5bf5087e9b5a124591E82b5d9E2807dba",
+      "EmergencyPool": "0xDC6446Afe79de533BcA4DE28872E8Fd9F0762835"
+    }
+  }
+}

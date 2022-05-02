@@ -53,7 +53,14 @@ task("addFarmingPool", "Add new farming pool")
     const farmingPool: FarmingPoolUpgradeable =
       FarmingPool.attach(farmingPoolAddress);
 
-    console.log("farming speed", parseUnits(basicDegisPerSecond).toString());
+    console.log(
+      "farming basic speed",
+      parseUnits(basicDegisPerSecond).toString()
+    );
+    console.log(
+      "farming bonus speed",
+      parseUnits(bonusDegisPerSecond).toString()
+    );
 
     const tx = await farmingPool.add(
       lptokenAddress,
@@ -111,7 +118,8 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     );
     const FarmingPool: FarmingPoolUpgradeable__factory =
       await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPoolUpgradeable = FarmingPool.attach(farmingPoolAddress);
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
     const tx = await farmingPool.setDegisReward(
@@ -210,16 +218,23 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     //   stablecoinToWei("450000"),
     //   stablecoinToWei("600000"),
     // ];
-    // const reward: string[] = [
-    //   toWei("0.035"),
-    //   toWei("0.07"),
-    //   toWei("0.104"),
-    //   toWei("0.139"),
-    //   toWei("0.174"),
-    // ];
+    
 
-    const threshold: string[] = [stablecoinToWei("0"), stablecoinToWei("30")];
-    const reward: string[] = [toWei("0.1"), toWei("0.2")];
+    const threshold: string[] = [
+      stablecoinToWei("0"),
+      stablecoinToWei("150000"),
+      stablecoinToWei("300000"),
+      stablecoinToWei("450000"),
+      stablecoinToWei("600000"),
+    ];
+    
+    const reward: string[] = [
+      toWei("0.042"),
+      toWei("0.084"),
+      toWei("0.1248"),
+      toWei("0.1668"),
+      toWei("0.2088"),
+    ];
 
     const { network } = hre;
     // Signers
@@ -241,6 +256,7 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
       gasLimit: 1000000,
       from: dev_account.address,
     });
+    console.log("Tx details: ", await tx.wait());
 
     const thresholdBasic = await farmingPool.thresholdBasic(poolId, 1);
     console.log("Threshold basic: ", thresholdBasic.toString());
