@@ -51,6 +51,7 @@ import "./tasks/governance/VeDEG";
 import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
+import "./tasks/general/index";
 
 dotenv.config();
 

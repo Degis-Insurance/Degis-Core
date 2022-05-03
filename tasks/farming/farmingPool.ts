@@ -39,7 +39,7 @@ task("addFarmingPool", "Add new farming pool")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
