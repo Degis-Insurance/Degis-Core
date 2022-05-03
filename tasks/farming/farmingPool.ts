@@ -218,23 +218,10 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     //   stablecoinToWei("450000"),
     //   stablecoinToWei("600000"),
     // ];
-    
 
-    const threshold: string[] = [
-      stablecoinToWei("0"),
-      stablecoinToWei("150000"),
-      stablecoinToWei("300000"),
-      stablecoinToWei("450000"),
-      stablecoinToWei("600000"),
-    ];
-    
-    const reward: string[] = [
-      toWei("0.042"),
-      toWei("0.084"),
-      toWei("0.1248"),
-      toWei("0.1668"),
-      toWei("0.2088"),
-    ];
+    const threshold: string[] = ["0"];
+
+    const reward: string[] = ["0"];
 
     const { network } = hre;
     // Signers

@@ -24,8 +24,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [],
+      init: {
+        methodName: "initialize",
+        args: [],
+      },
     },
   };
 
@@ -49,8 +51,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       proxyContract: "TransparentUpgradeableProxy",
       viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
       execute: {
-        methodName: "initialize",
-        args: [usdcAddress, factoryUpgradeable.address, priceGetter.address],
+        init: {
+          methodName: "initialize",
+          args: [usdcAddress, factoryUpgradeable.address, priceGetter.address],
+        },
       },
     };
 
@@ -69,12 +73,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       proxyContract: "TransparentUpgradeableProxy",
       viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
       execute: {
-        methodName: "initialize",
-        args: [
-          MockUSD.address,
-          factoryUpgradeable.address,
-          priceGetter.address,
-        ],
+        init: {
+          methodName: "initialize",
+          args: [
+            MockUSD.address,
+            factoryUpgradeable.address,
+            priceGetter.address,
+          ],
+        },
       },
     };
 
@@ -96,8 +102,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [factoryUpgradeable.address, BuyerToken.address],
+      init: {
+        methodName: "initialize",
+        args: [factoryUpgradeable.address, BuyerToken.address],
+      },
     },
   };
 

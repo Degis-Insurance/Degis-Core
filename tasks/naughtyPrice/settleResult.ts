@@ -20,7 +20,7 @@ task("settleNPToken", "Settle a naughty price token")
 
     const addressList = readAddressList();
 
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress

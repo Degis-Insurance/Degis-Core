@@ -61,12 +61,20 @@ task("getIncomeMakerBalance", "Get income maker lp balance")
       addressList[network.name].IncomeMaker
     );
 
+
     let usdAddress: string;
     if (network.name == "avax" || network.name == "avaxTest") {
       usdAddress = getTokenAddressOnAVAX("USDC.e");
     } else {
       usdAddress = addressList[network.name].MockUSD;
     }
+
+
+    const pairAddress = "0xB72cEC598799bcE63B44974cbea0B365083d0241"
+    const pair = new NaughtyPair__factory(dev_account).attach(pairAddress)
+
+    const balance = await pair.balanceOf(maker.address);
+    console.log("maker lp balance: ", formatUnits(balance, 6));
 
     const tx = await maker.convertIncome(taskArgs.token, usdAddress);
     console.log("Tx details: ", await tx.wait());

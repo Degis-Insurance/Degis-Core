@@ -29,8 +29,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [BuyerToken.address, DegisToken.address],
+      init: {
+        methodName: "initialize",
+        args: [BuyerToken.address, DegisToken.address],
+      },
     },
   };
 

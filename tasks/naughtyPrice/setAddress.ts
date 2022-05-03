@@ -4,6 +4,7 @@ import "@nomiclabs/hardhat-ethers";
 import { readAddressList } from "../../scripts/contractAddress";
 
 import {
+  MockUSD__factory,
   NaughtyFactory,
   NaughtyFactory__factory,
   NaughtyRouter,
@@ -11,6 +12,8 @@ import {
   PolicyCore,
   PolicyCore__factory,
 } from "../../typechain";
+import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
+import { formatUnits } from "ethers/lib/utils";
 
 task(
   "setNPFactory",
@@ -29,7 +32,8 @@ task(
   const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   // Get naughty factory contract instance
-  const naughtyFactoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
+  const naughtyFactoryAddress =
+    addressList[network.name].NaughtyFactoryUpgradeable;
   const NaughtyFactory: NaughtyFactory__factory =
     await hre.ethers.getContractFactory("NaughtyFactory");
   const factory: NaughtyFactory = NaughtyFactory.attach(naughtyFactoryAddress);
@@ -60,7 +64,8 @@ task(
   const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   // Get naughty router contract instance
-  const naughtyRouterAddress = addressList[network.name].NaughtyRouterUpgradeable;
+  const naughtyRouterAddress =
+    addressList[network.name].NaughtyRouterUpgradeable;
   const NaughtyRouter: NaughtyRouter__factory =
     await hre.ethers.getContractFactory("NaughtyRouter");
   const router: NaughtyRouter = NaughtyRouter.attach(naughtyRouterAddress);
@@ -89,7 +94,8 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     const addressList = readAddressList();
 
     // Addresses to be set
-    const naughtyRouterAddress = addressList[network.name].NaughtyRouterUpgradeable;
+    const naughtyRouterAddress =
+      addressList[network.name].NaughtyRouterUpgradeable;
     const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
     const lotteryAddress = addressList[network.name].DegisLottery;
 
@@ -100,7 +106,7 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
-    Set
+    Set;
     const tx_setRouter = await core.setNaughtyRouter(naughtyRouterAddress);
     console.log("Tx_setRouter details: ", await tx_setRouter.wait());
 
@@ -116,3 +122,48 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     // console.log("Emergency pool address in core: ", await core.incomeSharing());
   }
 );
+
+task("checkIncome", "sdsd").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const factory = new NaughtyFactory__factory(dev_account).attach(
+    addressList[network.name].NaughtyFactoryUpgradeable
+  );
+  const feeTo = await factory.incomeMaker();
+  console.log("feeTo: ", feeTo);
+
+  const core_old = new PolicyCore__factory(dev_account).attach(
+    addressList[network.name].PolicyCore
+  );
+
+  const core_new = new PolicyCore__factory(dev_account).attach(
+    addressList[network.name].PolicyCoreUpgradeable
+  );
+
+  const usdce = getTokenAddressOnAVAX("USDC.e");
+
+  const pendingOldLottery = await core_old.pendingIncomeToLottery(usdce);
+  console.log("pending_1: ", formatUnits(pendingOldLottery, 6));
+  const pendingOldIncome = await core_old.pendingIncomeToSharing(usdce);
+  console.log("pending_1: ", formatUnits(pendingOldIncome, 6));
+
+  const pendingNewLottery = await core_new.pendingIncomeToLottery(usdce);
+  console.log("pending_2: ", formatUnits(pendingNewLottery, 6));
+  const pendingNewIncome = await core_new.pendingIncomeToSharing(usdce);
+  console.log("pending_2: ", formatUnits(pendingNewIncome, 6));
+
+  const usd = new MockUSD__factory(dev_account).attach(usdce);
+  const balance = await usd.balanceOf(addressList[network.name].EmergencyPool);
+  console.log("balance: ", formatUnits(balance, 6));
+
+  // const tx = await factory.setIncomeMakerAddress(
+  //   "0xeB496257B64Cc2D39c291B209F465f3cfADE0873"
+  // );
+  // console.log("Tx details: ", await tx.wait());
+});
