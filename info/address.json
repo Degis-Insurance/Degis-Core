@@ -35,7 +35,9 @@
 		"NaughtyFactoryUpgradeable": "0x192794EE8bB83A6bD3B0091DE228F731D884772f",
 		"PolicyCoreUpgradeable": "0xe3F1FB39ec98A82E8d7564A51EDc9c9cCFcBb295",
 		"NaughtyRouterUpgradeable": "0xEBE5b5b6C6FcC724E41F32bd69f202a6aA8dC703",
-		"PurchaseIncentiveVault": "0xbb35BD4b71aB18f5D28B075F3dCCfd4b870c5fb0"
+		"PurchaseIncentiveVault": "0xbb35BD4b71aB18f5D28B075F3dCCfd4b870c5fb0",
+		"IncomeSharingVault": "0x7a5c17292AFfb5cFFd34991058e44C81C856f10b",
+		"IncomeMaker": "0xbaBaBa0a4b6968074162a8C271A872a49DfA97FE"
 	},
 	"avaxTest": {
 		"DegisLottery": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",

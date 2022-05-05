@@ -26,7 +26,6 @@ task(
   const addressList = readAddressList();
 
   const factoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
-
   const factory: NaughtyFactory = new NaughtyFactory__factory(
     dev_account
   ).attach(factoryAddress);
@@ -68,18 +67,13 @@ task(
     policyCoreAddress
   );
 
-  // const oldCore = [
-  //   "function setEmergencyPool(address)",
-  //   "function emergencyPool() returns(address)",
-  // ];
-  // const oldCoreInstance = new hre.ethers.Contract(
-  //   policyCoreAddress,
-  //   oldCore,
-  //   dev_account
-  // );
+  
+  const oldCoreInstance = new PolicyCore__factory(dev_account).attach(
+    addressList[network.name].PolicyCore
+  );
 
-  // const tx = await oldCoreInstance.setEmergencyPool(incomeSharingAddress);
-  // console.log("tx details:", await tx.wait());
+  const tx = await oldCoreInstance.setIncomeSharing(incomeSharingAddress);
+  console.log("tx details:", await tx.wait());
 
   const tx_setIncomeSharing = await core.setIncomeSharing(incomeSharingAddress);
   console.log(

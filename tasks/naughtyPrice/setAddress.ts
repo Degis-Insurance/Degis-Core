@@ -167,3 +167,67 @@ task("checkIncome", "sdsd").setAction(async (_, hre) => {
   // );
   // console.log("Tx details: ", await tx.wait());
 });
+
+task("checkNaughtyPrice", "check naughty price addresses setting").setAction(
+  async (_, hre) => {
+    console.log("\n Checking Naughty Price Addresses... \n");
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory = new NaughtyFactory__factory(dev_account).attach(
+      addressList[network.name].NaughtyFactoryUpgradeable
+    );
+
+    const incomeMakerAddress = await factory.incomeMaker();
+    console.log("incomeMakerAddress: ", incomeMakerAddress);
+
+    const incomeMakerProportion = await factory.incomeMakerProportion();
+    console.log("incomeMakerProportion: ", incomeMakerProportion.toNumber());
+
+    const policyCoreAddress = await factory.policyCore();
+    console.log("policyCoreAddress: ", policyCoreAddress);
+
+    const core = new PolicyCore__factory(dev_account).attach(
+      addressList[network.name].PolicyCoreUpgradeable
+    );
+
+    const lotteryAddress = await core.lottery();
+    console.log("lotteryAddress: ", lotteryAddress);
+
+    const ILMAddress = await core.ILMContract();
+    console.log("ILMAddress: ", ILMAddress);
+
+    const incomeSharingAddress = await core.incomeSharing();
+    console.log("incomeSharingAddress: ", incomeSharingAddress);
+
+    const routerAddress = await core.naughtyRouter();
+    console.log("routerAddress: ", routerAddress);
+
+    const factoryAddress = await core.factory();
+    console.log("factoryAddress: ", factoryAddress);
+
+    const toLotteryPart = await core.toLotteryPart();
+    console.log("toLotteryPart: ", toLotteryPart.toNumber());
+
+    const router = new NaughtyRouter__factory(dev_account).attach(
+      addressList[network.name].NaughtyRouterUpgradeable
+    );
+
+    const factoryInRouter = await router.factory();
+    console.log("factoryInRouter: ", factoryInRouter);
+
+    const coreInRouter = await router.policyCore();
+    console.log("coreInRouter: ", coreInRouter);
+
+    const buyerTokenInRouter = await router.buyerToken();
+    console.log("buyerTokenInRouter: ", buyerTokenInRouter);
+
+    console.log("\n Finish Checking Naughty Price Addresses... \n");
+  }
+);

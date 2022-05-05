@@ -104,18 +104,23 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
     const balance = await usd.balanceOf(vaultAddress);
     console.log("Balance: ", formatUnits(balance, 6));
 
+    const emergencyBalance = await usd.balanceOf(
+      addressList[network.name].EmergencyPool
+    );
+    console.log("emergency balance:", formatUnits(emergencyBalance, 6));
+
     const user = "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E";
     const pending = await vault.pendingReward(1, user);
     console.log("Pending: ", formatUnits(pending, 6));
 
     const userInfo = await vault.users(1, user);
-    console.log(formatUnits(userInfo.totalAmount,18));
-    console.log(formatUnits(userInfo.rewardDebt,18))
+    console.log(formatUnits(userInfo.totalAmount, 18));
+    console.log(formatUnits(userInfo.rewardDebt, 18));
 
     const pool = await vault.pools(1);
 
     console.log(formatUnits(pool.rewardPerSecond, 6));
-    console.log(pool.lastRewardTimestamp.toNumber())
+    console.log(pool.lastRewardTimestamp.toNumber());
 
     // const tx = await vault.setRewardSpeed(
     //   taskArgs.pid,

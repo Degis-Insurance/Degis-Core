@@ -48,7 +48,7 @@ task("collectIncome", "Collect income from policy core")
 
     const addressList = readAddressList();
 
-    const policyCoreAddress = addressList[network.name].PolicyCoreOld;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress
@@ -56,34 +56,34 @@ task("collectIncome", "Collect income from policy core")
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );
-    const core: any = PolicyCore.attach(policyCoreAddress);
+    const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
+
+    const balanceBefore = await core.pendingIncomeToLottery(taskArgs.stablecoin);
+    console.log("balance: ", formatUnits(balanceBefore, 6));
+
+    const balance2Before = await core.pendingIncomeToSharing(taskArgs.stablecoin);
+    console.log("balance: ", formatUnits(balance2Before, 6));
 
     const tx = await core.collectIncome(taskArgs.stablecoin);
     console.log("tx details:", await tx.wait());
 
-    const events = (await tx.wait()).events;
-    console.log("events: ", events);
-
-    // const oldCore = [
-    //   "function emergencyPool() public view returns (address)",
-    //   "function pendingIncomeToEmergency(address) public view returns(uint256)",
-    //   "function setEmergencyPool(address)",
-    // ];
-    // const oldCoreInstance = new hre.ethers.Contract(
-    //   policyCoreAddress,
-    //   oldCore,
-    //   dev_account
+    // old policy core
+    // const oldCore = new PolicyCore__factory(dev_account).attach(
+    //   addressList[network.name].PolicyCore
     // );
 
-    // const is = await oldCoreInstance.emergencyPool();
-    // console.log("income sharing address:", is);
+    // const tx = await oldCore.collectIncome(taskArgs.stablecoin);
+    // console.log("tx details:", await tx.wait());
 
-    // const lo = await core.lottery();
-    // console.log("lottery address:", lo);
-
-    // const balance = await core.pendingIncomeToLottery(taskArgs.stablecoin);
+    // const balance = await oldCore.pendingIncomeToLottery(taskArgs.stablecoin);
     // console.log("balance: ", formatUnits(balance, 6));
 
-    // const balance2 = await oldCoreInstance.pendingIncomeToEmergency(taskArgs.stablecoin);
+    // const balance2 = await oldCore.pendingIncomeToSharing(taskArgs.stablecoin);
     // console.log("balance: ", formatUnits(balance2, 6));
+
+    const balance = await core.pendingIncomeToLottery(taskArgs.stablecoin);
+    console.log("balance: ", formatUnits(balance, 6));
+
+    const balance2 = await core.pendingIncomeToSharing(taskArgs.stablecoin);
+    console.log("balance: ", formatUnits(balance2, 6));
   });

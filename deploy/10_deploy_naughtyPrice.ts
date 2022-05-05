@@ -124,16 +124,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
-  await hre.run("setNPFactory");
-  await hre.run("setNPRouter");
-  await hre.run("setNPCore");
+  // await hre.run("setNPFactory");
+  // await hre.run("setNPRouter");
+  // await hre.run("setNPCore");
 
-  // Add minter role to naughty router
-  await hre.run("addMinterBurner", {
-    type: "minter",
-    token: "b",
-    name: "NaughtyRouterUpgradeable",
-  });
+  // // Add minter role to naughty router
+  // await hre.run("addMinterBurner", {
+  //   type: "minter",
+  //   token: "b",
+  //   name: "NaughtyRouterUpgradeable",
+  // });
 };
 
 func.tags = ["NaughtyPrice"];

@@ -927,6 +927,9 @@ contract PolicyCore is OwnableUpgradeable {
 
         IERC20(_stablecoin).safeTransfer(lottery, amountToLottery);
         IERC20(_stablecoin).safeTransfer(incomeSharing, amountToSharing);
+
+        pendingIncomeToLottery[_stablecoin] = 0;
+        pendingIncomeToSharing[_stablecoin] = 0;
     }
 
     // ---------------------------------------------------------------------------------------- //

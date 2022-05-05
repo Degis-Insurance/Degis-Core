@@ -15,6 +15,8 @@ import "hardhat-contract-sizer";
 // tasks;
 import "./tasks/clearRecord";
 
+import "./tasks/emergencyPool/deposit-withdraw";
+
 // Farming Tasks
 import "./tasks/farming/farmingPool";
 import "./tasks/farming/purchaseIncentive";
@@ -134,7 +136,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
-      // gasPrice: 58000000000,
+      gasPrice: 88000000000,
     },
     avaxTest: {
       url: process.env.AVAX_URL || "",

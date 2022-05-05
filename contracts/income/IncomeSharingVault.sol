@@ -131,10 +131,14 @@ contract IncomeSharingVault is
             uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
             uint256 reward = timePassed * pool.rewardPerSecond;
 
+            console.log("reward", reward);
+
             // Remainging reward inside the pool
             uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
                 address(this)
             );
+
+            console.log("remaining reward", remainingReward);
 
             uint256 finalReward = reward > remainingReward
                 ? remainingReward
@@ -346,8 +350,9 @@ contract IncomeSharingVault is
         // Remainging reward inside the pool
         uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
             address(this)
-        );
+        ) ;
 
+        // Can not exceed the max balance of the pool
         uint256 finalReward = reward > remainingReward
             ? remainingReward
             : reward;
