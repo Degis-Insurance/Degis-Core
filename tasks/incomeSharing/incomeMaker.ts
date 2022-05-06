@@ -32,7 +32,7 @@ task("getIncomeMakerBalance", "Get income maker lp balance")
     const pair = new NaughtyPair__factory(dev_account).attach(pairAddress);
 
     const balance = await pair.balanceOf(maker.address);
-    console.log("income maker lp balance: ", formatUnits(balance, 6));
+    console.log("income maker lp balance: ", formatUnits(balance, 18));
   });
 
 task("convertIncome", "Convert income from maker to income sharing vault")

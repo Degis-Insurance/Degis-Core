@@ -249,6 +249,41 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
 
+  task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
+  .addParam("pid", "Pool id", null, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const poolId = taskArgs.pid;
+
+    const threshold: string[] = ["0"];
+
+    const reward: string[] = ["0"];
+
+    const { network } = hre;
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    console.log(
+      "The farming pool address of this network is: ",
+      farmingPoolAddress
+    );
+
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
+
+    const tx = await farmingPool.setPiecewise(poolId, threshold, reward, {
+      gasLimit: 1000000,
+      from: dev_account.address,
+    });
+    console.log("Tx details: ", await tx.wait());
+
+    const thresholdBasic = await farmingPool.thresholdBasic(poolId, 0);
+    console.log("Threshold basic: ", thresholdBasic.toString());
+  });
+
 task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   async (taskArgs, hre) => {
     const { network } = hre;

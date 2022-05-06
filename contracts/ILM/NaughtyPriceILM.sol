@@ -49,7 +49,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     // PolicyCore, Router and EmergencyPool contract address
     address public policyCore;
-    address public naughtyRouter;
+    address public router;
     address public emergencyPool;
 
     struct UserInfo {
@@ -60,6 +60,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     // user address => policy token address => user info
     mapping(address => mapping(address => UserInfo)) public users;
 
+    // Status of an ILM round
     enum Status {
         BeforeStart,
         Active,
@@ -157,7 +158,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
         degis = _degis;
         policyCore = _policyCore;
-        naughtyRouter = _router;
+        router = _router;
 
         emergencyPool = _emergencyPool;
     }
@@ -295,7 +296,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         pair.lptoken = lpTokenAddress;
 
         // Pre-approve the stablecoin for later deposit
-        IERC20(_policyToken).approve(naughtyRouter, MAX_UINT256);
+        IERC20(_policyToken).approve(router, MAX_UINT256);
 
         emit ILMStart(_policyToken, _stablecoin, _ILMDeadline, lpTokenAddress);
     }
@@ -305,7 +306,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @param _stablecoin Stablecoin address
      */
     function approveStablecoin(address _stablecoin) external {
-        IERC20(_stablecoin).approve(naughtyRouter, MAX_UINT256);
+        IERC20(_stablecoin).approve(router, MAX_UINT256);
         IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
     }
 
@@ -346,11 +347,11 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         pairs[_policyToken].naughtyPairAddress = poolAddress;
 
         // Approval prepration for withdraw liquidity
-        INaughtyPair(poolAddress).approve(naughtyRouter, MAX_UINT256);
+        INaughtyPair(poolAddress).approve(router, MAX_UINT256);
 
         // Add initial liquidity to the pool
         // Zero slippage
-        INaughtyRouter(naughtyRouter).addLiquidityWithUSD(
+        INaughtyRouter(router).addLiquidityWithUSD(
             _policyToken,
             pair.stablecoin,
             pair.amountA,
@@ -548,7 +549,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         _updateWhenClaim(_policyToken);
 
         // Remove liquidity
-        (uint256 amountA, uint256 amountB) = INaughtyRouter(naughtyRouter)
+        (uint256 amountA, uint256 amountB) = INaughtyRouter(router)
             .removeLiquidity(
                 _policyToken,
                 _stablecoin,
@@ -558,6 +559,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
                 msg.sender,
                 block.timestamp + 60
             );
+        
+        // Update user quota
+        // IPolicyCore(policyCore).updateUserQuota();
 
         delete users[msg.sender][_policyToken];
 

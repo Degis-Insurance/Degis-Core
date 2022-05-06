@@ -1,0 +1,12 @@
+{
+    "name": "NaughtyFactoryUpgradeable",
+    "network": "avax",
+    "proxy": {
+      "0x192794EE8bB83A6bD3B0091DE228F731D884772f": {
+        "impl": [
+          { "0x71f09B98Cd418ff25A68a7322E324783E44c2cA6": "2022-5-1 9:32:53" }
+        ]
+      }
+    }
+  }
+  

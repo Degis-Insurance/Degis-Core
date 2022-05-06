@@ -66,14 +66,6 @@ task("setIncomeSpeed", "Set income sharing speed")
       dev_account
     ).attach(vaultAddress);
 
-    const usd = new MockUSD__factory(dev_account).attach(
-      getTokenAddressOnAVAX("USDC.e")
-    );
-
-    const veDEG = new VoteEscrowedDegis__factory(dev_account).attach(
-      addressList[network.name].VoteEscrowedDegis
-    );
-
     const tx = await vault.setRewardSpeed(
       taskArgs.pid,
       parseUnits(taskArgs.reward, 6)

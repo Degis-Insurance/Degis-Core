@@ -136,7 +136,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
-      gasPrice: 88000000000,
+      // gasPrice: 120000000000,
     },
     avaxTest: {
       url: process.env.AVAX_URL || "",

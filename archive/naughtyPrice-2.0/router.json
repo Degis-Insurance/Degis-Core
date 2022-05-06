@@ -1,0 +1,11 @@
+{
+  "name": "NaughtyRouterUpgradeable",
+  "network": "avax",
+  "proxy": {
+    "0xEBE5b5b6C6FcC724E41F32bd69f202a6aA8dC703": {
+      "impl": [
+        { "0xEbB6616390B32f539d5Ed93c5c0662d1729478E0": "2022-5-1 9:59:18" }
+      ]
+    }
+  }
+}

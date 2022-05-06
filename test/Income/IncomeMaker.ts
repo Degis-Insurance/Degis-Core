@@ -207,13 +207,13 @@ describe("Income Maker", function () {
       // Fee : 5%
       // 2% to income maker, 3% to lp
       expect(usdBalanceAfter.sub(usdBalanceBefore)).to.equal(
-        stablecoinToWei("109.873759")
+        stablecoinToWei("109.898787")
       );
       expect(policyBalanceAfter.sub(policyBalanceBefore)).to.equal(
-        stablecoinToWei("91.219393")
+        stablecoinToWei("91.240172")
       ); // + 1.2
       expect(await pair.balanceOf(incomeMaker.address)).to.equal(
-        stablecoinToWei("0.113895")
+        stablecoinToWei("0.091095")
       );
 
       // Convert income to stablecoins
@@ -225,7 +225,7 @@ describe("Income Maker", function () {
       expect(await usd.balanceOf(incomeMaker.address)).to.equal(0);
       // The liquidity has been removed nearly all, so the amount is somehow smaller
       expect(await usd.balanceOf(incomeSharingVault.address)).to.equal(
-        stablecoinToWei("0.12623")
+        stablecoinToWei("0.1012")
       );
     });
   });
