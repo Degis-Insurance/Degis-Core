@@ -34,9 +34,9 @@ task(
   // Get naughty factory contract instance
   const naughtyFactoryAddress =
     addressList[network.name].NaughtyFactoryUpgradeable;
-  const NaughtyFactory: NaughtyFactory__factory =
-    await hre.ethers.getContractFactory("NaughtyFactory");
-  const factory: NaughtyFactory = NaughtyFactory.attach(naughtyFactoryAddress);
+  const factory: NaughtyFactory = new NaughtyFactory__factory(
+    dev_account
+  ).attach(naughtyFactoryAddress);
 
   // Set
   const tx = await factory.setPolicyCoreAddress(policyCoreAddress);
@@ -120,6 +120,31 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     console.log("Naughty router address in core: ", await core.naughtyRouter());
     // console.log("Degis lottery address in core: ", await core.lottery());
     // console.log("Emergency pool address in core: ", await core.incomeSharing());
+  }
+);
+
+task("setILMInCore", "Set ILM contract address in policy core").setAction(
+  async (_, hre) => {
+    console.log("\n Setting ILM in policyCore... \n");
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const core = new PolicyCore__factory(dev_account).attach(
+      addressList[network.name].PolicyCoreUpgradeable
+    );
+
+    const ILM = addressList[network.name].ILM;
+
+    const tx = await core.setILMContract(ILM);
+    console.log("Tx details: ", await tx.wait());
+
+    console.log("\n Finish setting ILM in policyCore \n");
   }
 );
 

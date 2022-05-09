@@ -302,15 +302,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     }
 
     /**
-     * @notice Approve stablecoins for naughty price contracts
-     * @param _stablecoin Stablecoin address
-     */
-    function approveStablecoin(address _stablecoin) external {
-        IERC20(_stablecoin).approve(router, MAX_UINT256);
-        IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
-    }
-
-    /**
      * @notice Finish a round of ILM
      * @dev The swap pool for the protection token will be deployed with inital liquidity\
      *      The amount of initial liquidity will be the total amount of the pair
@@ -559,9 +550,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
                 msg.sender,
                 block.timestamp + 60
             );
-        
+
         // Update user quota
-        // IPolicyCore(policyCore).updateUserQuota();
+        IPolicyCore(policyCore).updateUserQuota(msg.sender, _stablecoin, amountA);
 
         delete users[msg.sender][_policyToken];
 
@@ -583,6 +574,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         IERC20(_token).safeTransfer(owner(), _amount);
 
         emit EmergencyWithdraw(owner(), _amount);
+    }
+
+    /**
+     * @notice Approve stablecoins for naughty price contracts
+     * @param _stablecoin Stablecoin address
+     */
+    function approveStablecoin(address _stablecoin) external {
+        IERC20(_stablecoin).approve(router, MAX_UINT256);
+        IERC20(_stablecoin).approve(policyCore, MAX_UINT256);
     }
 
     // ---------------------------------------------------------------------------------------- //

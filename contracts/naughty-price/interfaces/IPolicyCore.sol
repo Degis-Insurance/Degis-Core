@@ -54,4 +54,10 @@ interface IPolicyCore {
         external
         view
         returns (PolicyTokenInfo memory);
+
+    function updateUserQuota(
+        address _user,
+        address _policyToken,
+        uint256 _amount
+    ) external;
 }

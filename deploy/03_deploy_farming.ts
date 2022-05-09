@@ -39,6 +39,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       log: true,
     });
     addressList[network.name].FarmingPool = farmingPool.address;
+    // Store the address list after deployment
+    storeAddressList(addressList);
+
     await hre.run("addMinterBurner", ["minter", "d", "FarmingPool"]);
   } else if (isProxy) {
     // const proxyArtifact = await getArtifact("TransparentUpgradeableProxy");
@@ -63,11 +66,16 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     });
     addressList[network.name].FarmingPoolUpgradeable =
       farmingPoolUpgradeable.address;
-    await hre.run("addMinterBurner", ["minter", "d", "FarmingPoolUpgradeable"]);
-  }
 
-  // Store the address list after deployment
-  storeAddressList(addressList);
+    // Store the address list after deployment
+    storeAddressList(addressList);
+
+    await hre.run("addMinterBurner", {
+      type: "minter",
+      token: "d",
+      name: "FarmingPoolUpgradeable",
+    });
+  }
 };
 
 func.tags = ["Farming"];

@@ -1,9 +1,9 @@
 {
 	"fuji": {
-		"AVAX_72.0_L_0105": {
-			"address": "0xf0833fF900357Fa7ecc53Bea9193F1d4Ca4ff91C",
-			"deadline": 1651392000,
-			"settleTime": 1651392000
+		"AVAX_50.0_L_1205": {
+			"address": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
+			"deadline": 1652367600,
+			"settleTime": 1652367600
 		}
 	},
 	"avax": {

@@ -67,7 +67,6 @@ task(
     policyCoreAddress
   );
 
-  
   const oldCoreInstance = new PolicyCore__factory(dev_account).attach(
     addressList[network.name].PolicyCore
   );
@@ -93,6 +92,8 @@ task(
   "addIncomeSharingWL",
   "Add income sharing contract to veDEG whitelist"
 ).setAction(async (_, hre) => {
+  console.log("\n Adding income sharing contract to veDEG whitelist... \n");
+
   const { network } = hre;
 
   // Signers
@@ -111,4 +112,8 @@ task(
 
   const tx = await veDEG.addWhitelist(incomeSharingAddress);
   console.log("Tx details: ", await tx.wait());
+
+  console.log(
+    "\n Finish Adding income sharing contract to veDEG whitelist... \n"
+  );
 });

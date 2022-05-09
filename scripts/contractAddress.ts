@@ -127,3 +127,11 @@ export const getLinkAddress = function (networkName: string) {
 
   return obj[networkName];
 };
+
+export const readILMList = function () {
+  return JSON.parse(fs.readFileSync("info/ILM.json", "utf-8"));
+};
+
+export const storeILMList = function (ILMList: object) {
+  fs.writeFileSync("info/ILM.json", JSON.stringify(ILMList, null, "\t"));
+};

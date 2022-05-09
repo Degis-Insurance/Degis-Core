@@ -166,9 +166,9 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 initLiquidityB
     );
     event Deposit(
-        address userAddress,
-        string policyTokenName,
-        address stablecoin,
+        address indexed userAddress,
+        string indexed policyTokenName,
+        address indexed stablecoin,
         uint256 amount
     );
     event DelegateDeposit(
@@ -179,15 +179,15 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 amount
     );
     event Redeem(
-        address userAddress,
-        string policyTokenName,
-        address stablecoin,
+        address indexed userAddress,
+        string indexed policyTokenName,
+        address indexed stablecoin,
         uint256 amount
     );
     event RedeemAfterSettlement(
-        address userAddress,
-        string policyTokenName,
-        address stablecoin,
+        address indexed userAddress,
+        string indexed policyTokenName,
+        address indexed stablecoin,
         uint256 amount
     );
     event FinalResultSettled(
@@ -201,6 +201,11 @@ contract PolicyCore is OwnableUpgradeable {
         address stablecoin,
         uint256 startIndex,
         uint256 stopIndex
+    );
+    event UpdateUserQuota(
+        address user,
+        address policyTokenAddress,
+        uint256 amount
     );
 
     // ---------------------------------------------------------------------------------------- //
@@ -930,6 +935,25 @@ contract PolicyCore is OwnableUpgradeable {
 
         pendingIncomeToLottery[_stablecoin] = 0;
         pendingIncomeToSharing[_stablecoin] = 0;
+    }
+
+    /**
+     * @notice Update user quota from ILM when claim
+     * @dev When you claim your liquidity from ILM, you will get normal quota as you are using policyCore
+     * @param _user User address
+     * @param _policyToken PolicyToken address
+     * @param _amount Quota amount
+     */
+    function updateUserQuota(
+        address _user,
+        address _policyToken,
+        uint256 _amount
+    ) external {
+        require(msg.sender == ILMContract, "Only ILM");
+
+        userQuota[_user][_policyToken] = _amount;
+
+        emit UpdateUserQuota(_user, _policyToken, _amount);
     }
 
     // ---------------------------------------------------------------------------------------- //

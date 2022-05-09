@@ -1,5 +1,5 @@
 {
-  "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+  "address": "0xD1eC490D85e9E42B82A179DE2dD65bf6520e5D38",
   "abi": [
     {
       "anonymous": false,
@@ -125,39 +125,62 @@
       "type": "receive"
     },
     {
-      "inputs": [],
-      "name": "DIS__NotEnoughVeDEG",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__PoolNotAvailable",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__WrongSpeed",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__ZeroAmount",
-      "type": "error"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
           "indexed": false,
           "internalType": "address",
-          "name": "user",
+          "name": "payerAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "stablecoin",
           "type": "address"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "poolId",
+          "name": "amount",
           "type": "uint256"
+        }
+      ],
+      "name": "DelegateDeposit",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "stablecoin",
+          "type": "address"
         },
         {
           "indexed": false,
@@ -174,24 +197,62 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "isHappened",
+          "type": "bool"
+        }
+      ],
+      "name": "FinalResultSettled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
-          "name": "user",
+          "name": "oldILM",
           "type": "address"
         },
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "newILM",
+          "type": "address"
+        }
+      ],
+      "name": "ILMChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "oldIncomeSharing",
+          "type": "address"
         },
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "newIncomeSharing",
+          "type": "address"
         }
       ],
-      "name": "Harvest",
+      "name": "IncomeSharingChanged",
       "type": "event"
     },
     {
@@ -200,17 +261,68 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "poolId",
+          "name": "oldToLottery",
           "type": "uint256"
         },
         {
           "indexed": false,
+          "internalType": "uint256",
+          "name": "newToLottery",
+          "type": "uint256"
+        }
+      ],
+      "name": "IncomeToLotteryChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
           "internalType": "address",
-          "name": "rewardToken",
+          "name": "oldLotteryAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newLotteryAddress",
           "type": "address"
         }
       ],
-      "name": "NewRewardPoolStart",
+      "name": "LotteryChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "oldRouter",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "newRouter",
+          "type": "address"
+        }
+      ],
+      "name": "NaughtyRouterChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "_newStablecoin",
+          "type": "address"
+        }
+      ],
+      "name": "NewStablecoinAdded",
       "type": "event"
     },
     {
@@ -237,12 +349,36 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "string",
+          "name": "tokenName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
           "internalType": "address",
-          "name": "account",
+          "name": "tokenAddress",
           "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenDecimals",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "settleTimestamp",
+          "type": "uint256"
         }
       ],
-      "name": "Paused",
+      "name": "PolicyTokenDeployed",
       "type": "event"
     },
     {
@@ -250,56 +386,30 @@
       "inputs": [
         {
           "indexed": false,
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "stablecoin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
           "internalType": "uint256",
-          "name": "poolId",
+          "name": "startIndex",
           "type": "uint256"
         },
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "accRewardPerSecond",
+          "name": "stopIndex",
           "type": "uint256"
         }
       ],
-      "name": "PoolUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "rewardPerSecond",
-          "type": "uint256"
-        }
-      ],
-      "name": "RewardSpeedSet",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "oldRoundTime",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "newRoundTime",
-          "type": "uint256"
-        }
-      ],
-      "name": "RoundTimeChanged",
+      "name": "PolicyTokensSettledForUsers",
       "type": "event"
     },
     {
@@ -308,11 +418,122 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "account",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "policyTokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "stablecoin",
           "type": "address"
         }
       ],
-      "name": "Unpaused",
+      "name": "PoolDeployed",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "poolAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "policyTokenAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "stablecoin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "initLiquidityA",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "initLiquidityB",
+          "type": "uint256"
+        }
+      ],
+      "name": "PoolDeployedWithInitialLiquidity",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "stablecoin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "Redeem",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "userAddress",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "stablecoin",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "RedeemAfterSettlement",
       "type": "event"
     },
     {
@@ -326,9 +547,9 @@
         },
         {
           "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "policyTokenAddress",
+          "type": "address"
         },
         {
           "indexed": false,
@@ -337,17 +558,93 @@
           "type": "uint256"
         }
       ],
-      "name": "Withdraw",
+      "name": "UpdateUserQuota",
       "type": "event"
     },
     {
       "inputs": [],
-      "name": "SCALE",
+      "name": "ILMContract",
       "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_tokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_strikePrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isCall",
+          "type": "bool"
+        },
+        {
+          "internalType": "string",
+          "name": "_round",
+          "type": "string"
+        }
+      ],
+      "name": "_generateName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_newStablecoin",
+          "type": "address"
+        }
+      ],
+      "name": "addStablecoin",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
         {
           "internalType": "uint256",
           "name": "",
           "type": "uint256"
+        }
+      ],
+      "name": "allDepositors",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -357,8 +654,183 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_poolId",
+          "name": "",
           "type": "uint256"
+        }
+      ],
+      "name": "allPolicyTokens",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "claim",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        }
+      ],
+      "name": "collectIncome",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        }
+      ],
+      "name": "delegateDeposit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_tokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "_isCall",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_nameDecimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_tokenDecimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_strikePrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "string",
+          "name": "_round",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_settleTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployPolicyToken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_poolDeadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_feeRate",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
         },
         {
           "internalType": "uint256",
@@ -372,28 +844,214 @@
       "type": "function"
     },
     {
-      "inputs": [
+      "inputs": [],
+      "name": "factory",
+      "outputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "_to",
+          "internalType": "contract INaughtyFactory",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "harvest",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        }
+      ],
+      "name": "findAddressbyName",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "policyTokenAddress",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
           "internalType": "address",
-          "name": "_veDEG",
+          "name": "_policyTokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "findNamebyAddress",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "policyTokenName",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllTokens",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "policyTokenAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "isCall",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nameDecimals",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenDecimals",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "strikePrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settleTimestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PolicyCore.PolicyTokenInfo[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        }
+      ],
+      "name": "getPolicyTokenInfo",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "policyTokenAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "isCall",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint256",
+              "name": "nameDecimals",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokenDecimals",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "strikePrice",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "deadline",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "settleTimestamp",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct PolicyCore.PolicyTokenInfo",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_policyTokenAddress",
+          "type": "address"
+        }
+      ],
+      "name": "getUserQuota",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "_quota",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "incomeSharing",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_usdc",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_factory",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_priceGetter",
           "type": "address"
         }
       ],
@@ -404,12 +1062,25 @@
     },
     {
       "inputs": [],
-      "name": "nextPool",
+      "name": "lottery",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "address",
           "name": "",
-          "type": "uint256"
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "naughtyRouter",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -429,13 +1100,119 @@
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "pendingIncomeToLottery",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "pendingIncomeToSharing",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "policyTokenAddressToName",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "name": "policyTokenInfoMapping",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "policyTokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "bool",
+          "name": "isCall",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "nameDecimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "tokenDecimals",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "strikePrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "settleTimestamp",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
-      "name": "paused",
+      "name": "priceGetter",
       "outputs": [
         {
-          "internalType": "bool",
+          "internalType": "contract IPriceGetter",
           "name": "",
-          "type": "bool"
+          "type": "address"
         }
       ],
       "stateMutability": "view",
@@ -444,69 +1221,42 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
         },
         {
           "internalType": "address",
-          "name": "_user",
+          "name": "_stablecoin",
           "type": "address"
-        }
-      ],
-      "name": "pendingReward",
-      "outputs": [
+        },
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "_amount",
           "type": "uint256"
         }
       ],
-      "stateMutability": "view",
+      "name": "redeem",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "pools",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "available",
-          "type": "bool"
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
         },
         {
           "internalType": "address",
-          "name": "rewardToken",
+          "name": "_stablecoin",
           "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "rewardPerSecond",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "accRewardPerShare",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "lastRewardTimestamp",
-          "type": "uint256"
         }
       ],
-      "stateMutability": "view",
+      "name": "redeemAfterSettlement",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -517,12 +1267,139 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "roundTime",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_ILM",
+          "type": "address"
+        }
+      ],
+      "name": "setILMContract",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_incomeSharing",
+          "type": "address"
+        }
+      ],
+      "name": "setIncomeSharing",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_toLottery",
+          "type": "uint256"
+        }
+      ],
+      "name": "setIncomeToLottery",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_lotteryAddress",
+          "type": "address"
+        }
+      ],
+      "name": "setLottery",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_router",
+          "type": "address"
+        }
+      ],
+      "name": "setNaughtyRouter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_startIndex",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_stopIndex",
+          "type": "uint256"
+        }
+      ],
+      "name": "settleAllPolicyTokens",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        }
+      ],
+      "name": "settleFinalResult",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "settleResult",
       "outputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isHappened",
+          "type": "bool"
+        },
+        {
+          "internalType": "bool",
+          "name": "alreadySettled",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "currentDistributionIndex",
           "type": "uint256"
         }
       ],
@@ -532,45 +1409,33 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_rewardPerSecond",
-          "type": "uint256"
-        }
-      ],
-      "name": "setRewardSpeed",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_roundTime",
-          "type": "uint256"
-        }
-      ],
-      "name": "setRoundTime",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
           "internalType": "address",
-          "name": "_rewardToken",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "startPool",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "supportedStablecoin",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "toLotteryPart",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -589,64 +1454,14 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        }
-      ],
-      "name": "updatePool",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "_user",
+          "type": "address"
         },
         {
           "internalType": "address",
-          "name": "",
+          "name": "_policyToken",
           "type": "address"
-        }
-      ],
-      "name": "users",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "totalAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "rewardDebt",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "veDEG",
-      "outputs": [
-        {
-          "internalType": "contract IVeDEG",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
         },
         {
           "internalType": "uint256",
@@ -654,7 +1469,7 @@
           "type": "uint256"
         }
       ],
-      "name": "withdraw",
+      "name": "updateUserQuota",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -662,14 +1477,20 @@
     {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "",
+          "type": "address"
         }
       ],
-      "name": "withdrawAll",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "whichStablecoin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -694,35 +1515,35 @@
       "type": "constructor"
     }
   ],
-  "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
+  "transactionHash": "0xb58aacb7d877fd40957fcaa75aa98f46e5c92ccc7f765b2f622bfb423da83baf",
   "receipt": {
     "to": null,
     "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
-    "contractAddress": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
-    "transactionIndex": 1,
-    "gasUsed": "775223",
-    "logsBloom": "0x00000000000000000000000000040000400000000000000000800000200000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000102000001000000000010000000000000000000000000020000020008000000000800000000800000000000000000000000400000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000020010000000000000000000000000000000400000000000000000020000000000000400000000000000000000000000000000000000000000000000000",
-    "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2",
-    "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
+    "contractAddress": "0xD1eC490D85e9E42B82A179DE2dD65bf6520e5D38",
+    "transactionIndex": 0,
+    "gasUsed": "796038",
+    "logsBloom": "0x00000000000000000000000000000000400000000000000000800000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000102000001000000400010000000000000000000000000020000000000000000000800000000800000000000000000000000400000100000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000400000000800000000020000000000000000000000000000000000400000000000000000020400000000000400000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x4c1a8ca9b780fb3cd5061c63f55f06484fb518f8c5a91f9cdc688be37d985f08",
+    "transactionHash": "0xb58aacb7d877fd40957fcaa75aa98f46e5c92ccc7f765b2f622bfb423da83baf",
     "logs": [
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459349,
+        "transactionHash": "0xb58aacb7d877fd40957fcaa75aa98f46e5c92ccc7f765b2f622bfb423da83baf",
+        "address": "0xD1eC490D85e9E42B82A179DE2dD65bf6520e5D38",
         "topics": [
           "0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b",
-          "0x00000000000000000000000060a1635ddd9fe0c56b3421e5a9da1483d0dbadfd"
+          "0x000000000000000000000000a7cb7152eb4a207af3d3b6fd5c4dda45db6b5b06"
         ],
         "data": "0x",
         "logIndex": 0,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0x4c1a8ca9b780fb3cd5061c63f55f06484fb518f8c5a91f9cdc688be37d985f08"
       },
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459349,
+        "transactionHash": "0xb58aacb7d877fd40957fcaa75aa98f46e5c92ccc7f765b2f622bfb423da83baf",
+        "address": "0xD1eC490D85e9E42B82A179DE2dD65bf6520e5D38",
         "topics": [
           "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -730,30 +1551,30 @@
         ],
         "data": "0x",
         "logIndex": 1,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0x4c1a8ca9b780fb3cd5061c63f55f06484fb518f8c5a91f9cdc688be37d985f08"
       },
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459349,
+        "transactionHash": "0xb58aacb7d877fd40957fcaa75aa98f46e5c92ccc7f765b2f622bfb423da83baf",
+        "address": "0xD1eC490D85e9E42B82A179DE2dD65bf6520e5D38",
         "topics": [
           "0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f"
         ],
         "data": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000002bb7e7f67be5452de6c9c1c3409180d5fd892002",
         "logIndex": 2,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0x4c1a8ca9b780fb3cd5061c63f55f06484fb518f8c5a91f9cdc688be37d985f08"
       }
     ],
-    "blockNumber": 9459511,
-    "cumulativeGasUsed": "934796",
+    "blockNumber": 9459349,
+    "cumulativeGasUsed": "796038",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x60a1635dDd9fe0C56B3421E5A9dA1483d0DBaDfd",
+    "0xA7cB7152eB4a207Af3d3b6FD5c4dda45db6b5B06",
     "0x2BB7e7F67bE5452dE6C9c1C3409180d5fD892002",
-    "0xc4d66de80000000000000000000000000fe61c76b92fb1b42ce69d026968209b52166879"
+    "0xc0c53b8b000000000000000000000000666ad8ab2402369a73759eb1d1c037670f02f81e0000000000000000000000000a19fd957af9c1875c4fda7c7206a6bf40d54ce1000000000000000000000000dacb7dbd3575da2a7df07b72987c3db9f8818df5"
   ],
   "numDeployments": 1,
   "solcInputHash": "dac4e5fe3f0ddff2793c693a8a6aab18",
@@ -763,10 +1584,12 @@
   "execute": {
     "methodName": "initialize",
     "args": [
-      "0x0FE61c76B92FB1B42Ce69d026968209b52166879"
+      "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+      "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
+      "0xdaCB7Dbd3575da2a7df07b72987c3Db9F8818Df5"
     ]
   },
-  "implementation": "0x60a1635dDd9fe0C56B3421E5A9dA1483d0DBaDfd",
+  "implementation": "0xA7cB7152eB4a207Af3d3b6FD5c4dda45db6b5B06",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin. To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand: 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\". These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation. Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.",
     "kind": "dev",

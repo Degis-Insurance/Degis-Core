@@ -1,0 +1,14 @@
+{
+	"fuji": {
+		"AVAX_50.0_L_1205": {
+			"policyToken": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
+			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+			"deadline": "1652281200",
+			"lptoken": "0x2416B56Cb5Cbf688E7eE7345C79Ca0597B8dc3fE"
+		}
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {}
+}

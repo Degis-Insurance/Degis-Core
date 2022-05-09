@@ -1,5 +1,5 @@
 {
-  "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+  "address": "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
   "abi": [
     {
       "anonymous": false,
@@ -125,73 +125,22 @@
       "type": "receive"
     },
     {
-      "inputs": [],
-      "name": "DIS__NotEnoughVeDEG",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__PoolNotAvailable",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__WrongSpeed",
-      "type": "error"
-    },
-    {
-      "inputs": [],
-      "name": "DIS__ZeroAmount",
-      "type": "error"
-    },
-    {
       "anonymous": false,
       "inputs": [
         {
           "indexed": false,
           "internalType": "address",
-          "name": "user",
+          "name": "oldIncomeMaker",
           "type": "address"
         },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "Deposit",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
         {
           "indexed": false,
           "internalType": "address",
-          "name": "user",
+          "name": "newIncomeMaker",
           "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
         }
       ],
-      "name": "Harvest",
+      "name": "IncomeMakerAddressChanged",
       "type": "event"
     },
     {
@@ -200,17 +149,17 @@
         {
           "indexed": false,
           "internalType": "uint256",
-          "name": "poolId",
+          "name": "oldProportion",
           "type": "uint256"
         },
         {
           "indexed": false,
-          "internalType": "address",
-          "name": "rewardToken",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "newProportion",
+          "type": "uint256"
         }
       ],
-      "name": "NewRewardPoolStart",
+      "name": "IncomeMakerProportionChanged",
       "type": "event"
     },
     {
@@ -238,111 +187,35 @@
         {
           "indexed": false,
           "internalType": "address",
-          "name": "account",
+          "name": "oldPolicyCore",
           "type": "address"
-        }
-      ],
-      "name": "Paused",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
         },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "accRewardPerSecond",
-          "type": "uint256"
-        }
-      ],
-      "name": "PoolUpdated",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "rewardPerSecond",
-          "type": "uint256"
-        }
-      ],
-      "name": "RewardSpeedSet",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "oldRoundTime",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "newRoundTime",
-          "type": "uint256"
-        }
-      ],
-      "name": "RoundTimeChanged",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
         {
           "indexed": false,
           "internalType": "address",
-          "name": "account",
+          "name": "newPolicyCore",
           "type": "address"
         }
       ],
-      "name": "Unpaused",
-      "type": "event"
-    },
-    {
-      "anonymous": false,
-      "inputs": [
-        {
-          "indexed": false,
-          "internalType": "address",
-          "name": "user",
-          "type": "address"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "poolId",
-          "type": "uint256"
-        },
-        {
-          "indexed": false,
-          "internalType": "uint256",
-          "name": "amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "Withdraw",
+      "name": "PolicyCoreAddressChanged",
       "type": "event"
     },
     {
       "inputs": [],
-      "name": "SCALE",
+      "name": "PAIR_INIT_CODE_HASH",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "_nextId",
       "outputs": [
         {
           "internalType": "uint256",
@@ -357,35 +230,61 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
+          "name": "",
           "type": "uint256"
         }
       ],
-      "name": "deposit",
-      "outputs": [],
-      "stateMutability": "nonpayable",
+      "name": "allPairs",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
       "type": "function"
     },
     {
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_poolId",
+          "name": "",
           "type": "uint256"
-        },
+        }
+      ],
+      "name": "allTokens",
+      "outputs": [
         {
           "internalType": "address",
-          "name": "_to",
+          "name": "",
           "type": "address"
         }
       ],
-      "name": "harvest",
-      "outputs": [],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_policyTokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployPolicyToken",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
       "stateMutability": "nonpayable",
       "type": "function"
     },
@@ -393,26 +292,128 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_veDEG",
+          "name": "_policyTokenAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_stablecoin",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_feeRate",
+          "type": "uint256"
+        }
+      ],
+      "name": "deployPool",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
           "type": "address"
         }
       ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getAllTokens",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "_tokenName",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_decimals",
+          "type": "uint256"
+        }
+      ],
+      "name": "getInitCodeHashForPolicyToken",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_tokenAddress1",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_tokenAddress2",
+          "type": "address"
+        }
+      ],
+      "name": "getPairAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "incomeMaker",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "incomeMakerProportion",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "initialize",
       "outputs": [],
       "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "nextPool",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
       "type": "function"
     },
     {
@@ -430,80 +431,12 @@
     },
     {
       "inputs": [],
-      "name": "paused",
+      "name": "policyCore",
       "outputs": [
-        {
-          "internalType": "bool",
-          "name": "",
-          "type": "bool"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
         {
           "internalType": "address",
-          "name": "_user",
-          "type": "address"
-        }
-      ],
-      "name": "pendingReward",
-      "outputs": [
-        {
-          "internalType": "uint256",
           "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "name": "pools",
-      "outputs": [
-        {
-          "internalType": "bool",
-          "name": "available",
-          "type": "bool"
-        },
-        {
-          "internalType": "address",
-          "name": "rewardToken",
           "type": "address"
-        },
-        {
-          "internalType": "uint256",
-          "name": "totalAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "rewardPerSecond",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "accRewardPerShare",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "lastRewardTimestamp",
-          "type": "uint256"
         }
       ],
       "stateMutability": "view",
@@ -517,32 +450,14 @@
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "roundTime",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
       "inputs": [
         {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_rewardPerSecond",
-          "type": "uint256"
+          "internalType": "address",
+          "name": "_incomeMaker",
+          "type": "address"
         }
       ],
-      "name": "setRewardSpeed",
+      "name": "setIncomeMakerAddress",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -551,11 +466,11 @@
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "_roundTime",
+          "name": "_proportion",
           "type": "uint256"
         }
       ],
-      "name": "setRoundTime",
+      "name": "setIncomeMakerProportion",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -564,11 +479,11 @@
       "inputs": [
         {
           "internalType": "address",
-          "name": "_rewardToken",
+          "name": "_policyCore",
           "type": "address"
         }
       ],
-      "name": "startPool",
+      "name": "setPolicyCoreAddress",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -582,92 +497,6 @@
         }
       ],
       "name": "transferOwnership",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        }
-      ],
-      "name": "updatePool",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "",
-          "type": "uint256"
-        },
-        {
-          "internalType": "address",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "name": "users",
-      "outputs": [
-        {
-          "internalType": "uint256",
-          "name": "totalAmount",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "rewardDebt",
-          "type": "uint256"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [],
-      "name": "veDEG",
-      "outputs": [
-        {
-          "internalType": "contract IVeDEG",
-          "name": "",
-          "type": "address"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        },
-        {
-          "internalType": "uint256",
-          "name": "_amount",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdraw",
-      "outputs": [],
-      "stateMutability": "nonpayable",
-      "type": "function"
-    },
-    {
-      "inputs": [
-        {
-          "internalType": "uint256",
-          "name": "_poolId",
-          "type": "uint256"
-        }
-      ],
-      "name": "withdrawAll",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -694,35 +523,35 @@
       "type": "constructor"
     }
   ],
-  "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
+  "transactionHash": "0xeea14bca0037de27ce7299877f386d47df11cc38a464d4afe21139c5dbe88d82",
   "receipt": {
     "to": null,
     "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
-    "contractAddress": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
-    "transactionIndex": 1,
-    "gasUsed": "775223",
-    "logsBloom": "0x00000000000000000000000000040000400000000000000000800000200000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000102000001000000000010000000000000000000000000020000020008000000000800000000800000000000000000000000400000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000000000000000000000000000000000000000000020010000000000000000000000000000000400000000000000000020000000000000400000000000000000000000000000000000000000000000000000",
-    "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2",
-    "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
+    "contractAddress": "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
+    "transactionIndex": 0,
+    "gasUsed": "727348",
+    "logsBloom": "0x00000000000000000000080000000000400000002000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000102000001000000000010000000100000000000000000020000000000000000000800000000800000000000000000000000400000000000000000000000000000000000000400000000000000000000800010000000000000000000000200000000000000000000000000000000000000000000000020000000000000000000000000000000000400000000000000000020000000000000400000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xdaa6f25d4368026585c3b8365344623b23a66bb1a30573b02a3ba85d2f55b19a",
+    "transactionHash": "0xeea14bca0037de27ce7299877f386d47df11cc38a464d4afe21139c5dbe88d82",
     "logs": [
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459331,
+        "transactionHash": "0xeea14bca0037de27ce7299877f386d47df11cc38a464d4afe21139c5dbe88d82",
+        "address": "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
         "topics": [
           "0xbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b",
-          "0x00000000000000000000000060a1635ddd9fe0c56b3421e5a9da1483d0dbadfd"
+          "0x000000000000000000000000d8e6de45dc2b4582ee43c024ca1bfee1079bd584"
         ],
         "data": "0x",
         "logIndex": 0,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0xdaa6f25d4368026585c3b8365344623b23a66bb1a30573b02a3ba85d2f55b19a"
       },
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459331,
+        "transactionHash": "0xeea14bca0037de27ce7299877f386d47df11cc38a464d4afe21139c5dbe88d82",
+        "address": "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
         "topics": [
           "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
           "0x0000000000000000000000000000000000000000000000000000000000000000",
@@ -730,30 +559,30 @@
         ],
         "data": "0x",
         "logIndex": 1,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0xdaa6f25d4368026585c3b8365344623b23a66bb1a30573b02a3ba85d2f55b19a"
       },
       {
-        "transactionIndex": 1,
-        "blockNumber": 9459511,
-        "transactionHash": "0x82d21fddacd9fd02cab36b92ab0c7f24d32c07c934cca81c771f7c69103de07c",
-        "address": "0x57a9F20B2a8548Cc2B787f7502f7876c0406645E",
+        "transactionIndex": 0,
+        "blockNumber": 9459331,
+        "transactionHash": "0xeea14bca0037de27ce7299877f386d47df11cc38a464d4afe21139c5dbe88d82",
+        "address": "0x0A19fD957af9c1875C4fdA7C7206A6Bf40D54CE1",
         "topics": [
           "0x7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f"
         ],
         "data": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000002bb7e7f67be5452de6c9c1c3409180d5fd892002",
         "logIndex": 2,
-        "blockHash": "0x833a8a74e738d97f46904b10d12961f301ae3dada62eb7553e19927418c9c6d2"
+        "blockHash": "0xdaa6f25d4368026585c3b8365344623b23a66bb1a30573b02a3ba85d2f55b19a"
       }
     ],
-    "blockNumber": 9459511,
-    "cumulativeGasUsed": "934796",
+    "blockNumber": 9459331,
+    "cumulativeGasUsed": "727348",
     "status": 1,
     "byzantium": true
   },
   "args": [
-    "0x60a1635dDd9fe0C56B3421E5A9dA1483d0DBaDfd",
+    "0xd8e6De45dc2b4582ee43c024CA1BFeE1079bD584",
     "0x2BB7e7F67bE5452dE6C9c1C3409180d5fD892002",
-    "0xc4d66de80000000000000000000000000fe61c76b92fb1b42ce69d026968209b52166879"
+    "0x8129fc1c"
   ],
   "numDeployments": 1,
   "solcInputHash": "dac4e5fe3f0ddff2793c693a8a6aab18",
@@ -762,11 +591,9 @@
   "deployedBytecode": "0x60806040526004361061005e5760003560e01c80635c60da1b116100435780635c60da1b146100a85780638f283970146100d3578063f851a440146100f35761006d565b80633659cfe6146100755780634f1ef286146100955761006d565b3661006d5761006b610108565b005b61006b610108565b34801561008157600080fd5b5061006b6100903660046105a8565b610122565b61006b6100a3366004610623565b61015f565b3480156100b457600080fd5b506100bd6101c6565b6040516100ca919061068e565b60405180910390f35b3480156100df57600080fd5b5061006b6100ee3660046105a8565b6101f7565b3480156100ff57600080fd5b506100bd610217565b61011061026c565b61012061011b6102a4565b6102ae565b565b61012a6102d2565b6001600160a01b031633036101575761015481604051806020016040528060008152506000610305565b50565b610154610108565b6101676102d2565b6001600160a01b031633036101be576101b98383838080601f01602080910402602001604051908101604052809392919081815260200183838082843760009201919091525060019250610305915050565b505050565b6101b9610108565b60006101d06102d2565b6001600160a01b031633036101ec576101e76102a4565b905090565b6101f4610108565b90565b6101ff6102d2565b6001600160a01b031633036101575761015481610330565b60006102216102d2565b6001600160a01b031633036101ec576101e76102d2565b606061025d838360405180606001604052806027815260200161091460279139610379565b90505b92915050565b3b151590565b6102746102d2565b6001600160a01b031633036101205760405162461bcd60e51b815260040161029b9061069c565b60405180910390fd5b60006101e7610410565b3660008037600080366000845af43d6000803e8080156102cd573d6000f35b3d6000fd5b60007fb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d61035b546001600160a01b0316919050565b61030e83610438565b60008251118061031b5750805b156101b95761032a8383610238565b50505050565b7f7e644d79422f17c01e4894b5f4f588d331ebfa28653d42ae832dc59e38c9798f6103596102d2565b82604051610368929190610723565b60405180910390a161015481610478565b6060833b6103995760405162461bcd60e51b815260040161029b90610798565b600080856001600160a01b0316856040516103b491906107f6565b600060405180830381855af49150503d80600081146103ef576040519150601f19603f3d011682016040523d82523d6000602084013e6103f4565b606091505b50915091506104048282866104fa565b925050505b9392505050565b60007f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc6102f6565b61044181610533565b6040516001600160a01b038216907fbc7cd75a20ee27fd9adebab32041f755214dbc6bffa90cc0225b39da2e5c2d3b90600090a250565b6001600160a01b03811661049e5760405162461bcd60e51b815260040161029b90610858565b807fb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d61035b80547fffffffffffffffffffffffff0000000000000000000000000000000000000000166001600160a01b039290921691909117905550565b60608315610509575081610409565b8251156105195782518084602001fd5b8160405162461bcd60e51b815260040161029b919061089a565b803b6105515760405162461bcd60e51b815260040161029b90610903565b807f360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc6104c1565b60006001600160a01b038216610260565b61059281610578565b811461015457600080fd5b803561026081610589565b6000602082840312156105bd576105bd600080fd5b60006105c9848461059d565b949350505050565b60008083601f8401126105e6576105e6600080fd5b50813567ffffffffffffffff81111561060157610601600080fd5b60208301915083600182028301111561061c5761061c600080fd5b9250929050565b60008060006040848603121561063b5761063b600080fd5b6000610647868661059d565b935050602084013567ffffffffffffffff81111561066757610667600080fd5b610673868287016105d1565b92509250509250925092565b61068881610578565b82525050565b60208101610260828461067f565b6020808252810161026081604281527f5472616e73706172656e745570677261646561626c6550726f78793a2061646d60208201527f696e2063616e6e6f742066616c6c6261636b20746f2070726f7879207461726760408201527f6574000000000000000000000000000000000000000000000000000000000000606082015260800190565b60408101610731828561067f565b610409602083018461067f565b60268152602081017f416464726573733a2064656c65676174652063616c6c20746f206e6f6e2d636f81527f6e74726163740000000000000000000000000000000000000000000000000000602082015290505b60400190565b602080825281016102608161073e565b60005b838110156107c35781810151838201526020016107ab565b8381111561032a5750506000910152565b60006107de825190565b6107ec8185602086016107a8565b9290920192915050565b61026081836107d4565b60268152602081017f455243313936373a206e65772061646d696e20697320746865207a65726f206181527f646472657373000000000000000000000000000000000000000000000000000060208201529050610792565b6020808252810161026081610800565b6000610872825190565b8084526020840193506108898185602086016107a8565b601f01601f19169290920192915050565b6020808252810161025d8184610868565b602d8152602081017f455243313936373a206e657720696d706c656d656e746174696f6e206973206e81527f6f74206120636f6e74726163740000000000000000000000000000000000000060208201529050610792565b60208082528101610260816108ab56fe416464726573733a206c6f772d6c6576656c2064656c65676174652063616c6c206661696c6564a2646970667358221220a7509fad27b586bc672016f5b1f45187103993af81aeec12c38c9cedd3fe8e6364736f6c634300080d0033",
   "execute": {
     "methodName": "initialize",
-    "args": [
-      "0x0FE61c76B92FB1B42Ce69d026968209b52166879"
-    ]
+    "args": []
   },
-  "implementation": "0x60a1635dDd9fe0C56B3421E5A9dA1483d0DBaDfd",
+  "implementation": "0xd8e6De45dc2b4582ee43c024CA1BFeE1079bD584",
   "devdoc": {
     "details": "This contract implements a proxy that is upgradeable by an admin. To avoid https://medium.com/nomic-labs-blog/malicious-backdoors-in-ethereum-proxies-62629adf3357[proxy selector clashing], which can potentially be used in an attack, this contract uses the https://blog.openzeppelin.com/the-transparent-proxy-pattern/[transparent proxy pattern]. This pattern implies two things that go hand in hand: 1. If any account other than the admin calls the proxy, the call will be forwarded to the implementation, even if that call matches one of the admin functions exposed by the proxy itself. 2. If the admin calls the proxy, it can access the admin functions, but its calls will never be forwarded to the implementation. If the admin tries to call a function on the implementation it will fail with an error that says \"admin cannot fallback to proxy target\". These properties mean that the admin account can only be used for admin actions like upgrading the proxy or changing the admin, so it's best if it's a dedicated account that is not used for anything else. This will avoid headaches due to sudden errors when trying to call a function from the proxy implementation. Our recommendation is for the dedicated account to be an instance of the {ProxyAdmin} contract. If set up this way, you should think of the `ProxyAdmin` instance as the real administrative interface of your proxy.",
     "kind": "dev",

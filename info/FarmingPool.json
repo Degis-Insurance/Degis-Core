@@ -1,16 +1,9 @@
 {
 	"fuji": {
 		"1": {
-			"name": "test",
-			"address": "0x79Da89DC282F71896264b5B598189956C8b22AcF",
+			"name": "ILM_AVAX_50.0_L_1205",
+			"address": "0x2416B56Cb5Cbf688E7eE7345C79Ca0597B8dc3fE",
 			"poolId": 1,
-			"reward": "1.0",
-			"bonus": "1.0"
-		},
-		"2": {
-			"name": "AVAX_72.0_L_0105",
-			"address": "0xaE4f8f59a53a595993Eb83e31104eef2997EfDFb",
-			"poolId": 2,
 			"reward": "0.1",
 			"bonus": "0.1"
 		}

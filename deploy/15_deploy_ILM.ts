@@ -4,7 +4,7 @@ import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
-  const { deploy } = deployments;
+  const { deploy, get } = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
@@ -13,12 +13,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  // Arguments for deployment
-  const degisAddress: string = addressList[network.name].DegisToken;
-  const farmingPoolAddress: string =
-    addressList[network.name].FarmingPoolUpgradeable;
-
-  const argsConfig = [degisAddress, farmingPoolAddress];
+  const degis = await get("DegisToken");
+  const core = await get("PolicyCoreUpgradeable");
+  const router = await get("NaughtyRouterUpgradeable");
+  const emergencyPool = await get("EmergencyPool");
 
   // Always use the same proxy admin
   const proxyOptions: ProxyOptions = {
@@ -27,23 +25,31 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     execute: {
       init: {
         methodName: "initialize",
-        args: argsConfig,
+        args: [
+          degis.address,
+          core.address,
+          router.address,
+          emergencyPool.address,
+        ],
       },
     },
   };
-
-  const veDEG = await deploy("VeDEG", {
-    contract: "VoteEscrowedDegis",
+  const ILM = await deploy("ILM", {
+    contract: "NaughtyPriceILM",
     from: deployer,
     proxy: proxyOptions,
     args: [],
     log: true,
   });
-  addressList[network.name].VoteEscrowedDegis = veDEG.address;
+
+  addressList[network.name].ILM = ILM.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);
+
+  // Run some afterwards tasks
+  await hre.run("setILMInCore");
 };
 
-func.tags = ["VeDEG"];
+func.tags = ["ILM"];
 export default func;

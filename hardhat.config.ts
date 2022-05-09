@@ -54,6 +54,7 @@ import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
 import "./tasks/general/index";
+import "./tasks/ILM/startStop";
 
 dotenv.config();
 
