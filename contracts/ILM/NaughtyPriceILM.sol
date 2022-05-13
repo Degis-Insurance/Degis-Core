@@ -561,7 +561,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         // Update user quota
         IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
-            _stablecoin,
+            _policyToken,
             policyTokenAmount
         );
 

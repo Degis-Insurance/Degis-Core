@@ -951,7 +951,7 @@ contract PolicyCore is OwnableUpgradeable {
     ) external {
         require(msg.sender == ILMContract, "Only ILM");
 
-        userQuota[_user][_policyToken] = _amount;
+        userQuota[_user][_policyToken] += _amount;
 
         emit UpdateUserQuota(_user, _policyToken, _amount);
     }

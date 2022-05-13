@@ -722,6 +722,13 @@ describe("Initial Liquidity Matching", function () {
       );
       const userInfo_2 = await ILM.users(user2.address, policyTokenAddress);
       expect(userInfo_2.degisDebt).to.equal(toWei("2.25"));
+
+      const quota = await core.getUserQuota(
+        dev_account.address,
+        policyTokenAddress
+      );
+      console.log(quota);
+      expect(quota).to.equal(stablecoinToWei("99.9996"));
     });
   });
 });
