@@ -4,6 +4,16 @@
 			"address": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
 			"deadline": 1652367600,
 			"settleTime": 1652367600
+		},
+		"AVAX_32.0_L_1405": {
+			"address": "0xAf2E598AD50Ba661a0f65bEf6177595FAE34cA38",
+			"deadline": 1652508000,
+			"settleTime": 1652508000
+		},
+		"AVAX_33.0_L_1405": {
+			"address": "0x38D38E24fdC1E3c20d5181779d8632F54d107563",
+			"deadline": 1652508000,
+			"settleTime": 1652508000
 		}
 	},
 	"avax": {

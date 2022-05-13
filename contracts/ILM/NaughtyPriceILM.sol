@@ -510,6 +510,10 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Claim liquidity back
+     * @dev You will get back some DEG (depending on how many users deposit after you)
+     *      The claim amount is determined by the LP Token balance of you (you can buy from others)
+     *      But the DEG reward would only be got once
+     *      Your LP token will be burnt and you can not join ILM farming pool again
      * @param _policyToken Policy token address
      * @param _stablecoin Stablecoin address
      * @param _amountAMin Minimum amount of policy token (slippage)
@@ -518,15 +522,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     function claim(
         address _policyToken,
         address _stablecoin,
+        uint256 _amount,
         uint256 _amountAMin,
         uint256 _amountBMin
     ) external {
-        UserInfo memory user = users[msg.sender][_policyToken];
-
-        if (user.amountA + user.amountB == 0) revert ILM__NotEnoughDeposit();
+        if (_amount == 0) revert ILM__ZeroAmount();
 
         address naughtyPair = pairs[_policyToken].naughtyPairAddress;
         address lptoken = pairs[_policyToken].lptoken;
+
+        uint256 lpBalance = LPToken(lptoken).balanceOf(msg.sender);
+        uint256 lpToClaim = _amount > lpBalance ? lpBalance : _amount;
 
         // Total liquidity owned by the pool
         uint256 totalLiquidity = INaughtyPair(naughtyPair).balanceOf(
@@ -534,14 +540,15 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         );
 
         // User's liquidity amount
-        uint256 userLiquidity = (LPToken(lptoken).balanceOf(msg.sender) *
-            totalLiquidity) / LPToken(lptoken).totalSupply();
+        uint256 userLiquidity = (lpToClaim * totalLiquidity) /
+            LPToken(lptoken).totalSupply();
 
         _updateWhenClaim(_policyToken);
 
         // Remove liquidity
-        (uint256 amountA, uint256 amountB) = INaughtyRouter(router)
-            .removeLiquidity(
+        (uint256 policyTokenAmount, uint256 stablecoinAmount) = INaughtyRouter(
+            router
+        ).removeLiquidity(
                 _policyToken,
                 _stablecoin,
                 userLiquidity,
@@ -552,17 +559,16 @@ contract NaughtyPriceILM is OwnableUpgradeable {
             );
 
         // Update user quota
-        IPolicyCore(policyCore).updateUserQuota(msg.sender, _stablecoin, amountA);
-
-        delete users[msg.sender][_policyToken];
-
-        // Burn the user's lp tokens
-        LPToken(lptoken).burn(
+        IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
-            LPToken(lptoken).balanceOf(msg.sender)
+            _stablecoin,
+            policyTokenAmount
         );
 
-        emit Claim(msg.sender, amountA, amountB);
+        // Burn the user's lp tokens
+        LPToken(lptoken).burn(msg.sender, lpToClaim);
+
+        emit Claim(msg.sender, policyTokenAmount, stablecoinAmount);
     }
 
     /**
@@ -652,7 +658,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         // Update accDegisPerShare first
         pair.accDegisPerShare +=
             (_degAmount * SCALE) /
-            (pair.amountA + pair.amountB);
+            ((pair.amountA + pair.amountB));
 
         uint256 currentUserDeposit = user.amountA + user.amountB;
         // If user has deposited before, distribute the deg reward first
@@ -682,16 +688,27 @@ contract NaughtyPriceILM is OwnableUpgradeable {
      * @param _policyToken Policy token address
      */
     function _updateWhenClaim(address _policyToken) internal {
-        PairInfo storage pair = pairs[_policyToken];
+        uint256 accDegisPerShare = pairs[_policyToken].accDegisPerShare;
 
         UserInfo storage user = users[msg.sender][_policyToken];
 
-        uint256 pendingReward = ((user.amountA + user.amountB) *
-            pair.accDegisPerShare) /
+        uint256 userTotalDeposit = user.amountA + user.amountB;
+
+        uint256 pendingReward = (userTotalDeposit * accDegisPerShare) /
             SCALE -
             user.degisDebt;
 
-        uint256 reward = _safeTokenTransfer(degis, msg.sender, pendingReward);
-        emit Harvest(msg.sender, reward);
+        if (pendingReward > 0) {
+            // Update debt
+            // Only get deg back when first time claim
+            user.degisDebt = (userTotalDeposit * accDegisPerShare) / SCALE;
+
+            uint256 reward = _safeTokenTransfer(
+                degis,
+                msg.sender,
+                pendingReward
+            );
+            emit Harvest(msg.sender, reward);
+        }
     }
 }

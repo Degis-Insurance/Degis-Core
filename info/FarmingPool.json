@@ -6,6 +6,20 @@
 			"poolId": 1,
 			"reward": "0.1",
 			"bonus": "0.1"
+		},
+		"2": {
+			"name": "AVAX_32.0_L_1405",
+			"address": "0xafc2a6aDeE8Eb2587a58603E16B06B512d9ae3a7",
+			"poolId": 2,
+			"reward": "0.0",
+			"bonus": "0.0"
+		},
+		"3": {
+			"name": "AVAX_33.0_L_1405",
+			"address": "0x327b7e63C50f91a212cCA980b84654a443e1BfC3",
+			"poolId": 3,
+			"reward": "0.0",
+			"bonus": "0.0"
 		}
 	},
 	"avax": {
