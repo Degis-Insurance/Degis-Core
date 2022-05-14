@@ -346,7 +346,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Claims accumulated veDEG for flex deposit
      */
-    function claim() public nonReentrant whenNotPaused noLocked(msg.sender) {
+    function claim() public nonReentrant whenNotPaused {
         if (users[msg.sender].amount == 0) revert VED__ZeroAmount();
 
         _claim(msg.sender);
@@ -396,6 +396,7 @@ contract VoteEscrowedDegis is
         noLocked(msg.sender)
     {
         UserInfo memory user = users[msg.sender];
+        
         if (user.amountLocked == 0) revert VED__ZeroAmount();
         if (block.timestamp < user.lockUntil) revert VED__TimeNotPassed();
 

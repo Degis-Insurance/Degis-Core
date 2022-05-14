@@ -37,7 +37,7 @@ contract IncomeSharingVault is
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    uint256 public constant SCALE = 1e18;
+    uint256 public constant SCALE = 1e30;
 
     uint256 public roundTime;
 
@@ -131,7 +131,20 @@ contract IncomeSharingVault is
             uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
             uint256 reward = timePassed * pool.rewardPerSecond;
 
-            accRewardPerShare += (reward * SCALE) / pool.totalAmount;
+            console.log("reward", reward);
+
+            // Remainging reward inside the pool
+            uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
+                address(this)
+            );
+
+            console.log("remaining reward", remainingReward);
+
+            uint256 finalReward = reward > remainingReward
+                ? remainingReward
+                : reward;
+
+            accRewardPerShare += (finalReward * SCALE) / pool.totalAmount;
 
             uint256 pending = (user.totalAmount * accRewardPerShare) /
                 SCALE -
@@ -241,11 +254,19 @@ contract IncomeSharingVault is
     }
 
     /**
+     * @notice Withdraw all veDEG
+     * @param _poolId Pool Id
+     */
+    function withdrawAll(uint256 _poolId) external {
+        withdraw(_poolId, users[_poolId][msg.sender].totalAmount);
+    }
+
+    /**
      * @notice Withdraw the reward from the pool
      * @param _poolId Pool Id
      * @param _amount Amount to withdraw
      */
-    function withdraw(uint256 _poolId, uint256 _amount) external nonReentrant {
+    function withdraw(uint256 _poolId, uint256 _amount) public nonReentrant {
         if (_amount == 0) revert DIS__ZeroAmount();
 
         PoolInfo storage pool = pools[_poolId];
@@ -267,13 +288,15 @@ contract IncomeSharingVault is
         emit Harvest(msg.sender, _poolId, reward);
 
         // Update user info
+        pool.totalAmount -= _amount;
+
         user.totalAmount -= _amount;
         user.rewardDebt = (user.totalAmount * pool.accRewardPerShare) / SCALE;
 
         // Unlock veDEG
         veDEG.unlockVeDEG(msg.sender, _amount);
 
-        emit Withdraw(msg.sender, _poolId, reward);
+        emit Withdraw(msg.sender, _poolId, _amount);
     }
 
     /**
@@ -291,6 +314,7 @@ contract IncomeSharingVault is
         PoolInfo memory pool = pools[_poolId];
         UserInfo storage user = users[_poolId][msg.sender];
 
+        // pending reward
         uint256 pending = (user.totalAmount * pool.accRewardPerShare) /
             SCALE -
             user.rewardDebt;
@@ -326,8 +350,9 @@ contract IncomeSharingVault is
         // Remainging reward inside the pool
         uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
             address(this)
-        );
+        ) ;
 
+        // Can not exceed the max balance of the pool
         uint256 finalReward = reward > remainingReward
             ? remainingReward
             : reward;

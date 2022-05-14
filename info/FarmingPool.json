@@ -1,18 +1,39 @@
 {
 	"fuji": {
 		"1": {
-			"name": "test",
-			"address": "0x79Da89DC282F71896264b5B598189956C8b22AcF",
+			"name": "ILM_AVAX_50.0_L_1205",
+			"address": "0x2416B56Cb5Cbf688E7eE7345C79Ca0597B8dc3fE",
 			"poolId": 1,
-			"reward": "1.0",
-			"bonus": "1.0"
-		},
-		"2": {
-			"name": "AVAX_72.0_L_0105",
-			"address": "0xaE4f8f59a53a595993Eb83e31104eef2997EfDFb",
-			"poolId": 2,
 			"reward": "0.1",
 			"bonus": "0.1"
+		},
+		"2": {
+			"name": "AVAX_32.0_L_1405",
+			"address": "0xafc2a6aDeE8Eb2587a58603E16B06B512d9ae3a7",
+			"poolId": 2,
+			"reward": "1.0",
+			"bonus": "0.0"
+		},
+		"3": {
+			"name": "AVAX_33.0_L_1405",
+			"address": "0x327b7e63C50f91a212cCA980b84654a443e1BfC3",
+			"poolId": 3,
+			"reward": "1.0",
+			"bonus": "0.0"
+		},
+		"4": {
+			"name": "AVAX_32.0_L_1405_N",
+			"address": "0x0bA981A1f865FC7127B84C9e8745c1f7D4F7A885",
+			"poolId": 4,
+			"reward": "0.1",
+			"bonus": "0.0"
+		},
+		"5": {
+			"name": "AVAX_33.0_L_1405_N",
+			"address": "0x81eAF39DBA66a84c3A2fEEA31B85c720A43d2597",
+			"poolId": 5,
+			"reward": "0.1",
+			"bonus": "0.0"
 		}
 	},
 	"avax": {
@@ -22,6 +43,13 @@
 			"poolId": 1,
 			"reward": "0.035",
 			"bonus": "0.052"
+		},
+		"2": {
+			"name": "AVAX_58.0_L_1705",
+			"address": "0x3679B24C909dfeDB89e6C171eCF0a6f5715320C3",
+			"poolId": 2,
+			"reward": "0.03472",
+			"bonus": "0.0289"
 		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",
@@ -45,6 +73,13 @@
 			"poolId": 2,
 			"reward": "0.0",
 			"bonus": "0.0"
+		},
+		"3": {
+			"name": "AVAX_64.0_L_0305",
+			"address": "0xB72cEC598799bcE63B44974cbea0B365083d0241",
+			"poolId": 3,
+			"reward": "0.1",
+			"bonus": "0.1"
 		}
 	},
 	"localhost": {

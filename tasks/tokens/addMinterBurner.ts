@@ -14,6 +14,8 @@ task("addMinterBurner", "add minter/burner manually")
   .addParam("token", "Which token", null, types.string)
   .addParam("name", "new minter name", null, types.string)
   .setAction(async (taskArgs, hre) => {
+    console.log("\nAdding minter or burner...\n");
+
     // Token "b" or "d"
     let tokenName;
     if (taskArgs.token == "b") tokenName = "BuyerToken";
@@ -40,7 +42,6 @@ task("addMinterBurner", "add minter/burner manually")
       return;
     }
 
-    console.log("hi")
 
     if (taskArgs.type == "minter") {
       // Add minter
@@ -49,6 +50,7 @@ task("addMinterBurner", "add minter/burner manually")
         const tx = await token.addMinter(newMinterContract);
         console.log(await tx.wait());
       }
+      else console.log("Already minter")
     } else if (taskArgs.type == "burner") {
       // Add burner
       const isAlready = await token.isBurner(newMinterContract);
@@ -56,7 +58,10 @@ task("addMinterBurner", "add minter/burner manually")
         const tx = await token.addBurner(newMinterContract);
         console.log(await tx.wait());
       }
+      else console.log("Already burner")
     }
+
+    console.log("\nFinish Adding minter or burner...\n");
   });
 
 task("addStakingMinter", "add staking minter manually")

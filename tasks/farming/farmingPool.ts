@@ -39,7 +39,7 @@ task("addFarmingPool", "Add new farming pool")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -53,7 +53,14 @@ task("addFarmingPool", "Add new farming pool")
     const farmingPool: FarmingPoolUpgradeable =
       FarmingPool.attach(farmingPoolAddress);
 
-    console.log("farming speed", parseUnits(basicDegisPerSecond).toString());
+    console.log(
+      "farming basic speed",
+      parseUnits(basicDegisPerSecond).toString()
+    );
+    console.log(
+      "farming bonus speed",
+      parseUnits(bonusDegisPerSecond).toString()
+    );
 
     const tx = await farmingPool.add(
       lptokenAddress,
@@ -102,16 +109,17 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     const [dev_account] = await hre.ethers.getSigners();
     console.log("The dfault signer is: ", dev_account.address);
 
-    const farmingPoolAddress = addressList[network.name].FarmingPool;
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
       "The farming pool address of ",
       network.name,
       " is: ",
       farmingPoolAddress
     );
-    const FarmingPool: FarmingPool__factory =
-      await hre.ethers.getContractFactory("FarmingPool");
-    const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
     const tx = await farmingPool.setDegisReward(
@@ -131,15 +139,15 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
       formatEther(poolInfo.bonusDegisPerSecond)
     );
 
-    // // Store the new farming pool
-    // farmingPoolList[network.name][poolId].reward = formatEther(
-    //   poolInfo.basicDegisPerSecond
-    // );
-    // farmingPoolList[network.name][poolId].bonus = formatEther(
-    //   poolInfo.bonusDegisPerSecond
-    // );
-    // console.log("Farming pool list now: ", farmingPoolList);
-    // storeFarmingPoolList(farmingPoolList);
+    // Store the new farming pool
+    farmingPoolList[network.name][poolId].reward = formatEther(
+      poolInfo.basicDegisPerSecond
+    );
+    farmingPoolList[network.name][poolId].bonus = formatEther(
+      poolInfo.bonusDegisPerSecond
+    );
+    console.log("Farming pool list now: ", farmingPoolList);
+    storeFarmingPoolList(farmingPoolList);
   });
 
 task("setFarmingStartTime", "Set the start timestamp of farming")
@@ -210,16 +218,10 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     //   stablecoinToWei("450000"),
     //   stablecoinToWei("600000"),
     // ];
-    // const reward: string[] = [
-    //   toWei("0.035"),
-    //   toWei("0.07"),
-    //   toWei("0.104"),
-    //   toWei("0.139"),
-    //   toWei("0.174"),
-    // ];
 
-    const threshold: string[] = [stablecoinToWei("0"), stablecoinToWei("30")];
-    const reward: string[] = [toWei("0.1"), toWei("0.2")];
+    const threshold: string[] = ["0"];
+
+    const reward: string[] = ["0"];
 
     const { network } = hre;
     // Signers
@@ -241,12 +243,48 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
       gasLimit: 1000000,
       from: dev_account.address,
     });
+    console.log("Tx details: ", await tx.wait());
 
     const thresholdBasic = await farmingPool.thresholdBasic(poolId, 1);
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
 
-task("ttt", "Set the VeDEG of a farming pool").setAction(
+  task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
+  .addParam("pid", "Pool id", null, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const poolId = taskArgs.pid;
+
+    const threshold: string[] = ["0"];
+
+    const reward: string[] = ["0"];
+
+    const { network } = hre;
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    console.log(
+      "The farming pool address of this network is: ",
+      farmingPoolAddress
+    );
+
+    const FarmingPool: FarmingPoolUpgradeable__factory =
+      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
+
+    const tx = await farmingPool.setPiecewise(poolId, threshold, reward, {
+      gasLimit: 1000000,
+      from: dev_account.address,
+    });
+    console.log("Tx details: ", await tx.wait());
+
+    const thresholdBasic = await farmingPool.thresholdBasic(poolId, 0);
+    console.log("Threshold basic: ", thresholdBasic.toString());
+  });
+
+task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   async (taskArgs, hre) => {
     const { network } = hre;
 

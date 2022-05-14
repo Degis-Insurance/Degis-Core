@@ -4,7 +4,7 @@ import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
-  const { deploy, get } = deployments;
+  const { deploy } = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
@@ -25,8 +25,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: argsConfig,
+      init: {
+        methodName: "initialize",
+        args: argsConfig,
+      },
     },
   };
 
@@ -38,7 +40,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     log: true,
   });
   addressList[network.name].VoteEscrowedDegis = veDEG.address;
-
 
   // Store the address list after deployment
   storeAddressList(addressList);

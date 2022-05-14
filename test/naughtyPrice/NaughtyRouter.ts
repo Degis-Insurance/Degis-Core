@@ -52,23 +52,19 @@ describe("Naughty Router", function () {
     [dev_account, user1, user2] = await ethers.getSigners();
 
     factory = await new NaughtyFactory__factory(dev_account).deploy();
+    await factory.initialize();
 
     usd = await new MockUSD__factory(dev_account).deploy();
 
     priceGetter = await new PriceGetter__factory(dev_account).deploy();
 
-    core = await new PolicyCore__factory(dev_account).deploy(
-      usd.address,
-      factory.address,
-      priceGetter.address
-    );
+    core = await new PolicyCore__factory(dev_account).deploy();
+    await core.initialize(usd.address, factory.address, priceGetter.address);
 
     buyerToken = await new BuyerToken__factory(dev_account).deploy();
 
-    router = await new NaughtyRouter__factory(dev_account).deploy(
-      factory.address,
-      buyerToken.address
-    );
+    router = await new NaughtyRouter__factory(dev_account).deploy();
+    await router.initialize(factory.address, buyerToken.address);
 
     await core.deployed();
     await factory.deployed();

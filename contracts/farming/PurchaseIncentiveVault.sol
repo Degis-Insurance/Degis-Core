@@ -25,7 +25,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../tokens/interfaces/IDegisToken.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-
+import "hardhat/console.sol";
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens
@@ -253,6 +253,7 @@ contract PurchaseIncentiveVault is
 
         uint256[] memory thresholdM = threshold;
 
+        // If no piecewise is set, use the default degisPerRound
         if (thresholdM.length == 0) rewardPerRound = degisPerRound;
         else {
             for (uint256 i = thresholdM.length - 1; i >= 0; ) {
@@ -346,7 +347,7 @@ contract PurchaseIncentiveVault is
         // Update the total shares
         rounds[round].shares += _amount;
 
-        // Finally finish the token transfer
+        // Finish the token transfer (need approval)
         buyerToken.safeTransferFrom(msg.sender, address(this), _amount);
 
         emit Stake(msg.sender, round, _amount);
@@ -362,7 +363,6 @@ contract PurchaseIncentiveVault is
         uint256 round = currentRound;
 
         uint256 userBalance = userSharesInRound[msg.sender][round];
-
         if (userBalance < _amount) revert PIV__NotEnoughBuyerTokens();
 
         userSharesInRound[msg.sender][round] -= _amount;
@@ -374,7 +374,7 @@ contract PurchaseIncentiveVault is
 
         rounds[round].shares -= _amount;
 
-        // Finally finish the buyer token transfer
+        // Finish the buyer token transfer
         buyerToken.safeTransfer(msg.sender, _amount);
 
         emit Redeem(msg.sender, round, _amount);
@@ -423,21 +423,28 @@ contract PurchaseIncentiveVault is
             roundsToClaim -= 1;
         }
 
+        uint256 startIndex = user.lastRewardRoundIndex;
+
+        // MAX_ROUND to claim each time
         if (roundsToClaim > MAX_ROUND) {
             roundsToClaim = MAX_ROUND;
             users[msg.sender].lastRewardRoundIndex += MAX_ROUND;
         } else users[msg.sender].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
-        uint256 startIndex = user.lastRewardRoundIndex;
+        
 
-        for (uint256 i = startIndex; i < startIndex + roundsToClaim; i++) {
+        for (uint256 i = startIndex; i < startIndex + roundsToClaim;) {
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=
                 (rounds[round].degisPerShare *
                     userSharesInRound[msg.sender][round]) /
                 SCALE;
+
+            unchecked {
+                ++i;
+            }
         }
 
         // Mint reward to user

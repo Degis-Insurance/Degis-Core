@@ -185,6 +185,52 @@ describe("Income Sharing", function () {
       );
     });
 
+    it("should be able to withdraw veDEG", async function () {
+      const deposit_num = toWei("100");
+      const withdraw_num = toWei("40");
+      const remain_num = toWei("60");
+      await veDEG.addWhitelist(income.address);
+
+      // USD pool
+      await income.deposit(1, deposit_num);
+
+      // Shield pool
+      await income.deposit(2, deposit_num);
+
+      expect(await income.withdraw(1, withdraw_num))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 1, withdraw_num);
+
+      expect(await income.withdraw(2, withdraw_num))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 2, withdraw_num);
+
+      const usdPoolInfo = await income.pools(1);
+      expect(usdPoolInfo.totalAmount).to.equal(remain_num);
+      expect(usdPoolInfo.accRewardPerShare).to.equal(
+        stablecoinToWei("20000000000")
+      );
+
+      const shieldPoolInfo = await income.pools(2);
+      expect(shieldPoolInfo.totalAmount).to.equal(remain_num);
+      expect(shieldPoolInfo.accRewardPerShare).to.equal(toWei("20000000000"));
+
+      const usdUserInfo = await income.users(1, dev_account.address);
+      expect(usdUserInfo.totalAmount).to.equal(remain_num);
+
+      const shieldUserInfo = await income.users(2, dev_account.address);
+      expect(shieldUserInfo.totalAmount).to.equal(remain_num);
+
+      // Locked amount change
+      const lockedNum = await veDEG.locked(dev_account.address);
+      expect(lockedNum).to.equal(toWei("120"));
+
+      // Balance not change
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+    });
+
     it("should be able to get reward after deposit", async function () {
       const deposit_num = toWei("100");
       await veDEG.addWhitelist(income.address);
@@ -263,7 +309,7 @@ describe("Income Sharing", function () {
       // accRewardPerShare = 1e6 * 1e18 / 1e20 = 1e4
       await expect(income.updatePool(1))
         .to.emit(income, "PoolUpdated")
-        .withArgs(1, parseUnits("1", 4));
+        .withArgs(1, parseUnits("1", 16));
     });
 
     it("should not be able to withdraw veDEG when deposit into incomesharing", async function () {
@@ -283,22 +329,143 @@ describe("Income Sharing", function () {
 
       await income.deposit(1, deposit_num);
 
+      // 5 blocks reward
       await mineBlocks(5);
 
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("5")
       );
 
+      // 1 block reward
       await income.setRewardSpeed(1, stablecoinToWei("0"));
       await mineBlocks(5);
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("6")
       );
 
+      // 5 blocks reward
       await income.setRewardSpeed(1, stablecoinToWei("1"));
       await mineBlocks(5);
       expect(await income.pendingReward(1, dev_account.address)).to.equal(
         stablecoinToWei("11")
+      );
+    });
+
+    it("should be able to get reward when reach max balance - part 1", async function () {
+      await veDEG.addWhitelist(income.address);
+      // Max usdc = 1000
+      // Speed = 100
+      await income.setRewardSpeed(1, stablecoinToWei("100"));
+
+      await income.deposit(1, toWei("100")); // acc = 0
+      await income.connect(user1).deposit(1, toWei("100")); // acc = 1
+
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("350")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("250")
+      );
+
+      await mineBlocks(5);
+
+      // reward = 5 x 100 >
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("600")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("500")
+      );
+
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("600")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("500")
+      );
+
+      await expect(income.withdraw(1, toWei("100")))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 1, toWei("100"))
+        .and.emit(income, "Harvest")
+        .withArgs(dev_account.address, 1, stablecoinToWei("600"));
+
+      await expect(income.connect(user1).withdraw(1, toWei("100")))
+        .to.emit(income, "Withdraw")
+        .withArgs(user1.address, 1, toWei("100"))
+        .and.emit(income, "Harvest")
+        .withArgs(user1.address, 1, stablecoinToWei("400"));
+    });
+
+    it("should be able to get reward when reach max balance - part 2", async function () {
+      await veDEG.addWhitelist(income.address);
+      // Max usdc = 1000
+      // Speed = 100
+      await income.setRewardSpeed(1, stablecoinToWei("100"));
+
+      await income.deposit(1, toWei("100")); // acc = 0
+      await income.connect(user1).deposit(1, toWei("100")); // acc = 1
+
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("350")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("250")
+      );
+
+      await mineBlocks(5);
+
+      // reward = 5 x 100 >
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("600")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("500")
+      );
+
+      await mineBlocks(5);
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("600")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("500")
+      );
+
+      await expect(income.connect(user1).withdraw(1, toWei("100")))
+        .to.emit(income, "Withdraw")
+        .withArgs(user1.address, 1, toWei("100"))
+        .and.emit(income, "Harvest")
+        .withArgs(user1.address, 1, stablecoinToWei("500"));
+
+      await expect(income.withdraw(1, toWei("100")))
+        .to.emit(income, "Withdraw")
+        .withArgs(dev_account.address, 1, toWei("100"))
+        .and.emit(income, "Harvest")
+        .withArgs(dev_account.address, 1, stablecoinToWei("500"));
+    });
+
+    it("should be able to deposit before setting reward speed", async function () {
+      await veDEG.addWhitelist(income.address);
+      // Max usdc = 1000
+      // Speed = 100
+
+      await income.setRewardSpeed(1, 0);
+
+      await income.deposit(1, toWei("100"));
+      await income.connect(user1).deposit(1, toWei("100"));
+
+      await income.setRewardSpeed(1, stablecoinToWei("100"));
+
+      await mineBlocks(1);
+
+      expect(await income.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("50")
+      );
+      expect(await income.pendingReward(1, user1.address)).to.equal(
+        stablecoinToWei("50")
       );
     });
   });

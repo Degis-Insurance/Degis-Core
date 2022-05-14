@@ -16,6 +16,7 @@ task(
   "setIncomeMakerInFactory",
   "Set the income maker address inside naughty factory"
 ).setAction(async (_, hre) => {
+  console.log("\nSetting income maker in factory...\n");
   const { network } = hre;
 
   // Signers
@@ -24,8 +25,7 @@ task(
 
   const addressList = readAddressList();
 
-  const factoryAddress = addressList[network.name].NaughtyFactory;
-
+  const factoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
   const factory: NaughtyFactory = new NaughtyFactory__factory(
     dev_account
   ).attach(factoryAddress);
@@ -61,11 +61,18 @@ task(
   const lotteryAddress = addressList[network.name].DegisLottery;
 
   // Get policy core contract instance
-  const policyCoreAddress = addressList[network.name].PolicyCore;
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
 
   const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
     policyCoreAddress
   );
+
+  const oldCoreInstance = new PolicyCore__factory(dev_account).attach(
+    addressList[network.name].PolicyCore
+  );
+
+  const tx = await oldCoreInstance.setIncomeSharing(incomeSharingAddress);
+  console.log("tx details:", await tx.wait());
 
   const tx_setIncomeSharing = await core.setIncomeSharing(incomeSharingAddress);
   console.log(
@@ -85,6 +92,8 @@ task(
   "addIncomeSharingWL",
   "Add income sharing contract to veDEG whitelist"
 ).setAction(async (_, hre) => {
+  console.log("\n Adding income sharing contract to veDEG whitelist... \n");
+
   const { network } = hre;
 
   // Signers
@@ -103,4 +112,8 @@ task(
 
   const tx = await veDEG.addWhitelist(incomeSharingAddress);
   console.log("Tx details: ", await tx.wait());
+
+  console.log(
+    "\n Finish Adding income sharing contract to veDEG whitelist... \n"
+  );
 });

@@ -44,13 +44,13 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
 
     console.log("Stablecoin address: ", stablecoinAddress);
 
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
-    // Deploy
+    //Deploy
     const tx = await core.deployPool(
       taskArgs.name,
       stablecoinAddress,
@@ -60,7 +60,7 @@ task("deployNPPool", "Deploy the swapping pool of naughty price policy token")
     console.log("Tx details: ", await tx.wait());
 
     // Get naughty factory contract instance
-    const naughtyFactoryAddress = addressList[network.name].NaughtyFactory;
+    const naughtyFactoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
     const NaughtyFactory: NaughtyFactory__factory =
       await hre.ethers.getContractFactory("NaughtyFactory");
     const factory: NaughtyFactory = NaughtyFactory.attach(

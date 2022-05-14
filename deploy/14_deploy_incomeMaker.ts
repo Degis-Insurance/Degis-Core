@@ -13,8 +13,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const router = await get("NaughtyRouter");
-  const factory = await get("NaughtyFactory");
+  const router = await get("NaughtyRouterUpgradeable");
+  const factory = await get("NaughtyFactoryUpgradeable");
   const vault = await get("IncomeSharingVault");
 
   // const proxyArtifact = await getArtifact("TransparentUpgradeableProxy");
@@ -23,8 +23,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [router.address, factory.address, vault.address],
+      init: {
+        methodName: "initialize",
+        args: [router.address, factory.address, vault.address],
+      },
     },
   };
   const incomeMaker = await deploy("IncomeMaker", {

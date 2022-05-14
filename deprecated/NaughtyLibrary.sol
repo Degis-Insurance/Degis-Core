@@ -5,7 +5,7 @@ import "../interfaces/INaughtyPair.sol";
 import "../interfaces/INaughtyFactory.sol";
 import "../interfaces/IPolicyCore.sol";
 
-import "hardhat/console.sol";
+
 
 library NaughtyLibrary {
     /**

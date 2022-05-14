@@ -1,0 +1,29 @@
+{
+	"fuji": {
+		"AVAX_50.0_L_1205": {
+			"policyToken": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
+			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+			"deadline": "1652281200",
+			"lptoken": "0x2416B56Cb5Cbf688E7eE7345C79Ca0597B8dc3fE",
+			"pairAddress": "0x75259Ed83410c4Ab1DF9e7aDD06547895d79cE02"
+		},
+		"AVAX_32.0_L_1405": {
+			"policyToken": "0xAf2E598AD50Ba661a0f65bEf6177595FAE34cA38",
+			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+			"deadline": "1652457600",
+			"lptoken": "0xafc2a6aDeE8Eb2587a58603E16B06B512d9ae3a7",
+			"pairAddress": "0x0bA981A1f865FC7127B84C9e8745c1f7D4F7A885"
+		},
+		"AVAX_33.0_L_1405": {
+			"policyToken": "0x38D38E24fdC1E3c20d5181779d8632F54d107563",
+			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+			"deadline": "1652457600",
+			"lptoken": "0x327b7e63C50f91a212cCA980b84654a443e1BfC3",
+			"pairAddress": "0x81eAF39DBA66a84c3A2fEEA31B85c720A43d2597"
+		}
+	},
+	"avax": {},
+	"avaxTest": {},
+	"localhost": {},
+	"rinkeby": {}
+}

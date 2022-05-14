@@ -63,12 +63,14 @@ describe("Initial Liquidity Matching", function () {
   let NaughtyRouter: NaughtyRouter__factory, router: NaughtyRouter;
   let emergencyPool: EmergencyPool;
 
-  let dev_account: SignerWithAddress, user1: SignerWithAddress;
+  let dev_account: SignerWithAddress,
+    user1: SignerWithAddress,
+    user2: SignerWithAddress;
 
   const FEE_RATE = 50;
 
   beforeEach(async function () {
-    [dev_account, user1] = await ethers.getSigners();
+    [dev_account, user1, user2] = await ethers.getSigners();
 
     // 6 decimals for usd
     MockUSD = await ethers.getContractFactory("MockUSD");
@@ -83,6 +85,7 @@ describe("Initial Liquidity Matching", function () {
 
     NaughtyFactory = await ethers.getContractFactory("NaughtyFactory");
     factory = await NaughtyFactory.deploy();
+    await factory.initialize();
 
     PriceGetter = await ethers.getContractFactory("PriceGetter");
     priceGetter = await PriceGetter.deploy();
@@ -93,14 +96,12 @@ describe("Initial Liquidity Matching", function () {
     NPPolicyToken = await ethers.getContractFactory("NPPolicyToken");
 
     PolicyCore = await ethers.getContractFactory("PolicyCore");
-    core = await PolicyCore.deploy(
-      usd.address,
-      factory.address,
-      priceFeedMock.address
-    );
+    core = await PolicyCore.deploy();
+    await core.initialize(usd.address, factory.address, priceFeedMock.address);
 
     NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
-    router = await NaughtyRouter.deploy(factory.address, buyerToken.address);
+    router = await NaughtyRouter.deploy();
+    await router.initialize(factory.address, buyerToken.address);
     await router.setPolicyCore(core.address);
 
     await factory.setPolicyCoreAddress(core.address);
@@ -121,15 +122,19 @@ describe("Initial Liquidity Matching", function () {
       emergencyPool.address
     );
 
+    await ILM.approveStablecoin(usd.address);
+
     await core.setILMContract(ILM.address);
     await core.setNaughtyRouter(router.address);
 
     // Mint degis token as entrance
     await degisToken.mintDegis(dev_account.address, toWei("100"));
     await degisToken.mintDegis(user1.address, toWei("100"));
+    await degisToken.mintDegis(user2.address, toWei("100"));
 
     await degisToken.approve(ILM.address, toWei("100"));
     await degisToken.connect(user1).approve(ILM.address, toWei("100"));
+    await degisToken.connect(user2).approve(ILM.address, toWei("100"));
   });
 
   describe("Deployment", function () {
@@ -266,7 +271,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1", 12)
+      );
 
       // Another user
       await usd.mint(user1.address, stablecoinToWei("300"));
@@ -296,7 +303,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("200"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1.5", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1.5", 12)
+      );
 
       // related to degis
       expect(pairInfo_2.accDegisPerShare).to.equal(parseUnits("0.025", 24));
@@ -334,7 +343,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo.amountB).to.equal(stablecoinToWei("100"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("1", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("1", 12)
+      );
 
       // Another user
       await expect(
@@ -371,7 +382,9 @@ describe("Initial Liquidity Matching", function () {
       expect(pairInfo_2.amountB).to.equal(stablecoinToWei("40"));
 
       // Calculate the price
-      expect(await ILM.getPrice(policyTokenAddress)).to.equal(parseUnits("2", 12));
+      expect(await ILM.getPrice(policyTokenAddress)).to.equal(
+        parseUnits("2", 12)
+      );
     });
 
     it("should be able to stop current round ILM", async function () {
@@ -492,6 +505,7 @@ describe("Initial Liquidity Matching", function () {
       await ILM.claim(
         policyTokenAddress,
         usd.address,
+        stablecoinToWei("200"),
         stablecoinToWei("80"), // Slippage
         stablecoinToWei("80") // Slippage
       );
@@ -518,6 +532,203 @@ describe("Initial Liquidity Matching", function () {
       // expect(await usd.balanceOf(dev_account.address)).to.be.greaterThanOrEqual(
       //   stablecoinToWei("99899")
       // );
+    });
+
+    it("should be able to get degis token fee when withdraw", async function () {
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await ILM.deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("98")
+      );
+
+      await usd.mint(user1.address, stablecoinToWei("200"));
+      await usd.connect(user1).approve(ILM.address, stablecoinToWei("200"));
+      await ILM.connect(user1).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("98"));
+
+      await usd.mint(user2.address, stablecoinToWei("100"));
+      await usd.connect(user2).approve(ILM.address, stablecoinToWei("100"));
+      await ILM.connect(user2).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("50"),
+        stablecoinToWei("50")
+      );
+
+      expect(await degisToken.balanceOf(user2.address)).to.equal(toWei("99"));
+
+      await ILM.withdraw(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("98")
+      );
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("4.5")
+      );
+
+      await ILM.connect(user1).withdraw(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("98"));
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("5")
+      );
+
+      await ILM.connect(user2).withdraw(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("50"),
+        stablecoinToWei("50")
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(user2.address)).to.equal(toWei("99"));
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("5")
+      );
+    });
+
+    it("should be able to get degis fee when claim", async function () {
+      const startTime = await getLatestBlockTimestamp(ethers.provider);
+      await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
+      await usd.approve(ILM.address, stablecoinToWei("200"));
+      await ILM.deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("98")
+      );
+
+      await usd.mint(user1.address, stablecoinToWei("200"));
+      await usd.connect(user1).approve(ILM.address, stablecoinToWei("200"));
+      await ILM.connect(user1).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        stablecoinToWei("100")
+      );
+
+      expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("98"));
+
+      await usd.mint(user2.address, stablecoinToWei("100"));
+      await usd.connect(user2).approve(ILM.address, stablecoinToWei("100"));
+      await ILM.connect(user2).deposit(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("50"),
+        stablecoinToWei("50")
+      );
+
+      expect(await degisToken.balanceOf(user2.address)).to.equal(toWei("99"));
+
+      await setNextBlockTime(startTime + ILM_TIME + 100);
+      const deadlineForPolicyToken = (
+        await core.policyTokenInfoMapping(policyTokenName)
+      ).deadline;
+      await ILM.finishILM(policyTokenAddress, deadlineForPolicyToken, FEE_RATE);
+
+      await ILM.claim(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        0,
+        0
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("102.5")
+      );
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("0")
+      );
+      const userInfo_dev_1 = await ILM.users(
+        dev_account.address,
+        policyTokenAddress
+      );
+      expect(userInfo_dev_1.degisDebt).to.equal(toWei("4.5"));
+
+      await ILM.claim(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        0,
+        0
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(dev_account.address)).to.equal(
+        toWei("102.5")
+      );
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("0")
+      );
+      const userInfo_dev_2 = await ILM.users(
+        dev_account.address,
+        policyTokenAddress
+      );
+      expect(userInfo_dev_2.degisDebt).to.equal(toWei("4.5"));
+
+      await ILM.connect(user1).claim(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("200"),
+        0,
+        0
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("98.5"));
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("0")
+      );
+      const userInfo_1 = await ILM.users(user1.address, policyTokenAddress);
+      expect(userInfo_1.degisDebt).to.equal(toWei("4.5"));
+
+      await ILM.connect(user2).claim(
+        policyTokenAddress,
+        usd.address,
+        stablecoinToWei("100"),
+        0,
+        0
+      );
+      // Withdraw will not return degis token
+      expect(await degisToken.balanceOf(user2.address)).to.equal(toWei("99"));
+      expect(await degisToken.balanceOf(emergencyPool.address)).to.equal(
+        toWei("0")
+      );
+      const userInfo_2 = await ILM.users(user2.address, policyTokenAddress);
+      expect(userInfo_2.degisDebt).to.equal(toWei("2.25"));
+
+      const quota = await core.getUserQuota(
+        dev_account.address,
+        policyTokenAddress
+      );
+      console.log(quota);
+      expect(quota).to.equal(stablecoinToWei("99.9996"));
     });
   });
 });

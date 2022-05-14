@@ -1,0 +1,12 @@
+{
+  "name": "PolicyCoreUpgradeable",
+  "network": "avax",
+  "proxy": {
+    "0xe3F1FB39ec98A82E8d7564A51EDc9c9cCFcBb295": {
+      "impl": [
+        { "0x87B3D27111288f0127e5Cc53142498997b5Daca1": "2022-5-5 14:11:54" },
+        {}
+      ]
+    }
+  }
+}

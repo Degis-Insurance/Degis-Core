@@ -26,7 +26,6 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "../utils/ReentrancyGuard.sol";
 import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
-import "hardhat/console.sol";
 
 /**
  * @title  Naughty Pair
@@ -381,15 +380,20 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
                 uint256 rootKLast = Math.sqrt(_k);
 
                 if (rootK > rootKLast) {
-                    uint256 numerator = totalSupply() * (rootK - rootKLast);
+                    uint256 numerator = totalSupply() *
+                        (rootK - rootKLast) *
+                        10;
 
                     // (1 / φ) - 1
                     // Proportion got from factory is based on 100
+                    // Use 1000/proportion to make it divided (donominator and numerator both * 10)
+                    // p = 40 (2/5) => 1000/40 = 25
                     uint256 incomeMakerProportion = INaughtyFactory(factory)
                         .incomeMakerProportion();
                     uint256 denominator = rootK *
-                        (100 / incomeMakerProportion - 1) +
-                        rootKLast;
+                        (1000 / incomeMakerProportion - 10) +
+                        rootKLast *
+                        10;
 
                     uint256 liquidity = numerator / denominator;
 

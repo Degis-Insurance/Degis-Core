@@ -63,8 +63,10 @@ typescript ^4.5.3
 
 4. Deploy to the blockchain
 
+   (This way is not maintained, you need to write your own script)
+
    ```
-   npx hardhar run scripts/deploy/deploy.ts --network {{network name}}
+   npx hardhart run scripts/deploy/deploy.ts --network {{network name}}
    ```
 
    or:
@@ -121,17 +123,21 @@ npx hardhat verify --constructor-args scripts/verify/arguments.js DEPLOYED_CONTR
 
 - All addresses of deployed contracts and tokens will be stored inside the info folder.
 
-
 ## About Proxy Contracts
 
 We use proxy contracts for some contracts including:
 
-- FarmingPool
+- FarmingPoolUpgradeable
+- VoteEscrowedDegis
+- PolicyCore (new)
+- NaughtyFactory (new)
+- NaughtyRouter (new)
+- PurchaseIncentiveVault
 - ...
-(the list may be extended later)
+  (the list may be extended later)
 
-We will have one ProxyAdmin Contract and its owner is our multi-sig wallet.
-
-The ProxyAdmin contract can upgrade the implementation contract of farmingPool.
+The ProxyAdmin contract can upgrade the implementation.
 
 All proxies will share the same proxy admin address.
+
+We will upgrade the owner of ProxyAdmin to be a combination of TimeLock and MultiSig in the future.

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 import "./MathLib.sol";
 
-contract DegisLottery is ReentrancyGuard, Ownable {
+contract DegisLotteryV2 is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
     using MathLib for uint256;
     using MathLib for int128;

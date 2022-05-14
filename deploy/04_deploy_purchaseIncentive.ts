@@ -2,7 +2,7 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
-// Deploy Purchase Incentive Vault 
+// Deploy Purchase Incentive Vault
 // It is a proxy deployment
 //    - TransparentUpgradeableProxy
 //    - PurchaseIncentiveVault
@@ -29,8 +29,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [BuyerToken.address, DegisToken.address],
+      init: {
+        methodName: "initialize",
+        args: [BuyerToken.address, DegisToken.address],
+      },
     },
   };
 
@@ -47,7 +49,13 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Add degis minter role to purchaseIncentiveVault contract
-  await hre.run("addMinterBurner", ["minter", "d", "PurchaseIncentiveVault"]);
+  if (network.name != "avax") {
+    await hre.run("addMinterBurner", {
+      type: "minter",
+      token: "d",
+      name: "PurchaseIncentiveVault",
+    });
+  }
 };
 
 func.tags = ["PurchaseIncentive"];

@@ -22,8 +22,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     proxyContract: "TransparentUpgradeableProxy",
     viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
     execute: {
-      methodName: "initialize",
-      args: [veDEG.address],
+      init: {
+        methodName: "initialize",
+        args: [veDEG.address],
+      },
     },
   };
   const incomeSharingVault = await deploy("IncomeSharingVault", {
@@ -41,6 +43,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Run some afterwards tasks
   await hre.run("setIncomeSharingInCore");
+  await hre.run("addIncomeSharingWL");
 };
 
 func.tags = ["IncomeSharing"];

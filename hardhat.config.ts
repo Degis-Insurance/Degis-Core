@@ -15,6 +15,8 @@ import "hardhat-contract-sizer";
 // tasks;
 import "./tasks/clearRecord";
 
+import "./tasks/emergencyPool/deposit-withdraw";
+
 // Farming Tasks
 import "./tasks/farming/farmingPool";
 import "./tasks/farming/purchaseIncentive";
@@ -50,6 +52,9 @@ import "./tasks/governance/VeDEG";
 // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
+import "./tasks/incomeSharing/incomeMaker";
+import "./tasks/general/index";
+import "./tasks/ILM/startStop";
 
 dotenv.config();
 
@@ -68,7 +73,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.10",
+    version: "0.8.13",
     settings: {
       optimizer: {
         enabled: true,
@@ -132,7 +137,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
         count: 20,
       },
-      // gasPrice: 75000000000,
+      // gasPrice: 120000000000,
     },
     avaxTest: {
       url: process.env.AVAX_URL || "",
@@ -141,7 +146,7 @@ const config: HardhatUserConfig = {
           process.env.PHRASE_FUJI !== undefined ? process.env.PHRASE_FUJI : "",
         count: 20,
       },
-      //  gasPrice: 75000000000,
+      // gasPrice: 45000000000,
     },
   },
   gasReporter: {
