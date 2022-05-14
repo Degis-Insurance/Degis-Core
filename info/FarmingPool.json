@@ -34,6 +34,27 @@
 			"poolId": 5,
 			"reward": "0.1",
 			"bonus": "0.0"
+		},
+		"6": {
+			"name": "ILM_AVAX_33.0_L_1605",
+			"address": "0x7c7eCe59d2EAA356C239994A6111653d0E1c33AA",
+			"poolId": 6,
+			"reward": "0.0",
+			"bonus": "0.0"
+		},
+		"7": {
+			"name": "ILM_AVAX_34.0_L_1605",
+			"address": "0xa7e29167ea5329D954238258d4e58EF3F18b915d",
+			"poolId": 7,
+			"reward": "0.0",
+			"bonus": "0.0"
+		},
+		"8": {
+			"name": "mockusd",
+			"address": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
+			"poolId": 8,
+			"reward": "0.1",
+			"bonus": "0.0"
 		}
 	},
 	"avax": {

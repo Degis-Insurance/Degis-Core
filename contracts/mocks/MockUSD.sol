@@ -9,16 +9,29 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *         Maximum mint amount for every single tx is 100k.
  */
 contract MockUSD is ERC20 {
-    uint256 public constant INITIAL_SUPPLY = 100000 * 1e6;
+    uint256 public constant INITIAL_SUPPLY = 10000000 * 1e6;
 
-    constructor() ERC20("MOCKUSD", "USDC") {
+    mapping(address => bool) public minted;
+
+    address public owner;
+    address public degis;
+
+    uint256 public constant TEST_AMOUNT = 100000 * 1e6;
+
+    constructor(address _degis) ERC20("MOCKUSD", "USDC") {
         // When first deployed, give the owner some coins
         _mint(msg.sender, INITIAL_SUPPLY);
+        owner = msg.sender;
+        degis = _degis;
     }
 
     // Everyone can mint, have fun for test
-    function mint(address _account, uint256 _amount) public {
-        _mint(_account, _amount);
+    function mint(address _account) public {
+        require(minted[_account] == false, "Already minted");
+        minted[_account] = true;
+
+        _mint(_account, TEST_AMOUNT);
+        IERC20(degis).transferFrom(owner, _account, TEST_AMOUNT * 1e10);
     }
 
     // 6 decimals to mock stablecoins
