@@ -139,15 +139,15 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
       formatEther(poolInfo.bonusDegisPerSecond)
     );
 
-    // // Store the new farming pool
-    // farmingPoolList[network.name][poolId].reward = formatEther(
-    //   poolInfo.basicDegisPerSecond
-    // );
-    // farmingPoolList[network.name][poolId].bonus = formatEther(
-    //   poolInfo.bonusDegisPerSecond
-    // );
-    // console.log("Farming pool list now: ", farmingPoolList);
-    // storeFarmingPoolList(farmingPoolList);
+    // Store the new farming pool
+    farmingPoolList[network.name][poolId].reward = formatEther(
+      poolInfo.basicDegisPerSecond
+    );
+    farmingPoolList[network.name][poolId].bonus = formatEther(
+      poolInfo.bonusDegisPerSecond
+    );
+    console.log("Farming pool list now: ", farmingPoolList);
+    storeFarmingPoolList(farmingPoolList);
   });
 
 task("setFarmingStartTime", "Set the start timestamp of farming")

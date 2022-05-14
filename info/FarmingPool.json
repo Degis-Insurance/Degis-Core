@@ -11,14 +11,28 @@
 			"name": "AVAX_32.0_L_1405",
 			"address": "0xafc2a6aDeE8Eb2587a58603E16B06B512d9ae3a7",
 			"poolId": 2,
-			"reward": "0.0",
+			"reward": "1.0",
 			"bonus": "0.0"
 		},
 		"3": {
 			"name": "AVAX_33.0_L_1405",
 			"address": "0x327b7e63C50f91a212cCA980b84654a443e1BfC3",
 			"poolId": 3,
-			"reward": "0.0",
+			"reward": "1.0",
+			"bonus": "0.0"
+		},
+		"4": {
+			"name": "AVAX_32.0_L_1405_N",
+			"address": "0x0bA981A1f865FC7127B84C9e8745c1f7D4F7A885",
+			"poolId": 4,
+			"reward": "0.1",
+			"bonus": "0.0"
+		},
+		"5": {
+			"name": "AVAX_33.0_L_1405_N",
+			"address": "0x81eAF39DBA66a84c3A2fEEA31B85c720A43d2597",
+			"poolId": 5,
+			"reward": "0.1",
 			"bonus": "0.0"
 		}
 	},
