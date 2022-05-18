@@ -97,7 +97,7 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     const naughtyRouterAddress =
       addressList[network.name].NaughtyRouterUpgradeable;
     const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
-    const lotteryAddress = addressList[network.name].DegisLottery;
+    const lotteryAddress = addressList[network.name].EmergencyPool;
 
     // Get policy core contract instance
     const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
@@ -118,8 +118,8 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
 
     // Check the result
     console.log("Naughty router address in core: ", await core.naughtyRouter());
-    // console.log("Degis lottery address in core: ", await core.lottery());
-    // console.log("Emergency pool address in core: ", await core.incomeSharing());
+    console.log("Degis lottery address in core: ", await core.lottery());
+    console.log("Income sharing address in core: ", await core.incomeSharing());
   }
 );
 

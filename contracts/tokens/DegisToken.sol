@@ -16,7 +16,7 @@ import "../utils/ERC20PermitWithMultipleMinters.sol";
  */
 contract DegisToken is ERC20PermitWithMultipleMinters {
     // Degis has a total supply of 100 million
-    uint256 public constant CAP = 1e8 ether;
+    uint256 public constant CAP = 1000e8 ether;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Constructor *************************************** //

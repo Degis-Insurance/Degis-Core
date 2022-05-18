@@ -1,0 +1,12 @@
+{
+  "name": "FarmingPoolUpgradeable",
+  "network": "avax",
+  "proxy": {
+    "0x69F8F0E775CFf1C361644c8fBd3bba8e9873B4cD": {
+      "impl": [
+        { "0xCf44a8960606C8Ef700dADB06c8ED7889E4E3B8e": "2022-4-15 4:53:46" },
+        { "0x7E906e82A40637F471ee1059739A20A024c0050E": "2022-4-27 7:47:06" }
+      ]
+    }
+  }
+}

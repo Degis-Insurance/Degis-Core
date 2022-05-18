@@ -17,7 +17,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Read address list from local file
   const addressList = readAddressList();
-  const proxyAddressList = readProxyAdmin();
 
   // Arguments for deployment
   const insurancePoolAddress: string = addressList[network.name].InsurancePool;

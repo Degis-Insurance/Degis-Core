@@ -57,7 +57,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const mockUSD = await deploy("MockUSD", {
       contract: "MockUSD",
       from: deployer,
-      args: [],
+      args: [degis.address],
       log: true,
     });
     addressList[network.name].MockUSD = mockUSD.address;
