@@ -42,23 +42,20 @@ task("addMinterBurner", "add minter/burner manually")
       return;
     }
 
-
     if (taskArgs.type == "minter") {
       // Add minter
       const isAlready = await token.isMinter(newMinterContract);
       if (!isAlready) {
         const tx = await token.addMinter(newMinterContract);
         console.log(await tx.wait());
-      }
-      else console.log("Already minter")
+      } else console.log("Already minter");
     } else if (taskArgs.type == "burner") {
       // Add burner
       const isAlready = await token.isBurner(newMinterContract);
       if (!isAlready) {
         const tx = await token.addBurner(newMinterContract);
         console.log(await tx.wait());
-      }
-      else console.log("Already burner")
+      } else console.log("Already burner");
     }
 
     console.log("\nFinish Adding minter or burner...\n");
@@ -115,7 +112,7 @@ task("addFarmingMinter", "Add degis minter to farming contract").setAction(
   }
 );
 
-subtask(
+task(
   "addRouterMinter",
   "Add buyer minter to naughty router contract"
 ).setAction(async (_, hre) => {
@@ -126,7 +123,7 @@ subtask(
   console.log("The dfault signer is: ", dev_account.address);
 
   const addressList = readAddressList();
-  const routerAddress = addressList[network.name].NaughtyRouter;
+  const routerAddress = addressList[network.name].NaughtyRouterUpgradeable;
   const buyerTokenAddress = addressList[network.name].BuyerToken;
 
   // Get the contract instance
@@ -141,6 +138,7 @@ subtask(
     const tx_1 = await buyer.addMinter(routerAddress);
     console.log(await tx_1.wait());
   }
+  else console.log("already minter")
 });
 
 task("addAllMinterBurner", "Add minter for degis/buyer tokens").setAction(

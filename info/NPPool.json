@@ -1,7 +1,21 @@
 {
 	"fuji": {
-		
+		"AVAX_50.0_L_2105": {
+			"poolAddress": "0xe6b75aab9e1de00fDb6cB34408a32E8B58388903",
+			"policyTokenAddress": "0x342Cef67C87BAE274B9347475a1e5A30D4e14530",
+			"stablecoinAddress": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"poolDeadline": "1653033600",
+			"feeRate": 50
+		},
+		"AVAX_33.0_L_2205": {
+			"poolAddress": "0x3A16BEa96a801137643E107F260fd63c546198B4",
+			"policyTokenAddress": "0x4fb7139b44194161ab6f8ae299F2E0164c569150",
+			"stablecoinAddress": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"poolDeadline": "1653121800",
+			"feeRate": 50
+		}
 	},
+	"fujiTest": {},
 	"avax": {
 		"AVAX_94.0_L_2104": {
 			"poolAddress": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",

@@ -45,6 +45,8 @@ task(
   // Check the result
   const coreAddress = await factory.policyCore();
   console.log("The policy core address inside naughty factory: ", coreAddress);
+
+  console.log("\n Finish Setting Naughty Factory... \n");
 });
 
 task(
@@ -66,9 +68,9 @@ task(
   // Get naughty router contract instance
   const naughtyRouterAddress =
     addressList[network.name].NaughtyRouterUpgradeable;
-  const NaughtyRouter: NaughtyRouter__factory =
-    await hre.ethers.getContractFactory("NaughtyRouter");
-  const router: NaughtyRouter = NaughtyRouter.attach(naughtyRouterAddress);
+  const router: NaughtyRouter = new NaughtyRouter__factory(dev_account).attach(
+    naughtyRouterAddress
+  );
 
   // Set
   const tx = await router.setPolicyCore(policyCoreAddress);
@@ -80,6 +82,8 @@ task(
 
   const buyerAddress = await router.buyerToken();
   console.log("The buyer token address inside naughty router: ", buyerAddress);
+
+  console.log("\n Finish Setting Naughty Router... \n");
 });
 
 task("setNPCore", "Set the contract addresses inside policy core").setAction(
@@ -96,32 +100,63 @@ task("setNPCore", "Set the contract addresses inside policy core").setAction(
     // Addresses to be set
     const naughtyRouterAddress =
       addressList[network.name].NaughtyRouterUpgradeable;
-    const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
-    const lotteryAddress = addressList[network.name].EmergencyPool;
 
     // Get policy core contract instance
     const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
-    const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
-      "PolicyCore"
+    const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
+      policyCoreAddress
     );
-    const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
-    Set;
+    // Set
     const tx_setRouter = await core.setNaughtyRouter(naughtyRouterAddress);
     console.log("Tx_setRouter details: ", await tx_setRouter.wait());
-
-    const tx_setEmergency = await core.setIncomeSharing(incomeSharingAddress);
-    console.log("Tx_setEmergency details: ", await tx_setEmergency.wait());
-
-    const tx_setLottery = await core.setLottery(lotteryAddress);
-    console.log("Tx_setLottery details: ", await tx_setLottery.wait());
 
     // Check the result
     console.log("Naughty router address in core: ", await core.naughtyRouter());
     console.log("Degis lottery address in core: ", await core.lottery());
     console.log("Income sharing address in core: ", await core.incomeSharing());
+
+    console.log("\n Finish Setting PolicyCore... \n");
   }
 );
+
+task(
+  "setLotteryAndIncomeInCore",
+  "Set the lottery and income sharing contract addresses inside policy core"
+).setAction(async (_, hre) => {
+  console.log("\n Setting Lottery and Income in Policy Core... \n");
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  // Addresses to be set
+  const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
+  const lotteryAddress = addressList[network.name].EmergencyPool;
+
+  // Get policy core contract instance
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
+  const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
+    policyCoreAddress
+  );
+
+  // Set
+  const tx_setIncome = await core.setIncomeSharing(incomeSharingAddress);
+  console.log("Tx_setIncome details: ", await tx_setIncome.wait());
+
+  const tx_setLottery = await core.setLottery(lotteryAddress);
+  console.log("Tx_setLottery details: ", await tx_setLottery.wait());
+
+  // Check the result
+  console.log("Naughty router address in core: ", await core.naughtyRouter());
+  console.log("Degis lottery address in core: ", await core.lottery());
+  console.log("Income sharing address in core: ", await core.incomeSharing());
+
+  console.log("\n Finish Setting Lottery and Income in PolicyCore... \n");
+});
 
 task("setILMInCore", "Set ILM contract address in policy core").setAction(
   async (_, hre) => {

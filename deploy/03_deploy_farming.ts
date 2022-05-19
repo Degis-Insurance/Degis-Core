@@ -70,11 +70,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     // Store the address list after deployment
     storeAddressList(addressList);
 
-    // await hre.run("addMinterBurner", {
-    //   type: "minter",
-    //   token: "d",
-    //   name: "FarmingPoolUpgradeable",
-    // });
+    await hre.run("addMinterBurner", {
+      type: "minter",
+      token: "d",
+      name: "FarmingPoolUpgradeable",
+    });
   }
 };
 

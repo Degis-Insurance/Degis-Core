@@ -75,7 +75,7 @@ task("mintUSD", "mint degis token")
     );
 
     // Add minter
-    const tx = await usd.mint(taskArgs.address);
+    const tx = await usd.mint(taskArgs.address, taskArgs.amount);
 
     console.log(await tx.wait());
   });

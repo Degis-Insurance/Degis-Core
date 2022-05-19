@@ -138,39 +138,3 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
 func.tags = ["NaughtyPrice"];
 export default func;
-
-// const factory = await deploy("NaughtyFactory", {
-//   contract: "NaughtyFactory",
-//   from: deployer,
-//   args: [],
-//   log: true,
-// });
-// addressList[network.name].NaughtyFactory = factory.address;
-
-// if (network.name == "avax" || network.name == "avaxTest") {
-//   const usdcAddress = getTokenAddressOnAVAX("USDC.e");
-//   const core = await deploy("PolicyCore", {
-//     contract: "PolicyCore",
-//     from: deployer,
-//     args: [usdcAddress, factory.address, priceGetter.address],
-//     log: true,
-//   });
-//   addressList[network.name].PolicyCore = core.address;
-// } else {
-//   const MockUSD = await get("MockUSD");
-//   const core = await deploy("PolicyCore", {
-//     contract: "PolicyCore",
-//     from: deployer,
-//     args: [MockUSD.address, factory.address, priceGetter.address],
-//     log: true,
-//   });
-//   addressList[network.name].PolicyCore = core.address;
-// }
-
-// const router = await deploy("NaughtyRouter", {
-//   contract: "NaughtyRouter",
-//   from: deployer,
-//   args: [factory.address, BuyerToken.address],
-//   log: true,
-// });
-// addressList[network.name].NaughtyRouter = router.address;

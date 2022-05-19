@@ -24,7 +24,10 @@ pragma solidity ^0.8.10;
 //     uint32 public constant MIN_TICKET_NUMBER = 10000;
 //     uint32 public constant MAX_TICKET_NUMBER = 19999;
 
-//     uint32[4] public constant CALCULATOR = [1, 11, 111, 1111];
+//     uint32 public constant CALCULATOR_1 = 1;
+//     uint32 public constant CALCULATOR_2 = 11;
+//     uint32 public constant CALCULATOR_3 = 111;
+//     uint32 public constant CALCULATOR_4 = 1111;
 
 //     uint256 public constant ticketPrice = 10 ether;
 
@@ -554,7 +557,7 @@ pragma solidity ^0.8.10;
 //         for (uint32 i = 0; i < 4; i++) {
 //             uint32 j = 3 - i;
 //             // Get transformed winning number
-//             uint32 transformedWinningNumber = CALCULATOR[j] +
+//             uint32 transformedWinningNumber = _getCalculator(j) +
 //                 (finalNumber % (uint32(10)**(j + 1)));
 
 //             uint256 numberTickets = 0;
@@ -1094,11 +1097,12 @@ pragma solidity ^0.8.10;
 
 //         // Apply transformation to verify the claim provided by the user is true
 //         //
-//         uint256 ts = uint32(10)**(_bracket + 1);
-//         uint32 transformedWinningNumber = CALCULATOR[_bracket] +
+//         uint32 ts = uint32(10)**(_bracket + 1);
+//         uint32 transformedWinningNumber = _getCalculator(_bracket) +
 //             (winningTicketNumber % ts);
 
-//         uint32 transformedUserNumber = CALCULATOR[_bracket] + (userNumber % ts);
+//         uint32 transformedUserNumber = _getCalculator(_bracket) +
+//             (userNumber % ts);
 
 //         // Confirm that the two transformed numbers are the same
 //         if (transformedWinningNumber == transformedUserNumber) {
@@ -1138,5 +1142,12 @@ pragma solidity ^0.8.10;
 //             size := extcodesize(_addr)
 //         }
 //         return size > 0;
+//     }
+
+//     function _getCalculator(uint256 index) internal view returns (uint32) {
+//         if (index == 1) return CALCULATOR_1;
+//         else if (index == 2) return CALCULATOR_2;
+//         else if (index == 3) return CALCULATOR_3;
+//         else return CALCULATOR_4;
 //     }
 // }

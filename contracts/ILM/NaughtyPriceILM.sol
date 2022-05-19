@@ -200,7 +200,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     function getPrice(address _policyToken) external view returns (uint256) {
         uint256 amountA = pairs[_policyToken].amountA;
         uint256 amountB = pairs[_policyToken].amountB;
-        return (amountA * SCALE) / amountB;
+        return (amountB * SCALE) / amountA;
     }
 
     /**

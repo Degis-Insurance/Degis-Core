@@ -85,6 +85,24 @@
 		"IncomeMaker": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF"
 	},
 	"rinkeby": {},
+	"fujiTest": {
+		"ProxyAdmin": "0xd2482af30b9B52409334c4f87dB965b225b31f80",
+		"DegisToken": "0xd448a8ace8661eBdc4119114514d9bCCE2e4eE7D",
+		"BuyerToken": "0xd671D29418Eb5dF5c406A38Afa5586961eb389f8",
+		"MockUSD": "0x9eC6599DE436189B38e709B94dbc6A690dD8c49d",
+		"EmergencyPool": "0xf9742783550B1b8d0e524d2ad1c463d10ddA5903",
+		"FarmingPoolUpgradeable": "0x6D7E2145330B3da6F7b81123BBe621B337f84254",
+		"PurchaseIncentiveVault": "0xB9cf4E558fd9df2230e81015A12e69ff9DBaa074",
+		"PriceGetter": "0xf1797F9239A3FdeB3b126Ca32169c7fc4Fd26367",
+		"NaughtyFactoryUpgradeable": "0x1D1e2816A8564929eE09A8A689755422aDE0b0e4",
+		"PolicyCoreUpgradeable": "0xfc86E86a95fB8111E95AE4538F140a0D30fb1961",
+		"NaughtyRouterUpgradeable": "0x5183D73987cdc9a42C7D39984c7BED8C97dd19df",
+		"StakingPoolFactory": "0x7A60654d2889613E5F3C67E54D52Dd1100A7063b",
+		"VoteEscrowedDegis": "0xC4cCfc950A5262D24200Aabeb6B7bC071b72D12B",
+		"IncomeSharingVault": "0x1E02e1D369e8379849af6F1cE2989c2a7f29A210",
+		"IncomeMaker": "0x5f93759c6420A4A14daEE27f1FcCd71791A58eA9",
+		"ILM": "0x891e6983cBAe99036ee12DAfa5c478623F6468fd"
+	},
 	"reserve": {
 		"avax": {
 			"DegisToken": "0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645",
