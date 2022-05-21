@@ -48,7 +48,7 @@ task("collectIncome", "Collect income from policy core")
 
     const addressList = readAddressList();
 
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     console.log(
       "The policy core address of this network is: ",
       policyCoreAddress
@@ -59,13 +59,13 @@ task("collectIncome", "Collect income from policy core")
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
     const balanceBefore = await core.pendingIncomeToLottery(taskArgs.stablecoin);
-    console.log("balance: ", formatUnits(balanceBefore, 6));
+    console.log("pending income to lottery: ", formatUnits(balanceBefore, 6));
 
     const balance2Before = await core.pendingIncomeToSharing(taskArgs.stablecoin);
-    console.log("balance: ", formatUnits(balance2Before, 6));
+    console.log("pending income to income sharing: ", formatUnits(balance2Before, 6));
 
-    const tx = await core.collectIncome(taskArgs.stablecoin);
-    console.log("tx details:", await tx.wait());
+    // const tx = await core.collectIncome(taskArgs.stablecoin);
+    // console.log("tx details:", await tx.wait());
 
     // old policy core
     // const oldCore = new PolicyCore__factory(dev_account).attach(
@@ -82,8 +82,8 @@ task("collectIncome", "Collect income from policy core")
     // console.log("balance: ", formatUnits(balance2, 6));
 
     const balance = await core.pendingIncomeToLottery(taskArgs.stablecoin);
-    console.log("balance: ", formatUnits(balance, 6));
+    console.log("pending income to lottery: ", formatUnits(balance, 6));
 
     const balance2 = await core.pendingIncomeToSharing(taskArgs.stablecoin);
-    console.log("balance: ", formatUnits(balance2, 6));
+    console.log("pending income to income sharing: ", formatUnits(balance2, 6));
   });
