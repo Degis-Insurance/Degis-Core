@@ -58,7 +58,7 @@ task(
 
   // Addresses to be set
   const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
-  const lotteryAddress = addressList[network.name].DegisLottery;
+  const lotteryAddress = addressList[network.name].EmergencyPool;
 
   // Get policy core contract instance
   const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
@@ -66,13 +66,6 @@ task(
   const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
     policyCoreAddress
   );
-
-  const oldCoreInstance = new PolicyCore__factory(dev_account).attach(
-    addressList[network.name].PolicyCore
-  );
-
-  const tx = await oldCoreInstance.setIncomeSharing(incomeSharingAddress);
-  console.log("tx details:", await tx.wait());
 
   const tx_setIncomeSharing = await core.setIncomeSharing(incomeSharingAddress);
   console.log(

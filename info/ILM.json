@@ -1,27 +1,42 @@
 {
 	"fuji": {
-		"AVAX_50.0_L_1205": {
-			"policyToken": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
-			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
-			"deadline": "1652281200",
-			"lptoken": "0x2416B56Cb5Cbf688E7eE7345C79Ca0597B8dc3fE",
-			"pairAddress": "0x75259Ed83410c4Ab1DF9e7aDD06547895d79cE02"
+		"AVAX_34.0_L_2105": {
+			"policyToken": "0x2626fB8fBC8AFFfb2B4E459599020Ab5fd33C4b9",
+			"stablecoin": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"deadline": "1652875200",
+			"lptoken": "0xDDD9c5e94Fe9138d9686C1988aE91095922d78a2",
+			"pairAddress": "0xaEF954281C4cd97a3c3b9c5f7817c5202f0aF244"
 		},
-		"AVAX_32.0_L_1405": {
-			"policyToken": "0xAf2E598AD50Ba661a0f65bEf6177595FAE34cA38",
-			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
-			"deadline": "1652457600",
-			"lptoken": "0xafc2a6aDeE8Eb2587a58603E16B06B512d9ae3a7",
-			"pairAddress": "0x0bA981A1f865FC7127B84C9e8745c1f7D4F7A885"
+		"AVAX_51.0_L_2105": {
+			"policyToken": "0xA5d688d0d7ff408BE76fdE1De5C3Dc44972B59de",
+			"stablecoin": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"deadline": "1652882700",
+			"lptoken": "0xe0fcd11E554C593E7E6b0013A8f28bd10f377D7e",
+			"pairAddress": "0x946e639518E159a084Cf4EAB5660c49323E3d4C4"
 		},
-		"AVAX_33.0_L_1405": {
-			"policyToken": "0x38D38E24fdC1E3c20d5181779d8632F54d107563",
-			"stablecoin": "0x666aD8AB2402369a73759eB1d1C037670F02f81e",
-			"deadline": "1652457600",
-			"lptoken": "0x327b7e63C50f91a212cCA980b84654a443e1BfC3",
-			"pairAddress": "0x81eAF39DBA66a84c3A2fEEA31B85c720A43d2597"
+		"AVAX_52.0_L_2105": {
+			"policyToken": "0xb5ac624f65D52cba932bF8d302Ed7AF2AFd916C0",
+			"stablecoin": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"deadline": "1652883360",
+			"lptoken": "0xe7A9FF449de94C508D7309451B8C647150ecE028",
+			"pairAddress": "0x7ca8879767D91128e87CeA39950B31247a96E486"
+		},
+		"AVAX_53.0_L_2105": {
+			"policyToken": "0x9A67880A95D17213663719CA2134E2727a3c68d5",
+			"stablecoin": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"deadline": "1652884200",
+			"lptoken": "0x5Ab45B23490Cf7733963B83783c058434e0aAe61",
+			"pairAddress": "0xcb630D30d1FbcdB6A2fA1cb7d3367E066e43Ca96"
+		},
+		"AVAX_32.0_L_2205": {
+			"policyToken": "0x94475A7f7De5fc820A39bF7fB51512e70814e9b3",
+			"stablecoin": "0x6D765318b8740856f3027712086e91429fADDBA6",
+			"deadline": "1652961600",
+			"lptoken": "0xD6027bd71AEf97ef5E0125B2948f0b521b4602E2",
+			"pairAddress": "0xcfc31C8D876464dcd932B1EC16eEb8Fe64Fc91Be"
 		}
 	},
+	"fujiTest": {},
 	"avax": {},
 	"avaxTest": {},
 	"localhost": {},

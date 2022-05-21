@@ -1,21 +1,42 @@
 {
 	"fuji": {
-		"AVAX_50.0_L_1205": {
-			"address": "0x7efe3d9Ffa024d8297e4488F78C0b7099f0A3B4b",
-			"deadline": 1652367600,
-			"settleTime": 1652367600
+		"AVAX_34.0_L_2105": {
+			"address": "0x2626fB8fBC8AFFfb2B4E459599020Ab5fd33C4b9",
+			"deadline": 1653033600,
+			"settleTime": 1653120000
 		},
-		"AVAX_32.0_L_1405": {
-			"address": "0xAf2E598AD50Ba661a0f65bEf6177595FAE34cA38",
-			"deadline": 1652508000,
-			"settleTime": 1652508000
+		"AVAX_50.0_L_2105": {
+			"address": "0x342Cef67C87BAE274B9347475a1e5A30D4e14530",
+			"deadline": 1653033600,
+			"settleTime": 1653120000
 		},
-		"AVAX_33.0_L_1405": {
-			"address": "0x38D38E24fdC1E3c20d5181779d8632F54d107563",
-			"deadline": 1652508000,
-			"settleTime": 1652508000
+		"AVAX_51.0_L_2105": {
+			"address": "0xA5d688d0d7ff408BE76fdE1De5C3Dc44972B59de",
+			"deadline": 1653033600,
+			"settleTime": 1653120000
+		},
+		"AVAX_52.0_L_2105": {
+			"address": "0xb5ac624f65D52cba932bF8d302Ed7AF2AFd916C0",
+			"deadline": 1653033600,
+			"settleTime": 1653120000
+		},
+		"AVAX_53.0_L_2105": {
+			"address": "0x9A67880A95D17213663719CA2134E2727a3c68d5",
+			"deadline": 1653033600,
+			"settleTime": 1653120000
+		},
+		"AVAX_32.0_L_2205": {
+			"address": "0x94475A7f7De5fc820A39bF7fB51512e70814e9b3",
+			"deadline": 1653121800,
+			"settleTime": 1653208200
+		},
+		"AVAX_33.0_L_2205": {
+			"address": "0x4fb7139b44194161ab6f8ae299F2E0164c569150",
+			"deadline": 1653121800,
+			"settleTime": 1653208200
 		}
 	},
+	"fujiTest": {},
 	"avax": {
 		"AVAX_94.0_L_2104": {
 			"address": "0xaa99642E4bD99c99a6473d1572729A5d902F654E",

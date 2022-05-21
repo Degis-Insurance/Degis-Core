@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
  *         Maximum mint amount for every single tx is 100k.
  */
 contract MockUSD is ERC20 {
-    uint256 public constant INITIAL_SUPPLY = 100000 * 1e6;
+    uint256 public constant INITIAL_SUPPLY = 10000000 * 1e6;
 
     constructor() ERC20("MOCKUSD", "USDC") {
         // When first deployed, give the owner some coins

@@ -5,7 +5,11 @@ import { readAddressList } from "../../scripts/contractAddress";
 
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 
-import { IncomeMaker__factory, NaughtyPair__factory } from "../../typechain";
+import {
+  IncomeMaker__factory,
+  MockUSD__factory,
+  NaughtyPair__factory,
+} from "../../typechain";
 import { formatUnits } from "ethers/lib/utils";
 
 task("getIncomeMakerBalance", "Get income maker lp balance")
@@ -63,6 +67,19 @@ task("convertIncome", "Convert income from maker to income sharing vault")
       usdAddress = addressList[network.name].MockUSD;
     }
 
+    const usd = new MockUSD__factory(dev_account).attach(usdAddress);
+
+    const balBefore = await usd.balanceOf(
+      addressList[network.name].IncomeSharingVault
+    );
+    console.log("Income sharing vault bal before: ", formatUnits(balBefore, 6));
+
     const tx = await maker.convertIncome(policyTokenAddress, usdAddress);
     console.log("Tx details: ", await tx.wait());
+
+
+    const balAfter = await usd.balanceOf(
+      addressList[network.name].IncomeSharingVault
+    );
+    console.log("Income sharing vault bal after: ", formatUnits(balAfter, 6));
   });

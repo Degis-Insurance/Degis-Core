@@ -420,6 +420,8 @@ contract FarmingPoolUpgradeable is
 
         if (_basicDegisPerSecond == 0) {
             isFarming[_poolId] = false;
+            poolList[_poolId].basicDegisPerSecond = 0;
+            poolList[_poolId].bonusDegisPerSecond = 0;
             emit FarmingPoolStopped(_poolId, block.timestamp);
         } else {
             poolList[_poolId].basicDegisPerSecond = _basicDegisPerSecond;

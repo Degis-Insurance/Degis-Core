@@ -130,6 +130,12 @@ const config: HardhatUserConfig = {
       },
       timeout: 60000,
     },
+    fujiTest: {
+      url: process.env.FUJI_URL || "",
+      accounts:
+        process.env.PK_FUJITEST !== undefined ? [process.env.PK_FUJITEST] : [],
+      timeout: 60000,
+    },
     avax: {
       url: process.env.AVAX_URL || "",
       accounts: {

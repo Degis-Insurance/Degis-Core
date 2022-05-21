@@ -22,7 +22,7 @@ This folder is for storing those previous implementation contract file and addre
 - FarmingPoolUpgradeable-1.0 (Implementation)
 
     address: 0xCf44a8960606C8Ef700dADB06c8ED7889E4E3B8e
-    date delpoyed: 2022-4-15 4:53:46 UTC)
+    date delpoyed: 2022-4-15 4:53:46 (UTC)
     file: ./FarmingPoolUpgradeable-1.0.sol
 
 - Naughty Price - 1.0

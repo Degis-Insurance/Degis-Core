@@ -66,19 +66,19 @@ contract PriceGetter is Ownable {
     constructor() Ownable(msg.sender) {
         // Avalanche data feed addresses and decimals
         priceFeedInfo["AVAX"] = PriceFeedInfo(
-            0x0A77230d17318075983913bC2145DB16C7366156,
+            0x5498BB86BC934c8D34FDA08E81D444153d0D06aD,
             8
         );
 
-        priceFeedInfo["ETH"] = PriceFeedInfo(
-            0x976B3D034E162d8bD72D6b9C989d545b839003b0,
-            8
-        );
+        // priceFeedInfo["ETH"] = PriceFeedInfo(
+        //     0x976B3D034E162d8bD72D6b9C989d545b839003b0,
+        //     8
+        // );
 
-        priceFeedInfo["BTC"] = PriceFeedInfo(
-            0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
-            8
-        );
+        // priceFeedInfo["BTC"] = PriceFeedInfo(
+        //     0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
+        //     8
+        // );
     }
 
     // ---------------------------------------------------------------------------------------- //
