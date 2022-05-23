@@ -15,12 +15,20 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constants **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // PTP USD Pool to be used for swapping stablecoins
     address public constant PTPPOOL =
         0x66357dCaCe80431aee0A7507e2E361B7e2402370;
 
     // USDC address as base token
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     IVeDEG veDEG;
 
@@ -30,16 +38,24 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     // stablecoin => whether supported
-    mapping(address => bool) supportedStablecoin;
+    mapping(address => bool) public supportedStablecoin;
 
     // stablecoin => collteral ratio
-    mapping(address => uint256) depositRatio;
+    mapping(address => uint256) public depositRatio;
 
     mapping(address => uint256) public users;
+
+    // ---------------------------------------------------------------------------------------- //
+    // *************************************** Events ***************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     event AddStablecoin(address stablecoin, uint256 collateralRatio);
     event Deposit(address indexed user, uint256 inAmount, uint256 outAmount);
     event Withdraw(address indexed user, uint256 amount);
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Constructor ************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     function initialize(address _veDEG) public initializer {
         __ERC20_init("Shield Token", "SHD");
@@ -56,6 +72,10 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         // USDC
         supportedStablecoin[USDC] = true;
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Add new stablecoin
@@ -78,6 +98,16 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         return balance;
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Deposit tokens and mint Shield
+     * @param _stablecoin Stablecoin address
+     * @param _amount Input stablecoin amount
+     * @param _minAmount Minimum amount output (if need swap)
+     */
     function deposit(
         address _stablecoin,
         uint256 _amount,
@@ -115,6 +145,10 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         emit Deposit(msg.sender, _amount, outAmount);
     }
 
+    /**
+     * @notice Withdraw stablecoins
+     * @param _amount Amount of Shield to be burned
+     */
     function withdraw(uint256 _amount) public {
         require(users[msg.sender] >= _amount, "Insufficient balance");
         users[msg.sender] -= _amount;
@@ -129,15 +163,25 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice Withdraw all shield
+     * @notice Withdraw all stablecoins
      */
     function withdrawAll() external {
         require(users[msg.sender] > 0, "Insufficient balance");
         withdraw(users[msg.sender]);
     }
 
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
+
     /**
      * @notice Swap stablecoin to USDC in PTP
+     * @param _fromToken From token address
+     * @param _toToken To token address
+     * @param _fromAmount Amount of from token
+     * @param _minToAmount Minimun output amount
+     * @param _to Address that will receive the output token
+     * @param _deadline Deadline for this transaction
      */
     function _swap(
         address _fromToken,
@@ -166,6 +210,13 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         return actualAmount;
     }
 
+    /**
+     * @notice Safe toke transfer
+     * @dev Not allowed to transfer more tokens than the current balance
+     * @param _token Token address to be transferred
+     * @param _amount Amount of token to be transferred
+     * @return realAmount Real amount that has been transferred
+     */
     function _safeTokenTransfer(address _token, uint256 _amount)
         internal
         returns (uint256 realAmount)
