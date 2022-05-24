@@ -107,7 +107,7 @@ contract IncomeSharingVault is
     /**
      * @notice Pending reward
      * @param _poolId Pool Id
-     * @param _user User address
+     * @param _user   User address
      * @return pendingReward Amount of pending reward
      */
     function pendingReward(uint256 _poolId, address _user)
@@ -137,8 +137,6 @@ contract IncomeSharingVault is
             uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
                 address(this)
             );
-
-            console.log("remaining reward", remainingReward);
 
             uint256 finalReward = reward > remainingReward
                 ? remainingReward
@@ -350,7 +348,7 @@ contract IncomeSharingVault is
         // Remainging reward inside the pool
         uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
             address(this)
-        ) ;
+        );
 
         // Can not exceed the max balance of the pool
         uint256 finalReward = reward > remainingReward

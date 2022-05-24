@@ -16,7 +16,7 @@ import "../utils/ERC20PermitWithMultipleMinters.sol";
  */
 contract DegisToken is ERC20PermitWithMultipleMinters {
     // Degis has a total supply of 100 million
-    uint256 public constant CAP = 1000e8 ether;
+    uint256 public constant CAP = 1e8 ether;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Constructor *************************************** //
@@ -44,7 +44,7 @@ contract DegisToken is ERC20PermitWithMultipleMinters {
     /**
      * @notice Mint degis tokens
      * @param  _account Receiver's address
-     * @param  _amount Amount to be minted
+     * @param  _amount  Amount to be minted
      */
     function mintDegis(address _account, uint256 _amount)
         external
@@ -56,7 +56,7 @@ contract DegisToken is ERC20PermitWithMultipleMinters {
     /**
      * @notice Burn degis tokens
      * @param  _account Receiver's address
-     * @param  _amount Amount to be burned
+     * @param  _amount  Amount to be burned
      */
     function burnDegis(address _account, uint256 _amount) external {
         burn(_account, _amount);

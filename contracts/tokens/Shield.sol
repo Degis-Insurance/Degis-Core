@@ -4,21 +4,19 @@ pragma solidity ^0.8.10;
 import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
- * @title Shield Token (Derived Stablecoin on Degis)
+ * @title  Shield Token (Derived Stablecoin on Degis)
  * @author Eric Lee (ylikp.ust@gmail.com)
- * @dev Users can swap other stablecoins to Shield
- *      Shield can be used in NaughtyPrice and future products
+ * @dev    Users can swap other stablecoins to Shield
+ *         Shield can be used in NaughtyPrice and future products
  *      
- *      When users want to withdraw, their shield tokens will be burned 
- *      and USDC will be sent back to them
+ *         When users want to withdraw, their shield tokens will be burned 
+ *         and USDC will be sent back to them
  *
- *      Currently, the swap is done inside Platypus
+ *         Currently, the swap is done inside Platypus
  */
 contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
@@ -92,9 +90,12 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Add new stablecoin
+     * @notice Add new supported stablecoin
+     * @dev Set the token address and collateral ratio at the same time
+     *      The collateral ratio need to be less than 100
+     *      Only callable by the owner
      * @param _stablecoin Stablecoin address
-     * @param _ratio Collateral ratio
+     * @param _ratio      Collateral ratio
      */
     function addSupportedStablecoin(address _stablecoin, uint256 _ratio)
         external
@@ -107,6 +108,11 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         emit AddStablecoin(_stablecoin, _ratio);
     }
 
+    /**
+     * @notice Get discount by veDEG
+     * @dev The discount depends on veDEG 
+     * @return discount The discount for the user
+     */
     function _getDiscount() internal view returns (uint256) {
         uint256 balance = veDEG.balanceOf(msg.sender);
         return balance;
@@ -119,8 +125,8 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     /**
      * @notice Deposit tokens and mint Shield
      * @param _stablecoin Stablecoin address
-     * @param _amount Input stablecoin amount
-     * @param _minAmount Minimum amount output (if need swap)
+     * @param _amount     Input stablecoin amount
+     * @param _minAmount  Minimum amount output (if need swap)
      */
     function deposit(
         address _stablecoin,
@@ -196,12 +202,12 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Swap stablecoin to USDC in PTP
-     * @param _fromToken From token address
-     * @param _toToken To token address
-     * @param _fromAmount Amount of from token
+     * @param _fromToken   From token address
+     * @param _toToken     To token address
+     * @param _fromAmount  Amount of from token
      * @param _minToAmount Minimun output amount
-     * @param _to Address that will receive the output token
-     * @param _deadline Deadline for this transaction
+     * @param _to          Address that will receive the output token
+     * @param _deadline    Deadline for this transaction
      */
     function _swap(
         address _fromToken,
@@ -231,9 +237,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice Safe toke transfer
+     * @notice Safe token transfer
      * @dev Not allowed to transfer more tokens than the current balance
-     * @param _token Token address to be transferred
+     * @param _token  Token address to be transferred
      * @param _amount Amount of token to be transferred
      * @return realAmount Real amount that has been transferred
      */

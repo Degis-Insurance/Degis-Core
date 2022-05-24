@@ -25,7 +25,7 @@ contract BuyerToken is ERC20PermitWithMultipleMinters {
     /**
      * @notice Mint buyer tokens
      * @param  _account Receiver's address
-     * @param  _amount Amount to be minted
+     * @param  _amount  Amount to be minted
      */
     function mintBuyerToken(address _account, uint256 _amount) external {
         mint(_account, _amount);
@@ -34,7 +34,7 @@ contract BuyerToken is ERC20PermitWithMultipleMinters {
     /**
      * @notice Burn buyer tokens
      * @param  _account Receiver's address
-     * @param  _amount Amount to be burned
+     * @param  _amount  Amount to be burned
      */
     function burnBuyerToken(address _account, uint256 _amount) external {
         burn(_account, _amount);

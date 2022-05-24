@@ -61,24 +61,25 @@ contract PriceGetter is Ownable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Constructor function, initialize some price feed
+     * @notice Constructor function, initialize some price feeds
+     *         The first supported tokens are AVAX, BTC and ETH
      */
     constructor() Ownable(msg.sender) {
         // Avalanche data feed addresses and decimals
         priceFeedInfo["AVAX"] = PriceFeedInfo(
-            0x5498BB86BC934c8D34FDA08E81D444153d0D06aD,
+            0x0A77230d17318075983913bC2145DB16C7366156,
             8
         );
 
-        // priceFeedInfo["ETH"] = PriceFeedInfo(
-        //     0x976B3D034E162d8bD72D6b9C989d545b839003b0,
-        //     8
-        // );
+        priceFeedInfo["ETH"] = PriceFeedInfo(
+            0x976B3D034E162d8bD72D6b9C989d545b839003b0,
+            8
+        );
 
-        // priceFeedInfo["BTC"] = PriceFeedInfo(
-        //     0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
-        //     8
-        // );
+        priceFeedInfo["BTC"] = PriceFeedInfo(
+            0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
+            8
+        );
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -103,9 +104,11 @@ contract PriceGetter is Ownable {
 
     /**
      * @notice Set a price feed oracle address for a token
-     * @param _tokenName Address of the token
+     * @dev Only callable by the owner
+     *      The price result decimal should be less than 18
+     * @param _tokenName   Address of the token
      * @param _feedAddress Price feed oracle address
-     * @param _decimals Decimals of this price feed service
+     * @param _decimals    Decimals of this price feed service
      */
     function setPriceFeed(
         string memory _tokenName,

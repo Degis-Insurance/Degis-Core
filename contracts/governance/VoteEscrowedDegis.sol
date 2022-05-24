@@ -182,6 +182,11 @@ contract VoteEscrowedDegis is
     // ************************************** Modifiers *************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Not callable by smart contract
+     * @dev Checked first by msg.sender == tx.origin
+     *      Then if the contract is whitelisted, it will still pass the check
+     */
     modifier notContract(address _addr) {
         if (_addr != tx.origin) {
             if (!whitelist[_addr]) revert VED__NotWhiteListed();
@@ -189,6 +194,10 @@ contract VoteEscrowedDegis is
         _;
     }
 
+    /**
+     * @notice No locked veDEG
+     * @dev Check the locked balance of a user
+     */
     modifier noLocked(address _user) {
         if (locked[_user] > 0) revert VED__StillLocked();
         _;
@@ -201,6 +210,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Calculate the amount of veDEG that can be claimed by user
      * @param _user User address
+     * @return claimableAmount Claimable amount of the user
      */
     function claimable(address _user) public view returns (uint256) {
         if (_user == address(0)) revert VED__ZeroAddress();
@@ -247,6 +257,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Add a new whitelist address
+     * @dev Only callable by the owner
      * @param _account Address to add
      */
     function addWhitelist(address _account) external onlyOwner {
@@ -256,6 +267,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Remove a new whitelist address
+     * @dev Only callable by the owner
      * @param _account Address to remove
      */
     function removeWhitelist(address _account) external onlyOwner {
@@ -396,7 +408,7 @@ contract VoteEscrowedDegis is
         noLocked(msg.sender)
     {
         UserInfo memory user = users[msg.sender];
-        
+
         if (user.amountLocked == 0) revert VED__ZeroAmount();
         if (block.timestamp < user.lockUntil) revert VED__TimeNotPassed();
 

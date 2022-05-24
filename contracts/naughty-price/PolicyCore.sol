@@ -214,8 +214,8 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Constructor, for some addresses
-     * @param _usdc USDC.e is the first stablecoin supported in the pool
-     * @param _factory Address of naughty factory
+     * @param _usdc        USDC.e is the first stablecoin supported in the pool
+     * @param _factory     Address of naughty factory
      * @param _priceGetter Address of the oracle contract
      */
     function initialize(
@@ -255,7 +255,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Check whether the policy token is paired with this stablecoin
      * @param _policyTokenName Policy token name
-     * @param _stablecoin Stablecoin address
+     * @param _stablecoin      Stablecoin address
      */
     modifier validPolicyTokenWithStablecoin(
         string memory _policyTokenName,
@@ -374,7 +374,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Get a user's quota for a certain policy token
-     * @param _user Address of the user to be checked
+     * @param _user               Address of the user to be checked
      * @param _policyTokenAddress Address of the policy token
      * @return _quota User's quota result
      */
@@ -468,16 +468,19 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Deploy a new policy token and return the token address
-     * @dev Only the owner can deploy new policy token
-     *      The name form is like "AVAX_50_L_2203" and is built inside the contract.
-     * @param _tokenName Name of the original token (e.g. AVAX, BTC, ETH...)
-     * @param _stablecoin Address of the stablecoin (Just for check decimals here)
-     * @param _isCall The policy is for higher or lower than the strike price (call / put)
-     * @param _nameDecimals Decimals of this token's name (0~18)
-     * @param _tokenDecimals Decimals of this token's value (0~18) (same as paired stablecoin)
-     * @param _strikePrice Strike price of the policy (have already been transferred with 1e18)
-     * @param _round Round of the token (e.g. 2203 -> expired at 22 March)
-     * @param _deadline Deadline of this policy token (deposit / redeem / swap)
+     * @dev Only the owner can deploy new policy tokens
+     *      The name form is like "AVAX_50_L_2203" and is built inside the contract
+     *      Name decimals and token decimals are different here
+     *      The original token name should be the same in Chainlink PriceFeeds
+     *      Those tokens that are not listed on Chainlink are not supported
+     * @param _tokenName       Name of the original token (e.g. AVAX, BTC, ETH...)
+     * @param _stablecoin      Address of the stablecoin (Just for check decimals here)
+     * @param _isCall          The policy is for higher or lower than the strike price (call / put)
+     * @param _nameDecimals    Decimals of this token's name (0~18)
+     * @param _tokenDecimals   Decimals of this token's value (0~18) (same as paired stablecoin)
+     * @param _strikePrice     Strike price of the policy (have already been transferred with 1e18)
+     * @param _round           Round of the token (e.g. 2203 -> expired at 22 March)
+     * @param _deadline        Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
      */
     function deployPolicyToken(
@@ -549,9 +552,9 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Deploy a new pair (pool)
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
-     * @param _feeRate Fee rate given to LP holders
+     * @param _stablecoin      Address of the stable coin
+     * @param _poolDeadline    Swapping deadline of the pool (normally the same as the token's deadline)
+     * @param _feeRate         Fee rate given to LP holders
      */
     function deployPool(
         string memory _policyTokenName,
@@ -591,8 +594,8 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Deposit stablecoins and get policy tokens
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _amount Amount of stablecoin
+     * @param _stablecoin      Address of the stable coin
+     * @param _amount          Amount of stablecoin
      */
     function deposit(
         string memory _policyTokenName,
@@ -611,9 +614,9 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Delegate deposit (deposit and mint for other addresses)
      * @dev Only called by the router contract
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the sable coin
-     * @param _amount Amount of stablecoin
-     * @param _user Address to receive the policy tokens
+     * @param _stablecoin      Address of the sable coin
+     * @param _amount          Amount of stablecoin
+     * @param _user            Address to receive the policy tokens
      */
     function delegateDeposit(
         string memory _policyTokenName,
@@ -646,8 +649,8 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Burn policy tokens and redeem stablecoins
      * @dev Redeem happens before the deadline and is different from claim/settle
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount to redeem
+     * @param _stablecoin      Address of the stablecoin
+     * @param _amount          Amount to redeem
      */
     function redeem(
         string memory _policyTokenName,
@@ -685,7 +688,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Redeem policy tokens and get stablecoins by the user himeself
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the stablecoin
+     * @param _stablecoin      Address of the stablecoin
      */
     function redeemAfterSettlement(
         string memory _policyTokenName,
@@ -740,8 +743,8 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Claim a payoff based on policy tokens
      * @dev It is done after result settlement and only if the result is true
      * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _amount Amount of stablecoin
+     * @param _stablecoin      Address of the stable coin
+     * @param _amount          Amount of stablecoin
      */
     function claim(
         string memory _policyTokenName,
@@ -829,9 +832,9 @@ contract PolicyCore is OwnableUpgradeable {
      *         Funds are automatically distributed back to the depositors
      * @dev    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
      * @param _policyTokenName Name of policy token
-     * @param _stablecoin Address of stablecoin
-     * @param _startIndex Settlement start index
-     * @param _stopIndex Settlement stop index
+     * @param _stablecoin      Address of stablecoin
+     * @param _startIndex      Settlement start index
+     * @param _stopIndex       Settlement stop index
      */
     function settleAllPolicyTokens(
         string memory _policyTokenName,
@@ -939,10 +942,11 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Update user quota from ILM when claim
+     *
      * @dev When you claim your liquidity from ILM, you will get normal quota as you are using policyCore
-     * @param _user User address
+     * @param _user        User address
      * @param _policyToken PolicyToken address
-     * @param _amount Quota amount
+     * @param _amount      Quota amount
      */
     function updateUserQuota(
         address _user,
@@ -962,10 +966,12 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Finish deploying a pool
+     *
      * @param _policyTokenAddress Address of the policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _poolDeadline Swapping deadline of the pool (normally the same as the token's deadline)
-     * @param _feeRate Fee rate given to LP holders
+     * @param _stablecoin         Address of the stable coin
+     * @param _poolDeadline       Swapping deadline of the pool (normally the same as the token's deadline)
+     * @param _feeRate            Fee rate given to LP holders
+     *
      * @return poolAddress Address of the pool
      */
     function _deployPool(
@@ -990,6 +996,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Finish Deposit
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin Address of the sable coin
      * @param _amount Amount of stablecoin
@@ -1024,6 +1031,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Settle the policy when the event does not happen
+     *
      * @param _policyTokenAddress Address of policy token
      * @param _stablecoin Address of stable coin
      * @param _start Start index
@@ -1053,8 +1061,10 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Charge fee when redeem / claim
+     *
      * @param _stablecoin Stablecoin address
-     * @param _amount Amount to redeem / claim
+     * @param _amount     Amount to redeem / claim
+     *
      * @return amountWithFee Amount with fee
      */
     function _chargeFee(address _stablecoin, uint256 _amount)
@@ -1076,11 +1086,12 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Generate the policy token name
-     * @param _tokenName Name of the stike token (BTC, ETH, AVAX...)
-     * @param _decimals Decimals of the name generation (0,1=>1, 2=>2)
+     *
+     * @param _tokenName   Name of the stike token (BTC, ETH, AVAX...)
+     * @param _decimals    Decimals of the name generation (0,1=>1, 2=>2)
      * @param _strikePrice Strike price of the policy (18 decimals)
-     * @param _isCall The policy's payoff is triggered when higher(true) or lower(false)
-     * @param _round Round of the policy, named by <month><day> (e.g. 0320, 1215)
+     * @param _isCall      The policy's payoff is triggered when higher(true) or lower(false)
+     * @param _round       Round of the policy, named by <month><day> (e.g. 0320, 1215)
      */
     function _generateName(
         string memory _tokenName,
@@ -1119,6 +1130,15 @@ contract PolicyCore is OwnableUpgradeable {
         return name;
     }
 
+    /**
+     * @notice Calculate the fraction part of a number
+     *
+     * @dev The scale is fixed as 1e18 (decimal fraction)
+     *      
+     * @param x Number to calculate
+     *
+     * @return result Fraction result
+     */
     function _frac(uint256 x) internal pure returns (uint256 result) {
         uint256 SCALE = 1e18;
         assembly {
