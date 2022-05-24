@@ -11,6 +11,14 @@ import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Own
 
 /**
  * @title Shield Token (Derived Stablecoin on Degis)
+ * @author Eric Lee (ylikp.ust@gmail.com)
+ * @dev Users can swap other stablecoins to Shield
+ *      Shield can be used in NaughtyPrice and future products
+ *      
+ *      When users want to withdraw, their shield tokens will be burned 
+ *      and USDC will be sent back to them
+ *
+ *      Currently, the swap is done inside Platypus
  */
 contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
@@ -23,8 +31,12 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     address public constant PTPPOOL =
         0x66357dCaCe80431aee0A7507e2E361B7e2402370;
 
-    // USDC address as base token
+    // Constant stablecoin addresses
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
+    address public constant USDCe = 0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664;
+    address public constant USDT = 0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7;
+    address public constant USDTe = 0xc7198437980c041c805A1EDcbA50c1Ce5db95118;
+    address public constant DAIe = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
@@ -45,7 +57,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     mapping(address => uint256) public users;
 
-    // ---------------------------------------------------------------------------------------- //
+    // ------------------------------------------------------------------------- --------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
@@ -64,13 +76,15 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         veDEG = IVeDEG(_veDEG);
 
         // USDT.e
-        supportedStablecoin[0xc7198437980c041c805A1EDcbA50c1Ce5db95118] = true;
+        supportedStablecoin[USDTe] = true;
         // USDT
-        supportedStablecoin[0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7] = true;
+        supportedStablecoin[USDT] = true;
         // USDC.e
-        supportedStablecoin[0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664] = true;
+        supportedStablecoin[USDCe] = true;
         // USDC
         supportedStablecoin[USDC] = true;
+        // DAI.e
+        supportedStablecoin[DAIe] = true;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -118,6 +132,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         // Actual shield amount
         uint256 outAmount;
 
+        // Collateral ratio
+        uint256 inAmount = _amount * 100 /  depositRatio[_stablecoin];
+
         // Transfer stablecoin to this contract
         // Transfer to this, no need for safeTransferFrom
         IERC20(_stablecoin).transferFrom(msg.sender, address(this), _amount);
@@ -127,13 +144,13 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             outAmount = _swap(
                 _stablecoin,
                 USDC,
-                _amount,
+                inAmount,
                 _minAmount,
                 address(this),
                 block.timestamp + 60
             );
         } else {
-            outAmount = _amount;
+            outAmount = inAmount;
         }
 
         // Record user balance
@@ -158,6 +175,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
         // Burn shield token
         _burn(msg.sender, realAmount);
+
+        // Transfer USDC back
+        IERC20(USDC).safeTransfer(msg.sender, _amount);
 
         emit Withdraw(msg.sender, realAmount);
     }
