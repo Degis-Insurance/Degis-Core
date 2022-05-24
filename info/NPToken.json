@@ -34,6 +34,11 @@
 			"address": "0x4fb7139b44194161ab6f8ae299F2E0164c569150",
 			"deadline": 1653121800,
 			"settleTime": 1653208200
+		},
+		"AVAX_32.0_L_3006": {
+			"address": "0xaC0CDC63E4B6ccb38851Fd8d9D24a13C4040532E",
+			"deadline": 1656576000,
+			"settleTime": 1656576000
 		}
 	},
 	"fujiTest": {},
