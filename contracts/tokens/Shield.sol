@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
-import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
-import {IVeDEG} from "../governance/interfaces/IVeDEG.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title  Shield Token (Derived Stablecoin on Degis)
  * @author Eric Lee (ylikp.ust@gmail.com)
  * @dev    Users can swap other stablecoins to Shield
  *         Shield can be used in NaughtyPrice and future products
- *      
- *         When users want to withdraw, their shield tokens will be burned 
+ *
+ *         When users want to withdraw, their shield tokens will be burned
  *         and USDC will be sent back to them
  *
  *         Currently, the swap is done inside Platypus
@@ -26,8 +26,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     // PTP USD Pool to be used for swapping stablecoins
-    address public constant PTPPOOL =
-        0x66357dCaCe80431aee0A7507e2E361B7e2402370;
+    address public PTPPOOL = 0x66357dCaCe80431aee0A7507e2E361B7e2402370;
 
     // Constant stablecoin addresses
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
@@ -40,7 +39,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    IVeDEG veDEG;
+    IVeDEG public veDEG;
 
     struct Stablecoin {
         bool isSupported;
@@ -60,7 +59,13 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     event AddStablecoin(address stablecoin, uint256 collateralRatio);
-    event Deposit(address indexed user, uint256 inAmount, uint256 outAmount);
+    event SetPTPPool(address oldPool, address newPool);
+    event Deposit(
+        address indexed user,
+        address indexed stablecoin,
+        uint256 inAmount,
+        uint256 outAmount
+    );
     event Withdraw(address indexed user, uint256 amount);
 
     // ---------------------------------------------------------------------------------------- //
@@ -108,14 +113,23 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         emit AddStablecoin(_stablecoin, _ratio);
     }
 
+    function setPTPPool(address _ptpPool) external onlyOwner {
+        emit SetPTPPool(PTPPOOL, _ptpPool);
+        PTPPOOL = _ptpPool;
+    }
+
     /**
      * @notice Get discount by veDEG
-     * @dev The discount depends on veDEG 
+     * @dev The discount depends on veDEG
      * @return discount The discount for the user
      */
     function _getDiscount() internal view returns (uint256) {
         uint256 balance = veDEG.balanceOf(msg.sender);
         return balance;
+    }
+
+    function approveStablecoin(address _token) external {
+        IERC20(_token).approve(PTPPOOL, type(uint256).max);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -139,7 +153,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         uint256 outAmount;
 
         // Collateral ratio
-        uint256 inAmount = _amount * 100 /  depositRatio[_stablecoin];
+        uint256 inAmount = (_amount * 100) / depositRatio[_stablecoin];
 
         // Transfer stablecoin to this contract
         // Transfer to this, no need for safeTransferFrom
@@ -165,7 +179,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         // Mint shield
         _mint(msg.sender, outAmount);
 
-        emit Deposit(msg.sender, _amount, outAmount);
+        emit Deposit(msg.sender, _stablecoin, _amount, outAmount);
     }
 
     /**
@@ -194,6 +208,10 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     function withdrawAll() external {
         require(users[msg.sender] > 0, "Insufficient balance");
         withdraw(users[msg.sender]);
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
     }
 
     // ---------------------------------------------------------------------------------------- //
