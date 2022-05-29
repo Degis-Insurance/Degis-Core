@@ -38,7 +38,21 @@
 	},
 	"fujiTest": {},
 	"avax": {},
-	"avaxTest": {},
+	"avaxTest": {
+		"AVAX_25.0_L_3005": {
+			"policyToken": "0x158e8C894C03aCB777fD0af229994D419b9b6126",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1653811200",
+			"lptoken": "0x6267A5D978A801e1F65385c07a70DBC8A89Adc5F",
+			"pairAddress": "0x9fbD8DFB17CCD27BF146A1043eC0c26cC7555874"
+		},
+		"AVAX_26.0_L_2905": {
+			"policyToken": "0x5F6a71786319412d909C0b5878841A26E1BA995D",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1653840000",
+			"lptoken": "0x668b026597c4071F40485065C0eb80f06f104AbC"
+		}
+	},
 	"localhost": {},
 	"rinkeby": {}
 }

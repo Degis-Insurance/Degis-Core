@@ -12,6 +12,7 @@ import { NaughtyPriceILM__factory, PolicyCore__factory } from "../../typechain";
 
 task("startILM", "Start a new round ILM")
   .addParam("policytoken", "Policy token address", null, types.string)
+  .addParam("stablecoin", "Stablecoin address", null, types.string)
   .addParam("deadline", "ILM deadline", null, types.string)
   .setAction(async (taskArgs, hre) => {
     console.log("\n Starting a new round ILM... \n");

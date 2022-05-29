@@ -57,7 +57,9 @@
 		"NaughtyFactoryUpgradeable": "0x69d00EA20de053A9a5C6C6A886a75083C02a1133",
 		"PolicyCoreUpgradeable": "0x7F1Dad27E03DbCe0022981984F136d8d159612b5",
 		"NaughtyRouterUpgradeable": "0xCD4e2Bb3E19BE711D6e2f3EACC1843d0E27275Dc",
-		"IncomeMaker": "0xcBF3d1b380d1255FFe3019Cdb56faaBBf194bE8c"
+		"IncomeMaker": "0xcBF3d1b380d1255FFe3019Cdb56faaBBf194bE8c",
+		"EmergencyPool": "0xEE453DcDa199a74E563fBe8b3b5425665D0325dF",
+		"ILM": "0x5655dDf58776A7F3722c592b524558de55Cf2DAB"
 	},
 	"localhost": {
 		"ProxyAdmin": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
