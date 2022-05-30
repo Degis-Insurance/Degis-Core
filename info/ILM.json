@@ -50,7 +50,8 @@
 			"policyToken": "0x5F6a71786319412d909C0b5878841A26E1BA995D",
 			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"deadline": "1653840000",
-			"lptoken": "0x668b026597c4071F40485065C0eb80f06f104AbC"
+			"lptoken": "0x668b026597c4071F40485065C0eb80f06f104AbC",
+			"pairAddress": "0x32c121B39D94D72A3f5F62ca74237dBb8342a060"
 		}
 	},
 	"localhost": {},

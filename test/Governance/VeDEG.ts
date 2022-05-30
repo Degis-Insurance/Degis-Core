@@ -29,7 +29,9 @@ describe("Vote Escrowed Degis", function () {
   let MockUSD: MockUSD__factory, usd: MockUSD;
   let VeDEGToken: VoteEscrowedDegis__factory, veDEG: VoteEscrowedDegis;
 
-  let dev_account: SignerWithAddress, user1: SignerWithAddress;
+  let dev_account: SignerWithAddress,
+    user1: SignerWithAddress,
+    nftStaking: SignerWithAddress;
 
   // Pool info type definition
   type PoolInfo = {
@@ -43,7 +45,7 @@ describe("Vote Escrowed Degis", function () {
   };
 
   beforeEach(async function () {
-    [dev_account, user1] = await ethers.getSigners();
+    [dev_account, user1, nftStaking] = await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
@@ -418,11 +420,92 @@ describe("Vote Escrowed Degis", function () {
       await mineBlocks(100);
       await veDEG.claim();
 
-      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("10000"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
 
       await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"));
 
-      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("9900"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("9900")
+      );
+    });
+  });
+
+  describe("Boost veDEG by nft staking", function () {
+    beforeEach(async function () {
+      await veDEG.setNFTStaking(nftStaking.address);
+
+      await degis.mintDegis(dev_account.address, toWei("1000"));
+      await degis.approve(veDEG.address, toWei("1000"));
+
+      await veDEG.deposit(toWei("100"));
+    });
+
+    it("should be able to boost veDEG for its current balance - type 1", async function () {
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+
+      await expect(veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1))
+        .to.emit(veDEG, "BoostVeDEG")
+        .withArgs(dev_account.address, 1);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("120"));
+    });
+
+    it("should be able to boost veDEG for its current balance - type 2", async function () {
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+
+      await expect(veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 2))
+        .to.emit(veDEG, "BoostVeDEG")
+        .withArgs(dev_account.address, 2);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("150"));
+    });
+
+    it("should be able to unBoost veDEG", async function () {
+      await veDEG.claim();
+
+      // Boost with type 1 and unboost
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("120"));
+
+      await expect(veDEG.connect(nftStaking).unBoostVeDEG(dev_account.address))
+        .to.emit(veDEG, "UnBoostVeDEG")
+        .withArgs(dev_account.address);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+
+      // Boost with type 2 and unboost
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 2);
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("150"));
+
+      await expect(veDEG.connect(nftStaking).unBoostVeDEG(dev_account.address))
+        .to.emit(veDEG, "UnBoostVeDEG")
+        .withArgs(dev_account.address);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+    });
+
+    it("should be able to update future veDEG generation with boost", async function () {
+      await veDEG.claim();
+
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("120"));
+
+      // 10 blocks  = 1200 new reward
+      await mineBlocks(10);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(
+        toWei("1320")
+      );
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("1560")
+      );
     });
   });
 });

@@ -25,12 +25,12 @@ import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {VeERC20Upgradeable} from "./VeERC20Upgradeable.sol";
-import {Math} from "../libraries/Math.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { VeERC20Upgradeable } from "./VeERC20Upgradeable.sol";
+import { Math } from "../libraries/Math.sol";
 
-import {IFarmingPool} from "../farming/interfaces/IFarmingPool.sol";
+import { IFarmingPool } from "../farming/interfaces/IFarmingPool.sol";
 
 import "hardhat/console.sol";
 
@@ -99,6 +99,11 @@ contract VoteEscrowedDegis is
     // Locked amount
     mapping(address => uint256) public locked;
 
+    // NFT Staking contract
+    address public nftStaking;
+
+    mapping(address => uint256) public boosted;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -135,6 +140,10 @@ contract VoteEscrowedDegis is
         uint256 amount
     );
 
+    event NFTStakingChanged(address oldNFTStaking, address newNFTStaking);
+    event BoostVeDEG(address user, uint256 boostType);
+    event UnBoostVeDEG(address user);
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Errors ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -147,6 +156,8 @@ contract VoteEscrowedDegis is
 
     error VED__TimeNotPassed();
     error VED__OverLocked();
+
+    error VED__NotNftStaking();
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -220,16 +231,34 @@ contract VoteEscrowedDegis is
         // Seconds passed since last claim
         uint256 timePassed = block.timestamp - user.lastRelease;
 
+        uint256 realCapRatio;
+
+        uint256 pending;
         // calculate pending amount
-        uint256 pending = Math.wmul(user.amount, timePassed * generationRate);
+        if (boosted[_user] == 0) {
+            pending = Math.wmul(user.amount, timePassed * generationRate);
+            realCapRatio = maxCapRatio;
+        } else if (boosted[_user] == 1) {
+            pending = Math.wmul(
+                user.amount,
+                (timePassed * generationRate * 120) / 100
+            );
+            realCapRatio = (maxCapRatio * 120) / 100;
+        } else if (boosted[_user] == 2) {
+            pending = Math.wmul(
+                user.amount,
+                (timePassed * generationRate * 150) / 100
+            );
+            realCapRatio = (maxCapRatio * 150) / 100;
+        }
 
         // get user's veDEG balance
         uint256 userVeDEGBalance = balanceOf(_user) -
             user.amountLocked *
-            maxCapRatio;
+            realCapRatio;
 
         // user veDEG balance cannot go above user.amount * maxCap
-        uint256 veDEGCap = user.amount * maxCapRatio;
+        uint256 veDEGCap = user.amount * realCapRatio;
 
         // first, check that user hasn't reached the max limit yet
         if (userVeDEGBalance < veDEGCap) {
@@ -293,6 +322,11 @@ contract VoteEscrowedDegis is
         if (_generationRate == 0) revert VED__ZeroAmount();
         emit GenerationRateChanged(generationRate, _generationRate);
         generationRate = _generationRate;
+    }
+
+    function setNFTStaking(address _nftStaking) external onlyOwner {
+        emit NFTStakingChanged(nftStaking, _nftStaking);
+        nftStaking = _nftStaking;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -376,18 +410,20 @@ contract VoteEscrowedDegis is
         noLocked(msg.sender)
     {
         if (_amount == 0) revert VED__ZeroAmount();
-        if (users[msg.sender].amount < _amount) revert VED__NotEnoughBalance();
+
+        UserInfo storage user = users[msg.sender];
+        if (user.amount < _amount) revert VED__NotEnoughBalance();
 
         // reset last Release timestamp
-        users[msg.sender].lastRelease = block.timestamp;
+        user.lastRelease = block.timestamp;
 
         // update his balance before burning or sending back degis
-        users[msg.sender].amount -= _amount;
+        user.amount -= _amount;
 
         // get user veDEG balance that must be burned
         // those locked amount will not be calculated
         uint256 userVeDEGBalance = balanceOf(msg.sender) -
-            users[msg.sender].amountLocked *
+            user.amountLocked *
             maxCapRatio;
 
         _burn(msg.sender, userVeDEGBalance);
@@ -467,6 +503,51 @@ contract VoteEscrowedDegis is
 
         _burn(_to, _amount);
         emit BurnVeDEG(msg.sender, _to, _amount);
+    }
+
+    /**
+     * @notice Boost veDEG
+     *
+     * @dev Only called by nftStaking contract
+     *
+     * @param _user User address
+     * @param _type Boost type (1 = 120%, 2 = 150%)
+     */
+    function boostVeDEG(address _user, uint256 _type) external {
+        if (msg.sender != nftStaking) revert VED__NotNftStaking();
+
+        require(_type == 1 || _type == 2);
+
+        boosted[_user] = _type;
+
+        uint256 boostRatio;
+
+        if (_type == 1) boostRatio = 20;
+        else if (_type == 2) boostRatio = 50;
+
+        uint256 userBalance = balanceOf(_user);
+
+        if (userBalance > 0) {
+            _mint(_user, (userBalance * boostRatio) / 100);
+        }
+
+        emit BoostVeDEG(_user, _type);
+    }
+
+    function unBoostVeDEG(address _user) external {
+        if (msg.sender != nftStaking) revert VED__NotNftStaking();
+
+        uint256 currentBoostStatus = boosted[_user];
+
+        if (currentBoostStatus == 0) return;
+
+        if (currentBoostStatus == 1) {
+            _burn(_user, (balanceOf(_user) * 20) / 120);
+        } else if (currentBoostStatus == 2) {
+            _burn(_user, (balanceOf(_user) * 50) / 150);
+        }
+
+        emit UnBoostVeDEG(_user);
     }
 
     // ---------------------------------------------------------------------------------------- //
