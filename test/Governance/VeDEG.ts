@@ -14,6 +14,7 @@ import {
 } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import {
+  customErrorMsg,
   getLatestBlockTimestamp,
   stablecoinToWei,
   toWei,
@@ -439,7 +440,16 @@ describe("Vote Escrowed Degis", function () {
       await degis.mintDegis(dev_account.address, toWei("1000"));
       await degis.approve(veDEG.address, toWei("1000"));
 
+      await degis.mintDegis(user1.address, toWei("1000"));
+      await degis.connect(user1).approve(veDEG.address, toWei("1000"));
+
       await veDEG.deposit(toWei("100"));
+    });
+
+    it("should not be able to boost by addresses other than nftStaking", async function () {
+      await expect(
+        veDEG.connect(user1).boostVeDEG(dev_account.address, 1)
+      ).to.be.revertedWith(customErrorMsg("'VED__NotNftStaking()'"));
     });
 
     it("should be able to boost veDEG for its current balance - type 1", async function () {
@@ -506,6 +516,14 @@ describe("Vote Escrowed Degis", function () {
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(
         toWei("1560")
       );
+    });
+
+    it("should be able to boost for those who deposit for max time", async function () {
+      await veDEG.connect(user1).depositMaxTime(toWei("100"));
+
+      await veDEG.connect(nftStaking).boostVeDEG(user1.address, 1);
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
     });
   });
 });
