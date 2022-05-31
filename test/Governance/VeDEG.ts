@@ -613,6 +613,9 @@ describe("Vote Escrowed Degis", function () {
       await veDEG.connect(nftStaking).boostVeDEG(user1.address, 1);
 
       expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
+
+      await mineBlocks(10);
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
     });
 
     it("should be able to boost with locking contracts", async function () {
@@ -624,6 +627,16 @@ describe("Vote Escrowed Degis", function () {
       await veDEG.lockVeDEG(dev_account.address, toWei("10"));
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("200"));
       expect(await veDEG.locked(dev_account.address)).to.equal(toWei("10"));
+
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("240"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("240"));
+
+      await mineBlocks(1);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("360"));
+
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("720"));
     });
   });
 });
