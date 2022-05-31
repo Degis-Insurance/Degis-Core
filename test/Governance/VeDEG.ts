@@ -20,7 +20,7 @@ import {
   toWei,
   zeroAddress,
 } from "../utils";
-import { BigNumberish } from "ethers";
+import { BigNumberish, Signer } from "ethers";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
 describe("Vote Escrowed Degis", function () {
@@ -32,6 +32,7 @@ describe("Vote Escrowed Degis", function () {
 
   let dev_account: SignerWithAddress,
     user1: SignerWithAddress,
+    user2: SignerWithAddress,
     nftStaking: SignerWithAddress;
 
   // Pool info type definition
@@ -46,7 +47,7 @@ describe("Vote Escrowed Degis", function () {
   };
 
   beforeEach(async function () {
-    [dev_account, user1, nftStaking] = await ethers.getSigners();
+    [dev_account, user1, user2, nftStaking] = await ethers.getSigners();
 
     MockUSD = await ethers.getContractFactory("MockUSD");
     usd = await MockUSD.deploy();
@@ -427,9 +428,97 @@ describe("Vote Escrowed Degis", function () {
 
       await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"));
 
+      // Burn veDEG => balance decrease
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(
         toWei("9900")
       );
+
+      // Balance less than max amount after the burn
+      // So it will restart to gain veDEG
+      await mineBlocks(1);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("100"));
+
+      // Also can not exceed the max amount
+      await mineBlocks(10);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("100"));
+
+      // Burn for the second time
+      await veDEG.connect(user1).burnVeDEG(dev_account.address, toWei("100"));
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("200"));
+
+      await mineBlocks(1);
+      expect(await veDEG.claimable(dev_account.address)).to.equal(toWei("200"));
+
+      // After claim, balance back to max amount
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+    });
+  });
+
+  describe("Whitelist contract lock veDEG", function () {
+    beforeEach(async function () {
+      await degis.mintDegis(dev_account.address, toWei("1000"));
+      await degis.approve(veDEG.address, toWei("1000"));
+
+      await veDEG.addWhitelist(user1.address);
+    });
+
+    it("should not be able to lock & unlock veDEG by accounts other than whitelist", async function () {
+      await veDEG.deposit(toWei("100"));
+
+      // Owner can not lock
+      await expect(
+        veDEG.lockVeDEG(dev_account.address, toWei("100"))
+      ).to.be.revertedWith(customErrorMsg("'VED__NotWhiteListed()'"));
+
+      await expect(
+        veDEG.unlockVeDEG(dev_account.address, toWei("100"))
+      ).to.be.revertedWith(customErrorMsg("'VED__NotWhiteListed()'"));
+
+      // Not whitelisted accounts can not lock
+      await expect(
+        veDEG.connect(user2).lockVeDEG(dev_account.address, toWei("100"))
+      ).to.be.revertedWith(customErrorMsg("'VED__NotWhiteListed()'"));
+
+      await expect(
+        veDEG.connect(user2).unlockVeDEG(dev_account.address, toWei("100"))
+      ).to.be.revertedWith(customErrorMsg("'VED__NotWhiteListed()'"));
+    });
+
+    it("should be able to lock and unlock veDEG", async function () {
+      await veDEG.deposit(toWei("100"));
+
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+
+      await expect(
+        veDEG.connect(user1).lockVeDEG(dev_account.address, toWei("100"))
+      )
+        .to.emit(veDEG, "LockVeDEG")
+        .withArgs(user1.address, dev_account.address, toWei("100"));
+
+      // Check lock status
+      expect(await veDEG.locked(dev_account.address)).to.equal(toWei("100"));
+
+      // Can not withdraw when locked
+      await expect(veDEG.withdraw(toWei("100"))).to.be.revertedWith(
+        customErrorMsg("'VED__StillLocked()'")
+      );
+
+      await expect(
+        veDEG.connect(user1).unlockVeDEG(dev_account.address, toWei("100"))
+      )
+        .to.emit(veDEG, "UnlockVeDEG")
+        .withArgs(user1.address, dev_account.address, toWei("100"));
+
+      // Can withdraw after unlock
+      await veDEG.withdraw(toWei("100"));
+      expect(await degis.balanceOf(dev_account.address)).to.equal(
+        toWei("1000")
+      );
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
     });
   });
 
@@ -524,6 +613,17 @@ describe("Vote Escrowed Degis", function () {
       await veDEG.connect(nftStaking).boostVeDEG(user1.address, 1);
 
       expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
+    });
+
+    it("should be able to boost with locking contracts", async function () {
+      await veDEG.addWhitelist(dev_account.address);
+
+      await veDEG.claim();
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("200"));
+
+      await veDEG.lockVeDEG(dev_account.address, toWei("10"));
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("200"));
+      expect(await veDEG.locked(dev_account.address)).to.equal(toWei("10"));
     });
   });
 });

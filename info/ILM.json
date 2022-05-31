@@ -37,7 +37,14 @@
 		}
 	},
 	"fujiTest": {},
-	"avax": {},
+	"avax": {
+		"AVAX_27.0_L_1606": {
+			"policyToken": "0xc1b3799354A0E601F724f5533E600498682eC528",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1654070400",
+			"lptoken": "0xdcc9c01261D4F432059140409aC13941e61F2b51"
+		}
+	},
 	"avaxTest": {
 		"AVAX_25.0_L_3005": {
 			"policyToken": "0x158e8C894C03aCB777fD0af229994D419b9b6126",

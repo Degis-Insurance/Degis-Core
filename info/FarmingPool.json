@@ -59,6 +59,13 @@
 			"reward": "0.03472",
 			"bonus": "0.0289"
 		},
+		"4": {
+			"name": "IM_AVAX_27.0_L_1606",
+			"address": "0xdcc9c01261D4F432059140409aC13941e61F2b51",
+			"poolId": 4,
+			"reward": "0.0",
+			"bonus": "0.0"
+		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",
 			"address": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",
