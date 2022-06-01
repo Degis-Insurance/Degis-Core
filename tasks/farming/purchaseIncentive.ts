@@ -55,8 +55,6 @@ task(
   .setAction(async (taskArgs, hre) => {
     const degisPerRound = taskArgs.reward;
     const rewardInterval = taskArgs.interval;
-    console.log("Degis per round: ", degisPerRound);
-    console.log("Reward interval: ", rewardInterval);
 
     const { network } = hre;
 
@@ -116,7 +114,7 @@ task(
     toWei("5000"),
     toWei("6000"),
     toWei("7000"),
-    toWei("8000")
+    toWei("8000"),
   ];
 
   const { network } = hre;
