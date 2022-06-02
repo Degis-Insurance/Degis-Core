@@ -131,8 +131,6 @@ contract IncomeSharingVault is
             uint256 timePassed = block.timestamp - pool.lastRewardTimestamp;
             uint256 reward = timePassed * pool.rewardPerSecond;
 
-            console.log("reward", reward);
-
             // Remainging reward inside the pool
             uint256 remainingReward = IERC20(pool.rewardToken).balanceOf(
                 address(this)
