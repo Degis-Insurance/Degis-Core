@@ -211,17 +211,23 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
   .addParam("pid", "Pool id", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const poolId = taskArgs.pid;
-    // const threshold: string[] = [
-    //   stablecoinToWei("0"),
-    //   stablecoinToWei("150000"),
-    //   stablecoinToWei("300000"),
-    //   stablecoinToWei("450000"),
-    //   stablecoinToWei("600000"),
-    // ];
+    const threshold: string[] = [
+      stablecoinToWei("0"),
+      stablecoinToWei("150000"),
+      stablecoinToWei("300000"),
+      stablecoinToWei("450000"),
+      stablecoinToWei("600000"),
+      stablecoinToWei("750000"),
+    ];
 
-    const threshold: string[] = ["0"];
-
-    const reward: string[] = ["0"];
+    const reward: string[] = [
+      toWei("0.03472"),
+      toWei("0.06944"),
+      toWei("0.08101"),
+      toWei("0.09259"),
+      toWei("0.10417"),
+      toWei("0.11574"),
+    ];
 
     const { network } = hre;
     // Signers
@@ -249,7 +255,7 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
 
-  task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
+task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
   .addParam("pid", "Pool id", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const poolId = taskArgs.pid;

@@ -86,6 +86,7 @@ const reward_3_basic: string[] = [
   toWei("0.13888"),
 ];
 
+// bonus 1200 deg / day
 const bonus = toWei("0.01388");
 
 // Pool Id 5
@@ -108,3 +109,5 @@ const reward_4_basic: string[] = [
   toWei("0.10417"),
   toWei("0.11574"),
 ];
+// bonus 1000 deg / day
+const bonus_4 = toWei("0.01157");
