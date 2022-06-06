@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { DeployFunction } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
-
 // Deploy Treasury Box
 // It is a non-proxy deployment
 // Contract:
@@ -17,7 +16,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
-
   const { deployer } = await getNamedAccounts();
 
   // Read address list from local file
@@ -26,23 +24,21 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const DegisToken = await get("DegisToken");
   const MockUSD = await get("MockUSD");
 
-  const keyhash_mainnet =
-    "0xAA77729D3466CA35AE8D28B3BBAC7CC36A5031EFDC430821C02BC31A238AF445";
+  const keyhash_fuji_300GWEI =
+    "0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61";
+  const subscriptionId_fuji = 130;
+  const coordinator_fuji = "0x2eD832Ba664535e5886b75D64C46EB9a228C2610";
 
   const rand = await deploy("RandomNumberGenerator", {
-    contract: "RandomNumberGenerator",
+    contract: "RandomNumberGeneratorV2",
     from: deployer,
-    args: [
-      hre.ethers.constants.AddressZero,
-      hre.ethers.constants.AddressZero,
-      keyhash_mainnet,
-    ],
+    args: [coordinator_fuji, keyhash_fuji_300GWEI, subscriptionId_fuji],
     log: true,
   });
-  addressList[network.name].RandomNumberGenerator = rand.address;
+  addressList[network.name].RandomNumberGeneratorV2 = rand.address;
 
   const lottery = await deploy("DegisLottery", {
-    contract: "DegisLottery",
+    contract: "DegisLotteryV2",
     from: deployer,
     args: [DegisToken.address, MockUSD.address, rand.address],
     log: true,
@@ -54,7 +50,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
   // Run some afterwars tasks
   await hre.run("setLottery");
-  await hre.run("setRandGenerator")
+  await hre.run("setRandGenerator");
 };
 
 func.tags = ["Lottery"];

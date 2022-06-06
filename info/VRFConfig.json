@@ -1,0 +1,11 @@
+{
+  "fuji": {
+    "subscriptionId": "130",
+    "300GWEI": "0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61"
+  },
+  "avax": {
+    "200GWEI": "0x83250c5584ffa93feb6ee082981c5ebe484c865196750b39835ad4f13780435d",
+    "500GWEI": "0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46",
+    "1000GWEI": "0x06eb0e2ea7cca202fc7c8258397a36f33d88568d2522b37aaa3b14ff6ee1b696"
+  }
+}
