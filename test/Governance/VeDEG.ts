@@ -616,6 +616,71 @@ describe("Vote Escrowed Degis", function () {
 
       await mineBlocks(10);
       expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
+
+
+      await veDEG.connect(nftStaking).unBoostVeDEG(user1.address);
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("10000"));
+    });
+
+    it("should be able to withdraw when boosting - normal deposit", async function () {
+      await veDEG.claim();
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("100"));
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(toWei("120"));
+
+      await veDEG.withdraw(toWei("100"));
+
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(0);
+    });
+
+    it("should be able to withdraw when boosting - max time deposit", async function () {
+      await veDEG.connect(user1).depositMaxTime(toWei("100"));
+      const initTime = await getLatestBlockTimestamp(ethers.provider);
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("10000"));
+      await veDEG.connect(nftStaking).boostVeDEG(user1.address, 1);
+
+      expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
+
+      await setNextBlockTime(initTime + 365 * 24 * 3600);
+
+      await veDEG.connect(user1).withdrawLocked();
+      expect(await veDEG.balanceOf(user1.address)).to.equal(0);
+    });
+
+    it("should be able to withdraw when boosting - mix deposit", async function () {
+      // Max time deposit + normal deposit
+      await veDEG.depositMaxTime(toWei("100"));
+      await veDEG.claim();
+
+      // 2 blocks normal (200) + 10000 max time
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10200")
+      );
+
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+
+      // 10200 x 1.2
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("12240")
+      );
+      await veDEG.claim();
+
+      // [ 4 blocks normal (400) + 10000 max time ] * 1.2
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("12480")
+      );
+
+      // withdraw normal part
+      await veDEG.withdraw(toWei("100"));
+
+      // Remaining max time part still boost
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("12000")
+      );
     });
 
     it("should be able to boost with locking contracts", async function () {

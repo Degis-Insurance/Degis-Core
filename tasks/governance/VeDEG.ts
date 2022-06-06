@@ -117,3 +117,26 @@ task("checkVeState", "Add whitelist for veDEG").setAction(async (_, hre) => {
   const locked = await veDEG.locked(user);
   console.log("locked: ", formatEther(locked));
 });
+
+task("setNFTStaking", "Set nft staking address in veDEG").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+
+    const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+      dev_account
+    ).attach(veDEGAddress);
+
+    const currentAddress = await veDEG.nftStaking();
+    console.log("current nft staking address ", currentAddress);
+
+    const nftStakingAddress = "0x75fe5888371A19dFc99f5C2A64b98E85CB1987aa";
+    const tx = await veDEG.setNFTStaking(nftStakingAddress);
+    console.log("tx details: ", await tx.wait());
+  }
+);

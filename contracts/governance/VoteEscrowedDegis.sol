@@ -231,25 +231,28 @@ contract VoteEscrowedDegis is
         // Seconds passed since last claim
         uint256 timePassed = block.timestamp - user.lastRelease;
 
-        uint256 realCapRatio;
+        uint256 realCapRatio = _getCapRatio(_user);
 
         uint256 pending;
-        // calculate pending amount
-        if (boosted[_user] == 0) {
+        // Calculate pending amount
+        uint256 boostType = boosted[_user];
+        // If no boost
+        if (boostType == 0) {
             pending = Math.wmul(user.amount, timePassed * generationRate);
-            realCapRatio = maxCapRatio;
-        } else if (boosted[_user] == 1) {
+        }
+        // Normal nft boost
+        else if (boostType == 1) {
             pending = Math.wmul(
                 user.amount,
                 (timePassed * generationRate * 120) / 100
             );
-            realCapRatio = (maxCapRatio * 120) / 100;
-        } else if (boosted[_user] == 2) {
+        }
+        // Rare nft boost
+        else if (boostType == 2) {
             pending = Math.wmul(
                 user.amount,
                 (timePassed * generationRate * 150) / 100
             );
-            realCapRatio = (maxCapRatio * 150) / 100;
         }
 
         // get user's veDEG balance
@@ -422,9 +425,12 @@ contract VoteEscrowedDegis is
 
         // get user veDEG balance that must be burned
         // those locked amount will not be calculated
+
+        uint256 realCapRatio = _getCapRatio(msg.sender);
+
         uint256 userVeDEGBalance = balanceOf(msg.sender) -
             user.amountLocked *
-            maxCapRatio;
+            realCapRatio;
 
         _burn(msg.sender, userVeDEGBalance);
 
@@ -448,7 +454,9 @@ contract VoteEscrowedDegis is
         if (user.amountLocked == 0) revert VED__ZeroAmount();
         if (block.timestamp < user.lockUntil) revert VED__TimeNotPassed();
 
-        _burn(msg.sender, user.amountLocked * maxCapRatio);
+        uint256 realCapRatio = _getCapRatio(msg.sender);
+
+        _burn(msg.sender, user.amountLocked * realCapRatio);
 
         // update his balance before burning or sending back degis
         users[msg.sender].amountLocked = 0;
@@ -600,5 +608,28 @@ contract VoteEscrowedDegis is
     function _unlock(address _to, uint256 _amount) internal {
         if (locked[_to] < _amount) revert VED__NotEnoughBalance();
         locked[_to] -= _amount;
+    }
+
+    /**
+     * @notice Get real cap ratio for a user
+     *         The ratio depends on the boost type
+     *
+     * @param _user User address
+     *
+     * @return realCapRatio Real cap ratio
+     */
+    function _getCapRatio(address _user)
+        internal
+        view
+        returns (uint256 realCapRatio)
+    {
+        uint256 boostType = boosted[_user];
+        if (boostType == 0) {
+            realCapRatio = maxCapRatio;
+        } else if (boostType == 1) {
+            realCapRatio = (maxCapRatio * 120) / 100;
+        } else if (boostType == 2) {
+            realCapRatio = (maxCapRatio * 150) / 100;
+        }
     }
 }
