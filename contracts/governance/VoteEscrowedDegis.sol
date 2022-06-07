@@ -255,6 +255,11 @@ contract VoteEscrowedDegis is
             );
         }
 
+        console.log("balance of user", balanceOf(_user));
+        console.log("real cap ratio", realCapRatio);
+        console.log("amount locked ", user.amountLocked);
+        console.log("minus", user.amountLocked * realCapRatio);
+
         // get user's veDEG balance
         uint256 userVeDEGBalance = balanceOf(_user) -
             user.amountLocked *
@@ -387,7 +392,9 @@ contract VoteEscrowedDegis is
         // Request degis from user
         degis.safeTransferFrom(msg.sender, address(this), _amount);
 
-        _mint(msg.sender, maxCapRatio * _amount);
+        uint256 realCapRatio = _getCapRatio(msg.sender);
+
+        _mint(msg.sender, realCapRatio * _amount);
 
         emit DepositMaxTime(msg.sender, _amount, lockUntil);
     }
@@ -554,6 +561,8 @@ contract VoteEscrowedDegis is
         } else if (currentBoostStatus == 2) {
             _burn(_user, (balanceOf(_user) * 50) / 150);
         }
+
+        boosted[_user] = 0;
 
         emit UnBoostVeDEG(_user);
     }

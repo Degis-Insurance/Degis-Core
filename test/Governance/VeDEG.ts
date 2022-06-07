@@ -532,6 +532,9 @@ describe("Vote Escrowed Degis", function () {
       await degis.mintDegis(user1.address, toWei("1000"));
       await degis.connect(user1).approve(veDEG.address, toWei("1000"));
 
+      await degis.mintDegis(user2.address, toWei("1000"));
+      await degis.connect(user2).approve(veDEG.address, toWei("1000"));
+
       await veDEG.deposit(toWei("100"));
     });
 
@@ -617,7 +620,6 @@ describe("Vote Escrowed Degis", function () {
       await mineBlocks(10);
       expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("12000"));
 
-
       await veDEG.connect(nftStaking).unBoostVeDEG(user1.address);
 
       expect(await veDEG.balanceOf(user1.address)).to.equal(toWei("10000"));
@@ -681,6 +683,57 @@ describe("Vote Escrowed Degis", function () {
       expect(await veDEG.balanceOf(dev_account.address)).to.equal(
         toWei("12000")
       );
+    });
+
+    it("should be able to boost and unboost continuously", async function () {
+      // Max time deposit + normal deposit
+      await veDEG.depositMaxTime(toWei("100"));
+
+      // 2 blocks normal (200) + 10000 max time
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("10000")
+      );
+
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+
+      // 10200 x 1.2
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("12000")
+      );
+
+      await veDEG.connect(nftStaking).unBoostVeDEG(dev_account.address);
+
+      await veDEG.connect(nftStaking).boostVeDEG(dev_account.address, 1);
+
+      // [ 4 blocks normal (400) + 10000 max time ] * 1.2
+      expect(await veDEG.balanceOf(dev_account.address)).to.equal(
+        toWei("12000")
+      );
+    });
+
+    it("a case simulation", async function () {
+      await veDEG.connect(user2).depositMaxTime(toWei("10"));
+
+      await veDEG.connect(nftStaking).boostVeDEG(user2.address, 1);
+      await veDEG.connect(nftStaking).unBoostVeDEG(user2.address);
+      await veDEG.connect(nftStaking).boostVeDEG(user2.address, 1);
+
+      expect(await veDEG.balanceOf(user2.address)).to.equal(toWei("1200"));
+      expect(await veDEG.claimable(user2.address)).to.equal(toWei("0"));
+
+      await veDEG.connect(user2).deposit(toWei("10"));
+
+      await veDEG.connect(user2).depositMaxTime(toWei("5"));
+
+      expect(await veDEG.balanceOf(user2.address)).to.equal(toWei("1800"));
+
+      await veDEG.connect(nftStaking).unBoostVeDEG(user2.address);
+
+      expect(await veDEG.balanceOf(user2.address)).to.equal(toWei("1500"));
+
+      // Speed goes back to normal
+      // 2 blocks => 20 veDEG
+      expect(await veDEG.claimable(user2.address)).to.equal(toWei("20"));
     });
 
     it("should be able to boost with locking contracts", async function () {
