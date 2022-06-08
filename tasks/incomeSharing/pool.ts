@@ -101,7 +101,7 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
     );
     console.log("emergency balance:", formatUnits(emergencyBalance, 6));
 
-    const user = "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E";
+    const user = "0x7A670382953B45A2552040c4dE77fA83Ed6C0239";
     const pending = await vault.pendingReward(1, user);
     console.log("Pending: ", formatUnits(pending, 6));
 

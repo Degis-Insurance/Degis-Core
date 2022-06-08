@@ -111,7 +111,11 @@ contract FarmingPoolUpgradeable is
     // Reward speed change with liquidity inside contract
     mapping(uint256 => uint256[]) public thresholdBasic;
     mapping(uint256 => uint256[]) public piecewiseBasic;
+
+    // This state variable is collapased
     uint256 public currentRewardLevel;
+
+    mapping(uint256 => uint256) public poolRewardLevel;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -651,15 +655,17 @@ contract FarmingPoolUpgradeable is
 
         pool.lastRewardTimestamp = block.timestamp;
 
+        uint256 currentPoolLevel = poolRewardLevel[_poolId];
+
         // Update the new reward speed
         // Only if the threshold are already set
         if (thresholdBasic[_poolId].length > 0) {
             uint256 currentLiquidity = thresholdBasic[_poolId][
-                currentRewardLevel
+                currentPoolLevel
             ];
             if (
-                currentRewardLevel < thresholdBasic[_poolId].length - 1 &&
-                lpSupply >= thresholdBasic[_poolId][currentRewardLevel + 1]
+                currentPoolLevel < thresholdBasic[_poolId].length - 1 &&
+                lpSupply >= thresholdBasic[_poolId][currentPoolLevel + 1]
             ) {
                 _updateRewardSpeed(_poolId);
             } else if (lpSupply < currentLiquidity) {
@@ -825,7 +831,7 @@ contract FarmingPoolUpgradeable is
             if (currentBasicBalance >= thresholdBasic[_poolId][i]) {
                 basicRewardSpeed = piecewiseBasic[_poolId][i];
                 // record current reward level
-                currentRewardLevel = i;
+                poolRewardLevel[_poolId] = i;
                 break;
             } else continue;
         }
