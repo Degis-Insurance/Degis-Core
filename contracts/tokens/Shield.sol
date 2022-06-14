@@ -49,16 +49,13 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // stablecoin => whether supported
     mapping(address => bool) public supportedStablecoin;
 
-    // stablecoin => collteral ratio
-    mapping(address => uint256) public depositRatio;
-
     mapping(address => uint256) public users;
 
     // ------------------------------------------------------------------------- --------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event AddStablecoin(address stablecoin, uint256 collateralRatio);
+    event AddStablecoin(address stablecoin);
     event SetPTPPool(address oldPool, address newPool);
     event Deposit(
         address indexed user,
@@ -96,21 +93,20 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Add new supported stablecoin
+     *
      * @dev Set the token address and collateral ratio at the same time
      *      The collateral ratio need to be less than 100
      *      Only callable by the owner
+     *
      * @param _stablecoin Stablecoin address
-     * @param _ratio      Collateral ratio
      */
-    function addSupportedStablecoin(address _stablecoin, uint256 _ratio)
+    function addSupportedStablecoin(address _stablecoin)
         external
         onlyOwner
     {
-        require(_ratio >= 100, "Deposit ratio must be greater than 100");
         supportedStablecoin[_stablecoin] = true;
-        depositRatio[_stablecoin] = _ratio;
-
-        emit AddStablecoin(_stablecoin, _ratio);
+     
+        emit AddStablecoin(_stablecoin);
     }
 
     function setPTPPool(address _ptpPool) external onlyOwner {
@@ -153,11 +149,11 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         uint256 outAmount;
 
         // Collateral ratio
-        uint256 inAmount = (_amount * 100) / depositRatio[_stablecoin];
+        uint256 inAmount = _amount;
 
         // Transfer stablecoin to this contract
         // Transfer to this, no need for safeTransferFrom
-        IERC20(_stablecoin).transferFrom(msg.sender, address(this), _amount);
+        IERC20(_stablecoin).safeTransferFrom(msg.sender, address(this), _amount);
 
         if (_stablecoin != USDC) {
             // Swap stablecoin to USDC and directly goes to this contract

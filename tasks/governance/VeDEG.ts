@@ -135,7 +135,7 @@ task("setNFTStaking", "Set nft staking address in veDEG").setAction(
     const currentAddress = await veDEG.nftStaking();
     console.log("current nft staking address ", currentAddress);
 
-    const nftStakingAddress = "0x75fe5888371A19dFc99f5C2A64b98E85CB1987aa";
+    const nftStakingAddress = "0xD42D4d6d159aE44829be781Bcb04fe5903A2Add4";
     const tx = await veDEG.setNFTStaking(nftStakingAddress);
     console.log("tx details: ", await tx.wait());
   }

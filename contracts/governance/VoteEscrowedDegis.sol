@@ -32,8 +32,6 @@ import { Math } from "../libraries/Math.sol";
 
 import { IFarmingPool } from "../farming/interfaces/IFarmingPool.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Vote Escrowed Degis
  * @notice The staking contract for DEG -> veDEG
@@ -254,11 +252,6 @@ contract VoteEscrowedDegis is
                 (timePassed * generationRate * 150) / 100
             );
         }
-
-        console.log("balance of user", balanceOf(_user));
-        console.log("real cap ratio", realCapRatio);
-        console.log("amount locked ", user.amountLocked);
-        console.log("minus", user.amountLocked * realCapRatio);
 
         // get user's veDEG balance
         uint256 userVeDEGBalance = balanceOf(_user) -
@@ -549,6 +542,13 @@ contract VoteEscrowedDegis is
         emit BoostVeDEG(_user, _type);
     }
 
+    /**
+     * @notice UnBoost veDEG
+     *
+     * @dev Only called by nftStaking contract
+     *
+     * @param _user User address
+     */
     function unBoostVeDEG(address _user) external {
         if (msg.sender != nftStaking) revert VED__NotNftStaking();
 
@@ -556,10 +556,15 @@ contract VoteEscrowedDegis is
 
         if (currentBoostStatus == 0) return;
 
+        uint256 userBalance = balanceOf(_user);
+        uint256 userLocked = locked[_user];
+
         if (currentBoostStatus == 1) {
-            _burn(_user, (balanceOf(_user) * 20) / 120);
+            if (userLocked > 0) revert VED__StillLocked();
+            _burn(_user, (userBalance * 20) / 120);
         } else if (currentBoostStatus == 2) {
-            _burn(_user, (balanceOf(_user) * 50) / 150);
+            if (userLocked > 0) revert VED__StillLocked();
+            _burn(_user, (userBalance * 50) / 150);
         }
 
         boosted[_user] = 0;
