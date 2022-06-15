@@ -567,10 +567,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             DegisToken.transfer(treasury, amountToTreasury);
         }
 
-        require(
-            _calculateTotalAwards() == DegisToken.balanceOf(address(this)),
-            "USDC not balance"
-        );
+       
 
         emit LotteryNumberDrawn(
             currentLotteryId,
@@ -627,8 +624,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Transfer DEG
         DegisToken.transferFrom(msg.sender, address(this), _amount);
 
-        uint256 degBalance = DegisToken.balanceOf(address(this));
-        require(_calculateTotalAwards() <= degBalance, "Wrong deg amount");
 
         emit LotteryInjection(currentRound, _amount);
     }
@@ -991,27 +986,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         } else {
             return 0;
         }
-    }
-
-    /**
-     * @notice Calculate all awards
-     */
-    function _calculateTotalAwards() internal view returns (uint256) {
-        uint256 amount;
-
-        for (uint256 i; i < currentLotteryId; i++) {
-            amount += lotteries[i].pendingRewards;
-        }
-
-        if (lotteries[currentLotteryId].status == Status.Claimable) {
-            amount +=
-                lotteries[currentLotteryId].pendingRewards +
-                pendingInjectionNextLottery;
-        } else {
-            amount += lotteries[currentLotteryId].amountCollected;
-        }
-
-        return amount;
     }
 
     /**
