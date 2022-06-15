@@ -29,7 +29,7 @@ const reward_1_basic: string[] = [
   toWei("0.174"),
 ];
 
-// 15 + 5 
+// 15 + 5
 // Last 5 days 1.2x speed
 const reward_1_speed: string[] = [
   toWei("0.042"),
@@ -111,3 +111,17 @@ const reward_4_basic: string[] = [
 ];
 // bonus 1000 deg / day
 const bonus_4 = toWei("0.01157");
+
+// Pool Id 6
+// Token: IM_AVAX_15.0_L_0107
+// Address: 0x6B657FB68907f0005931AA4088086a73Af4F0a40
+
+const basic_6 = toWei("0.03472");
+const bonus_6 = toWei("0.00694");
+
+// Pool Id 7
+// Token: AVAX_15.0_L_0107
+// Address:
+
+const basic_7 = toWei("0.02893");
+const bonus_7 = toWei("0.00578");

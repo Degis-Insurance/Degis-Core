@@ -6,7 +6,7 @@
 
 ---
 
-npx hardhat deployNPToken --network avaxTest --name AVAX --stablecoin USDC.e --k 26.0 --namedecimals 0 --iscall 0 --round 2905 --deadline 1653897600 --settletime 1653897600
+npx hardhat deployNPToken --network avax --name AVAX --stablecoin USDC.e --k 15.0 --namedecimals 0 --iscall 0 --round 0107 --deadline 1656576000 --settletime 1656662400
 
 npx hardhat deployNPPool --network fuji --name AVAX_32.0_L_3006 --stablecoin USDC.e --deadline 1656576000 --fee 50
 
