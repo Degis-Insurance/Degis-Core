@@ -126,7 +126,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 number,
         uint256 totalPrice
     );
-    event TicketsClaim(
+    event TicketsClaimed(
         address indexed claimer,
         uint256 amount,
         uint256 indexed lotteryId
@@ -395,7 +395,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 "Ticket id too small"
             );
             require(
-                thisTicketId < lotteries[_lotteryId].firstTicketIdNextRound,
+                thisTicketId <= currentTicketId,
                 "Ticket id too large"
             );
 
@@ -439,7 +439,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Transfer the prize to the user
         DegisToken.transfer(msg.sender, rewardToTransfer);
 
-        emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
+        emit TicketsClaimed(msg.sender, rewardToTransfer, _lotteryId);
     }
 
     // /**
@@ -492,7 +492,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     //     DegisToken.transfer(msg.sender, rewardToTransfer);
 
-    //     emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
+    //     emit TicketsClaimed(msg.sender, rewardToTransfer, _lotteryId);
     // }
 
     /**

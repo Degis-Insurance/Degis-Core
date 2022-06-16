@@ -36,7 +36,8 @@ contract VRFMock is Ownable {
 
         // TODO: This part is only for test on Fuji Testnet because there is no VRF currently
         string memory randInput = string(
-            abi.encodePacked((block.timestamp).uintToString(), address(this))
+            // abi.encodePacked((block.timestamp).uintToString(), address(this))
+            abi.encodePacked("0x")
         );
         randomResult = _rand(randInput) % 10000;
 

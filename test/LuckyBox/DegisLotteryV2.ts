@@ -28,6 +28,7 @@ describe("Degis Lottery V2", function () {
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
   let RandomNumberGenerator: VRFMock__factory, rng: VRFMock;
+  let tenTicketsArray: number[], elevenTicketsArray: number[];
 
   beforeEach(async function () {
     [dev_account, user1] = await ethers.getSigners();
@@ -49,6 +50,14 @@ describe("Degis Lottery V2", function () {
     await degis.transfer(user1.address, toWei("10000"));
     await degis.connect(user1).approve(lottery.address, toWei("10000"));
     await lottery.setMaxNumberTicketsEachTime(BigNumber.from(10));
+
+    tenTicketsArray = [
+      11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+    ];
+    elevenTicketsArray = [
+      11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+      13333,
+    ];
   });
 
   describe("Deployment", function () {
@@ -89,6 +98,8 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to start a lottery", async function () {
+      const currentLotteryId = await lottery.currentLotteryId();
+      now = await getLatestBlockTimestamp(ethers.provider);
       await expect(
         lottery.startLottery(
           60 * 60 * 24 * 3 + now,
@@ -96,15 +107,15 @@ describe("Degis Lottery V2", function () {
           [4000, 3000, 2000, 1000],
           0
         )
-      );
-      // .to.emit(lottery, "LotteryOpen")
-      // .withArgs(
-      //   currentLotteryId.add(1),
-      //   ts + 88,
-      //   60 * 60 * 24 * 3 + now,
-      //   toWei("10"),
-      //   0
-      // );
+      )
+        .to.emit(lottery, "LotteryOpen")
+        .withArgs(
+          currentLotteryId.add(1),
+          now + 1,
+          60 * 60 * 24 * 3 + now,
+          toWei("10"),
+          0
+        );
     });
 
     it("should be able to close a lottery", async function () {
@@ -115,7 +126,6 @@ describe("Degis Lottery V2", function () {
         0
       );
       const currentLotteryId = await lottery.currentLotteryId();
-      console.log(currentLotteryId);
       await expect(lottery.closeLottery(currentLotteryId))
         .to.emit(lottery, "LotteryClosed")
         .withArgs(1);
@@ -129,7 +139,6 @@ describe("Degis Lottery V2", function () {
         0
       );
       const currentLotteryId = await lottery.currentLotteryId();
-      console.log(currentLotteryId);
       lottery.closeLottery(BigNumber.from(currentLotteryId));
       await lottery.setTreasury(dev_account.address);
       await expect(
@@ -148,13 +157,16 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should not be able to buy tickets if there is no lottery", async function () {
-      await expect(lottery.buyTickets([11111])).to.be.reverted;
+      await expect(lottery.buyTickets([11111])).to.be.revertedWith(
+        "Current lottery round not open"
+      );
     });
 
-    // it("should not be able to claim tickets if there is no lottery", async function () {
-    //   await expect(lottery.claimTickets(1, [1111], BigNumber.from(0))).to.be
-    //     .reverted;
-    // });
+    it("should not be able to claim tickets if there is no lottery", async function () {
+      await expect(
+        lottery.claimTickets(1, [11111], [BigNumber.from(0)])
+      ).to.be.revertedWith("Not claimable");
+    });
 
     it("should not allow non owner to open lotteries", async function () {
       await expect(
@@ -166,22 +178,14 @@ describe("Degis Lottery V2", function () {
             [4000, 3000, 2000, 1000],
             0
           )
-      ).to.be.reverted;
+      ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 
   describe("lottery with open status", function () {
-    let tenTicketsArray: number[], elevenTicketsArray: number[];
     let now: number;
 
     beforeEach(async function () {
-      tenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-      ];
-      elevenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-        13333,
-      ];
       now = getNow();
 
       await lottery.startLottery(
@@ -212,19 +216,14 @@ describe("Degis Lottery V2", function () {
       await expect(
         lottery.connect(user1).buyTickets(elevenTicketsArray)
       ).to.emit(lottery, "TicketsPurchased");
-      const tickets = await lottery._userTicketIds(user1.address, 1, 1);
-      console.log(tickets);
     });
 
-    // it should not be able to buy more than maxNumberTicketsEachTime
     it("should not be able to buy more than 11 tickets after reduction", async function () {
       await lottery.setMaxNumberTicketsEachTime(11);
       await lottery.setMaxNumberTicketsEachTime(10);
       await expect(
         lottery.connect(user1).buyTickets(elevenTicketsArray)
       ).to.be.revertedWith("Too many tickets");
-      // const tickets = await lottery._userTicketIds(user1.address, 1, 1);
-      // console.log(tickets);
     });
 
     // it shoud not be able to buy 0 tickets
@@ -242,18 +241,10 @@ describe("Degis Lottery V2", function () {
   });
 
   describe("lottery with closed status", function () {
-    let tenTicketsArray: number[], elevenTicketsArray: number[];
     let now: number;
     let lotteryId: BigNumber;
 
     beforeEach(async function () {
-      tenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-      ];
-      elevenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-        13333,
-      ];
       now = getNow();
 
       await lottery.startLottery(
@@ -274,18 +265,11 @@ describe("Degis Lottery V2", function () {
   });
 
   describe("lottery with claimable status", function () {
-    let tenTicketsArray: number[], elevenTicketsArray: number[];
     let now: number;
     let lotteryId: BigNumber;
+    let winnerTicket: BigNumber;
 
     beforeEach(async function () {
-      tenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-      ];
-      elevenTicketsArray = [
-        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
-        13333,
-      ];
       now = getNow();
 
       await lottery.startLottery(
@@ -294,10 +278,16 @@ describe("Degis Lottery V2", function () {
         [4000, 3000, 2000, 1000],
         0
       );
+      // 0,     1,     2,     3,      4,    5,      6,    7,      8
+      // 0,     one,   two   three,   four, oneB,   twoB, threeB, fourB
+      await lottery.buyTickets([
+        11111, 19111, 15911, 15971, 15975, 19111, 19511, 19551, 19557,
+      ]);
       lotteryId = await lottery.currentLotteryId();
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, false);
+      winnerTicket = await rng.randomResult();
     });
 
     it("should not be able to buy tickets if lottery is claimable", async function () {
@@ -306,15 +296,88 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    // it should get reward equivalent to one correct number
-    it("it should get reward equivalent to one correct number", async function () {});
+    it("it should get reward equivalent to one correct number in right order", async function () {
+      await expect(lottery.claimTickets(1, [1], [0])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
 
-    it("it should get reward equivalent to two correct numbers", async function () {});
+    it("it should get reward equivalent to two correct numbers in right order", async function () {
+      await expect(lottery.claimTickets(1, [2], [1])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
 
-    it("it should get reward equivalent to three correct numbers", async function () {});
+    it("it should get reward equivalent to three correct numbers in right order", async function () {
+      await expect(lottery.claimTickets(1, [3], [2])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
 
-    it("it should get reward equivalent to four correct numbers", async function () {});
+    it("it should get reward equivalent to four correct numbers in right order", async function () {
+      await expect(lottery.claimTickets(1, [4], [3])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
 
-    it("it should not be able to claim not owned tickets", async function () {});
+    it("it should get reward equivalent to one correct number in wrong order", async function () {
+      await expect(lottery.claimTickets(1, [5], [0])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
+
+    it("it should get reward equivalent to two correct numbers in wrong order", async function () {
+      await expect(lottery.claimTickets(1, [6], [1])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
+
+    it("it should get reward equivalent to three correct numbers in wrong order", async function () {
+      await expect(lottery.claimTickets(1, [7], [2])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
+
+    it("it should get reward equivalent to four correct numbers in wrong order", async function () {
+      await expect(lottery.claimTickets(1, [8], [3])).to.emit(
+        lottery,
+        "TicketsClaimed"
+      );
+    });
+
+    it("should be able to claim all tickets", async function () {
+      await expect(
+        lottery.claimTickets(
+          1,
+          [1, 2, 3, 4, 5, 6, 7, 8],
+          [0, 1, 2, 3, 0, 1, 2, 3]
+        )
+      ).to.emit(lottery, "TicketsClaimed");
+    });
+
+    it("it should not get rewards if claiming non existent ticketId", async function () {
+      await expect(lottery.claimTickets(1, [10], [0])).to.be.revertedWith(
+        "Ticket id too large"
+      );
+    });
+
+    it("it should not get rewards if diverging input length in bracket and ticketIds", async function () {
+      await expect(lottery.claimTickets(1, [1], [3, 0])).to.be.revertedWith(
+        "Not same length"
+      );
+    });
+
+    it("it should not be able to claim not owned tickets", async function () {
+      await expect(
+        lottery.connect(user1).claimTickets(1, [4], [3])
+      ).to.be.revertedWith("Not the ticket owner or already claimed");
+    });
   });
 });
