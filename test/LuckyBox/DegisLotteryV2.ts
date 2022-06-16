@@ -2,12 +2,15 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { BigNumber } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import {
   DegisLotteryV2,
   DegisLotteryV2__factory,
   DegisToken,
   DegisToken__factory,
+  VRFMock,
+  VRFMock__factory,
+  OwnableUpgradeable,
   RandomNumberGenerator,
   RandomNumberGenerator__factory,
 } from "../../typechain";
@@ -24,21 +27,20 @@ describe("Degis Lottery V2", function () {
   let DegisLottery: DegisLotteryV2__factory, lottery: DegisLotteryV2;
   let DegisToken: DegisToken__factory, degis: DegisToken;
   let dev_account: SignerWithAddress, user1: SignerWithAddress;
-  let RandomNumberGenerator: RandomNumberGenerator__factory,
-    rng: RandomNumberGenerator;
+  let RandomNumberGenerator: VRFMock__factory, rng: VRFMock;
 
   beforeEach(async function () {
     [dev_account, user1] = await ethers.getSigners();
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
 
-    RandomNumberGenerator = await ethers.getContractFactory(
-      "RandomNumberGenerator"
-    );
+    RandomNumberGenerator = await ethers.getContractFactory("VRFMock");
     rng = await RandomNumberGenerator.deploy();
 
     DegisLottery = await ethers.getContractFactory("DegisLotteryV2");
-    lottery = await DegisLottery.deploy(degis.address, rng.address);
+    lottery = await DegisLottery.deploy();
+    await lottery.deployed();
+    await lottery.initialize(degis.address, rng.address);
 
     await rng.setLotteryAddress(lottery.address);
 
@@ -46,8 +48,7 @@ describe("Degis Lottery V2", function () {
     await degis.approve(lottery.address, toWei("20000"));
     await degis.transfer(user1.address, toWei("10000"));
     await degis.connect(user1).approve(lottery.address, toWei("10000"));
-    await degis.connect(dev_account);
-    await lottery.setMaxNumberTicketsEachTime(10);
+    await lottery.setMaxNumberTicketsEachTime(BigNumber.from(10));
   });
 
   describe("Deployment", function () {
@@ -74,65 +75,112 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to lower maxNumberTicketsEachTime", async function () {
-      await lottery.setMaxNumberTicketsEachTime(5);
+      await lottery.setMaxNumberTicketsEachTime(BigNumber.from(5));
       expect(await lottery.maxNumberTicketsEachTime()).to.equal(
         BigNumber.from(5)
       );
     });
 
     it("should be able to increase maxNumberTicketsEachTime", async function () {
-      await lottery.setMaxNumberTicketsEachTime(20);
+      await lottery.setMaxNumberTicketsEachTime(BigNumber.from(20));
       expect(await lottery.maxNumberTicketsEachTime()).to.equal(
         BigNumber.from(20)
       );
     });
 
     it("should be able to start a lottery", async function () {
+      await expect(
+        lottery.startLottery(
+          60 * 60 * 24 * 3 + now,
+          toWei("10"),
+          [4000, 3000, 2000, 1000],
+          0
+        )
+      );
+      // .to.emit(lottery, "LotteryOpen")
+      // .withArgs(
+      //   currentLotteryId.add(1),
+      //   ts + 88,
+      //   60 * 60 * 24 * 3 + now,
+      //   toWei("10"),
+      //   0
+      // );
+    });
+
+    it("should be able to close a lottery", async function () {
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [4000, 3000, 2000, 1000],
+        0
+      );
       const currentLotteryId = await lottery.currentLotteryId();
-      const provider = await ethers.getDefaultProvider();
-      const ts = await getLatestBlockTimestamp(provider);
+      console.log(currentLotteryId);
+      await expect(lottery.closeLottery(currentLotteryId))
+        .to.emit(lottery, "LotteryClosed")
+        .withArgs(1);
+    });
+
+    it("should be able to open a claim period", async function () {
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [4000, 3000, 2000, 1000],
+        0
+      );
+      const currentLotteryId = await lottery.currentLotteryId();
+      console.log(currentLotteryId);
+      lottery.closeLottery(BigNumber.from(currentLotteryId));
+      await lottery.setTreasury(dev_account.address);
+      await expect(
+        lottery.drawFinalNumberAndMakeLotteryClaimable(
+          BigNumber.from(currentLotteryId),
+          false
+        )
+      ).to.emit(lottery, "LotteryNumberDrawn");
+    });
+  });
+
+  describe("non existent lottery", async function () {
+    let now: number;
+    beforeEach(async function () {
+      now = getNow();
+    });
+
+    it("should not be able to buy tickets if there is no lottery", async function () {
+      await expect(lottery.buyTickets([11111])).to.be.reverted;
+    });
+
+    // it("should not be able to claim tickets if there is no lottery", async function () {
+    //   await expect(lottery.claimTickets(1, [1111], BigNumber.from(0))).to.be
+    //     .reverted;
+    // });
+
+    it("should not allow non owner to open lotteries", async function () {
       await expect(
         lottery
+          .connect(user1)
           .startLottery(
             60 * 60 * 24 * 3 + now,
             toWei("10"),
             [4000, 3000, 2000, 1000],
             0
           )
-          .to.emit(lottery, "LoterryOpen")
-          .withArgs(
-            currentLotteryId + 1,
-            ts + 1,
-            60 * 60 * 24 * 3 + now,
-            toWei("10"),
-            0
-          )
-      );
-    });
-
-    it("should be able to close a lottery", async function () {
-      await expect(lottery.closeLottery(1))
-        .to.emit(lottery, "LoterryClosed")
-        .withArgs(1);
-    });
-
-    it("should be able to open a claim period", async function () {
-      await expect(
-        lottery.drawFinalNumberAndMakeLotteryClaimable(1, false)
-      ).to.emit(lottery, "LotteryNumberDrawn");
+      ).to.be.reverted;
     });
   });
 
-  describe("Main Functions", function () {
+  describe("lottery with open status", function () {
     let tenTicketsArray: number[], elevenTicketsArray: number[];
     let now: number;
 
     beforeEach(async function () {
       tenTicketsArray = [
-        1234, 4321, 2222, 1111, 9999, 8888, 7777, 6666, 5555, 4444,
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
       ];
       elevenTicketsArray = [
-        1234, 4321, 2222, 1111, 9999, 8888, 7777, 6666, 5555, 4444, 3333,
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+        13333,
       ];
       now = getNow();
 
@@ -145,8 +193,12 @@ describe("Degis Lottery V2", function () {
     });
 
     it("any participant should be able to buy 10 tickets", async function () {
-      await lottery.connect(user1).buyTickets(tenTicketsArray);
-      expect(await lottery.userTicketIds[user1.address].length().to.equal(10));
+      await expect(lottery.connect(user1).buyTickets(tenTicketsArray)).to.emit(
+        lottery,
+        "TicketsPurchased"
+      );
+      const ticket = await lottery._userTicketIds(user1.address, 1, 2);
+      expect(ticket).to.equal(2);
     });
 
     it("should not be able to buy 11 tickets", async function () {
@@ -157,16 +209,22 @@ describe("Degis Lottery V2", function () {
 
     it("should be able to buy 11 tickets after changes", async function () {
       await lottery.setMaxNumberTicketsEachTime(11);
-      await lottery.connect(user1).buyTickets(elevenTicketsArray);
-      expect(await lottery._userTicketIds[user1.address].length().to.equal(21));
+      await expect(
+        lottery.connect(user1).buyTickets(elevenTicketsArray)
+      ).to.emit(lottery, "TicketsPurchased");
+      const tickets = await lottery._userTicketIds(user1.address, 1, 1);
+      console.log(tickets);
     });
 
     // it should not be able to buy more than maxNumberTicketsEachTime
     it("should not be able to buy more than 11 tickets after reduction", async function () {
+      await lottery.setMaxNumberTicketsEachTime(11);
       await lottery.setMaxNumberTicketsEachTime(10);
-      await expect(lottery.connect(user1).buyTickets(11)).to.be.revertedWith(
-        "Too many tickets"
-      );
+      await expect(
+        lottery.connect(user1).buyTickets(elevenTicketsArray)
+      ).to.be.revertedWith("Too many tickets");
+      // const tickets = await lottery._userTicketIds(user1.address, 1, 1);
+      // console.log(tickets);
     });
 
     // it shoud not be able to buy 0 tickets
@@ -176,20 +234,73 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    // it should not be able to buy tickets if the lottery is closed
-    it("should not be able to buy tickets if the lottery is closed", async function () {
-      const lotteryId = await lottery.currentLotteryId();
-      await lottery.connect(dev_account).closeLottery(lotteryId);
-      await expect(lottery.buyTickets([1111])).to.be.revertedWith(
+    it("should not be able to buy tickets if given bad numbers", async function () {
+      await expect(
+        lottery.connect(user1).buyTickets([999, 20000])
+      ).to.be.revertedWith("Ticket number is outside the range");
+    });
+  });
+
+  describe("lottery with closed status", function () {
+    let tenTicketsArray: number[], elevenTicketsArray: number[];
+    let now: number;
+    let lotteryId: BigNumber;
+
+    beforeEach(async function () {
+      tenTicketsArray = [
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+      ];
+      elevenTicketsArray = [
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+        13333,
+      ];
+      now = getNow();
+
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [4000, 3000, 2000, 1000],
+        0
+      );
+      lotteryId = await lottery.currentLotteryId();
+      await lottery.closeLottery(lotteryId);
+    });
+    it("should not be able to buy tickets if lottery is closed", async function () {
+      await expect(lottery.buyTickets([11111])).to.be.revertedWith(
         "Current lottery round not open"
       );
     });
+  });
 
-    // it should not be able to buy tickets if the lottery is closed and the claim period is open
-    it("should not be able to buy tickets if the lottery is closed", async function () {
-      const lotteryId = await lottery.currentLotteryId();
+  describe("lottery with claimable status", function () {
+    let tenTicketsArray: number[], elevenTicketsArray: number[];
+    let now: number;
+    let lotteryId: BigNumber;
+
+    beforeEach(async function () {
+      tenTicketsArray = [
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+      ];
+      elevenTicketsArray = [
+        11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
+        13333,
+      ];
+      now = getNow();
+
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [4000, 3000, 2000, 1000],
+        0
+      );
+      lotteryId = await lottery.currentLotteryId();
+      await lottery.setTreasury(dev_account.address);
+      await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, false);
-      await expect(lottery.buyTickets([1111])).to.be.revertedWith(
+    });
+
+    it("should not be able to buy tickets if lottery is claimable", async function () {
+      await expect(lottery.buyTickets([11111])).to.be.revertedWith(
         "Current lottery round not open"
       );
     });

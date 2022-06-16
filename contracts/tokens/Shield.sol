@@ -27,13 +27,16 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     // PTP USD Pool to be used for swapping stablecoins
     address public PTPPOOL = 0x66357dCaCe80431aee0A7507e2E361B7e2402370;
-
+    address public YUSDCTPOOL = 0x1da20Ac34187b2d9c74F729B85acB225D3341b25;
+    address public USDCeUSDCPOOL = 0x3a43A5851A3e3E0e25A3c1089670269786be1577;
+    address public aTRICURVEPOOL = 0xB755B949C126C04e0348DD881a5cF55d424742B2;
     // Constant stablecoin addresses
     address public constant USDC = 0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E;
     address public constant USDCe = 0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664;
     address public constant USDT = 0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7;
     address public constant USDTe = 0xc7198437980c041c805A1EDcbA50c1Ce5db95118;
     address public constant DAIe = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
+    address public constant YUSD = 0x111111111111ed1D73f860F57b2798b683f2d325;
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //

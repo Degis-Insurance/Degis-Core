@@ -33,7 +33,7 @@
     "@chainlink/contracts": "^0.4.1",
     "@openzeppelin/contracts": "^4.4.0",
     "@openzeppelin/contracts-upgradeable": "^4.5.1",
-    "@openzeppelin/hardhat-upgrades": "^1.16.0",
+    "@openzeppelin/hardhat-upgrades": "^1.18.3",
     "@tenderly/hardhat-tenderly": "^1.0.13",
     "hardhat-abi-exporter": "^2.7.2",
     "hardhat-contract-sizer": "^2.4.0",

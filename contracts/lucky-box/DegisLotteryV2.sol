@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
@@ -93,7 +93,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // Keep track of user ticket ids for a given lotteryId
 
     // User Address => Lottery Round => Tickets
-    mapping(address => mapping(uint256 => uint256[])) private _userTicketIds;
+    mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -104,7 +104,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 newMaxNumber
     );
     event AdminTokenRecovery(address token, uint256 amount);
-    event LotteryClose(uint256 indexed lotteryId);
+    event LotteryClosed(uint256 indexed lotteryId);
     event LotteryInjection(uint256 indexed lotteryId, uint256 injectedAmount);
     event LotteryOpen(
         uint256 indexed lotteryId,
@@ -120,7 +120,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     );
 
     event NewRandomGenerator(address indexed randomGenerator);
-    event TicketsPurchase(
+    event TicketsPurchased(
         address indexed buyer,
         uint256 indexed lotteryId,
         uint256 number,
@@ -147,7 +147,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     function initialize(address _degis, address _randomGenerator)
         public
         initializer
-    {
+    {   
+        __Ownable_init();
+        __ReentrancyGuard_init_unchained();
+
         DegisToken = IERC20(_degis);
         randomGenerator = IRandomNumberGenerator(_randomGenerator);
 
@@ -203,37 +206,37 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         return (ticketNumbers, ticketStatuses);
     }
 
-    /**
-     * @notice View rewards for a given ticket, providing a bracket, and lottery id
-     * @dev Computations are mostly offchain. This is used to verify a ticket!
-     *
-     * @param _lotteryId: lottery round
-     * @param _ticketId: ticket id
-     */
-    function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
-    /// ticketIdReward
-        external
-        view
-        returns (uint256)
-    {
-        // Check lottery is in claimable status
-        if (lotteries[_lotteryId].status != Status.Claimable) {
-            return 0;
-        }
+    // /**
+    //  * @notice View rewards for a given ticket, providing a bracket, and lottery id
+    //  * @dev Computations are mostly offchain. This is used to verify a ticket!
+    //  *
+    //  * @param _lotteryId: lottery round
+    //  * @param _ticketId: ticket id
+    //  */
+    // function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
+    // /// ticketIdReward
+    //     external
+    //     view
+    //     returns (uint256)
+    // {
+    //     // Check lottery is in claimable status
+    //     if (lotteries[_lotteryId].status != Status.Claimable) {
+    //         return 0;
+    //     }
 
-        // Check ticketId is within range
-        if (
-            lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
-            lotteries[_lotteryId].firstTicketId >= _ticketId
-        ) {
-            return 0;
-        }
+    //     // Check ticketId is within range
+    //     if (
+    //         lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
+    //         lotteries[_lotteryId].firstTicketId >= _ticketId
+    //     ) {
+    //         return 0;
+    //     }
 
-        uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
+    //     uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
 
-        return
-            _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
-    }
+    //     return
+    //         _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
+    // }
 
 
     // ---------------------------------------------------------------------------------------- //
@@ -290,7 +293,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 amountToBuy = _ticketNumbers.length;
         require(amountToBuy > 0, "No tickets are being bought");
         require(amountToBuy <= maxNumberTicketsEachTime, "Too many tickets");
-
         // Gas savings
         uint256 currentRound = currentLotteryId;
         require(
@@ -352,7 +354,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             }
         }
 
-        emit TicketsPurchase(msg.sender, currentRound, amountToBuy, degToPay);
+        emit TicketsPurchased(msg.sender, currentRound, amountToBuy, degToPay);
     }
 
     /**
@@ -440,58 +442,58 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
     }
 
-    /**
-     * @notice Claim all winning tickets for a lottery round
-     *
-     * @dev Callable by users only, not contract
-     *      Gas cost may be oversized, recommended to get brackets offchain first
-     *
-     * @param _lotteryId Lottery id
-     */
-    function claimAllTickets(uint256 _lotteryId)
-        external
-        notContract
-        nonReentrant
-    {
-        require(
-            lotteries[_lotteryId].status == Status.Claimable,
-            "this round of lottery are not ready for claiming"
-        );
+    // /**
+    //  * @notice Claim all winning tickets for a lottery round
+    //  *
+    //  * @dev Callable by users only, not contract
+    //  *      Gas cost may be oversized, recommended to get brackets offchain first
+    //  *
+    //  * @param _lotteryId Lottery id
+    //  */
+    // function claimAllTickets(uint256 _lotteryId)
+    //     external
+    //     notContract
+    //     nonReentrant
+    // {
+    //     require(
+    //         lotteries[_lotteryId].status == Status.Claimable,
+    //         "this round of lottery are not ready for claiming"
+    //     );
 
-        uint256 rewardToTransfer;
+    //     uint256 rewardToTransfer;
 
-        for (uint256 i; i < _userTicketIds[msg.sender][_lotteryId].length; ) {
-            uint256 thisTicketId = _userTicketIds[msg.sender][_lotteryId][i];
+    //     for (uint256 i; i < _userTicketIds[msg.sender][_lotteryId].length; ) {
+    //         uint256 thisTicketId = _userTicketIds[msg.sender][_lotteryId][i];
 
-            Ticket memory thisTicket = tickets[thisTicketId];
+    //         Ticket memory thisTicket = tickets[thisTicketId];
 
-            require(msg.sender == thisTicket.owner, "Not the ticket owner");
+    //         require(msg.sender == thisTicket.owner, "Not the ticket owner");
 
-            uint32 highestBracket = _getBracket(_lotteryId, thisTicketId);
+    //         uint32 highestBracket = _getBracket(_lotteryId, thisTicketId);
 
-            uint256 rewardForTicketId = _calculateRewardsForTicketId(
-                _lotteryId,
-                thisTicketId,
-                highestBracket
-            );
+    //         uint256 rewardForTicketId = _calculateRewardsForTicketId(
+    //             _lotteryId,
+    //             thisTicketId,
+    //             highestBracket
+    //         );
 
-            require(rewardForTicketId > 0, "No prize");
+    //         require(rewardForTicketId > 0, "No prize");
 
-            // Increase the reward to transfer
-            rewardToTransfer += rewardForTicketId;
+    //         // Increase the reward to transfer
+    //         rewardToTransfer += rewardForTicketId;
 
-            unchecked {
-                ++i;
-            }
-        }
+    //         unchecked {
+    //             ++i;
+    //         }
+    //     }
 
-        // Transfer the prize to winner
-        lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+    //     // Transfer the prize to winner
+    //     lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
 
-        DegisToken.transfer(msg.sender, rewardToTransfer);
+    //     DegisToken.transfer(msg.sender, rewardToTransfer);
 
-        emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
-    }
+    //     emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
+    // }
 
     /**
      * @notice Start the lottery
@@ -573,7 +575,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Update the lottery status to "Closed"
         lotteries[_lotteryId].status = Status.Closed;
 
-        emit LotteryClose(_lotteryId);
+        emit LotteryClosed(_lotteryId);
     }
 
     /**
@@ -781,10 +783,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      *
      * @param _x number
      */
-    function int2ln(uint256 x) internal pure returns (uint256) {
+    function int2ln(uint256 _x) internal pure returns (uint256) {
         // return (x-1)*10000;
         uint256 y = 10000;
-        int128 x_128 = x.fromUInt();
+        int128 x_128 = _x.fromUInt();
         int128 y_128 = y.fromUInt();
         int128 ln_x_128 = x_128.ln();
         ln_x_128 = ln_x_128.mul(y_128);
@@ -825,34 +827,34 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         }
     }
 
-    /**
-     * @notice returns highest bracket a ticket number falls into
-     *
-     * @param _lotteryId Lottery round
-     * @param _ticketId  Ticket id
-     */
-    function _getBracket(uint256 _lotteryId, uint256 _ticketId)
-        internal
-        view
-        returns (uint32 highestBracket)
-    {
-        uint32 userNumber = tickets[_ticketId].number;
+    // /**
+    //  * @notice returns highest bracket a ticket number falls into
+    //  *
+    //  * @param _lotteryId Lottery round
+    //  * @param _ticketId  Ticket id
+    //  */
+    // function _getBracket(uint256 _lotteryId, uint256 _ticketId)
+    //     internal
+    //     view
+    //     returns (uint32 highestBracket)
+    // {
+    //     uint32 userNumber = tickets[_ticketId].number;
 
-        // Retrieve the winning number combination
-        uint32 winningNumber = lotteries[_lotteryId].finalNumber;
+    //     // Retrieve the winning number combination
+    //     uint32 winningNumber = lotteries[_lotteryId].finalNumber;
 
-        // Smaller number => more prize
-        // 0 => highest prize
-        // 4 => no prize
-        highestBracket = 4;
-        for (uint32 i = 1; i <= 4; ++i) {
-            if (
-                winningNumber % (uint32(10)**i) == userNumber % (uint32(10)**i)
-            ) {
-                highestBracket = i - 1;
-            }
-        }
-    }
+    //     // Smaller number => more prize
+    //     // 0 => highest prize
+    //     // 4 => no prize
+    //     highestBracket = 4;
+    //     for (uint32 i = 1; i <= 4; ++i) {
+    //         if (
+    //             winningNumber % (uint32(10)**i) == userNumber % (uint32(10)**i)
+    //         ) {
+    //             highestBracket = i - 1;
+    //         }
+    //     }
+    // }
 
     /**
      * @notice Calculate all awards
