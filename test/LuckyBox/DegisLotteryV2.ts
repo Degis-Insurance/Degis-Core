@@ -270,6 +270,7 @@ describe("Degis Lottery V2", function () {
         "Current lottery round not open"
       );
     });
+    it("should not be able to claim tickets if lottery is closed", async function () {});
   });
 
   describe("lottery with claimable status", function () {
@@ -304,5 +305,16 @@ describe("Degis Lottery V2", function () {
         "Current lottery round not open"
       );
     });
+
+    // it should get reward equivalent to one correct number
+    it("it should get reward equivalent to one correct number", async function () {});
+
+    it("it should get reward equivalent to two correct numbers", async function () {});
+
+    it("it should get reward equivalent to three correct numbers", async function () {});
+
+    it("it should get reward equivalent to four correct numbers", async function () {});
+
+    it("it should not be able to claim not owned tickets", async function () {});
   });
 });
