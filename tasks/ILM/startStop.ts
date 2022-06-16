@@ -88,13 +88,6 @@ task("stopILM", "Stop a round ILM")
       addressList[network.name].PolicyCoreUpgradeable
     );
 
-    let stablecoinAddress: string;
-    if (network.name == "avax" || network.name == "avaxTest") {
-      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
-    } else stablecoinAddress = addressList[network.name].MockUSD;
-
-    console.log("Stablecoin address: ", stablecoinAddress);
-
     const tx = await ILM.finishILM(taskArgs.policytoken, taskArgs.deadline, 50);
     console.log("tx details:", await tx.wait());
 

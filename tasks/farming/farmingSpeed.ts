@@ -116,12 +116,12 @@ const bonus_4 = toWei("0.01157");
 // Token: IM_AVAX_15.0_L_0107
 // Address: 0x6B657FB68907f0005931AA4088086a73Af4F0a40
 
-const basic_6 = toWei("0.03472");
-const bonus_6 = toWei("0.00694");
+const basic_6 = toWei("0.03472"); // 3000 deg / day
+const bonus_6 = toWei("0.00694"); // 600 deg / day
 
 // Pool Id 7
 // Token: AVAX_15.0_L_0107
 // Address:
 
-const basic_7 = toWei("0.02893");
-const bonus_7 = toWei("0.00578");
+const basic_7 = toWei("0.02893"); // 2500 deg / day
+const bonus_7 = toWei("0.00578"); // 500 deg / day

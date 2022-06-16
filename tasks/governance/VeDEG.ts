@@ -85,18 +85,32 @@ task("addWhiteList-Ve", "Add whitelist for veDEG").setAction(async (_, hre) => {
 
   // const IncomeSharingAddress = addressList[network.name].IncomeSharingVault;
   // const myAddress = "0xeB496257B64Cc2D39c291B209F465f3cfADE0873";
-  const myAddress = "0xf84eb208b432bacbc417f109e929f432b64ffd7e";
+  const myAddress = "0xd135550c6ecee8d9e2953e498a570c2d5c278d82";
 
-  const lockedAmount = await veDEG.locked(myAddress);
-  const userAmount = (await income.users(1, myAddress)).totalAmount;
+  let lockedAmount, userAmount;
+
+  lockedAmount = await veDEG.locked(myAddress);
+  userAmount = (await income.users(1, myAddress)).totalAmount;
 
   console.log("lockedAmount: ", lockedAmount.toString());
   console.log("userAmount: ", userAmount.toString());
 
-  // const tx = await veDEG.addWhitelist(myAddress);
+  // const tx = await veDEG.removeWhitelist(
+  //   "0xcA11bde05977b3631167028862bE2a173976CA11"
+  // );
 
-  const tx = await veDEG.unlockVeDEG(myAddress, lockedAmount.sub(userAmount));
-  console.log("tx details: ", await tx.wait());
+  if (lockedAmount.gt(userAmount)) {
+    const tx = await veDEG.unlockVeDEG(myAddress, lockedAmount.sub(userAmount));
+    console.log("tx details: ", await tx.wait());
+  } else {
+    console.log("locked equal to userAmount");
+  }
+
+  lockedAmount = await veDEG.locked(myAddress);
+  userAmount = (await income.users(1, myAddress)).totalAmount;
+
+  console.log("lockedAmount: ", lockedAmount.toString());
+  console.log("userAmount: ", userAmount.toString());
 });
 
 task("checkVeState", "Add whitelist for veDEG").setAction(async (_, hre) => {
@@ -106,13 +120,24 @@ task("checkVeState", "Add whitelist for veDEG").setAction(async (_, hre) => {
   const [dev_account] = await hre.ethers.getSigners();
   console.log("The default signer is: ", dev_account.address);
 
-  const user = "0xf84eb208b432bacbc417f109e929f432b64ffd7e";
+  const user = "0x37d92a1bab189b2f58975c4ee6210343f3e926a0";
 
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
   const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
     dev_account
   ).attach(veDEGAddress);
+
+  const incomeSharing: IncomeSharingVault = new IncomeSharingVault__factory(
+    dev_account
+  ).attach(addressList[network.name].IncomeSharingVault);
+
+  const userAmount = await incomeSharing.users(1, user);
+  console.log(
+    "user Amount:",
+    formatEther(userAmount.totalAmount),
+    formatEther(userAmount.rewardDebt)
+  );
 
   const balance = await veDEG.balanceOf(user);
   console.log("balance: ", formatEther(balance));
