@@ -336,28 +336,28 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    it("it should get reward equivalent to one correct number in wrong order", async function () {
+    it("it should not get reward equivalent to one correct number in wrong order", async function () {
       await expect(lottery.claimTickets(1, [5], [0])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to two correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to two correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [6], [1])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to three correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to three correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [7], [2])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to four correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to four correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [8], [3])).to.emit(
         lottery,
         "TicketsClaimed"
