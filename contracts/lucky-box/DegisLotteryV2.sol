@@ -567,8 +567,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             DegisToken.transfer(treasury, amountToTreasury);
         }
 
-       
-
         emit LotteryNumberDrawn(
             currentLotteryId,
             finalNumber, // final result for this round
@@ -623,7 +621,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Transfer DEG
         DegisToken.transferFrom(msg.sender, address(this), _amount);
-
 
         emit LotteryInjection(currentRound, _amount);
     }
@@ -715,7 +712,11 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice View ticker statuses and numbers for an array of ticket ids
-     * @param _ticketIds: array of _ticketId
+     *
+     * @param _ticketIds Array of _ticketId
+     *
+     * @return ticketNumbers All ticket numbers
+     * @return ticketStatuses All ticket statuses (whether claimed)
      */
     function viewNumbersAndStatusesForTicketIds(uint256[] calldata _ticketIds)
         external
@@ -723,22 +724,29 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         returns (uint32[] memory, bool[] memory)
     {
         uint256 length = _ticketIds.length;
+
         uint32[] memory ticketNumbers = new uint32[](length);
         bool[] memory ticketStatuses = new bool[](length);
 
         for (uint256 i = 0; i < length; i++) {
             ticketNumbers[i] = tickets[_ticketIds[i]].number;
+            ticketStatuses[i] = !(tickets[_ticketIds[i]].owner == address(0));
         }
 
         return (ticketNumbers, ticketStatuses);
     }
 
     /**
-     * @notice View rewards for a given ticket, providing a bracket, and lottery id
-     * @dev Computations are mostly offchain. This is used to verify a ticket!
+     * @notice View rewards for a given ticket in a given lottery round
      *
-     * @param _lotteryId: lottery round
-     * @param _ticketId: ticket id
+     * @dev This function will help to find the highest prize bracket
+     *      But this computation is encouraged to be done off-chain
+     *      Better to get bracket first and then call "_calculateRewardsForTicketId()"
+     *
+     * @param _lotteryId Lottery round
+     * @param _ticketId  Ticket id
+     *
+     * @return reward Ticket reward
      */
     function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
         external
@@ -760,8 +768,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
 
-        return
-            _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
+        if (highestBracket > 3) return 0;
+        else
+            return
+                _calculateRewardsForTicketId(
+                    _lotteryId,
+                    _ticketId,
+                    highestBracket
+                );
     }
 
     /**
