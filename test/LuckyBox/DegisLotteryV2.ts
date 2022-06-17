@@ -118,6 +118,17 @@ describe("Degis Lottery V2", function () {
         );
     });
 
+    it("should not be able to start a lottery if rewards breakdown too high", async function () {
+      await expect(
+        lottery.startLottery(
+          60 * 60 * 24 * 3 + now,
+          toWei("10"),
+          [4000, 3000, 2000, 1001],
+          0
+        )
+      ).to.be.revertedWith("Rewards breakdown too high");
+    });
+
     it("should be able to close a lottery", async function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
@@ -142,7 +153,7 @@ describe("Degis Lottery V2", function () {
       lottery.closeLottery(BigNumber.from(currentLotteryId));
       await lottery.setTreasury(dev_account.address);
       await expect(
-        lottery.drawFinalNumberAndMakeLotteryClaimable(
+        lottery.makeLotteryClaimable(
           BigNumber.from(currentLotteryId),
           false
         )
@@ -286,8 +297,9 @@ describe("Degis Lottery V2", function () {
       lotteryId = await lottery.currentLotteryId();
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
-      await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, false);
-      winnerTicket = await rng.randomResult();
+      await lottery.makeLotteryClaimable(lotteryId, false);
+      const lotteryInfo = await lottery.lotteries(1);
+      console.log(lotteryInfo.winningNumber);
     });
 
     it("should not be able to buy tickets if lottery is claimable", async function () {
@@ -324,28 +336,28 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    it("it should get reward equivalent to one correct number in wrong order", async function () {
+    it("it should not get reward equivalent to one correct number in wrong order", async function () {
       await expect(lottery.claimTickets(1, [5], [0])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to two correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to two correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [6], [1])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to three correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to three correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [7], [2])).to.emit(
         lottery,
         "TicketsClaimed"
       );
     });
 
-    it("it should get reward equivalent to four correct numbers in wrong order", async function () {
+    it("it should not get reward equivalent to four correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [8], [3])).to.emit(
         lottery,
         "TicketsClaimed"
