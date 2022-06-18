@@ -39,7 +39,7 @@ contract VRFMock is Ownable {
             // abi.encodePacked((block.timestamp).uintToString(), address(this))
             abi.encodePacked("0x")
         );
-        randomResult = _rand(randInput) % 10000;
+        randomResult = _rand(randInput) % 10000 + 10000;
 
         latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }

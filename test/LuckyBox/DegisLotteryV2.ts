@@ -114,6 +114,7 @@ describe("Degis Lottery V2", function () {
           now + 1,
           60 * 60 * 24 * 3 + now,
           toWei("10"),
+          [4000, 3000, 2000, 1000],
           0
         );
     });
@@ -133,12 +134,12 @@ describe("Degis Lottery V2", function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
         toWei("10"),
-        [4000, 3000, 2000, 1000],
+        [1000, 2000, 3000, 4000],
         0
       );
       const currentLotteryId = await lottery.currentLotteryId();
       await expect(lottery.closeLottery(currentLotteryId))
-        .to.emit(lottery, "LotteryClosed")
+        .to.emit(lottery, "LotteryClose")
         .withArgs(1);
     });
 
@@ -146,14 +147,14 @@ describe("Degis Lottery V2", function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
         toWei("10"),
-        [4000, 3000, 2000, 1000],
+        [1000, 2000, 3000, 4000],
         0
       );
       const currentLotteryId = await lottery.currentLotteryId();
       lottery.closeLottery(BigNumber.from(currentLotteryId));
       await lottery.setTreasury(dev_account.address);
       await expect(
-        lottery.makeLotteryClaimable(
+        lottery.drawFinalNumberAndMakeLotteryClaimable(
           BigNumber.from(currentLotteryId),
           false
         )
@@ -202,7 +203,7 @@ describe("Degis Lottery V2", function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
         toWei("10"),
-        [4000, 3000, 2000, 1000],
+        [1000, 2000, 3000, 4000],
         0
       );
     });
@@ -247,7 +248,7 @@ describe("Degis Lottery V2", function () {
     it("should not be able to buy tickets if given bad numbers", async function () {
       await expect(
         lottery.connect(user1).buyTickets([999, 20000])
-      ).to.be.revertedWith("Ticket number is outside the range");
+      ).to.be.revertedWith("Ticket number is outside range");
     });
   });
 
@@ -261,7 +262,7 @@ describe("Degis Lottery V2", function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
         toWei("10"),
-        [4000, 3000, 2000, 1000],
+        [1000, 2000, 3000, 4000],
         0
       );
       lotteryId = await lottery.currentLotteryId();
@@ -278,7 +279,8 @@ describe("Degis Lottery V2", function () {
   describe("lottery with claimable status", function () {
     let now: number;
     let lotteryId: BigNumber;
-    let winnerTicket: BigNumber;
+
+    let finalNumber: number;
 
     beforeEach(async function () {
       now = getNow();
@@ -286,20 +288,20 @@ describe("Degis Lottery V2", function () {
       await lottery.startLottery(
         60 * 60 * 24 * 3 + now,
         toWei("10"),
-        [4000, 3000, 2000, 1000],
+        [1000, 2000, 3000, 4000],
         0
       );
       // 0,     1,     2,     3,      4,    5,      6,    7,      8
       // 0,     one,   two   three,   four, oneB,   twoB, threeB, fourB
       await lottery.buyTickets([
-        11111, 19111, 15911, 15971, 15975, 19111, 19511, 19551, 19557,
+        11111, 11115, 11175, 11975, 15975, 19557, 15111, 19571, 17559,
       ]);
       lotteryId = await lottery.currentLotteryId();
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
-      await lottery.makeLotteryClaimable(lotteryId, false);
-      const lotteryInfo = await lottery.lotteries(1);
-      console.log(lotteryInfo.winningNumber);
+      await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, false);
+      const lotteryInfo = await lottery.lotteries(lotteryId);
+      finalNumber = lotteryInfo.finalNumber;
     });
 
     it("should not be able to buy tickets if lottery is claimable", async function () {
@@ -311,67 +313,91 @@ describe("Degis Lottery V2", function () {
     it("it should get reward equivalent to one correct number in right order", async function () {
       await expect(lottery.claimTickets(1, [1], [0])).to.emit(
         lottery,
-        "TicketsClaimed"
+        "TicketsClaim"
       );
     });
 
     it("it should get reward equivalent to two correct numbers in right order", async function () {
       await expect(lottery.claimTickets(1, [2], [1])).to.emit(
         lottery,
-        "TicketsClaimed"
+        "TicketsClaim"
       );
     });
 
     it("it should get reward equivalent to three correct numbers in right order", async function () {
       await expect(lottery.claimTickets(1, [3], [2])).to.emit(
         lottery,
-        "TicketsClaimed"
+        "TicketsClaim"
       );
     });
 
     it("it should get reward equivalent to four correct numbers in right order", async function () {
-      await expect(lottery.claimTickets(1, [4], [3])).to.emit(
-        lottery,
-        "TicketsClaimed"
-      );
+      try {
+        const rewardsPerBracket = await lottery.getRewardPerTicketInBracket(
+          lotteryId
+        );
+        const numberTicketsBracket1 = await lottery._numberTicketsPerLotteryId(
+          lotteryId,
+          6
+        );
+        const numberTicketsBracket2 = await lottery._numberTicketsPerLotteryId(
+          lotteryId,
+          86
+        );
+        const numberTicketsBracket3 = await lottery._numberTicketsPerLotteryId(
+          lotteryId,
+          1086
+        );
+        const numberTicketsBracket4 = await lottery._numberTicketsPerLotteryId(
+          lotteryId,
+          7086
+        );
+        console.log("1", numberTicketsBracket1);
+        console.log("2", numberTicketsBracket2);
+        console.log("3", numberTicketsBracket3);
+        console.log("4", numberTicketsBracket4);
+        console.log("rewardsPerBracket", rewardsPerBracket);
+        console.log("finalNumber", finalNumber);
+        const userTicketIds = await lottery._userTicketIds(
+          dev_account.address,
+          1,
+          4
+        );
+        console.log(await lottery.tickets(userTicketIds.toNumber()));
+        await expect(lottery.claimTickets(1, [4], [3]))
+          .to.emit(lottery, "TicketsClaim")
+          .withArgs(dev_account.address, toWei("10"), 1);
+      } catch (e) {
+        console.log("error", e);
+      }
     });
 
     it("it should not get reward equivalent to one correct number in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [5], [0])).to.emit(
-        lottery,
-        "TicketsClaimed"
+      await expect(lottery.claimTickets(1, [5], [0])).to.be.revertedWith(
+        "No prize"
       );
     });
 
     it("it should not get reward equivalent to two correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [6], [1])).to.emit(
-        lottery,
-        "TicketsClaimed"
+      await expect(lottery.claimTickets(1, [6], [1])).to.be.revertedWith(
+        "No prize"
       );
     });
 
     it("it should not get reward equivalent to three correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [7], [2])).to.emit(
-        lottery,
-        "TicketsClaimed"
+      await expect(lottery.claimTickets(1, [7], [2])).to.be.revertedWith(
+        "No prize"
       );
     });
 
     it("it should not get reward equivalent to four correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [8], [3])).to.emit(
-        lottery,
-        "TicketsClaimed"
+      await expect(lottery.claimTickets(1, [8], [3])).to.be.revertedWith(
+        "No prize"
       );
     });
 
     it("should be able to claim all tickets", async function () {
-      await expect(
-        lottery.claimTickets(
-          1,
-          [1, 2, 3, 4, 5, 6, 7, 8],
-          [0, 1, 2, 3, 0, 1, 2, 3]
-        )
-      ).to.emit(lottery, "TicketsClaimed");
+      await expect(lottery.claimAllTickets(1)).to.emit(lottery, "TicketsClaim");
     });
 
     it("it should not get rewards if claiming non existent ticketId", async function () {
@@ -391,5 +417,7 @@ describe("Degis Lottery V2", function () {
         lottery.connect(user1).claimTickets(1, [4], [3])
       ).to.be.revertedWith("Not the ticket owner or already claimed");
     });
+
+    describe("past lotteries", async function () {});
   });
 });
