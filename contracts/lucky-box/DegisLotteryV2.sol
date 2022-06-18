@@ -520,7 +520,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require(_fee <= MAX_TREASURY_FEE, "Treasury fee too high");
 
         require(
-            (_rewardsBreakdown[0] +
+               (_rewardsBreakdown[0] +
                 _rewardsBreakdown[1] +
                 _rewardsBreakdown[2] +
                 _rewardsBreakdown[3]) <= 10000,
@@ -684,8 +684,12 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Currently treasuryFee = 0 => amountToWinners = amountCollected
         uint256 amountToWinners = (
             ((lotteries[_lotteryId].amountCollected) *
-                (10000 - lotteries[_lotteryId].treasuryFee))
+                (8000 - lotteries[_lotteryId].treasuryFee))
         ) / 10000;
+
+        uint256 amountToNextLottery = (lotteries[_lotteryId].amountCollected) * (2000 - lotteries[_lotteryId].treasuryFee) / 10000;
+
+        uint256 amountToTreasury = (lotteries[_lotteryId].amountCollected) - amountToWinners - amountToNextLottery;
 
         // Calculate prizes for each bracket, starting from the highest one
         // Initialize a number to count addresses in all the previous bracket
@@ -736,20 +740,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         lotteries[_lotteryId].finalNumber = finalNumber;
         lotteries[_lotteryId].status = Status.Claimable;
 
-        uint256 amountToTreasury = 0;
-        amountToTreasury =
-            amountToWinners -
-            lotteries[_lotteryId].pendingRewards;
-
         // If autoInjection, all unused prize will be rolled to next round
         if (_autoInjection) {
-            pendingInjectionNextLottery = amountToTreasury;
-            amountToTreasury = 0;
+            pendingInjectionNextLottery = amountToNextLottery;
         }
-
-        // Amount to treasury from the treasuryFee part
-        amountToTreasury += (lotteries[_lotteryId].amountCollected -
-            amountToWinners);
 
         // Transfer prize to treasury address
         if (amountToTreasury > 0) {

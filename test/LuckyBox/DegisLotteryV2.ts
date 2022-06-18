@@ -156,7 +156,7 @@ describe("Degis Lottery V2", function () {
       await expect(
         lottery.drawFinalNumberAndMakeLotteryClaimable(
           BigNumber.from(currentLotteryId),
-          false
+          true
         )
       ).to.emit(lottery, "LotteryNumberDrawn");
     });
@@ -299,7 +299,7 @@ describe("Degis Lottery V2", function () {
       lotteryId = await lottery.currentLotteryId();
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
-      await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, false);
+      await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
       const lotteryInfo = await lottery.lotteries(lotteryId);
       finalNumber = lotteryInfo.finalNumber;
     });
@@ -372,25 +372,32 @@ describe("Degis Lottery V2", function () {
       }
     });
 
-    it("it should not get reward equivalent to one correct number in wrong order", async function () {
+    it("should be able to get multiple rewards equivalent to specified tickets in right order", async function () {
+      await expect(lottery.claimTickets(1, [3, 4], [2, 3])).to.emit(
+        lottery,
+        "TicketsClaim"
+      );
+    });
+
+    it("should not get reward equivalent to one correct number in wrong order", async function () {
       await expect(lottery.claimTickets(1, [5], [0])).to.be.revertedWith(
         "No prize"
       );
     });
 
-    it("it should not get reward equivalent to two correct numbers in wrong order", async function () {
+    it("should not get reward equivalent to two correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [6], [1])).to.be.revertedWith(
         "No prize"
       );
     });
 
-    it("it should not get reward equivalent to three correct numbers in wrong order", async function () {
+    it("should not get reward equivalent to three correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [7], [2])).to.be.revertedWith(
         "No prize"
       );
     });
 
-    it("it should not get reward equivalent to four correct numbers in wrong order", async function () {
+    it("should not get reward equivalent to four correct numbers in wrong order", async function () {
       await expect(lottery.claimTickets(1, [8], [3])).to.be.revertedWith(
         "No prize"
       );
@@ -400,24 +407,102 @@ describe("Degis Lottery V2", function () {
       await expect(lottery.claimAllTickets(1)).to.emit(lottery, "TicketsClaim");
     });
 
-    it("it should not get rewards if claiming non existent ticketId", async function () {
+    it("should not get rewards if claiming non existent ticketId", async function () {
       await expect(lottery.claimTickets(1, [10], [0])).to.be.revertedWith(
         "Ticket id too large"
       );
     });
 
-    it("it should not get rewards if diverging input length in bracket and ticketIds", async function () {
+    it("should not get rewards if diverging input length in bracket and ticketIds", async function () {
       await expect(lottery.claimTickets(1, [1], [3, 0])).to.be.revertedWith(
         "Not same length"
       );
     });
 
-    it("it should not be able to claim not owned tickets", async function () {
+    it("should not be able to claim not owned tickets", async function () {
       await expect(
         lottery.connect(user1).claimTickets(1, [4], [3])
       ).to.be.revertedWith("Not the ticket owner or already claimed");
     });
 
-    describe("past lotteries", async function () {});
+    it("should have allocated rewards to next lottery", async function () {
+      expect(await lottery.pendingInjectionNextLottery()).to.be.above(0);
+    });
+  });
+
+  describe("past lotteries", async function () {
+    let now: number;
+    let lotteryId: BigNumber;
+
+    let finalNumber: number;
+
+    beforeEach(async function () {
+      now = getNow();
+
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [1000, 2000, 3000, 4000],
+        0
+      );
+      // 0,     1,     2,     3,      4,    5,      6,    7,      8
+      // 0,     one,   two   three,   four, oneB,   twoB, threeB, fourB
+      await lottery.buyTickets([
+        11111, 11115, 11175, 11975, 15975, 19557, 15111, 19571, 17559,
+      ]);
+      lotteryId = await lottery.currentLotteryId();
+      await lottery.setTreasury(dev_account.address);
+      await lottery.closeLottery(lotteryId);
+      await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
+      const lotteryInfo = await lottery.lotteries(lotteryId);
+      finalNumber = lotteryInfo.finalNumber;
+
+      // claim only half of winning tickets
+      await lottery.claimTickets(1, [3, 4], [2, 3]);
+      await lottery.startLottery(
+        60 * 60 * 24 * 3 + now,
+        toWei("10"),
+        [1000, 2000, 3000, 4000],
+        0
+      );
+      await lottery.buyTickets([
+        11111, 11115, 11175, 11975, 15975, 19557, 15111, 19571, 17559,
+      ]);
+      await lottery.closeLottery(2);
+      await lottery.drawFinalNumberAndMakeLotteryClaimable(2, true);
+    });
+
+    it("should be able to claim unclaimed previous tickets", async function () {
+      await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
+        lottery,
+        "TicketsClaim"
+      );
+    });
+
+    it("should not be able to claim already claimed previous tickets", async function () {
+      await expect(lottery.claimTickets(1, [3, 4], [2, 3])).to.be.revertedWith(
+        "Not the ticket owner or already claimed"
+      );
+    });
+
+    it("should not be able to claim unclaimed previous tickets if not owner", async function () {
+      await expect(
+        lottery.connect(user1).claimTickets(1, [1, 2], [0, 1])
+      ).to.be.revertedWith("Not the ticket owner or already claimed");
+    });
+
+    it("should not be able to claim alreadt claimed previous tickets as not owner", async function () {
+      await expect(
+        lottery.connect(user1).claimTickets(1, [1, 2], [0, 1])
+      ).to.be.revertedWith("Not the ticket owner or already claimed");
+    });
+
+    it("should be able to claim previous tickets despite current lottery fully claimed", async function () {
+      await expect(lottery.claimAllTickets(2)).to.emit(lottery, "TicketsClaim");
+      await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
+        lottery,
+        "TicketsClaim"
+      );
+    });
   });
 });
