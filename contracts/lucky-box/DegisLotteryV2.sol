@@ -831,7 +831,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         pure
         returns (uint256 totalPrice)
     {
-        totalPrice = ((_price * _num * DISCOUNT_DIVISOR) / 100)**_num;
+        totalPrice = _price * _num * (DISCOUNT_DIVISOR**_num / 100**_num);
     }
 
     /**

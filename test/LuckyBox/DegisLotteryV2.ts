@@ -33,6 +33,21 @@ describe("Degis Lottery V2", function () {
   let RandomNumberGenerator: VRFMock__factory, rng: VRFMock;
   let tenTicketsArray: number[], elevenTicketsArray: number[];
 
+  const defaultRewardBreakdown: [
+    BigNumberish,
+    BigNumberish,
+    BigNumberish,
+    BigNumberish
+  ] = [
+    BigNumber.from(1000),
+    BigNumber.from(2000),
+    BigNumber.from(3000),
+    BigNumber.from(4000),
+  ];
+
+  const treasuryFee = 0;
+  const realTreasuryFee = 2000;
+
   beforeEach(async function () {
     [dev_account, user1, treasury] = await ethers.getSigners();
 
@@ -112,19 +127,6 @@ describe("Degis Lottery V2", function () {
   describe("Owner Functions", function () {
     let now: number;
     const roundLength = 60 * 60 * 24 * 7; // 1 week
-    const treasuryFee = 0;
-
-    const defaultRewardBreakdown: [
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish
-    ] = [
-      BigNumber.from(1000),
-      BigNumber.from(2000),
-      BigNumber.from(3000),
-      BigNumber.from(4000),
-    ];
 
     beforeEach(async function () {});
 
@@ -220,9 +222,9 @@ describe("Degis Lottery V2", function () {
     });
   });
 
-  describe("non existent lottery", async function () {
+  describe("Non existent lottery", async function () {
     let now: number;
-    beforeEach(async function () {});
+    const roundLength = 60 * 60 * 24 * 7; // 1 week
 
     it("should not be able to buy tickets if there is no lottery", async function () {
       await expect(lottery.buyTickets([11111])).to.be.revertedWith(
@@ -231,36 +233,38 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should not be able to claim tickets if there is no lottery", async function () {
-      await expect(
-        lottery.claimTickets(1, [11111], [BigNumber.from(0)])
-      ).to.be.revertedWith("Not claimable");
+      await expect(lottery.claimTickets(1, [11111], [0])).to.be.revertedWith(
+        "Not claimable"
+      );
     });
 
     it("should not allow non owner to open lotteries", async function () {
+      now = await getLatestBlockTimestamp(ethers.provider);
       await expect(
         lottery
           .connect(user1)
           .startLottery(
-            60 * 60 * 24 * 3 + now,
+            now + roundLength,
             toWei("10"),
-            [4000, 3000, 2000, 1000],
-            0
+            defaultRewardBreakdown,
+            treasuryFee
           )
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
   });
 
-  describe("lottery with open status", function () {
+  describe("Lottery with open status", function () {
     let now: number;
+    const roundLength = 60 * 60 * 24 * 7; // 1 week
 
     beforeEach(async function () {
-      now = getNow();
+      now = await getLatestBlockTimestamp(ethers.provider);
 
       await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
+        now + roundLength,
         toWei("10"),
-        [1000, 2000, 3000, 4000],
-        0
+        defaultRewardBreakdown,
+        treasuryFee
       );
     });
 
@@ -326,7 +330,7 @@ describe("Degis Lottery V2", function () {
     });
     it("should not be able to buy tickets if lottery is closed", async function () {
       await expect(lottery.buyTickets([11111])).to.be.revertedWith(
-        "Current lottery round not open"
+        "Round not open"
       );
     });
     it("should not be able to claim tickets if lottery is closed", async function () {});
@@ -336,16 +340,18 @@ describe("Degis Lottery V2", function () {
     let now: number;
     let lotteryId: BigNumber;
 
+    const roundLength = 60 * 60 * 24 * 7; // 1 week
+
     let finalNumber: number;
 
     beforeEach(async function () {
-      now = getNow();
+      now = await getLatestBlockTimestamp(ethers.provider);
 
       await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
+        now + roundLength,
         toWei("10"),
-        [1000, 2000, 3000, 4000],
-        0
+        defaultRewardBreakdown,
+        treasuryFee
       );
       // 0,     1,     2,     3,      4,    5,      6,    7,      8
       // 0,     one,   two   three,   four, oneB,   twoB, threeB, fourB
@@ -353,20 +359,22 @@ describe("Degis Lottery V2", function () {
         11111, 11115, 11175, 11975, 15975, 19557, 15111, 19571, 17559,
       ]);
       lotteryId = await lottery.currentLotteryId();
+      
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
+
       const lotteryInfo = await lottery.lotteries(lotteryId);
       finalNumber = lotteryInfo.finalNumber;
     });
 
     it("should not be able to buy tickets if lottery is claimable", async function () {
       await expect(lottery.buyTickets([11111])).to.be.revertedWith(
-        "Current lottery round not open"
+        "Round not open"
       );
     });
 
-    it("it should get reward equivalent to one correct number in right order", async function () {
+    it("should get reward equivalent to one correct number in right order", async function () {
       await expect(lottery.claimTickets(1, [1], [0])).to.emit(
         lottery,
         "TicketsClaim"
