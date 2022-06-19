@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
-import { BigNumber } from "ethers";
+import { BigNumber, BigNumberish, Signer } from "ethers";
 import { parseUnits } from "ethers/lib/utils";
 import { ethers, upgrades } from "hardhat";
 import {
@@ -24,9 +24,12 @@ import {
 } from "../utils";
 
 describe("Degis Lottery V2", function () {
+  let dev_account: SignerWithAddress, user1: SignerWithAddress;
+  let treasury: SignerWithAddress;
+
   let DegisLottery: DegisLotteryV2__factory, lottery: DegisLotteryV2;
   let DegisToken: DegisToken__factory, degis: DegisToken;
-  let dev_account: SignerWithAddress, user1: SignerWithAddress;
+
   let RandomNumberGenerator: VRFMock__factory, rng: VRFMock;
   let tenTicketsArray: number[], elevenTicketsArray: number[];
 
@@ -51,7 +54,7 @@ describe("Degis Lottery V2", function () {
     await degis.transfer(user1.address, toWei("10000"));
     await degis.connect(user1).approve(lottery.address, toWei("10000"));
 
-    await lottery.setMaxNumberTicketsEachTime(10);
+    await lottery.setTreasury(treasury.address);
 
     tenTicketsArray = [
       11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
@@ -90,6 +93,18 @@ describe("Degis Lottery V2", function () {
     const roundLength = 60 * 60 * 24 * 7; // 1 week
     const treasuryFee = 0;
 
+    const defaultRewardBreakdown: [
+      BigNumberish,
+      BigNumberish,
+      BigNumberish,
+      BigNumberish
+    ] = [
+      BigNumber.from(1000),
+      BigNumber.from(2000),
+      BigNumber.from(3000),
+      BigNumber.from(4000),
+    ];
+
     beforeEach(async function () {});
 
     it("should be able to change maxNumberTicketsEachTime", async function () {
@@ -113,7 +128,7 @@ describe("Degis Lottery V2", function () {
         lottery.startLottery(
           now + roundLength,
           toWei("10"),
-          [800, 1600, 2400, 3200], // 10%, 20%, 30%, 40% for 80% of total prize pool
+          defaultRewardBreakdown, // 10%, 20%, 30%, 40% for 80% of total prize pool
           treasuryFee
         )
       )
@@ -123,7 +138,7 @@ describe("Degis Lottery V2", function () {
           now + 1,
           now + roundLength,
           toWei("10"),
-          [800, 1600, 2400, 3200],
+          defaultRewardBreakdown,
           treasuryFee
         );
 
@@ -141,22 +156,23 @@ describe("Degis Lottery V2", function () {
     it("should not be able to start a lottery if rewards breakdown too high", async function () {
       await expect(
         lottery.startLottery(
-          60 * 60 * 24 * 3 + now,
+          now + roundLength,
           toWei("10"),
-          [4000, 3000, 2000, 1001],
-          0
+          [1001, 2000, 3000, 4000],
+          treasuryFee
         )
       ).to.be.revertedWith("Rewards breakdown too high");
     });
 
     it("should be able to close a lottery", async function () {
       await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
+        now + roundLength,
         toWei("10"),
-        [1000, 2000, 3000, 4000],
-        0
+        defaultRewardBreakdown,
+        treasuryFee
       );
       const currentLotteryId = await lottery.currentLotteryId();
+
       await expect(lottery.closeLottery(currentLotteryId))
         .to.emit(lottery, "LotteryClose")
         .withArgs(1);
@@ -164,17 +180,19 @@ describe("Degis Lottery V2", function () {
 
     it("should be able to open a claim period", async function () {
       await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
+        now + roundLength,
         toWei("10"),
-        [1000, 2000, 3000, 4000],
-        0
+        defaultRewardBreakdown,
+        treasuryFee
       );
+
       const currentLotteryId = await lottery.currentLotteryId();
-      lottery.closeLottery(BigNumber.from(currentLotteryId));
-      await lottery.setTreasury(dev_account.address);
+
+      await lottery.closeLottery(currentLotteryId);
+
       await expect(
         lottery.drawFinalNumberAndMakeLotteryClaimable(
-          BigNumber.from(currentLotteryId),
+          currentLotteryId,
           true
         )
       ).to.emit(lottery, "LotteryNumberDrawn");

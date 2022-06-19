@@ -10,6 +10,8 @@ contract VRFMock is Ownable {
 
     IDegisLottery public DegisLottery;
 
+    uint256 public seed;
+
     uint256 public randomResult;
 
     uint256 public latestLotteryId;
@@ -34,16 +36,12 @@ contract VRFMock is Ownable {
     function getRandomNumber() external {
         require(_msgSender() == address(DegisLottery), "Only DegisLottery");
 
-        // TODO: This part is only for test on Fuji Testnet because there is no VRF currently
-        string memory randInput = string(
-            abi.encodePacked((block.timestamp).uintToString(), address(this))
-        );
-        randomResult = (_rand(randInput) % 10000) + 10000;
+        randomResult = (_rand(++seed) % 10000) + 10000;
 
         latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();
     }
 
-    function _rand(string memory input) internal pure returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(input)));
+    function _rand(uint256 _input) internal pure returns (uint256) {
+        return _input * 12345;
     }
 }

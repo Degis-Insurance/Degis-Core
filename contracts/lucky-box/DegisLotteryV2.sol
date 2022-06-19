@@ -221,42 +221,44 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         for (uint256 i = 0; i < length; i++) {
             ticketNumbers[i] = tickets[_ticketIds[i]].number;
+            ticketStatuses[i] = tickets[_ticketIds[i]].owner != address(0);
         }
 
         return (ticketNumbers, ticketStatuses);
     }
 
-    // /**
-    //  * @notice View rewards for a given ticket, providing a bracket, and lottery id
-    //  * @dev Computations are mostly offchain. This is used to verify a ticket!
-    //  *
-    //  * @param _lotteryId: lottery round
-    //  * @param _ticketId: ticket id
-    //  */
-    // function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
-    // /// ticketIdReward
-    //     external
-    //     view
-    //     returns (uint256)
-    // {
-    //     // Check lottery is in claimable status
-    //     if (lotteries[_lotteryId].status != Status.Claimable) {
-    //         return 0;
-    //     }
+    /**
+     * @notice View rewards for a given ticket, providing the lottery id
+     *
+     * @dev Computations should be done offchain. This is used to verify a ticket!
+     *
+     * @param _lotteryId Lottery round
+     * @param _ticketId  Ticket id
+     */
+    function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
+        external
+        view
+        returns (uint256)
+    {
+        // Check lottery is in claimable status
+        if (lotteries[_lotteryId].status != Status.Claimable) {
+            return 0;
+        }
 
-    //     // Check ticketId is within range
-    //     if (
-    //         lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
-    //         lotteries[_lotteryId].firstTicketId >= _ticketId
-    //     ) {
-    //         return 0;
-    //     }
+        // Check ticketId is within range
+        if (
+            lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
+            lotteries[_lotteryId].firstTicketId >= _ticketId
+        ) {
+            return 0;
+        }
 
-    //     uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
+        // Only calculate prize for the highest bracket
+        uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
 
-    //     return
-    //         _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
-    // }
+        return
+            _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
+    }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
