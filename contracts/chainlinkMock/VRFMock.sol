@@ -34,7 +34,10 @@ contract VRFMock is Ownable {
      * @notice Request randomness from Chainlink VRF
      */
     function getRandomNumber() external {
-        require(_msgSender() == address(DegisLottery), "Only DegisLottery");
+        require(
+            _msgSender() == address(DegisLottery) || _msgSender() == owner(),
+            "Only DegisLottery"
+        );
 
         randomResult = (_rand(++seed) % 10000) + 10000;
 

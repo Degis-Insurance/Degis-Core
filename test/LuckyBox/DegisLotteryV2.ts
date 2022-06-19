@@ -34,7 +34,7 @@ describe("Degis Lottery V2", function () {
   let tenTicketsArray: number[], elevenTicketsArray: number[];
 
   beforeEach(async function () {
-    [dev_account, user1] = await ethers.getSigners();
+    [dev_account, user1, treasury] = await ethers.getSigners();
 
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
@@ -85,6 +85,27 @@ describe("Degis Lottery V2", function () {
 
     it("should have the correct discount divisor", async function () {
       expect(await lottery.DISCOUNT_DIVISOR()).to.equal(98);
+    });
+  });
+
+  describe("VRF Mock Functions", function () {
+    it("should be able to have the correct lottery address", async function () {
+      expect(await rng.DegisLottery()).to.equal(lottery.address);
+    });
+
+    it("should be able to have correct initial seed and result", async function () {
+      expect(await rng.seed()).to.equal(0);
+      expect(await rng.randomResult()).to.equal(0);
+    });
+
+    it("should be able to get random result", async function () {
+      await rng.getRandomNumber();
+      expect(await rng.seed()).to.equal(1);
+      expect(await rng.randomResult()).to.equal(12345);
+
+      await rng.getRandomNumber();
+      expect(await rng.seed()).to.equal(2);
+      expect(await rng.randomResult()).to.equal(14690);
     });
   });
 
@@ -178,7 +199,7 @@ describe("Degis Lottery V2", function () {
         .withArgs(1);
     });
 
-    it("should be able to open a claim period", async function () {
+    it("should be able to draw final number and make the round claimable", async function () {
       await lottery.startLottery(
         now + roundLength,
         toWei("10"),
@@ -190,24 +211,22 @@ describe("Degis Lottery V2", function () {
 
       await lottery.closeLottery(currentLotteryId);
 
+      // Random result: 12345 * 1 % 10000 + 10000
       await expect(
-        lottery.drawFinalNumberAndMakeLotteryClaimable(
-          currentLotteryId,
-          true
-        )
-      ).to.emit(lottery, "LotteryNumberDrawn");
+        lottery.drawFinalNumberAndMakeLotteryClaimable(currentLotteryId, true)
+      )
+        .to.emit(lottery, "LotteryNumberDrawn")
+        .withArgs(currentLotteryId, 12345, 0);
     });
   });
 
   describe("non existent lottery", async function () {
     let now: number;
-    beforeEach(async function () {
-      now = getNow();
-    });
+    beforeEach(async function () {});
 
     it("should not be able to buy tickets if there is no lottery", async function () {
       await expect(lottery.buyTickets([11111])).to.be.revertedWith(
-        "Current lottery round not open"
+        "Round not open"
       );
     });
 

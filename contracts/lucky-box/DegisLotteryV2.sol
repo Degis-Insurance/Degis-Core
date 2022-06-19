@@ -315,7 +315,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 currentRound = currentLotteryId;
         require(
             lotteries[currentRound].status == Status.Open,
-            "Current lottery round not open"
+            "Round not open"
         );
 
         // Calculate the number of DEG to pay
@@ -593,9 +593,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     /**
      * @notice Draw the final number, calculate reward in Degis for each group,
                and make this lottery claimable (need to wait for the random generator)
-     * @param _lotteryId lottery round
-     * @param _autoInjection reinjects funds into next lottery
-     * @dev Callable only by the operator
+     *
+     * @param _lotteryId     Lottery round
+     * @param _autoInjection Auto inject funds into next lottery
      */
     function drawFinalNumberAndMakeLotteryClaimable(
         uint256 _lotteryId,
@@ -603,80 +603,89 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     ) external onlyOwner nonReentrant {
         require(
             lotteries[_lotteryId].status == Status.Close,
-            "this lottery has not closed, you should first close it"
+            "Lottery not closed"
         );
         require(
             _lotteryId == randomGenerator.latestLotteryId(),
-            "the final lucky numbers have not been drawn"
+            "Final number not drawn"
         );
         require(treasury != address(0), "Treasury is not set");
+
         // Get the final lucky numbers from randomGenerator
         uint32 finalNumber = randomGenerator.randomResult();
 
-        // Calculate the prize amount given to winners
-        // Currently treasuryFee = 0 => amountToWinners = amountCollected
-        uint256 amountToWinners = (
-            ((lotteries[_lotteryId].amountCollected) *
-                (8000 - lotteries[_lotteryId].treasuryFee))
-        ) / 10000;
+        Lottery storage lottery = lotteries[_lotteryId];
 
-        uint256 amountToNextLottery = ((lotteries[_lotteryId].amountCollected) *
-            (2000 - lotteries[_lotteryId].treasuryFee)) / 10000;
+        // Gas savings
+        uint256 totalPrize = lottery.amountCollected;
 
-        uint256 amountToTreasury = (lotteries[_lotteryId].amountCollected) -
+        // Prize distributed to users
+        uint256 amountToWinners = (totalPrize * 8000) / 10000;
+
+        // (20% - treasuryFee) will go to next round
+        uint256 amountToNextLottery = (totalPrize *
+            (2000 - lottery.treasuryFee)) / 10000;
+
+        // Remaining part goes to treasury
+        uint256 amountToTreasury = totalPrize -
             amountToWinners -
             amountToNextLottery;
 
-        // Calculate prizes for each bracket, starting from the highest one
         // Initialize a number to count addresses in all the previous bracket
         // Ensure that a ticket is not counted several times in different brackets
         uint256 numberAddressesInPreviousBracket;
 
-        lotteries[_lotteryId].pendingRewards = 0;
-
-        for (uint32 i = 0; i < 4; i++) {
+        // Calculate prizes for each bracket, starting from the highest one
+        for (uint32 i; i < 4; ) {
             uint32 j = 3 - i;
+
             // Get transformed winning number
             uint32 transformedWinningNumber = _bracketCalculator[j] +
                 (finalNumber % (uint32(10)**(j + 1)));
 
+            // Amount of winning tickets for this number
             uint256 winningAmount = _numberTicketsPerLotteryId[_lotteryId][
                 transformedWinningNumber
             ];
 
-            lotteries[_lotteryId].countWinnersPerBracket[j] =
+            // Amount of winners for this bracket
+            // Remove those already have higher bracket reward
+            lottery.countWinnersPerBracket[j] =
                 winningAmount -
                 numberAddressesInPreviousBracket;
 
-            // If there are winners for this _bracket
-            if (winningAmount - numberAddressesInPreviousBracket != 0) {
+            // Check if there are winners for this bracket
+            if (winningAmount != numberAddressesInPreviousBracket) {
                 // B. If rewards at this bracket are > 0, calculate, else, report the numberAddresses from previous bracket
-                if (lotteries[_lotteryId].rewardsBreakdown[j] != 0) {
-                    lotteries[_lotteryId].rewardPerTicketInBracket[j] =
-                        ((lotteries[_lotteryId].rewardsBreakdown[j] *
-                            amountToWinners) /
+                if (lottery.rewardsBreakdown[j] != 0) {
+                    lottery.rewardPerTicketInBracket[j] =
+                        ((lottery.rewardsBreakdown[j] * amountToWinners) /
                             (winningAmount -
                                 numberAddressesInPreviousBracket)) /
                         10000;
-                    lotteries[_lotteryId].pendingRewards +=
-                        (lotteries[_lotteryId].rewardsBreakdown[j] *
-                            amountToWinners) /
+
+                    lottery.pendingRewards +=
+                        (lottery.rewardsBreakdown[j] * amountToWinners) /
                         10000;
                 }
                 // No winners, prize added to the amount to withdraw to treasury
             } else {
-                lotteries[_lotteryId].rewardPerTicketInBracket[j] = 0;
+                lottery.rewardPerTicketInBracket[j] = 0;
             }
 
             // Update numberAddressesInPreviousBracket
             numberAddressesInPreviousBracket = winningAmount;
+
+            unchecked {
+                ++i;
+            }
         }
 
         // Update internal statuses for this lottery round
-        lotteries[_lotteryId].finalNumber = finalNumber;
-        lotteries[_lotteryId].status = Status.Claimable;
+        lottery.finalNumber = finalNumber;
+        lottery.status = Status.Claimable;
 
-        // If autoInjection, all unused prize will be rolled to next round
+        // If auto injection is on, reinject funds into next lottery
         if (_autoInjection) {
             pendingInjectionNextLottery = amountToNextLottery;
         }
