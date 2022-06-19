@@ -781,88 +781,88 @@ contract DegisLottery is ReentrancyGuard, Ownable {
         return size > 0;
     }
 
-    // function _viewUserTicketAmount(address user, uint256 encodedNumber)
-    //     internal
-    //     view
-    //     returns (uint256)
-    // {
-    //     return usersTickets[user].ticketsAmount[encodedNumber];
-    // }
+    function _viewUserTicketAmount(address user, uint256 encodedNumber)
+        internal
+        view
+        returns (uint256)
+    {
+        return usersTickets[user].ticketsAmount[encodedNumber];
+    }
 
-    // function _viewUserTicketWeight(address user, uint256 encodedNumber)
-    //     internal
-    //     view
-    //     returns (uint256)
-    // {
-    //     return usersTickets[user].ticketsWeight[encodedNumber];
-    // }
+    function _viewUserTicketWeight(address user, uint256 encodedNumber)
+        internal
+        view
+        returns (uint256)
+    {
+        return usersTickets[user].ticketsWeight[encodedNumber];
+    }
 
-    // function viewUserAllTicketsInfo(address user, uint256 maxAmount)
-    //     external
-    //     view
-    //     returns (
-    //         uint256[] memory,
-    //         uint256[] memory,
-    //         uint256[] memory,
-    //         uint256
-    //     )
-    // {
-    //     uint256[] memory ticketsNumber = new uint256[](maxAmount);
-    //     uint256[] memory ticketsAmount = new uint256[](maxAmount);
-    //     uint256[] memory ticketsWeight = new uint256[](maxAmount);
+    function viewUserAllTicketsInfo(address user, uint256 maxAmount)
+        external
+        view
+        returns (
+            uint256[] memory,
+            uint256[] memory,
+            uint256[] memory,
+            uint256
+        )
+    {
+        uint256[] memory ticketsNumber = new uint256[](maxAmount);
+        uint256[] memory ticketsAmount = new uint256[](maxAmount);
+        uint256[] memory ticketsWeight = new uint256[](maxAmount);
 
-    //     uint256 amount;
-    //     uint256 number;
-    //     uint256 i0;
-    //     uint256 i1;
-    //     uint256 i2;
-    //     uint256 i3;
+        uint256 amount;
+        uint256 number;
+        uint256 i0;
+        uint256 i1;
+        uint256 i2;
+        uint256 i3;
 
-    //     for (i0; i0 <= 9; i0++) {
-    //         number = i0;
-    //         if (_viewUserTicketAmount(user, _encodeNumber(number, 0)) == 0)
-    //             continue;
-    //         for (i1 = 0; i1 <= 9; i1++) {
-    //             number = i0 + i1 * 10;
-    //             if (_viewUserTicketAmount(user, _encodeNumber(number, 1)) == 0)
-    //                 continue;
-    //             for (i2 = 0; i2 <= 9; i2++) {
-    //                 number = i0 + i1 * 10 + i2 * 100;
-    //                 if (
-    //                     _viewUserTicketAmount(user, _encodeNumber(number, 2)) ==
-    //                     0
-    //                 ) continue;
-    //                 for (i3 = 0; i3 <= 9; i3++) {
-    //                     number = i0 + i1 * 10 + i2 * 100 + i3 * 1000;
-    //                     if (
-    //                         _viewUserTicketAmount(
-    //                             user,
-    //                             _encodeNumber(number, 3)
-    //                         ) == 0
-    //                     ) continue;
-    //                     ticketsNumber[amount] = number;
-    //                     ticketsAmount[amount] = _viewUserTicketAmount(
-    //                         user,
-    //                         _encodeNumber(number, 3)
-    //                     );
-    //                     ticketsWeight[amount] = _viewUserTicketWeight(
-    //                         user,
-    //                         _encodeNumber(number, 3)
-    //                     );
-    //                     amount++;
-    //                     if (amount >= maxAmount)
-    //                         return (
-    //                             ticketsNumber,
-    //                             ticketsAmount,
-    //                             ticketsWeight,
-    //                             amount
-    //                         );
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     return (ticketsNumber, ticketsAmount, ticketsWeight, amount);
-    // }
+        for (i0; i0 <= 9; i0++) {
+            number = i0;
+            if (_viewUserTicketAmount(user, _encodeNumber(number, 0)) == 0)
+                continue;
+            for (i1 = 0; i1 <= 9; i1++) {
+                number = i0 + i1 * 10;
+                if (_viewUserTicketAmount(user, _encodeNumber(number, 1)) == 0)
+                    continue;
+                for (i2 = 0; i2 <= 9; i2++) {
+                    number = i0 + i1 * 10 + i2 * 100;
+                    if (
+                        _viewUserTicketAmount(user, _encodeNumber(number, 2)) ==
+                        0
+                    ) continue;
+                    for (i3 = 0; i3 <= 9; i3++) {
+                        number = i0 + i1 * 10 + i2 * 100 + i3 * 1000;
+                        if (
+                            _viewUserTicketAmount(
+                                user,
+                                _encodeNumber(number, 3)
+                            ) == 0
+                        ) continue;
+                        ticketsNumber[amount] = number;
+                        ticketsAmount[amount] = _viewUserTicketAmount(
+                            user,
+                            _encodeNumber(number, 3)
+                        );
+                        ticketsWeight[amount] = _viewUserTicketWeight(
+                            user,
+                            _encodeNumber(number, 3)
+                        );
+                        amount++;
+                        if (amount >= maxAmount)
+                            return (
+                                ticketsNumber,
+                                ticketsAmount,
+                                ticketsWeight,
+                                amount
+                            );
+                    }
+                }
+            }
+        }
+        return (ticketsNumber, ticketsAmount, ticketsWeight, amount);
+    }
 
     function viewUserRewardsInfo(
         address user,

@@ -11,7 +11,7 @@ import {
 import { parseUnits } from "ethers/lib/utils";
 import { toBN } from "../../test/utils";
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
-import { Contract } from "ethers";
+import { Contract, ethers } from "ethers";
 
 task("deployNPToken", "Deploy a new naughty price token")
   .addParam("name", "Strike token asset", null, types.string)
@@ -111,3 +111,4 @@ task("deployNPToken", "Deploy a new naughty price token")
     tokenList[network.name][policyTokenName] = tokenObject;
     storeNaughtyTokenList(tokenList);
   });
+

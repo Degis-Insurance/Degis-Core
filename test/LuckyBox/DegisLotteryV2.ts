@@ -32,6 +32,7 @@ describe("Degis Lottery V2", function () {
 
   beforeEach(async function () {
     [dev_account, user1] = await ethers.getSigners();
+
     DegisToken = await ethers.getContractFactory("DegisToken");
     degis = await DegisToken.deploy();
 
@@ -49,7 +50,8 @@ describe("Degis Lottery V2", function () {
     await degis.approve(lottery.address, toWei("20000"));
     await degis.transfer(user1.address, toWei("10000"));
     await degis.connect(user1).approve(lottery.address, toWei("10000"));
-    await lottery.setMaxNumberTicketsEachTime(BigNumber.from(10));
+
+    await lottery.setMaxNumberTicketsEachTime(10);
 
     tenTicketsArray = [
       11234, 14321, 12222, 11111, 19999, 18888, 17777, 16666, 15555, 14444,
@@ -66,57 +68,74 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should have set maxNumberTicketsEachTime to 10", async function () {
-      expect(await lottery.maxNumberTicketsEachTime()).to.equal(
-        BigNumber.from(10)
-      );
+      expect(await lottery.maxNumberTicketsEachTime()).to.equal(10);
     });
 
     it("should not have any lotteries", async function () {
       expect(await lottery.currentLotteryId()).to.equal(0);
     });
+
+    it("should have the correct ticket number range", async function () {
+      expect(await lottery.MAX_TICKET_NUMBER()).to.equal(19999);
+      expect(await lottery.MIN_TICKET_NUMBER()).to.equal(10000);
+    });
+
+    it("should have the correct discount divisor", async function () {
+      expect(await lottery.DISCOUNT_DIVISOR()).to.equal(98);
+    });
   });
 
   describe("Owner Functions", function () {
     let now: number;
+    const roundLength = 60 * 60 * 24 * 7; // 1 week
+    const treasuryFee = 0;
 
-    beforeEach(async function () {
-      now = getNow();
-    });
+    beforeEach(async function () {});
 
-    it("should be able to lower maxNumberTicketsEachTime", async function () {
-      await lottery.setMaxNumberTicketsEachTime(BigNumber.from(5));
-      expect(await lottery.maxNumberTicketsEachTime()).to.equal(
-        BigNumber.from(5)
-      );
-    });
+    it("should be able to change maxNumberTicketsEachTime", async function () {
+      // Decrease
+      await lottery.setMaxNumberTicketsEachTime(5);
+      expect(await lottery.maxNumberTicketsEachTime()).to.equal(5);
 
-    it("should be able to increase maxNumberTicketsEachTime", async function () {
-      await lottery.setMaxNumberTicketsEachTime(BigNumber.from(20));
-      expect(await lottery.maxNumberTicketsEachTime()).to.equal(
-        BigNumber.from(20)
-      );
+      // Increase
+      await lottery.setMaxNumberTicketsEachTime(15);
+      expect(await lottery.maxNumberTicketsEachTime()).to.equal(15);
     });
 
     it("should be able to start a lottery", async function () {
       const currentLotteryId = await lottery.currentLotteryId();
       now = await getLatestBlockTimestamp(ethers.provider);
+
+      const initStatus = await lottery.lotteries(currentLotteryId.add(1));
+      expect(initStatus.status).to.equal(0);
+
       await expect(
         lottery.startLottery(
-          60 * 60 * 24 * 3 + now,
+          now + roundLength,
           toWei("10"),
-          [4000, 3000, 2000, 1000],
-          0
+          [800, 1600, 2400, 3200], // 10%, 20%, 30%, 40% for 80% of total prize pool
+          treasuryFee
         )
       )
         .to.emit(lottery, "LotteryOpen")
         .withArgs(
           currentLotteryId.add(1),
           now + 1,
-          60 * 60 * 24 * 3 + now,
+          now + roundLength,
           toWei("10"),
-          [4000, 3000, 2000, 1000],
-          0
+          [800, 1600, 2400, 3200],
+          treasuryFee
         );
+
+      const status = await lottery.lotteries(currentLotteryId.add(1));
+      expect(status.startTime).to.equal(now + 1);
+      expect(status.status).to.equal(1);
+      expect(status.treasuryFee).to.equal(treasuryFee);
+      expect(status.finalNumber).to.equal(0);
+      expect(status.firstTicketId).to.equal(0);
+      expect(status.firstTicketIdNextRound).to.equal(0);
+      expect(status.amountCollected).to.equal(0);
+      expect(status.pendingRewards).to.equal(0);
     });
 
     it("should not be able to start a lottery if rewards breakdown too high", async function () {
