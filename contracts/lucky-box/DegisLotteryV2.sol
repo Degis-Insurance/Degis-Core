@@ -411,7 +411,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 thisTicketId >= lotteries[_lotteryId].firstTicketId,
                 "Ticket id too small"
             );
-            require(thisTicketId <= currentTicketId, "Ticket id too large");
+            require(
+                thisTicketId <= lotteries[_lotteryId].firstTicketIdNextRound,
+                "Ticket id too large"
+            );
 
             // Check the ticket is owned by the user and reset this ticket
             require(
@@ -426,7 +429,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 _brackets[i]
             );
             require(rewardForTicketId > 0, "No prize");
-    
+
             // If not claiming the highest prize, check if the user has a higher prize
             if (_brackets[i] < 3) {
                 require(
@@ -529,7 +532,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require(_fee <= MAX_TREASURY_FEE, "Treasury fee too high");
 
         require(
-                (_rewardsBreakdown[0] +
+            (_rewardsBreakdown[0] +
                 _rewardsBreakdown[1] +
                 _rewardsBreakdown[2] +
                 _rewardsBreakdown[3]) <= 10000,
@@ -672,6 +675,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 // No winners, prize added to the amount to withdraw to treasury
             } else {
                 lottery.rewardPerTicketInBracket[j] = 0;
+                amountToTreasury += (lottery.rewardsBreakdown[j] * amountToWinners) / 10000;
+
             }
 
             // Update numberAddressesInPreviousBracket

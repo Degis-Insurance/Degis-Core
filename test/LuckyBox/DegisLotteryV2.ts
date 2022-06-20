@@ -387,8 +387,6 @@ describe("Degis Lottery V2", function () {
         defaultRewardBreakdown,
         treasuryFee
       );
-      // 1,     2,     3,     4,      5,    6,      7,    8,      9
-      // 0,     one,   two   three,   four, oneB,   twoB, threeB, fourB
       await lottery.buyTickets(tenTicketsArray);
       lotteryId = await lottery.currentLotteryId();
 
@@ -510,7 +508,7 @@ describe("Degis Lottery V2", function () {
       );
       const ticketNumbers = await lottery.viewNumbersPerTicketId(ticketIds);
 
-      expect(ticketNumbers).to.equal(tenTicketsArray);
+      expect(ticketNumbers).to.deep.equal(tenTicketsArray);
     });
 
     it("should view a single lottery information", async function () {
@@ -547,7 +545,7 @@ describe("Degis Lottery V2", function () {
         0
       );
       lotteryId = await lottery.currentLotteryId();
-      await lottery.buyTickets(tenTicketsArray);
+      await lottery.buyTickets([14690]);
       await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
     });
@@ -571,7 +569,7 @@ describe("Degis Lottery V2", function () {
       ).to.be.revertedWith("Not the ticket owner or already claimed");
     });
 
-    it("should not be able to claim alreadt claimed previous tickets as not owner", async function () {
+    it("should not be able to claim already claimed previous tickets as not owner", async function () {
       await expect(
         lottery.connect(user1).claimTickets(1, [1, 2], [0, 1])
       ).to.be.revertedWith("Not the ticket owner or already claimed");
@@ -580,7 +578,7 @@ describe("Degis Lottery V2", function () {
     it("should be able to claim previous tickets despite current lottery fully claimed", async function () {
       await expect(lottery.claimAllTickets(2))
         .to.emit(lottery, "TicketsClaim")
-        .withArgs(dev_account.address, 0, 2);
+        .withArgs(dev_account.address, toWei("8.365265964080300097"), 2);
       await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
         lottery,
         "TicketsClaim"
@@ -595,7 +593,7 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should view different ticket ids spanning multiple lotteries", async function () {
-      const ticketIds2 = await lottery.viewWalletTicketIds(
+      const oldTicketIds = await lottery.viewWalletTicketIds(
         dev_account.address,
         oldLotteryId
       );
@@ -606,7 +604,7 @@ describe("Degis Lottery V2", function () {
 
       console.log("ticket ids", oldLotteryId, lotteryId);
 
-      expect(ticketIds2).to.equal([
+      expect(oldTicketIds).to.deep.equal([
         BigNumber.from(1),
         BigNumber.from(2),
         BigNumber.from(3),
@@ -618,18 +616,7 @@ describe("Degis Lottery V2", function () {
         BigNumber.from(9),
         BigNumber.from(10),
       ]);
-      expect(ticketIds).to.equal([
-        BigNumber.from(11),
-        BigNumber.from(12),
-        BigNumber.from(13),
-        BigNumber.from(14),
-        BigNumber.from(15),
-        BigNumber.from(16),
-        BigNumber.from(17),
-        BigNumber.from(18),
-        BigNumber.from(19),
-        BigNumber.from(20),
-      ]);
+      expect(ticketIds).to.deep.equal([BigNumber.from(11)]);
     });
 
     it("should have initial and final ticket IDs", async function () {
@@ -642,7 +629,7 @@ describe("Degis Lottery V2", function () {
       expect(oldLotteryInfo.firstTicketId).to.equal(1);
       expect(oldLotteryInfo.firstTicketIdNextRound).to.equal(11);
       expect(lotteryInfo.firstTicketId).to.equal(11);
-      expect(lotteryInfo.firstTicketIdNextRound).to.equal(21);
+      expect(lotteryInfo.firstTicketIdNextRound).to.equal(12);
     });
   });
 });
