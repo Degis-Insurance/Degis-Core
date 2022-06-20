@@ -83,11 +83,11 @@ describe("Shield Token", function () {
   });
 
   describe("Owner Functions", function () {
-    // it("should be able to add supported stablecoins", async function () {
-    //   await expect(shield.addSupportedStablecoin(mockUSD.address, 120))
-    //     .to.emit(shield, "AddStablecoin")
-    //     .withArgs(mockUSD.address, 120);
-    // });
+    it("should be able to add supported stablecoins", async function () {
+      await expect(shield.addSupportedStablecoin(mockUSD.address))
+        .to.emit(shield, "AddStablecoin")
+        .withArgs(mockUSD.address);
+    });
 
     it("should be able to set ptpPool address", async function () {
       await expect(shield.setPTPPool(ptpPool.address))
@@ -100,11 +100,11 @@ describe("Shield Token", function () {
   });
 
   describe("Main Functions", function () {
-    // beforeEach(async function () {
-    //   await shield.addSupportedStablecoin(mockUSD.address, 100);
-    //   await shield.setPTPPool(ptpPool.address);
-    //   await shield.approveStablecoin(mockUSD.address);
-    // });
+    beforeEach(async function () {
+      await shield.addSupportedStablecoin(mockUSD.address);
+      await shield.setPTPPool(ptpPool.address);
+      await shield.approveStablecoin(mockUSD.address);
+    });
     it("should be able to deposit stablecoins and get shield", async function () {
       await mockUSD.approve(shield.address, stablecoinToWei("1000"));
       await expect(
