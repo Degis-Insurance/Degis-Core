@@ -82,14 +82,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     mapping(uint256 => Ticket) public tickets;
 
     // lotteryId => (Lucky Number => Total Amount of this number)
-    // e.g. in lottery round 3, 10 Tickets are sold with "1234": 3 => (1234 => 10)
+    // e.g. in lottery round 3, 10 Tickets are sold with "11234": 3 => (11234 => 10)
     mapping(uint256 => mapping(uint32 => uint256))
-        public _numberTicketsPerLotteryId;
+        private _numberTicketsPerLotteryId;
 
     // Keep track of user ticket ids for a given lotteryId
 
     // User Address => Lottery Round => Tickets
-    mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
+    mapping(address => mapping(uint256 => uint256[])) private _userTicketIds;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -157,6 +157,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         _bracketCalculator[1] = 11;
         _bracketCalculator[2] = 111;
         _bracketCalculator[3] = 1111;
+        currentTicketId = 1;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -176,12 +177,13 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
-    function getRewardPerTicketInBracket(uint256 _lotteryId)
+    function viewWalletTicketIds(address _wallet, uint256 _lotteryId)
         external
         view
-        returns (uint256[4] memory)
+        returns (uint256[] memory)
     {
-        return lotteries[_lotteryId].rewardPerTicketInBracket;
+        uint256[] memory result = _userTicketIds[_wallet][_lotteryId];
+        return result;
     }
 
     /**
@@ -199,24 +201,22 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @notice View ticker statuses and numbers for an array of ticket ids
      * @param _ticketIds: array of _ticketId
      */
-    function viewNumbersAndStatusesForTicketIds(uint256[] calldata _ticketIds)
+    function viewNumbersPerTicketId(uint256[] calldata _ticketIds)
         external
         view
         returns (
             /// ticketIdsNumbersAndStatuses
-            uint32[] memory,
-            bool[] memory
+            uint32[] memory
         )
     {
         uint256 length = _ticketIds.length;
         uint32[] memory ticketNumbers = new uint32[](length);
-        bool[] memory ticketStatuses = new bool[](length);
 
         for (uint256 i = 0; i < length; i++) {
             ticketNumbers[i] = tickets[_ticketIds[i]].number;
         }
 
-        return (ticketNumbers, ticketStatuses);
+        return (ticketNumbers);
     }
 
     // /**
@@ -417,7 +417,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 _brackets[i]
             );
             require(rewardForTicketId > 0, "No prize");
-
+    
             // If not claiming the highest prize, check if the user has a higher prize
             if (_brackets[i] < 3) {
                 require(
@@ -520,7 +520,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require(_fee <= MAX_TREASURY_FEE, "Treasury fee too high");
 
         require(
-               (_rewardsBreakdown[0] +
+            (_rewardsBreakdown[0] +
                 _rewardsBreakdown[1] +
                 _rewardsBreakdown[2] +
                 _rewardsBreakdown[3]) <= 10000,
@@ -687,9 +687,12 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 (8000 - lotteries[_lotteryId].treasuryFee))
         ) / 10000;
 
-        uint256 amountToNextLottery = (lotteries[_lotteryId].amountCollected) * (2000 - lotteries[_lotteryId].treasuryFee) / 10000;
+        uint256 amountToNextLottery = ((lotteries[_lotteryId].amountCollected) *
+            (2000 - lotteries[_lotteryId].treasuryFee)) / 10000;
 
-        uint256 amountToTreasury = (lotteries[_lotteryId].amountCollected) - amountToWinners - amountToNextLottery;
+        uint256 amountToTreasury = (lotteries[_lotteryId].amountCollected) -
+            amountToWinners -
+            amountToNextLottery;
 
         // Calculate prizes for each bracket, starting from the highest one
         // Initialize a number to count addresses in all the previous bracket
