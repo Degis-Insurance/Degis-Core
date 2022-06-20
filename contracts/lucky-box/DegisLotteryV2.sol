@@ -227,12 +227,16 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice View rewards for a given ticket, providing the lottery id
+     * @notice View rewards for a given ticket in a given lottery round
      *
-     * @dev Computations should be done offchain. This is used to verify a ticket!
+     * @dev This function will help to find the highest prize bracket
+     *      But this computation is encouraged to be done off-chain
+     *      Better to get bracket first and then call "_calculateRewardsForTicketId()"
      *
      * @param _lotteryId Lottery round
      * @param _ticketId  Ticket id
+     *
+     * @return reward Ticket reward
      */
     function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
         external
