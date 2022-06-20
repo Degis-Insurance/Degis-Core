@@ -529,7 +529,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require(_fee <= MAX_TREASURY_FEE, "Treasury fee too high");
 
         require(
-            (_rewardsBreakdown[0] +
+                (_rewardsBreakdown[0] +
                 _rewardsBreakdown[1] +
                 _rewardsBreakdown[2] +
                 _rewardsBreakdown[3]) <= 10000,
@@ -552,6 +552,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         newLottery.rewardsBreakdown = _rewardsBreakdown;
         newLottery.treasuryFee = uint8(_fee);
         newLottery.amountCollected = pendingInjectionNextLottery;
+        newLottery.firstTicketId = currentTicketId;
 
         emit LotteryOpen(
             currentId,
@@ -684,6 +685,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Update internal statuses for this lottery round
         lottery.finalNumber = finalNumber;
         lottery.status = Status.Claimable;
+        lottery.firstTicketIdNextRound = currentTicketId;
 
         // If auto injection is on, reinject funds into next lottery
         if (_autoInjection) {
@@ -713,6 +715,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         external
         onlyOwner
     {
+        // We do not change the generator when a round has not been claimable
         require(
             lotteries[currentLotteryId].status == Status.Claimable,
             "current lottery is not claimable"
