@@ -331,7 +331,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         lotteries[currentRound].amountCollected += degToPay;
 
         // Record the tickets bought
-        for (uint256 i; i < amountToBuy; i++) {
+        for (uint256 i; i < amountToBuy; ) {
             uint32 currentTicketNumber = _ticketNumbers[i];
 
             require(
@@ -368,6 +368,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             // Increase total lottery ticket number
             unchecked {
                 ++currentTicketId;
+                ++i;
             }
         }
 
@@ -831,7 +832,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         pure
         returns (uint256 totalPrice)
     {
-        totalPrice = _price * _num * (DISCOUNT_DIVISOR**_num / 100**_num);
+        totalPrice = (_price * _num * (DISCOUNT_DIVISOR**_num)) / 100**_num;
     }
 
     /**

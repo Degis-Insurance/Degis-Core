@@ -268,7 +268,7 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    it("any participant should be able to buy 10 tickets", async function () {
+    it("should be able to buy 10 tickets", async function () {
       await expect(lottery.connect(user1).buyTickets(tenTicketsArray)).to.emit(
         lottery,
         "TicketsPurchased"
@@ -359,7 +359,7 @@ describe("Degis Lottery V2", function () {
         11111, 11115, 11175, 11975, 15975, 19557, 15111, 19571, 17559,
       ]);
       lotteryId = await lottery.currentLotteryId();
-      
+
       await lottery.setTreasury(dev_account.address);
       await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
