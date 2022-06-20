@@ -89,8 +89,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     mapping(uint32 => uint32) private _bracketCalculator;
 
-    mapping(uint32 => uint32) private _bracketCalculator;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
