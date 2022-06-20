@@ -89,6 +89,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     mapping(uint32 => uint32) private _bracketCalculator;
 
+    mapping(uint32 => uint32) private _bracketCalculator;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -175,6 +177,13 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ************************************ View Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Get the reward per ticket in 4 brackets
+     *
+     * @param _wallet address to check owned tickets
+     *
+     * @return _lotteryId lottery id to verify ownership
+     */
     function viewWalletTicketIds(address _wallet, uint256 _lotteryId)
         external
         view

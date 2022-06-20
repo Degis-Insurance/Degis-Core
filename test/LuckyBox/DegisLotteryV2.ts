@@ -228,10 +228,10 @@ describe("Degis Lottery V2", function () {
 
     it("should be able to inject funds", async function () {
       await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
+        now + roundLength,
         toWei("10"),
-        [1000, 2000, 3000, 4000],
-        0
+        defaultRewardBreakdown,
+        treasuryFee
       );
       const lotteryId = await lottery.currentLotteryId();
       await lottery.injectFunds(toWei("10"));
