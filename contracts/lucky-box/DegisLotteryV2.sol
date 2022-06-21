@@ -78,14 +78,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     mapping(uint256 => Ticket) public tickets;
 
     // lotteryId => (Lucky Number => Total Amount of this number)
-    // e.g. in lottery round 3, 10 Tickets are sold with "1234": 3 => (1234 => 10)
+    // e.g. in lottery round 3, 10 Tickets are sold with "11234": 3 => (11234 => 10)
     mapping(uint256 => mapping(uint32 => uint256))
-        public _numberTicketsPerLotteryId;
+        private _numberTicketsPerLotteryId;
 
     // Keep track of user ticket ids for a given lotteryId
 
     // User Address => Lottery Round => Tickets
-    mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
+    mapping(address => mapping(uint256 => uint256[])) private _userTicketIds;
 
     mapping(uint32 => uint32) private _bracketCalculator;
 
@@ -155,6 +155,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         _bracketCalculator[1] = 11;
         _bracketCalculator[2] = 111;
         _bracketCalculator[3] = 1111;
+        currentTicketId = 1;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -177,16 +178,17 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     /**
      * @notice Get the reward per ticket in 4 brackets
      *
-     * @param _lotteryId Lottery id to check
+     * @param _wallet address to check owned tickets
      *
-     * @return rewardPerTicketInBracket Array of the reward per ticket
+     * @return _lotteryId lottery id to verify ownership
      */
-    function getRewardPerTicketInBracket(uint256 _lotteryId)
+    function viewWalletTicketIds(address _wallet, uint256 _lotteryId)
         external
         view
-        returns (uint256[4] memory)
+        returns (uint256[] memory)
     {
-        return lotteries[_lotteryId].rewardPerTicketInBracket;
+        uint256[] memory result = _userTicketIds[_wallet][_lotteryId];
+        return result;
     }
 
     /**
@@ -206,34 +208,35 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @notice View ticker statuses and numbers for an array of ticket ids
      * @param _ticketIds: array of _ticketId
      */
-    function viewNumbersAndStatusesForTicketIds(uint256[] calldata _ticketIds)
+    function viewNumbersPerTicketId(uint256[] calldata _ticketIds)
         external
         view
         returns (
             /// ticketIdsNumbersAndStatuses
-            uint32[] memory,
-            bool[] memory
+            uint32[] memory
         )
     {
         uint256 length = _ticketIds.length;
         uint32[] memory ticketNumbers = new uint32[](length);
-        bool[] memory ticketStatuses = new bool[](length);
 
         for (uint256 i = 0; i < length; i++) {
             ticketNumbers[i] = tickets[_ticketIds[i]].number;
-            ticketStatuses[i] = tickets[_ticketIds[i]].owner != address(0);
         }
 
-        return (ticketNumbers, ticketStatuses);
+        return (ticketNumbers);
     }
 
     /**
-     * @notice View rewards for a given ticket, providing the lottery id
+     * @notice View rewards for a given ticket in a given lottery round
      *
-     * @dev Computations should be done offchain. This is used to verify a ticket!
+     * @dev This function will help to find the highest prize bracket
+     *      But this computation is encouraged to be done off-chain
+     *      Better to get bracket first and then call "_calculateRewardsForTicketId()"
      *
      * @param _lotteryId Lottery round
      * @param _ticketId  Ticket id
+     *
+     * @return reward Ticket reward
      */
     function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
         external
@@ -412,7 +415,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 thisTicketId >= lotteries[_lotteryId].firstTicketId,
                 "Ticket id too small"
             );
-            require(thisTicketId <= currentTicketId, "Ticket id too large");
+            require(
+                thisTicketId <= lotteries[_lotteryId].firstTicketIdNextRound,
+                "Ticket id too large"
+            );
 
             // Check the ticket is owned by the user and reset this ticket
             require(
@@ -553,6 +559,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         newLottery.rewardsBreakdown = _rewardsBreakdown;
         newLottery.treasuryFee = uint8(_fee);
         newLottery.amountCollected = pendingInjectionNextLottery;
+        newLottery.firstTicketId = currentTicketId;
 
         emit LotteryOpen(
             currentId,
@@ -672,6 +679,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 // No winners, prize added to the amount to withdraw to treasury
             } else {
                 lottery.rewardPerTicketInBracket[j] = 0;
+                amountToTreasury += (lottery.rewardsBreakdown[j] * amountToWinners) / 10000;
+
             }
 
             // Update numberAddressesInPreviousBracket
@@ -685,6 +694,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Update internal statuses for this lottery round
         lottery.finalNumber = finalNumber;
         lottery.status = Status.Claimable;
+        lottery.firstTicketIdNextRound = currentTicketId;
 
         // If auto injection is on, reinject funds into next lottery
         if (_autoInjection) {
@@ -714,6 +724,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         external
         onlyOwner
     {
+        // We do not change the generator when a round has not been claimable
         require(
             lotteries[currentLotteryId].status == Status.Claimable,
             "current lottery is not claimable"
