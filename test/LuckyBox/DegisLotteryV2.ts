@@ -413,24 +413,21 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should get reward equivalent to one correct number in right order", async function () {
-      await expect(lottery.claimTickets(1, [1], [0])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [1], [0]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("6.536582455100375121"), 1);
     });
 
     it("it should get reward equivalent to two correct numbers in right order", async function () {
-      await expect(lottery.claimTickets(1, [2], [1])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [2], [1]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("13.073164910200750243"), 1);
     });
 
     it("it should get reward equivalent to three correct numbers in right order", async function () {
-      await expect(lottery.claimTickets(1, [3], [2])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [3], [2]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("19.609747365301125365"), 1);
     });
 
     it("it should get reward equivalent to four correct numbers in right order", async function () {
@@ -440,10 +437,10 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to get multiple rewards equivalent to specified tickets in right order", async function () {
-      await expect(lottery.claimTickets(1, [3, 4], [2, 3])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [3, 4], [2, 3]))
+        .to.emit(lottery, "TicketsClaim")
+        // sum bracket 3 & 4
+        .withArgs(dev_account.address, toWei("45.756077185702625852"), 1);
     });
 
     it("should not get reward equivalent to one correct number in wrong order", async function () {
@@ -471,7 +468,9 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to claim all tickets", async function () {
-      await expect(lottery.claimAllTickets(1)).to.emit(lottery, "TicketsClaim");
+      await expect(lottery.claimAllTickets(1))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("65.365824551003751216"), 1);
     });
 
     it("should not get rewards if claiming non existent ticketId", async function () {
@@ -551,10 +550,9 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to claim unclaimed previous tickets", async function () {
-      await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [1, 2], [0, 1]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("19.609747365301125364"), 1);
     });
 
     it("should not be able to claim already claimed previous tickets", async function () {
@@ -579,10 +577,9 @@ describe("Degis Lottery V2", function () {
       await expect(lottery.claimAllTickets(2))
         .to.emit(lottery, "TicketsClaim")
         .withArgs(dev_account.address, toWei("8.365265964080300097"), 2);
-      await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
-        lottery,
-        "TicketsClaim"
-      );
+      await expect(lottery.claimTickets(1, [1, 2], [0, 1]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, toWei("19.609747365301125364"), 1);
     });
 
     it("should view two lotteries information", async function () {

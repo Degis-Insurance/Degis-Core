@@ -20,11 +20,11 @@ module.exports = {
       "error",
       { ignores: ["modules"] },
     ],
-    'prettier/prettier': [
-      'error',
+    "prettier/prettier": [
+      "error",
       {
-        'endOfLine': 'auto',
-      }
+        endOfLine: "auto",
+      },
     ],
     camelcase: "off",
     "@typescript-eslint/camelcase": "off",
