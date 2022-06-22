@@ -34,6 +34,7 @@ import "./tasks/naughtyPrice/settleResult";
 import "./tasks/naughtyPrice/deployToken";
 import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
+import "./tasks/naughtyPrice/IDOPriceGetter";
 
 // Lucky Box Tasks
 import "./tasks/lucky/setAddress";
@@ -73,20 +74,27 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.13",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 1000,
-        details: {
-          yul: true,
-          yulDetails: {
-            stackAllocation: true,
-            optimizerSteps: "dhfoDgvulfnTUtnIf",
+    compilers: [
+      {
+        version: "0.6.6",
+      },
+      {
+        version: "0.8.13",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 1000,
+            details: {
+              yul: true,
+              yulDetails: {
+                stackAllocation: true,
+                optimizerSteps: "dhfoDgvulfnTUtnIf",
+              },
+            },
           },
         },
       },
-    },
+    ],
   },
 
   namedAccounts: {

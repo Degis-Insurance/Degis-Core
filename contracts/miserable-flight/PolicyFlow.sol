@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
-import "../proxy/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "../tokens/interfaces/IBuyerToken.sol";
 import "./interfaces/ISigManager.sol";
 import "./interfaces/IFDPolicyToken.sol";
@@ -81,7 +81,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
         address _sigManager,
         address _buyerToken
     ) public initializer {
-        __Ownable_init(msg.sender);
+        __Ownable_init();
         __PolicyFlow_init(
             _insurancePool,
             _policyToken,

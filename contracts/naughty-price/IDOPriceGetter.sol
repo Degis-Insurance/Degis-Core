@@ -24,10 +24,10 @@ import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/O
 import { IPriceGetter } from "./interfaces/IPriceGetter.sol";
 import { IPolicyCore } from "./interfaces/IPolicyCore.sol";
 
-import { IUniswapV2Pair } from "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
-import { FixedPoint } from "@uniswap/lib/contracts/libraries/FixedPoint.sol";
-import { UniswapV2OracleLibrary } from "@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol";
-import { UniswapV2Library } from "@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol";
+import { IUniswapV2Pair } from "./interfaces/IUniswapV2Pair.sol";
+import { FixedPoint } from "../libraries/FixedPoint.sol";
+import { UniswapV2OracleLibrary } from "../libraries/UniswapV2OracleLibrary.sol";
+import { UniswapV2Library } from "../libraries/UniswapV2Library.sol";
 
 /**
  * @title Price Getter for IDO Protection
@@ -50,7 +50,8 @@ contract IDOPriceGetter is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     // WAVAX address
-    address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+    // address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+    address public constant WAVAX = 0xd00ae08403B9bbb9124bB305C09058E32C39A48c; // fuji
 
     // Minimum period before endTime to start sampling
     uint256 public constant PERIOD = 60 * 60 * 24 * 2; // 2 days
@@ -77,16 +78,24 @@ contract IDOPriceGetter is OwnableUpgradeable {
         uint256 endTime;
     }
     // Policy Base Token Name => IDO Info
-    mapping(string => IDOPriceInfo) priceFeeds;
+    mapping(string => IDOPriceInfo) public priceFeeds;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     event SamplePrice(
-        address policyToken,
+        string policyToken,
         uint256 priceAverage,
         uint256 timestamp
+    );
+
+    event NewIDOPair(
+        string policyToken,
+        address pair,
+        uint256 decimals,
+        uint256 sampleInterval,
+        uint256 isToken0
     );
 
     // ---------------------------------------------------------------------------------------- //
@@ -114,22 +123,34 @@ contract IDOPriceGetter is OwnableUpgradeable {
         uint256 _interval,
         uint256 _startTime
     ) external onlyOwner {
-        require(IUniswapV2Pair(_pair).token0 != address(0), "Non exist pair");
+        require(IUniswapV2Pair(_pair).token0() != address(0), "Non exist pair");
+        require(
+            priceFeeds[_policyToken].pair == address(0),
+            "Pair already exists"
+        );
 
         IDOPriceInfo storage newFeed = priceFeeds[_policyToken];
 
         newFeed.pair = _pair;
+        // Decimals should keep the priceAverage to have 18 decimals
+        // WAVAX always have 18 decimals
+        // E.g. Pair token both 18 decimals => price decimals 18
+        //      (5e18, 10e18) real price 0.5 => we show priceAverage 0.5 * 10^18
+        //      Pair token (18, 6) decimals => price decimals 6
+        //      (5e18, 10e6) real price 0.5 => we show priceAverage 0.5 * 10^18
         newFeed.decimals = _decimals;
         newFeed.sampleInterval = _interval;
 
-        newFeed.isToken0 = IUniswapV2Pair(_pair).token0 == WAVAX ? 0 : 1;
+        newFeed.isToken0 = IUniswapV2Pair(_pair).token0() == WAVAX ? 0 : 1;
+
+        (, , newFeed.lastTimestamp) = IUniswapV2Pair(_pair).getReserves();
 
         uint256 endTime = policyCore
             .getPolicyTokenInfo(_policyToken)
             .settleTimestamp;
 
         require(
-            _startTime < endTime && _startTime + PERIOD,
+            _startTime < endTime && _startTime + PERIOD >= endTime,
             "Wrong start time"
         );
 
@@ -156,7 +177,9 @@ contract IDOPriceGetter is OwnableUpgradeable {
         ) = UniswapV2OracleLibrary.currentCumulativePrices(priceFeed.pair);
 
         // Time between this sampling and last sampling (seconds)
-        uint32 timeElapsed = blockTimestamp - priceFeed.lastTimestamp;
+        uint32 timeElapsed = blockTimestamp - uint32(priceFeed.lastTimestamp);
+
+        uint256 decimals = priceFeed.decimals;
 
         require(
             timeElapsed > priceFeed.sampleInterval,
@@ -166,26 +189,30 @@ contract IDOPriceGetter is OwnableUpgradeable {
         // Update priceAverage and priceCumulativeLast
         uint256 newPriceAverage;
 
-        if (priceFeed.isToken0) {
-            newPriceAverage = FixedPoint.uq112x112(
-                uint224(
-                    (price0Cumulative - priceFeed.price0CumulativeLast) /
-                        timeElapsed
+        if (priceFeed.isToken0 > 0) {
+            newPriceAverage = FixedPoint
+                .uq112x112(
+                    uint224(
+                        ((price0Cumulative - priceFeed.priceCumulativeLast) *
+                            10**decimals) / timeElapsed
+                    )
                 )
-            );
+                .decode();
 
             priceFeed.priceCumulativeLast = price0Cumulative;
         } else {
-            newPriceAverage = FixedPoint.uq112x112(
-                uint224(
-                    (price1Cumulative - priceFeed.price1CumulativeLast) /
-                        timeElapsed
+            newPriceAverage = FixedPoint
+                .uq112x112(
+                    uint224(
+                        ((price1Cumulative - priceFeed.priceCumulativeLast) *
+                            10**decimals) / timeElapsed
+                    )
                 )
-            );
+                .decode();
 
             priceFeed.priceCumulativeLast = price1Cumulative;
         }
-        
+
         priceFeed.priceAverage = newPriceAverage;
 
         // Update lastTimestamp
@@ -203,11 +230,8 @@ contract IDOPriceGetter is OwnableUpgradeable {
      */
     function getLatestPrice(string calldata _policyToken)
         external
-        view
         returns (uint256 price)
     {
-        address pair = priceFeeds[_policyToken].pair;
-
         uint256 priceInAVAX;
 
         // If token0 is WAVAX, use price1Average
@@ -220,6 +244,6 @@ contract IDOPriceGetter is OwnableUpgradeable {
         uint256 avaxPrice = basePriceGetter.getLatestPrice("AVAX");
 
         // This final price is also multiplied by 1e18
-        price = avaxPrice * priceInAVAX;
+        price = (avaxPrice * priceInAVAX) / 1e18;
     }
 }
