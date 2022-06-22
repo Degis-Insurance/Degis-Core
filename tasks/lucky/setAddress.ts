@@ -5,10 +5,14 @@ import { readAddressList } from "../../scripts/contractAddress";
 
 import {
   DegisLottery,
+  DegisLotteryV2,
+  DegisLotteryV2__factory,
   DegisLottery__factory,
   InsurancePool__factory,
   RandomNumberGenerator,
   RandomNumberGenerator__factory,
+  VRFMock,
+  VRFMock__factory,
 } from "../../typechain";
 
 task("setLottery", "Set the contract addresses inside degis lottery").setAction(
@@ -75,6 +79,63 @@ task(
   const lotAddress = await rand.DegisLottery();
   console.log("The lottery inside rand: ", lotAddress);
 });
+
+task("setVRFMock", "Set the contract addresses inside VRFMock").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    // Addresses to be set
+    const lotteryAddress = addressList[network.name].DegisLotteryV2;
+
+    // Get naughty factory contract instance
+    const vrfMockAddress = addressList[network.name].VRFMock;
+    const rand: VRFMock = new VRFMock__factory(dev_account).attach(
+      vrfMockAddress
+    );
+
+    // Set
+    const tx = await rand.setLotteryAddress(lotteryAddress);
+    console.log("Tx details:", await tx.wait());
+
+    // Check the result
+    const lotAddress = await rand.DegisLottery();
+    console.log("The lottery inside rand: ", lotAddress);
+  }
+);
+
+task("setTreasury", "Set the treasury address inside lottery").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    // Addresses to be set
+    const lotteryAddress = addressList[network.name].DegisLotteryV2;
+
+    // Get naughty factory contract instance
+    const lottery: DegisLotteryV2 = new DegisLotteryV2__factory(
+      dev_account
+    ).attach(lotteryAddress);
+
+    // Set
+    const tx = await lottery.setTreasury(dev_account.address);
+    console.log("Tx details:", await tx.wait());
+
+    // Check the result
+    const treasuryAddress = await lottery.treasury();
+    console.log("The treasury inside lottery ", treasuryAddress);
+  }
+);
 
 task("setOperator", "Set the operator address for degis lottery").setAction(
   async (_, hre) => {

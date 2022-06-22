@@ -1,0 +1,273 @@
+{
+  "address": "0xd701EF19D2e2968FBF3E6556b30D783EdF3C4fc4",
+  "abi": [
+    {
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DegisLottery",
+      "outputs": [
+        {
+          "internalType": "contract IDegisLottery",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getRandomNumber",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestLotteryId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "randomResult",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "seed",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_degisLottery",
+          "type": "address"
+        }
+      ],
+      "name": "setLotteryAddress",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0x882912f7112c7fe6ff32cd1925229089560d8f32fde26856a96d55ee36a0776a",
+  "receipt": {
+    "to": null,
+    "from": "0x1Be1A151BA3D24F594ee971dc9B843F23b5bA80E",
+    "contractAddress": "0xd701EF19D2e2968FBF3E6556b30D783EdF3C4fc4",
+    "transactionIndex": 0,
+    "gasUsed": "435202",
+    "logsBloom": "0x00000000000000000000000000000000000080000000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000100000001004000200010000000000000000000000000020000000000000000000800000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000400000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xb96ec4300f2c8d3b34cf10cbbf478ae1f1cfde9a4f9219fd29cf726d2ff315f4",
+    "transactionHash": "0x882912f7112c7fe6ff32cd1925229089560d8f32fde26856a96d55ee36a0776a",
+    "logs": [
+      {
+        "transactionIndex": 0,
+        "blockNumber": 10877437,
+        "transactionHash": "0x882912f7112c7fe6ff32cd1925229089560d8f32fde26856a96d55ee36a0776a",
+        "address": "0xd701EF19D2e2968FBF3E6556b30D783EdF3C4fc4",
+        "topics": [
+          "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000001be1a151ba3d24f594ee971dc9b843f23b5ba80e"
+        ],
+        "data": "0x",
+        "logIndex": 0,
+        "blockHash": "0xb96ec4300f2c8d3b34cf10cbbf478ae1f1cfde9a4f9219fd29cf726d2ff315f4"
+      }
+    ],
+    "blockNumber": 10877437,
+    "cumulativeGasUsed": "435202",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "numDeployments": 1,
+  "solcInputHash": "b909dc3452f02a88fc934a14abdf895c",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DegisLottery\",\"outputs\":[{\"internalType\":\"contract IDegisLottery\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getRandomNumber\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"latestLotteryId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"randomResult\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"seed\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_degisLottery\",\"type\":\"address\"}],\"name\":\"setLotteryAddress\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"renounceOwnership()\":{\"details\":\"Renouncing ownership will leave the contract without an owner,         thereby removing any functionality that is only available to the owner.\"},\"setLotteryAddress(address)\":{\"params\":{\"_degisLottery\":\"address of the PancakeSwap lottery\"}},\"transferOwnership(address)\":{\"details\":\"Can only be called by the current owner.\",\"params\":{\"newOwner\":\"Address of the new owner\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"getRandomNumber()\":{\"notice\":\"Request randomness from Chainlink VRF\"},\"owner()\":{\"notice\":\"Returns the address of the current owner.\"},\"renounceOwnership()\":{\"notice\":\"Leaves the contract without owner. It will not be possible to call         `onlyOwner` functions anymore. Can only be called by the current owner.\"},\"setLotteryAddress(address)\":{\"notice\":\"Set the address for the DegisLottery\"},\"transferOwnership(address)\":{\"notice\":\"Transfers ownership of the contract to a new account (`newOwner`).\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/chainlinkMock/VRFMock.sol\":\"VRFMock\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"details\":{\"constantOptimizer\":true,\"cse\":true,\"deduplicate\":true,\"inliner\":true,\"jumpdestRemover\":true,\"orderLiterals\":true,\"peephole\":true,\"yul\":true,\"yulDetails\":{\"optimizerSteps\":\"dhfoDgvulfnTUtnIf\",\"stackAllocation\":true}},\"runs\":1000},\"remappings\":[]},\"sources\":{\"contracts/chainlinkMock/VRFMock.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\nimport \\\"../utils/Ownable.sol\\\";\\r\\nimport \\\"../lucky-box/interfaces/IDegisLottery.sol\\\";\\r\\nimport \\\"../libraries/StringsUtils.sol\\\";\\r\\n\\r\\ncontract VRFMock is Ownable {\\r\\n    using StringsUtils for uint256;\\r\\n\\r\\n    IDegisLottery public DegisLottery;\\r\\n\\r\\n    uint256 public seed;\\r\\n\\r\\n    uint256 public randomResult;\\r\\n\\r\\n    uint256 public latestLotteryId;\\r\\n\\r\\n    constructor() Ownable(msg.sender) {}\\r\\n\\r\\n    /**\\r\\n     * @notice Set the address for the DegisLottery\\r\\n     * @param _degisLottery address of the PancakeSwap lottery\\r\\n     */\\r\\n    function setLotteryAddress(address _degisLottery) external onlyOwner {\\r\\n        DegisLottery = IDegisLottery(_degisLottery);\\r\\n    }\\r\\n\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n    // ************************************ Main Functions ************************************ //\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n\\r\\n    /**\\r\\n     * @notice Request randomness from Chainlink VRF\\r\\n     */\\r\\n    function getRandomNumber() external {\\r\\n        require(\\r\\n            _msgSender() == address(DegisLottery) || _msgSender() == owner(),\\r\\n            \\\"Only DegisLottery\\\"\\r\\n        );\\r\\n\\r\\n        randomResult = (_rand(++seed) % 10000) + 10000;\\r\\n\\r\\n        latestLotteryId = IDegisLottery(DegisLottery).currentLotteryId();\\r\\n    }\\r\\n\\r\\n    function _rand(uint256 _input) internal pure returns (uint256) {\\r\\n        return _input * 12345;\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x8bf1a36114835a68cb1296fd2f4b68c9e2f6ee818e7aeba2e1d3b8dec718c65c\",\"license\":\"GPL-3.0-or-later\"},\"contracts/libraries/StringsUtils.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\n/**\\r\\n * @dev String operations.\\r\\n */\\r\\nlibrary StringsUtils {\\r\\n    bytes16 private constant _HEX_SYMBOLS = \\\"0123456789abcdef\\\";\\r\\n\\r\\n    /**\\r\\n     * @notice Bytes to string (not human-readable form)\\r\\n     * @param _bytes Input bytes\\r\\n     * @return stringBytes String form of the bytes\\r\\n     */\\r\\n    function byToString(bytes32 _bytes) internal pure returns (string memory) {\\r\\n        return uintToHexString(uint256(_bytes), 32);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Transfer address to string (not change the content)\\r\\n     * @param _addr Input address\\r\\n     * @return stringAddress String form of the address\\r\\n     */\\r\\n    function addressToString(address _addr)\\r\\n        internal\\r\\n        pure\\r\\n        returns (string memory)\\r\\n    {\\r\\n        return uintToHexString(uint256(uint160(_addr)), 20);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Converts a `uint256` to its ASCII `string` decimal representation.\\r\\n     */\\r\\n    function uintToString(uint256 value) internal pure returns (string memory) {\\r\\n        // Inspired by OraclizeAPI's implementation - MIT licence\\r\\n        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol\\r\\n\\r\\n        if (value == 0) {\\r\\n            return \\\"0\\\";\\r\\n        }\\r\\n        uint256 temp = value;\\r\\n        uint256 digits;\\r\\n        while (temp != 0) {\\r\\n            digits++;\\r\\n            temp /= 10;\\r\\n        }\\r\\n        bytes memory buffer = new bytes(digits);\\r\\n        while (value != 0) {\\r\\n            digits -= 1;\\r\\n            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));\\r\\n            value /= 10;\\r\\n        }\\r\\n        return string(buffer);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation.\\r\\n     */\\r\\n    function uintToHexString(uint256 value)\\r\\n        internal\\r\\n        pure\\r\\n        returns (string memory)\\r\\n    {\\r\\n        if (value == 0) {\\r\\n            return \\\"0x00\\\";\\r\\n        }\\r\\n        uint256 temp = value;\\r\\n        uint256 length = 0;\\r\\n        while (temp != 0) {\\r\\n            length++;\\r\\n            temp >>= 8;\\r\\n        }\\r\\n        return uintToHexString(value, length);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @dev Converts a `uint256` to its ASCII `string` hexadecimal representation with fixed length.\\r\\n     */\\r\\n    function uintToHexString(uint256 value, uint256 length)\\r\\n        internal\\r\\n        pure\\r\\n        returns (string memory)\\r\\n    {\\r\\n        bytes memory buffer = new bytes(2 * length + 2);\\r\\n        buffer[0] = \\\"0\\\";\\r\\n        buffer[1] = \\\"x\\\";\\r\\n        for (uint256 i = 2 * length + 1; i > 1; --i) {\\r\\n            buffer[i] = _HEX_SYMBOLS[value & 0xf];\\r\\n            value >>= 4;\\r\\n        }\\r\\n        require(value == 0, \\\"Strings: hex length insufficient\\\");\\r\\n        return string(buffer);\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x8be8b815a5d807a78388ab3f5196eafcba2f2cad2b7a25398b0770c9cc8cb26a\",\"license\":\"GPL-3.0-or-later\"},\"contracts/lucky-box/interfaces/IDegisLottery.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\ninterface IDegisLottery {\\r\\n    /**\\r\\n     * @notice Inject funds\\r\\n     * @param _amount amount to inject in USD\\r\\n     * @dev Callable by operator\\r\\n     */\\r\\n    function injectFunds(uint256 _amount) external;\\r\\n\\r\\n    /**\\r\\n     * @notice View current lottery id\\r\\n     */\\r\\n    function currentLotteryId() external view returns (uint256);\\r\\n}\\r\\n\",\"keccak256\":\"0x4b8a94e1f8c4a0f39512403454f45882fba8290fbe74d66d8f3577192b81c0e3\",\"license\":\"GPL-3.0-or-later\"},\"contracts/utils/Context.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\n// OpenZeppelin Contracts v4.4.0 (utils/Context.sol)\\r\\n\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\n/**\\r\\n * @dev Provides information about the current execution context, including the\\r\\n * sender of the transaction and its data. While these are generally available\\r\\n * via msg.sender and msg.data, they should not be accessed in such a direct\\r\\n * manner, since when dealing with meta-transactions the account sending and\\r\\n * paying for execution may not be the actual sender (as far as an application\\r\\n * is concerned).\\r\\n *\\r\\n * This contract is only required for intermediate, library-like contracts.\\r\\n */\\r\\nabstract contract Context {\\r\\n    function _msgSender() internal view virtual returns (address) {\\r\\n        return msg.sender;\\r\\n    }\\r\\n\\r\\n    function _msgData() internal view virtual returns (bytes calldata) {\\r\\n        return msg.data;\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0x1305ff89f884d987a2fb82dbe2479b4e8d47da2ae88d8c13f371597485a317e2\",\"license\":\"GPL-3.0-or-later\"},\"contracts/utils/Ownable.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\nimport \\\"./Context.sol\\\";\\r\\n\\r\\n/**\\r\\n * @dev The owner can be set during deployment, not default to be msg.sender\\r\\n */\\r\\nabstract contract Ownable is Context {\\r\\n    address private _owner;\\r\\n\\r\\n    event OwnershipTransferred(\\r\\n        address indexed previousOwner,\\r\\n        address indexed newOwner\\r\\n    );\\r\\n\\r\\n    /**\\r\\n     * @dev Initializes the contract setting the deployer as the initial owner.\\r\\n     */\\r\\n    constructor(address _initialOwner) {\\r\\n        _transferOwnership(_initialOwner);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Returns the address of the current owner.\\r\\n     */\\r\\n    function owner() public view virtual returns (address) {\\r\\n        return _owner;\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Throws if called by any account other than the owner.\\r\\n     */\\r\\n    modifier onlyOwner() {\\r\\n        require(owner() == msg.sender, \\\"Ownable: caller is not the owner\\\");\\r\\n        _;\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Leaves the contract without owner. It will not be possible to call\\r\\n     *         `onlyOwner` functions anymore. Can only be called by the current owner.\\r\\n     *\\r\\n     * @dev    Renouncing ownership will leave the contract without an owner,\\r\\n     *         thereby removing any functionality that is only available to the owner.\\r\\n     */\\r\\n    function renounceOwnership() public virtual onlyOwner {\\r\\n        _transferOwnership(address(0));\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Transfers ownership of the contract to a new account (`newOwner`).\\r\\n     * @dev    Can only be called by the current owner.\\r\\n     * @param  newOwner Address of the new owner\\r\\n     */\\r\\n    function transferOwnership(address newOwner) public virtual onlyOwner {\\r\\n        require(\\r\\n            newOwner != address(0),\\r\\n            \\\"Ownable: new owner is the zero address\\\"\\r\\n        );\\r\\n        _transferOwnership(newOwner);\\r\\n    }\\r\\n\\r\\n    /**\\r\\n     * @notice Transfers ownership of the contract to a new account (`newOwner`).\\r\\n     * @dev    Internal function without access restriction.\\r\\n     * @param  newOwner Address of the new owner\\r\\n     */\\r\\n    function _transferOwnership(address newOwner) internal virtual {\\r\\n        address oldOwner = _owner;\\r\\n        _owner = newOwner;\\r\\n        emit OwnershipTransferred(oldOwner, newOwner);\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0xe7dfe879383327ce606c01cd9550d28d1455f72b9bda34fcf766da02ffb47528\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b503361001b81610021565b50610071565b600080546001600160a01b038381166001600160a01b0319831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b610678806100806000396000f3fe608060405234801561001057600080fd5b50600436106100a35760003560e01c80638da5cb5b11610076578063dbdff2c11161005b578063dbdff2c114610126578063eed8e1ee1461012e578063f2fde38b1461013757600080fd5b80638da5cb5b146100ed578063d581b5b61461010657600080fd5b80632a332b2a146100a857806342619f66146100bd578063715018a6146100dc5780637d94792a146100e4575b600080fd5b6100bb6100b6366004610418565b61014a565b005b6100c660035481565b6040516100d39190610449565b60405180910390f35b6100bb6101bb565b6100c660025481565b6000546001600160a01b03166040516100d39190610460565b600154610119906001600160a01b031681565b6040516100d3919061048d565b6100bb610200565b6100c660045481565b6100bb610145366004610418565b61030c565b3361015d6000546001600160a01b031690565b6001600160a01b03161461018c5760405162461bcd60e51b8152600401610183906104cd565b60405180910390fd5b6001805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b336101ce6000546001600160a01b031690565b6001600160a01b0316146101f45760405162461bcd60e51b8152600401610183906104cd565b6101fe6000610377565b565b6001546001600160a01b0316336001600160a01b0316148061022c57506000546001600160a01b031633145b6102485760405162461bcd60e51b81526004016101839061050f565b61271061026760026000815461025d90610535565b91829055506103d4565b6102719190610564565b61027d90612710610578565b600355600154604080517f6be4097c00000000000000000000000000000000000000000000000000000000815290516001600160a01b0390921691636be4097c916004808201926020929091908290030181865afa1580156102e3573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061030791906105a1565b600455565b3361031f6000546001600160a01b031690565b6001600160a01b0316146103455760405162461bcd60e51b8152600401610183906104cd565b6001600160a01b03811661036b5760405162461bcd60e51b8152600401610183906105c2565b61037481610377565b50565b600080546001600160a01b0383811673ffffffffffffffffffffffffffffffffffffffff19831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60006103e282613039610623565b92915050565b60006001600160a01b0382166103e2565b610402816103e8565b811461037457600080fd5b80356103e2816103f9565b60006020828403121561042d5761042d600080fd5b6000610439848461040d565b949350505050565b805b82525050565b602081016103e28284610441565b610443816103e8565b602081016103e28284610457565b60006103e2826103e8565b60006103e28261046e565b61044381610479565b602081016103e28284610484565b60208082527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657291019081525b60200190565b602080825281016103e28161049b565b60118152602081017f4f6e6c792044656769734c6f7474657279000000000000000000000000000000815290506104c7565b602080825281016103e2816104dd565b634e487b7160e01b600052601160045260246000fd5b6000600182016105475761054761051f565b5060010190565b634e487b7160e01b600052601260045260246000fd5b6000826105735761057361054e565b500690565b6000821982111561058b5761058b61051f565b500190565b80610402565b80516103e281610590565b6000602082840312156105b6576105b6600080fd5b60006104398484610596565b602080825281016103e281602681527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160208201527f6464726573730000000000000000000000000000000000000000000000000000604082015260600190565b600081600019048311821515161561063d5761063d61051f565b50029056fea2646970667358221220275d5e1e28371d16ba452b28458aa3259407da7f8a2330ca446ac876b93f00ac64736f6c634300080d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100a35760003560e01c80638da5cb5b11610076578063dbdff2c11161005b578063dbdff2c114610126578063eed8e1ee1461012e578063f2fde38b1461013757600080fd5b80638da5cb5b146100ed578063d581b5b61461010657600080fd5b80632a332b2a146100a857806342619f66146100bd578063715018a6146100dc5780637d94792a146100e4575b600080fd5b6100bb6100b6366004610418565b61014a565b005b6100c660035481565b6040516100d39190610449565b60405180910390f35b6100bb6101bb565b6100c660025481565b6000546001600160a01b03166040516100d39190610460565b600154610119906001600160a01b031681565b6040516100d3919061048d565b6100bb610200565b6100c660045481565b6100bb610145366004610418565b61030c565b3361015d6000546001600160a01b031690565b6001600160a01b03161461018c5760405162461bcd60e51b8152600401610183906104cd565b60405180910390fd5b6001805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b336101ce6000546001600160a01b031690565b6001600160a01b0316146101f45760405162461bcd60e51b8152600401610183906104cd565b6101fe6000610377565b565b6001546001600160a01b0316336001600160a01b0316148061022c57506000546001600160a01b031633145b6102485760405162461bcd60e51b81526004016101839061050f565b61271061026760026000815461025d90610535565b91829055506103d4565b6102719190610564565b61027d90612710610578565b600355600154604080517f6be4097c00000000000000000000000000000000000000000000000000000000815290516001600160a01b0390921691636be4097c916004808201926020929091908290030181865afa1580156102e3573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061030791906105a1565b600455565b3361031f6000546001600160a01b031690565b6001600160a01b0316146103455760405162461bcd60e51b8152600401610183906104cd565b6001600160a01b03811661036b5760405162461bcd60e51b8152600401610183906105c2565b61037481610377565b50565b600080546001600160a01b0383811673ffffffffffffffffffffffffffffffffffffffff19831681178455604051919092169283917f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e09190a35050565b60006103e282613039610623565b92915050565b60006001600160a01b0382166103e2565b610402816103e8565b811461037457600080fd5b80356103e2816103f9565b60006020828403121561042d5761042d600080fd5b6000610439848461040d565b949350505050565b805b82525050565b602081016103e28284610441565b610443816103e8565b602081016103e28284610457565b60006103e2826103e8565b60006103e28261046e565b61044381610479565b602081016103e28284610484565b60208082527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e657291019081525b60200190565b602080825281016103e28161049b565b60118152602081017f4f6e6c792044656769734c6f7474657279000000000000000000000000000000815290506104c7565b602080825281016103e2816104dd565b634e487b7160e01b600052601160045260246000fd5b6000600182016105475761054761051f565b5060010190565b634e487b7160e01b600052601260045260246000fd5b6000826105735761057361054e565b500690565b6000821982111561058b5761058b61051f565b500190565b80610402565b80516103e281610590565b6000602082840312156105b6576105b6600080fd5b60006104398484610596565b602080825281016103e281602681527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160208201527f6464726573730000000000000000000000000000000000000000000000000000604082015260600190565b600081600019048311821515161561063d5761063d61051f565b50029056fea2646970667358221220275d5e1e28371d16ba452b28458aa3259407da7f8a2330ca446ac876b93f00ac64736f6c634300080d0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "renounceOwnership()": {
+        "details": "Renouncing ownership will leave the contract without an owner,         thereby removing any functionality that is only available to the owner."
+      },
+      "setLotteryAddress(address)": {
+        "params": {
+          "_degisLottery": "address of the PancakeSwap lottery"
+        }
+      },
+      "transferOwnership(address)": {
+        "details": "Can only be called by the current owner.",
+        "params": {
+          "newOwner": "Address of the new owner"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {
+      "getRandomNumber()": {
+        "notice": "Request randomness from Chainlink VRF"
+      },
+      "owner()": {
+        "notice": "Returns the address of the current owner."
+      },
+      "renounceOwnership()": {
+        "notice": "Leaves the contract without owner. It will not be possible to call         `onlyOwner` functions anymore. Can only be called by the current owner."
+      },
+      "setLotteryAddress(address)": {
+        "notice": "Set the address for the DegisLottery"
+      },
+      "transferOwnership(address)": {
+        "notice": "Transfers ownership of the contract to a new account (`newOwner`)."
+      }
+    },
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 35641,
+        "contract": "contracts/chainlinkMock/VRFMock.sol:VRFMock",
+        "label": "_owner",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_address"
+      },
+      {
+        "astId": 10345,
+        "contract": "contracts/chainlinkMock/VRFMock.sol:VRFMock",
+        "label": "DegisLottery",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_contract(IDegisLottery)24464"
+      },
+      {
+        "astId": 10347,
+        "contract": "contracts/chainlinkMock/VRFMock.sol:VRFMock",
+        "label": "seed",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10349,
+        "contract": "contracts/chainlinkMock/VRFMock.sol:VRFMock",
+        "label": "randomResult",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 10351,
+        "contract": "contracts/chainlinkMock/VRFMock.sol:VRFMock",
+        "label": "latestLotteryId",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_uint256"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_contract(IDegisLottery)24464": {
+        "encoding": "inplace",
+        "label": "contract IDegisLottery",
+        "numberOfBytes": "20"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      }
+    }
+  }
+}

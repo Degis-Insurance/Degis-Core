@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 import "./MathLib.sol";
 
+import "hardhat/console.sol";
+
 contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using MathLib for uint256;
     using MathLib for int128;
@@ -248,16 +250,21 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             return 0;
         }
 
+        console.log("id 1", lotteries[_lotteryId].firstTicketIdNextRound);
+        console.log("id 2", lotteries[_lotteryId].firstTicketId);
+
         // Check ticketId is within range
         if (
             lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
-            lotteries[_lotteryId].firstTicketId >= _ticketId
+            lotteries[_lotteryId].firstTicketId > _ticketId
         ) {
             return 0;
         }
 
         // Only calculate prize for the highest bracket
         uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
+
+        console.log("highestBracket: ", highestBracket);
 
         return
             _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
@@ -456,6 +463,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Transfer the prize to winner
         lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+
+        console.log("reward to transafer:", rewardToTransfer);
 
         // Transfer the prize to the user
         DegisToken.transfer(msg.sender, rewardToTransfer);
@@ -679,8 +688,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 // No winners, prize added to the amount to withdraw to treasury
             } else {
                 lottery.rewardPerTicketInBracket[j] = 0;
-                amountToTreasury += (lottery.rewardsBreakdown[j] * amountToWinners) / 10000;
-
+                amountToTreasury +=
+                    (lottery.rewardsBreakdown[j] * amountToWinners) /
+                    10000;
             }
 
             // Update numberAddressesInPreviousBracket
