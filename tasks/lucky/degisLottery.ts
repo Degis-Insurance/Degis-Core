@@ -3,7 +3,12 @@ import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { DegisLottery, DegisLottery__factory } from "../../typechain";
+import {
+  DegisLottery,
+  DegisLotteryV2,
+  DegisLotteryV2__factory,
+  DegisLottery__factory,
+} from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
 task("startLotteryRound", "Start a new lottery round")
@@ -19,12 +24,17 @@ task("startLotteryRound", "Start a new lottery round")
     const addressList = readAddressList();
 
     // Get lottery contract instance
-    const lotteryAddress = addressList[network.name].DegisLottery;
-    const DegisLottery: DegisLottery__factory =
-      await hre.ethers.getContractFactory("DegisLottery");
-    const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
+    const lotteryAddress = addressList[network.name].DegisLotteryV2;
+    const lottery: DegisLotteryV2 = new DegisLotteryV2__factory(
+      dev_account
+    ).attach(lotteryAddress);
 
-    const tx = await lottery.startLottery(endTime, [2000, 2000, 2000, 2000]);
+    const tx = await lottery.startLottery(
+      endTime,
+      0,
+      [1000, 2000, 3000, 4000],
+      0
+    );
     console.log("Tx details: ", await tx.wait());
   });
 
