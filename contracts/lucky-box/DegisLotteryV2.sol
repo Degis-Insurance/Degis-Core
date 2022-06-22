@@ -82,14 +82,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // lotteryId => (Lucky Number => Total Amount of this number)
     // e.g. in lottery round 3, 10 Tickets are sold with "11234": 3 => (11234 => 10)
     mapping(uint256 => mapping(uint32 => uint256))
-        private _numberTicketsPerLotteryId;
+        public _numberTicketsPerLotteryId;
 
     // Keep track of user ticket ids for a given lotteryId
 
     // User Address => Lottery Round => Tickets
-    mapping(address => mapping(uint256 => uint256[])) private _userTicketIds;
+    mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
 
-    mapping(uint32 => uint32) private _bracketCalculator;
+    mapping(uint32 => uint32) public _bracketCalculator;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
