@@ -452,6 +452,25 @@ describe("Degis Lottery V2", function () {
       );
     });
 
+    it("should be able to check reward status after claimbale", async function () {
+      const rewardPerTicketInBracket =
+        await lottery.viewRewardPerTicketInBracket(
+          await lottery.currentLotteryId()
+        );
+
+      const lotteryInfo = await lottery.lotteries(
+        await lottery.currentLotteryId()
+      );
+
+      // Total prize pool
+      const totalPrize = lotteryInfo.amountCollected;
+
+      // Prize pool for bracket 1
+      const prizeForBracket1 = totalPrize.mul(8).div(100);
+
+      expect(rewardPerTicketInBracket[0]).to.equal(prizeForBracket1);
+    });
+
     it("should get reward equivalent to one correct number in right order", async function () {
       const lotteryInfo = await lottery.lotteries(
         await lottery.currentLotteryId()

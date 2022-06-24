@@ -270,6 +270,22 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
     }
 
+    function viewRewardPerTicketInBracket(uint256 _lotteryId)
+        external
+        view
+        returns (uint256[4] memory)
+    {
+        return lotteries[_lotteryId].rewardPerTicketInBracket;
+    }
+
+    function viewWinnerAmount(uint256 _lotteryId)
+        external
+        view
+        returns (uint256[4] memory)
+    {
+        return lotteries[_lotteryId].countWinnersPerBracket;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -796,48 +812,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // *********************************** Internal Functions ********************************* //
     // ---------------------------------------------------------------------------------------- //
 
-    // /**
-    //  * @notice View rewards for a given ticket in a given lottery round
-    //  *
-    //  * @dev This function will help to find the highest prize bracket
-    //  *      But this computation is encouraged to be done off-chain
-    //  *      Better to get bracket first and then call "_calculateRewardsForTicketId()"
-    //  *
-    //  * @param _lotteryId Lottery round
-    //  * @param _ticketId  Ticket id
-    //  *
-    //  * @return reward Ticket reward
-    //  */
-    // function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
-    //     external
-    //     view
-    //     returns (uint256)
-    // {
-    //     // Check lottery is in claimable status
-    //     if (lotteries[_lotteryId].status != Status.Claimable) {
-    //         return 0;
-    //     }
-
-    //     // Check ticketId is within range
-    //     if (
-    //         lotteries[_lotteryId].firstTicketIdNextRound < _ticketId ||
-    //         lotteries[_lotteryId].firstTicketId >= _ticketId
-    //     ) {
-    //         return 0;
-    //     }
-
-    //     uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
-
-    //     if (highestBracket > 3) return 0;
-    //     else
-    //         return
-    //             _calculateRewardsForTicketId(
-    //                 _lotteryId,
-    //                 _ticketId,
-    //                 highestBracket
-    //             );
-    // }
-
     /**
      * @notice Calculate total price when buying many tickets
      *         1 ticket = 100%  2 tickets = 98%  3 tickets = 98% * 98 % ...
@@ -916,77 +890,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             return 0;
         }
     }
-
-    // /**
-    //  * @notice View user ticket ids, numbers, and statuses of user for a given lottery
-    //  * @param _user: user address
-    //  * @param _lotteryId: lottery round
-    //  * @param _cursor: cursor to start where to retrieve the tickets
-    //  * @param _size: the number of tickets to retrieve
-    //  */
-    // e.g. Alice, round 10, check her ticket-30 to ticket-35
-    // function viewUserInfoForLotteryId(
-    //     address _user,
-    //     uint256 _lotteryId,
-    //     uint256 _cursor,
-    //     uint256 _size
-    // )
-    //     external
-    //     view
-    //     returns (
-    //         uint256[] memory,
-    //         uint32[] memory,
-    //         bool[] memory,
-    //         uint256
-    //     )
-    // {
-    //     uint256 length = _size;
-    //     uint256 amount = _userTicketIds[_user][_lotteryId].length;
-
-    //     if (length > (amount - _cursor)) {
-    //         length = amount - _cursor;
-    //     }
-
-    //     uint256[] memory lotteryTicketIds = new uint256[](length);
-    //     uint32[] memory ticketNumbers = new uint32[](length);
-    //     bool[] memory ticketStatuses = new bool[](length);
-
-    //     for (uint256 i = 0; i < length; i++) {
-    //         lotteryTicketIds[i] = _userTicketIds[_user][i + _cursor];
-    //         ticketNumbers[i] = tickets[lotteryTicketIds[i]].number;
-    //         ticketStatuses[i] = tickets[lotteryTicketIds[i]].isRedeemed;
-    //     }
-
-    //     return (
-    //         lotteryTicketIds,
-    //         ticketNumbers,
-    //         ticketStatuses,
-    //         _cursor + length
-    //     );
-    // }
-
-    // /**
-    //  * @notice View user ticket ids, numbers, and statuses of user for a given lottery
-    //  * @param _user: user address
-    //  */
-    // e.g. Alice, round 10, check her ticket-30 to ticket-35
-    // function viewUserInfo(address _user)
-    //     external
-    //     view
-    //     returns (uint256[] memory, Ticket[] memory)
-    // {
-    //     uint256 length = _userTicketIds[_user].length;
-
-    //     uint256[] memory ticketIds = new uint256[](length);
-    //     Ticket[] memory userTickets = new Ticket[](length);
-
-    //     for (uint256 i = 0; i < length; i++) {
-    //         ticketIds[i] = _userTicketIds[_user][i];
-    //         userTickets[i] = tickets[ticketIds[i]];
-    //     }
-
-    //     return (ticketIds, userTickets);
-    // }
 
     /**
      * @notice Check if an address is a contract
