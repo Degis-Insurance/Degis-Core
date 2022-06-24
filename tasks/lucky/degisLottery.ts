@@ -49,12 +49,12 @@ task("closeLotteryRound", "Settle the current lottery round").setAction(
     const addressList = readAddressList();
 
     // Get lottery contract instance
-    const lotteryAddress = addressList[network.name].DegisLottery;
-    const DegisLottery: DegisLottery__factory =
-      await hre.ethers.getContractFactory("DegisLottery");
-    const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
+    const lotteryAddress = addressList[network.name].DegisLotteryV2;
+    const lottery: DegisLotteryV2 = new DegisLotteryV2__factory(
+      dev_account
+    ).attach(lotteryAddress);
 
-    const tx = await lottery.closeLottery();
+    const tx = await lottery.closeLottery(1);
     console.log("Tx details: ", await tx.wait());
   }
 );
@@ -70,12 +70,12 @@ task("drawLotteryRound", "Draw the final result of this round").setAction(
     const addressList = readAddressList();
 
     // Get lottery contract instance
-    const lotteryAddress = addressList[network.name].DegisLottery;
-    const DegisLottery: DegisLottery__factory =
-      await hre.ethers.getContractFactory("DegisLottery");
-    const lottery: DegisLottery = DegisLottery.attach(lotteryAddress);
+    const lotteryAddress = addressList[network.name].DegisLotteryV2;
+    const lottery: DegisLotteryV2 = new DegisLotteryV2__factory(
+      dev_account
+    ).attach(lotteryAddress);
 
-    const tx = await lottery.drawLottery();
+    const tx = await lottery.drawFinalNumberAndMakeLotteryClaimable(1, true);
     console.log("Tx details: ", await tx.wait());
   }
 );
