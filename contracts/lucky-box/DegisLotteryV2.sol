@@ -286,6 +286,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         return lotteries[_lotteryId].countWinnersPerBracket;
     }
 
+    function viewRewardsBreakdown(uint256 _lotteryId)
+        external
+        view
+        returns (uint256[4] memory)
+    {
+        return lotteries[_lotteryId].rewardsBreakdown;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
