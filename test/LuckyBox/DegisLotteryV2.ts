@@ -322,6 +322,13 @@ describe("Degis Lottery V2", function () {
       );
     });
 
+    it("should be able to show correct ticket number", async function () {
+      const tickets = [12345];
+
+      const reverse = await lottery._reverseTicketNumber(tickets[0]);
+      expect(reverse).to.equal(15432);
+    });
+
     it("should be able to buy 10 tickets", async function () {
       await expect(lottery.buyTickets(tenTicketsArray))
         .to.emit(lottery, "TicketsPurchased")

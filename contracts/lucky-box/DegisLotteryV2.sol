@@ -366,7 +366,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Record the tickets bought
         for (uint256 i; i < amountToBuy; ) {
-            uint32 currentTicketNumber = _ticketNumbers[i];
+            uint32 currentTicketNumber = _reverseTicketNumber(
+                _ticketNumbers[i]
+            );
 
             require(
                 (currentTicketNumber >= MIN_TICKET_NUMBER) &&
@@ -487,8 +489,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Transfer the prize to winner
         lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
-
-        console.log("reward to transafer:", rewardToTransfer);
 
         // Transfer the prize to the user
         DegisToken.transfer(msg.sender, rewardToTransfer);
@@ -897,6 +897,43 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         } else {
             return 0;
         }
+    }
+
+    /**
+     * @notice Reverse the ticket number
+     *         E.g. User want to buy "1234"
+     *              The input number will be 11234
+     *              The reversed output will be 14321
+     *
+     * @param _number Input ticket number
+     *
+     * @return reversedNumber Reversed number + 10000
+     */
+    function _reverseTicketNumber(uint256 _number)
+        public
+        view
+        returns (uint32)
+    {
+        uint256 initNumber = _number - 10**4;
+        uint256 singleNumber;
+        uint256 reversedNumber;
+
+        for (uint256 i; i < 4; ) {
+            singleNumber = initNumber % 10;
+
+            console.log("single number", singleNumber);
+
+            reversedNumber = reversedNumber * 10 + singleNumber;
+
+            console.log("reversedNumber", reversedNumber);
+
+            initNumber /= 10;
+
+            unchecked {
+                ++i;
+            }
+        }
+        return uint32(reversedNumber + 10000);
     }
 
     /**
