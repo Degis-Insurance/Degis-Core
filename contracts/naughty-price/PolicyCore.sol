@@ -19,14 +19,14 @@
 */
 
 pragma solidity ^0.8.10;
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {StringsUtils} from "../libraries/StringsUtils.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
-import {IPriceGetter} from "./interfaces/IPriceGetter.sol";
-import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
-import {INPPolicyToken} from "./interfaces/INPPolicyToken.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { StringsUtils } from "../libraries/StringsUtils.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
+import { IPriceGetter } from "./interfaces/IPriceGetter.sol";
+import { INaughtyFactory } from "./interfaces/INaughtyFactory.sol";
+import { INPPolicyToken } from "./interfaces/INPPolicyToken.sol";
 
 /**
  * @title  PolicyCore
@@ -134,6 +134,10 @@ contract PolicyCore is OwnableUpgradeable {
     mapping(address => uint256) public pendingIncomeToLottery;
     mapping(address => uint256) public pendingIncomeToSharing;
 
+    // IDO pool record and ido price getter contract
+    mapping(string => bool) public isIDOPool;
+    IPriceGetter public idoPriceGetter;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -207,6 +211,7 @@ contract PolicyCore is OwnableUpgradeable {
         address policyTokenAddress,
         uint256 amount
     );
+    event IDOPriceGetterChanged(address oldPriceGetter, address newPriceGetter);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -462,6 +467,15 @@ contract PolicyCore is OwnableUpgradeable {
         toLotteryPart = _toLottery;
     }
 
+    /**
+     * @notice Set IDO price getter contract
+     * @param _idoPriceGetter Address of the new IDO price getter contract
+     */
+    function setIDOPriceGetter(address _idoPriceGetter) external onlyOwner {
+        emit IDOPriceGetterChanged(address(idoPriceGetter), _idoPriceGetter);
+        idoPriceGetter = IPriceGetter(_idoPriceGetter);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -482,6 +496,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _round           Round of the token (e.g. 2203 -> expired at 22 March)
      * @param _deadline        Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
+     * @param _isIDOPool       Whether this token is an IDO pool
      */
     function deployPolicyToken(
         string memory _tokenName,
@@ -492,7 +507,8 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 _strikePrice,
         string memory _round,
         uint256 _deadline,
-        uint256 _settleTimestamp
+        uint256 _settleTimestamp,
+        bool _isIDOPool
     ) external onlyOwner {
         require(
             _nameDecimals <= 18 && _tokenDecimals <= 18,
@@ -547,6 +563,9 @@ contract PolicyCore is OwnableUpgradeable {
             _deadline,
             _settleTimestamp
         );
+
+        // Record if it is a IDO pool
+        isIDOPool[policyTokenName] = _isIDOPool;
     }
 
     /**
@@ -802,21 +821,26 @@ contract PolicyCore is OwnableUpgradeable {
             policyTokenAddress
         ];
 
+        uint256 finalPrice;
         // Get the final price from oracle
-        uint256 price = priceGetter.getLatestPrice(originalTokenName);
+        if (isIDOPool[_policyTokenName]) {
+            finalPrice = idoPriceGetter.getLatestPrice(_policyTokenName);
+        } else {
+            finalPrice = priceGetter.getLatestPrice(originalTokenName);
+        }
 
         // Record the price
         result.alreadySettled = true;
-        result.price = price;
+        result.price = finalPrice;
 
         PolicyTokenInfo memory policyTokenInfo = policyTokenInfoMapping[
             _policyTokenName
         ];
 
         // Get the final result
-        bool situationT1 = (price >= policyTokenInfo.strikePrice) &&
+        bool situationT1 = (finalPrice >= policyTokenInfo.strikePrice) &&
             policyTokenInfo.isCall;
-        bool situationT2 = (price <= policyTokenInfo.strikePrice) &&
+        bool situationT2 = (finalPrice <= policyTokenInfo.strikePrice) &&
             !policyTokenInfo.isCall;
 
         bool isHappened = (situationT1 || situationT2) ? true : false;
@@ -824,7 +848,7 @@ contract PolicyCore is OwnableUpgradeable {
         // Record the result
         result.isHappened = isHappened;
 
-        emit FinalResultSettled(_policyTokenName, price, isHappened);
+        emit FinalResultSettled(_policyTokenName, finalPrice, isHappened);
     }
 
     /**
@@ -1134,7 +1158,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Calculate the fraction part of a number
      *
      * @dev The scale is fixed as 1e18 (decimal fraction)
-     *      
+     *
      * @param x Number to calculate
      *
      * @return result Fraction result
