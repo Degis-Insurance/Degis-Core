@@ -377,18 +377,18 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             );
 
             // Used when drawing the prize
-            _numberTicketsPerLotteryId[currentRound][
+            ++_numberTicketsPerLotteryId[currentRound][
                 1 + (currentTicketNumber % 10)
-            ]++;
-            _numberTicketsPerLotteryId[currentRound][
+            ];
+            ++_numberTicketsPerLotteryId[currentRound][
                 11 + (currentTicketNumber % 100)
-            ]++;
-            _numberTicketsPerLotteryId[currentRound][
+            ];
+            ++_numberTicketsPerLotteryId[currentRound][
                 111 + (currentTicketNumber % 1000)
-            ]++;
-            _numberTicketsPerLotteryId[currentRound][
+            ];
+            ++_numberTicketsPerLotteryId[currentRound][
                 1111 + (currentTicketNumber % 10000)
-            ]++;
+            ];
 
             // Gas savings
             uint256 ticketId = currentTicketId;
@@ -449,7 +449,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 "Ticket id too small"
             );
             require(
-                thisTicketId <= lotteries[_lotteryId].firstTicketIdNextRound,
+                thisTicketId < lotteries[_lotteryId].firstTicketIdNextRound,
                 "Ticket id too large"
             );
 
@@ -910,8 +910,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @return reversedNumber Reversed number + 10000
      */
     function _reverseTicketNumber(uint256 _number)
-        public
-        view
+        internal
+        pure
         returns (uint32)
     {
         uint256 initNumber = _number - 10**4;
@@ -921,11 +921,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         for (uint256 i; i < 4; ) {
             singleNumber = initNumber % 10;
 
-            console.log("single number", singleNumber);
-
             reversedNumber = reversedNumber * 10 + singleNumber;
-
-            console.log("reversedNumber", reversedNumber);
 
             initNumber /= 10;
 
