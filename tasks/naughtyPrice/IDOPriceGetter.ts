@@ -7,6 +7,8 @@ import {
   IDOPriceGetter__factory,
   PolicyCore,
   PolicyCore__factory,
+  PriceGetter,
+  PriceGetter__factory,
 } from "../../typechain";
 import {
   readAddressList,
@@ -41,11 +43,11 @@ task("addIDOPriceFeed", "Deploy a new naughty price token").setAction(
     ).attach(idoPriceGetterAddress);
 
     const tx = await idoPriceGetter.addIDOPair(
-      "AVAX_15.0_L_8891",
+      "AVAX_1.0_L_8896",
       "0xb7829401854A550eef15D932CcD221A5e89a89eb",
       6,
       60,
-      1655910060
+      1656255600
     );
 
     console.log("Tx details: ", await tx.wait());
@@ -67,7 +69,37 @@ task("samplePrice", "Sample a new price").setAction(async (taskArgs, hre) => {
     dev_account
   ).attach(idoPriceGetterAddress);
 
-  const tx = await idoPriceGetter.samplePrice("AVAX_15.0_L_8891");
+  const tx = await idoPriceGetter.samplePrice("AVAX_1.0_L_8896");
 
+  console.log("Tx details: ", await tx.wait());
+
+  const priceGetter: PriceGetter = new PriceGetter__factory(dev_account).attach(
+    addressList[network.name].PriceGetter
+  );
+
+  const priceFeed = await priceGetter.priceFeedInfo("AVAX");
+  console.log("priceFeedInfo: ", priceFeed);
+});
+
+task(
+  "setIDOPriceGetter",
+  "Set ido price getter address in policyCore"
+).setAction(async (_, hre) => {
+  const { network } = hre;
+
+  const addressList = readAddressList();
+
+  const idoPriceGetterAddress = addressList[network.name].IDOPriceGetter;
+  const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const core: PolicyCore = new PolicyCore__factory(dev_account).attach(
+    policyCoreAddress
+  );
+
+  const tx = await core.setIDOPriceGetter(idoPriceGetterAddress);
   console.log("Tx details: ", await tx.wait());
 });

@@ -125,6 +125,11 @@ contract IDOPriceGetter is OwnableUpgradeable {
     ) external onlyOwner {
         require(IUniswapV2Pair(_pair).token0() != address(0), "Non exist pair");
         require(
+            IUniswapV2Pair(_pair).token0() == WAVAX ||
+                IUniswapV2Pair(_pair).token1() == WAVAX,
+            "Not avax pair"
+        );
+        require(
             priceFeeds[_policyToken].pair == address(0),
             "Pair already exists"
         );
@@ -141,9 +146,17 @@ contract IDOPriceGetter is OwnableUpgradeable {
         newFeed.decimals = _decimals;
         newFeed.sampleInterval = _interval;
 
-        newFeed.isToken0 = IUniswapV2Pair(_pair).token0() == WAVAX ? 0 : 1;
+        // Check if the policy base token is token0
+        bool isToken0 = !(IUniswapV2Pair(_pair).token0() == WAVAX);
+
+        newFeed.isToken0 = isToken0 ? 1 : 0;
 
         (, , newFeed.lastTimestamp) = IUniswapV2Pair(_pair).getReserves();
+
+        // Record the initial priceCumulativeLast
+        newFeed.priceCumulativeLast = isToken0
+            ? IUniswapV2Pair(_pair).price0CumulativeLast()
+            : IUniswapV2Pair(_pair).price1CumulativeLast();
 
         uint256 endTime = policyCore
             .getPolicyTokenInfo(_policyToken)

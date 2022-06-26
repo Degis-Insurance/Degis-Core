@@ -32,6 +32,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     null,
     types.int
   )
+  .addParam("ido", "Whether it is an IDO token", null, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const nameisCall = taskArgs.iscall == 1 ? "H" : "L";
     const boolisCall: boolean = taskArgs.iscall == 1 ? true : false;
@@ -46,6 +47,8 @@ task("deployNPToken", "Deploy a new naughty price token")
       "_" +
       taskArgs.round;
     console.log("Generated policy toke name: ", policyTokenName);
+
+    const isIDO = taskArgs.ido;
 
     let stablecoinAddress: string;
 
@@ -91,7 +94,8 @@ task("deployNPToken", "Deploy a new naughty price token")
       parseUnits(taskArgs.k),
       taskArgs.round,
       toBN(tokenDeadline),
-      toBN(tokenSettleTime)
+      toBN(tokenSettleTime),
+      isIDO
     );
     console.log("tx details:", await tx.wait());
 

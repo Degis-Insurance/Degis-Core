@@ -59,6 +59,31 @@
 			"address": "0x8b846C564395D920B229Bf3c0d4d4d29cd481b2B",
 			"deadline": 1655920800,
 			"settleTime": 1655920800
+		},
+		"AVAX_1.0_L_8892": {
+			"address": "0x881882A25D22f81b4bAce1049EcB5Fa968CC9d6A",
+			"deadline": 1656302400,
+			"settleTime": 1656302400
+		},
+		"AVAX_1.0_L_8893": {
+			"address": "0x3dFfF2C9b20F8439fCb0E424650Bbc387da3C57B",
+			"deadline": 1656295200,
+			"settleTime": 1656295200
+		},
+		"AVAX_1.0_L_8894": {
+			"address": "0x41614671ef900cf75c55EE57BaF21610D0148196",
+			"deadline": 1656256200,
+			"settleTime": 1656256200
+		},
+		"AVAX_1.0_L_8895": {
+			"address": "0x8215FA815eB6998e86e2F54Bf6dc125A1E07798B",
+			"deadline": 1656256800,
+			"settleTime": 1656256800
+		},
+		"AVAX_1.0_L_8896": {
+			"address": "0x77473a8b0cA293c88De631eb318f2FFa033D6f5D",
+			"deadline": 1656258300,
+			"settleTime": 1656258300
 		}
 	},
 	"fujiTest": {},
