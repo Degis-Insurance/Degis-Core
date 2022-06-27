@@ -87,7 +87,6 @@ describe("Policy Core and Naughty Factory", function () {
     core = await PolicyCore.deploy();
     await core.initialize(usd.address, factory.address, priceFeedMock.address);
     await core.deployed();
-    
 
     NaughtyRouter = await ethers.getContractFactory("NaughtyRouter");
     router = await NaughtyRouter.deploy();
@@ -215,7 +214,8 @@ describe("Policy Core and Naughty Factory", function () {
           parseUnits("5.5656"),
           "2112",
           toBN(deadline),
-          toBN(settleTimestamp)
+          toBN(settleTimestamp),
+          false
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -239,7 +239,8 @@ describe("Policy Core and Naughty Factory", function () {
           parseUnits("5.5656"),
           "2112",
           toBN(deadline),
-          toBN(settleTimestamp)
+          toBN(settleTimestamp),
+          false
         )
       ).to.be.revertedWith("Too many decimals");
     });
@@ -286,7 +287,8 @@ describe("Policy Core and Naughty Factory", function () {
           parseUnits("5.565656565656565656"),
           "2112",
           toBN(deadline),
-          toBN(settleTimestamp)
+          toBN(settleTimestamp),
+          false
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -343,7 +345,8 @@ describe("Policy Core and Naughty Factory", function () {
           parseUnits("24000"),
           "2112",
           toBN(deadline),
-          toBN(settleTimestamp)
+          toBN(settleTimestamp),
+          false
         )
       )
         .to.emit(core, "PolicyTokenDeployed")
@@ -375,7 +378,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
 
       // Calculate the address
@@ -425,7 +429,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
 
       // Calculate the address
@@ -495,7 +500,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
       await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
@@ -590,7 +596,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
       await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
 
@@ -735,7 +742,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
       await core.deployPolicyToken(
         "BTC",
@@ -746,7 +754,8 @@ describe("Policy Core and Naughty Factory", function () {
         parseUnits("24000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
 
       await core.deployPool(policyTokenName_H, usd.address, toBN(deadline), 20);

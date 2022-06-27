@@ -1,4 +1,4 @@
-import { task } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
 import { readAddressList } from "../../scripts/contractAddress";
@@ -11,6 +11,7 @@ import {
   NaughtyRouter__factory,
   PolicyCore,
   PolicyCore__factory,
+  PriceGetter__factory,
 } from "../../typechain";
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 import { formatUnits } from "ethers/lib/utils";
@@ -291,3 +292,31 @@ task("checkNaughtyPrice", "check naughty price addresses setting").setAction(
     console.log("\n Finish Checking Naughty Price Addresses... \n");
   }
 );
+
+task("addPriceFeed", "Add new chainlink price feed in Price Getter")
+  .addParam("name", "Base token name", null, types.string)
+  .addParam("feed", "Chainlink price feed address", null, types.string)
+  .addParam("decimals", "Price decimals", null, types.int)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const priceGetterAddress = addressList[network.name].PriceGetter;
+
+    const priceGetter = new PriceGetter__factory(dev_account).attach(
+      priceGetterAddress
+    );
+
+    const tx = await priceGetter.setPriceFeed(
+      taskArgs.name,
+      taskArgs.feed,
+      taskArgs.decimals
+    );
+
+    console.log("Tx details: ", await tx.wait());
+  });

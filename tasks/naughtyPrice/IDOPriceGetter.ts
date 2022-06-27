@@ -26,8 +26,13 @@ import {
 // Add IDO Price feed
 // Sample Price
 
-task("addIDOPriceFeed", "Deploy a new naughty price token").setAction(
-  async (taskArgs, hre) => {
+task("addIDOPriceFeed", "Deploy a new naughty price token")
+  .addParam("name", "Policy token name", null, types.string)
+  .addParam("pair", "Trader joe pair")
+  .setAction(async (taskArgs, hre) => {
+    const policyTokenName = taskArgs.name;
+    const joePair = taskArgs.pair;
+
     const { network } = hre;
 
     const addressList = readAddressList();
@@ -43,16 +48,15 @@ task("addIDOPriceFeed", "Deploy a new naughty price token").setAction(
     ).attach(idoPriceGetterAddress);
 
     const tx = await idoPriceGetter.addIDOPair(
-      "AVAX_1.0_L_8896",
-      "0xb7829401854A550eef15D932CcD221A5e89a89eb",
+      policyTokenName,
+      joePair,
       6,
       60,
       1656255600
     );
 
     console.log("Tx details: ", await tx.wait());
-  }
-);
+  });
 
 task("samplePrice", "Sample a new price").setAction(async (taskArgs, hre) => {
   const { network } = hre;

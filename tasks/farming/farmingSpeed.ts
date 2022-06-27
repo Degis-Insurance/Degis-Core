@@ -2,8 +2,6 @@ import { stablecoinToWei, toWei } from "../../test/utils";
 
 export const getFarmingSpeed = () => {
   const speed = [];
-
-  speed[0] = [];
 };
 
 // Farming Pool Upgradeable
@@ -121,7 +119,18 @@ const bonus_6 = toWei("0.00694"); // 600 deg / day
 
 // Pool Id 7
 // Token: AVAX_15.0_L_0107
-// Address:
+// Address: 0x50064925F17FEC98A0DE254bAD226AEf01a72744
 
 const basic_7 = toWei("0.02893"); // 2500 deg / day
 const bonus_7 = toWei("0.00578"); // 500 deg / day
+
+// Pool Id 8
+// Token: IM_XAVA_0.62_L_1307
+// Address: 0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f
+
+const basic_8 = toWei("0.02315"); // 2000 deg / day
+const bonus_8 = toWei("0.00463"); // 400 deg / day
+
+// Pool Id 9
+// Token: XAVA_0.62_L_1307
+// Address:

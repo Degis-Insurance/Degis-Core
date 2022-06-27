@@ -85,6 +85,15 @@ task("deployNPToken", "Deploy a new naughty price token")
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
+    const newName = await core._generateName(
+      taskArgs.name,
+      taskArgs.namedecimals,
+      parseUnits(taskArgs.k),
+      boolisCall,
+      taskArgs.round
+    );
+    console.log("Generated name: ", newName);
+
     const tx = await core.deployPolicyToken(
       taskArgs.name,
       stablecoinAddress,
@@ -114,4 +123,9 @@ task("deployNPToken", "Deploy a new naughty price token")
     };
     tokenList[network.name][policyTokenName] = tokenObject;
     storeNaughtyTokenList(tokenList);
+
+    // const req = new XMLHttpRequest();
+    // const lark_url =
+    //   "https://open.larksuite.com/open-apis/bot/v2/hook/03430ecc-9b80-4b08-ab95-c34e8e27e01a";
+    
   });

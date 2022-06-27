@@ -46,12 +46,12 @@
 			"feeRate": 50
 		},
 		"AVAX_33.0_L_0106": {
-            "poolAddress": "0xa70639b76aBFdCA9C08c59Fb964aA241addA5B69",
-            "policyTokenAddress": "0xB85A94adDb5B666c0ea270F750fCf8AbaFB22D1f",
-            "stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
-            "poolDeadline": "1653984000",
-            "feeRate": 50
-        }
+			"poolAddress": "0xa70639b76aBFdCA9C08c59Fb964aA241addA5B69",
+			"policyTokenAddress": "0xB85A94adDb5B666c0ea270F750fCf8AbaFB22D1f",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1653984000",
+			"feeRate": 50
+		}
 	},
 	"avaxTest": {
 		"AVAX_83.68_L_2303": {
@@ -88,6 +88,13 @@
 			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"poolDeadline": "1651564800",
 			"feeRate": 50
+		},
+		"XAVA_0.29_L_2706": {
+			"poolAddress": "0x36d6076A15097559BE973EFaEC6faBf8c2ecFF5f",
+			"policyTokenAddress": "0xa7af2B8398C2aF185643eF15Ed868Bf9fA876F56",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1656304200",
+			"feeRate": 10
 		}
 	},
 	"localhost": {
