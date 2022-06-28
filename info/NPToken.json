@@ -179,6 +179,11 @@
 			"address": "0xa7af2B8398C2aF185643eF15Ed868Bf9fA876F56",
 			"deadline": 1656304200,
 			"settleTime": 1656304320
+		},
+		"JOE_0.27_L_2806": {
+			"address": "0x01F0639a1EC5f6005413A53A8A92D26590163daa",
+			"deadline": 1656417600,
+			"settleTime": 1656419400
 		}
 	},
 	"localhost": {}

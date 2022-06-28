@@ -95,6 +95,13 @@
 			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"poolDeadline": "1656304200",
 			"feeRate": 10
+		},
+		"JOE_0.27_L_2806": {
+			"poolAddress": "0x67De46f0e6454b9Fd5Fd91F3a5fe36D403b4f19E",
+			"policyTokenAddress": "0x01F0639a1EC5f6005413A53A8A92D26590163daa",
+			"stablecoinAddress": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"poolDeadline": "1656417600",
+			"feeRate": 50
 		}
 	},
 	"localhost": {

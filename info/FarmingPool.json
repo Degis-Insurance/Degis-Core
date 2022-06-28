@@ -91,8 +91,15 @@
 			"name": "IM_XAVA_0.62_L_1307",
 			"address": "0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f",
 			"poolId": 8,
-			"reward": "0.0",
-			"bonus": "0.0"
+			"reward": "0.02315",
+			"bonus": "0.00463"
+		},
+		"9": {
+			"name": "XAVA_0.62_L_1307",
+			"address": "0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521",
+			"poolId": 9,
+			"reward": "0.01929",
+			"bonus": "0.00385"
 		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",

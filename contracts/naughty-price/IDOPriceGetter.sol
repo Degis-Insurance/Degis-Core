@@ -50,8 +50,8 @@ contract IDOPriceGetter is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     // WAVAX address
-    // address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
-    address public constant WAVAX = 0xd00ae08403B9bbb9124bB305C09058E32C39A48c; // fuji
+    address public constant WAVAX = 0xB31f66AA3C1e785363F0875A1B74E27b85FD66c7;
+    // address public constant WAVAX = 0xd00ae08403B9bbb9124bB305C09058E32C39A48c; // fuji
 
     // Minimum period before endTime to start sampling
     uint256 public constant PERIOD = 60 * 60 * 24 * 2; // 2 days

@@ -15,6 +15,7 @@ import {
   readNaughtyTokenList,
   storeNaughtyTokenList,
 } from "../../scripts/contractAddress";
+import { formatEther } from "ethers/lib/utils";
 
 // Preset for fuji test
 // Deploy a test naughty token "AVAX_15.0_L_8888"
@@ -25,6 +26,11 @@ import {
 // Add liquidity to the pair
 // Add IDO Price feed
 // Sample Price
+
+// Test on avaxTest
+// JOE: 0x6e84a6216eA6dACC71eE8E6b0a5B7322EEbC0fDd
+// WAVAX: 0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7
+// JOE-WAVAX: 0x454E67025631C065d3cFAD6d71E6892f74487a15
 
 task("addIDOPriceFeed", "Deploy a new naughty price token")
   .addParam("name", "Policy token name", null, types.string)
@@ -50,9 +56,9 @@ task("addIDOPriceFeed", "Deploy a new naughty price token")
     const tx = await idoPriceGetter.addIDOPair(
       policyTokenName,
       joePair,
-      6,
-      60,
-      1656255600
+      18,
+      1200,
+      1656414000
     );
 
     console.log("Tx details: ", await tx.wait());
@@ -107,3 +113,24 @@ task(
   const tx = await core.setIDOPriceGetter(idoPriceGetterAddress);
   console.log("Tx details: ", await tx.wait());
 });
+
+task("checkIDOPrice", "Check the current ido price").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    const addressList = readAddressList();
+
+    const idoPriceGetterAddress = addressList[network.name].IDOPriceGetter;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const idoPriceGetter: IDOPriceGetter = new IDOPriceGetter__factory(
+      dev_account
+    ).attach(idoPriceGetterAddress);
+
+    const currentPrice = await idoPriceGetter.priceFeeds("JOE_0.27_L_2806");
+    console.log("current price: ", formatEther(currentPrice.priceAverage));
+  }
+);

@@ -320,3 +320,22 @@ task("addPriceFeed", "Add new chainlink price feed in Price Getter")
 
     console.log("Tx details: ", await tx.wait());
   });
+
+task("checkPriceFeed", "Check price getter feeds").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const priceGetterAddress = addressList[network.name].PriceGetter;
+
+  const priceGetter = new PriceGetter__factory(dev_account).attach(
+    priceGetterAddress
+  );
+
+  const feedInfo = await priceGetter.priceFeedInfo("AVAX");
+  console.log("feedInfo: ", feedInfo);
+});

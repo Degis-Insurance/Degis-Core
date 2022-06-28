@@ -133,4 +133,7 @@ const bonus_8 = toWei("0.00463"); // 400 deg / day
 
 // Pool Id 9
 // Token: XAVA_0.62_L_1307
-// Address:
+// Address: 0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521
+
+const basic_9 = toWei("0.01929"); // 1667 deg / day
+const bonus_9 = toWei("0.00385")  /// 333 deg / day

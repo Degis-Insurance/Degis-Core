@@ -56,7 +56,8 @@
 			"policyToken": "0xc883F576d69670BdCffc5d7160c6A9aCd417c4b6",
 			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"deadline": "1656403200",
-			"lptoken": "0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f"
+			"lptoken": "0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f",
+			"pairAddress": "0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521"
 		}
 	},
 	"avaxTest": {
