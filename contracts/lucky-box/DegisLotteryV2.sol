@@ -194,13 +194,20 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice View all lottery information
+     * @notice View lottery information
      *
-     * @return Array of all lottery information
+     * @param _startId Start lottery id
+     * @param _endId End lottery id
+     *
+     * @return Array of lottery information
      */
-    function viewAllLottery() external view returns (Lottery[] memory) {
-        Lottery[] memory allLottery = new Lottery[](currentLotteryId);
-        for (uint256 i = 1; i <= currentLotteryId; i++) {
+    function viewAllLottery(uint256 _startId, uint256 _endId)
+        external
+        view
+        returns (Lottery[] memory)
+    {
+        Lottery[] memory allLottery = new Lottery[](_endId - _startId + 1);
+        for (uint256 i = _startId; i <= _endId; i++) {
             allLottery[i - 1] = lotteries[i];
         }
         return allLottery;
@@ -241,7 +248,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @return reward Ticket reward
      */
     function viewRewardsForTicketId(uint256 _lotteryId, uint256 _ticketId)
-        external
+        public
         view
         returns (uint256)
     {
@@ -249,9 +256,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         if (lotteries[_lotteryId].status != Status.Claimable) {
             return 0;
         }
-
-        console.log("id 1", lotteries[_lotteryId].firstTicketIdNextRound);
-        console.log("id 2", lotteries[_lotteryId].firstTicketId);
 
         // Check ticketId is within range
         if (
@@ -264,10 +268,35 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // Only calculate prize for the highest bracket
         uint32 highestBracket = _getBracket(_lotteryId, _ticketId);
 
-        console.log("highestBracket: ", highestBracket);
-
         return
             _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
+    }
+
+    function viewUserRewards(
+        address _user,
+        uint256 _startRound,
+        uint256 _endRound
+    ) external view returns (uint256[] memory userRewards) {
+        userRewards = new uint256[](_endRound - _startRound + 1);
+
+        for (uint256 i = _startRound; i <= _endRound; ) {
+            uint256 ticketAmount = _userTicketIds[_user][i].length;
+
+            if (ticketAmount > 0) {
+                uint256[] memory ticketIds = _userTicketIds[_user][i];
+
+                for (uint256 j; j < ticketAmount; ) {
+                    userRewards[i - 1] += viewRewardsForTicketId(
+                        i,
+                        ticketIds[j]
+                    );
+                }
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
     }
 
     function viewRewardPerTicketInBracket(uint256 _lotteryId)
