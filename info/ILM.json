@@ -88,6 +88,12 @@
 			"deadline": "1656302700",
 			"lptoken": "0x8026d5E60c158c28896323cbd65c8C227d653Eb1",
 			"pairAddress": "0xBd663931B9590e77ef45F73d836FBcbbd49F7d17"
+		},
+		"JOE_0.26_L_0107": {
+			"policyToken": "0x9717a44cAdB37E7F275ae445571d5032D2Fd6d55",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656561600",
+			"lptoken": "0x8989369917737CDF8bE1F137414162C18E338156"
 		}
 	},
 	"localhost": {},
