@@ -177,8 +177,15 @@
 			"name": "IM_JOE_0.26_L_0107",
 			"address": "0x8989369917737CDF8bE1F137414162C18E338156",
 			"poolId": 10,
-			"reward": "0.0",
-			"bonus": "0.0"
+			"reward": "0.15",
+			"bonus": "0.12"
+		},
+		"11": {
+			"name": "JOE_0.26_L_0107",
+			"address": "0x0Cc885bA9de677f59EDE136061DbE08909e3f0d0",
+			"poolId": 11,
+			"reward": "0.1",
+			"bonus": "0.1"
 		}
 	},
 	"localhost": {
