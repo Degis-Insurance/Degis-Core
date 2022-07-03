@@ -6,7 +6,7 @@
 
 ---
 
-npx hardhat deployNPToken --network avax --name XAVA --stablecoin USDC.e --k 0.62 --namedecimals 2 --iscall 0 --round 1307 --deadline 1657612800 --settletime 1657699200 --ido false
+npx hardhat deployNPToken --network avax --name JOE --stablecoin USDC.e --k 0.24 --namedecimals 2 --iscall 0 --round 1607 --deadline 1657872000 --settletime 1657958400 --ido false
 
 npx hardhat deployNPToken --network avaxTest --name JOE --stablecoin USDC.e --k 0.27 --namedecimals 2 --iscall 0 --round 2806 --deadline 1656417600 --settletime 1656419400 --ido true
 

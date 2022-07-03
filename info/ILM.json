@@ -58,6 +58,20 @@
 			"deadline": "1656403200",
 			"lptoken": "0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f",
 			"pairAddress": "0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521"
+		},
+		"AVAX_16.5_L_1607": {
+			"policyToken": "0xfBC8d1062B33E300e635ed78E3eD8352D560305a",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656662400",
+			"lptoken": "0x1FB6D47Add3C7CE818DE1fEA3259cB31B5403F69",
+			"pairAddress": "0x93C45304b4954A3f9111E92199A40a3D83bE67E9"
+		},
+		"JOE_0.24_L_1607": {
+			"policyToken": "0xeC2B2899e68d74E0F8f3202D9d059940a1e36EaB",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656662400",
+			"lptoken": "0xb9365b58B07f49AD740fA72566B97970f62B6e2c",
+			"pairAddress": "0xB1f288bf386690Ae8E9f13Ca6009fE3535d581af"
 		}
 	},
 	"avaxTest": {

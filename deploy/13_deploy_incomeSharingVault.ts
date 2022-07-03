@@ -42,9 +42,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
-  await hre.run("setIncomeSharingInCore");
-  await hre.run("addIncomeSharingWL");
-  await hre.run("setLotteryAndIncomeInCore")
+  // await hre.run("setIncomeSharingInCore");
+  // await hre.run("addIncomeSharingWL");
+  // await hre.run("setLotteryAndIncomeInCore")
 };
 
 func.tags = ["IncomeSharing"];

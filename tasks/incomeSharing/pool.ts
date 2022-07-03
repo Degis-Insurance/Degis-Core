@@ -70,8 +70,30 @@ task("setIncomeSpeed", "Set income sharing speed")
       taskArgs.pid,
       parseUnits(taskArgs.reward, 6)
     );
+
     console.log("Tx details: ", await tx.wait());
   });
+
+task("setRoundTime", "Set income sharing round time").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const vaultAddress = addressList[network.name].IncomeSharingVault;
+
+    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
+      dev_account
+    ).attach(vaultAddress);
+
+    const tx = await vault.setRoundTime(1209600);
+    console.log("Tx details: ", await tx.wait());
+  }
+);
 
 task("getIncomeBalance", "Get balance in income sharing vault").setAction(
   async (taskArgs, hre) => {

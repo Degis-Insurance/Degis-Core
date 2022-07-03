@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
-import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
-import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
-import {ILMToken as LPToken} from "./ILMToken.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IPolicyCore } from "../naughty-price/interfaces/IPolicyCore.sol";
+import { INaughtyRouter } from "../naughty-price/interfaces/INaughtyRouter.sol";
+import { INaughtyPair } from "../naughty-price/interfaces/INaughtyPair.sol";
+import { ILMToken as LPToken } from "./ILMToken.sol";
 
 /**
  * @title Naughty Price Initial Liquidity Matching
@@ -82,6 +82,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     }
     // Policy Token Address => Pair Info
     mapping(address => PairInfo) public pairs;
+
+    mapping(address => uint256) public endPrice;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -558,7 +560,6 @@ contract NaughtyPriceILM is OwnableUpgradeable {
                 block.timestamp + 60
             );
 
-        // Update user quota
         IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
             _policyToken,

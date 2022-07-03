@@ -77,15 +77,15 @@
 			"name": "IM_AVAX_15.0_L_0107",
 			"address": "0x6B657FB68907f0005931AA4088086a73Af4F0a40",
 			"poolId": 6,
-			"reward": "0.03472",
-			"bonus": "0.00694"
+			"reward": "0.0",
+			"bonus": "0.0"
 		},
 		"7": {
 			"name": "AVAX_15.0_L_0107",
 			"address": "0x50064925F17FEC98A0DE254bAD226AEf01a72744",
 			"poolId": 7,
-			"reward": "0.02893",
-			"bonus": "0.00578"
+			"reward": "0.0",
+			"bonus": "0.0"
 		},
 		"8": {
 			"name": "IM_XAVA_0.62_L_1307",
@@ -98,6 +98,34 @@
 			"name": "XAVA_0.62_L_1307",
 			"address": "0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521",
 			"poolId": 9,
+			"reward": "0.01929",
+			"bonus": "0.00385"
+		},
+		"10": {
+			"name": "IM_AVAX_16.5_L_1607",
+			"address": "0x1FB6D47Add3C7CE818DE1fEA3259cB31B5403F69",
+			"poolId": 10,
+			"reward": "0.02315",
+			"bonus": "0.00463"
+		},
+		"11": {
+			"name": "IM_JOE_0.24_L_1607",
+			"address": "0xb9365b58B07f49AD740fA72566B97970f62B6e2c",
+			"poolId": 11,
+			"reward": "0.02315",
+			"bonus": "0.00463"
+		},
+		"12": {
+			"name": "AVAX_16.5_L_1607",
+			"address": "0x93C45304b4954A3f9111E92199A40a3D83bE67E9",
+			"poolId": 12,
+			"reward": "0.01929",
+			"bonus": "0.00385"
+		},
+		"13": {
+			"name": "JOE_0.24_L_1607",
+			"address": "0xB1f288bf386690Ae8E9f13Ca6009fE3535d581af",
+			"poolId": 13,
 			"reward": "0.01929",
 			"bonus": "0.00385"
 		},

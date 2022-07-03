@@ -62,6 +62,9 @@ task("addFarmingPool", "Add new farming pool")
       parseUnits(bonusDegisPerSecond).toString()
     );
 
+    console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
+    console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
+
     const tx = await farmingPool.add(
       lptokenAddress,
       parseUnits(basicDegisPerSecond),
