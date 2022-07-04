@@ -9,6 +9,12 @@ import "./MathLib.sol";
 
 import "hardhat/console.sol";
 
+/**
+ * @title DegisLotteryV2
+ *
+ * @dev
+ */
+
 contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using MathLib for uint256;
     using MathLib for int128;
@@ -17,13 +23,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    // Fee
+    // Treasury fee
     uint256 public constant MAX_TREASURY_FEE = 3000; // 30%
 
     // Ticket numbers
     uint32 public constant MIN_TICKET_NUMBER = 10000;
     uint32 public constant MAX_TICKET_NUMBER = 19999;
 
+    // Default ticket price
     uint256 public constant DEFAULT_PRICE = 10 ether;
 
     // 98% for each extra ticket
@@ -39,6 +46,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     address public treasury;
 
     uint256 public currentLotteryId; // Total Rounds
+
     uint256 public currentTicketId; // Total Tickets
 
     uint256 public maxNumberTicketsEachTime;
@@ -80,12 +88,11 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     mapping(uint256 => Ticket) public tickets;
 
     // lotteryId => (Lucky Number => Total Amount of this number)
-    // e.g. in lottery round 3, 10 Tickets are sold with "11234": 3 => (11234 => 10)
+    // e.g. In lottery round 3, 10 Tickets are sold with "11234": 3 => (11234 => 10)
     mapping(uint256 => mapping(uint32 => uint256))
         public _numberTicketsPerLotteryId;
 
     // Keep track of user ticket ids for a given lotteryId
-
     // User Address => Lottery Round => Tickets
     mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
 
@@ -99,6 +106,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 oldMaxNumber,
         uint256 newMaxNumber
     );
+    event TreasuryChanged(address oldTreasury, address newTreasury);
     event AdminTokenRecovery(address token, uint256 amount);
     event LotteryClose(uint256 indexed lotteryId);
     event LotteryInjection(uint256 indexed lotteryId, uint256 injectedAmount);
@@ -282,14 +290,21 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         for (uint256 i = _startRound; i <= _endRound; ) {
             uint256 ticketAmount = _userTicketIds[_user][i].length;
 
+            console.log("ticket amount: ", ticketAmount);
+            console.log("gas used: ", gasleft());
+
             if (ticketAmount > 0) {
                 uint256[] memory ticketIds = _userTicketIds[_user][i];
 
                 for (uint256 j; j < ticketAmount; ) {
-                    userRewards[i - 1] += viewRewardsForTicketId(
-                        i,
-                        ticketIds[j]
-                    );
+                    uint256 reward = viewRewardsForTicketId(i, ticketIds[j]);
+                    userRewards[i - 1] += reward;
+
+                    console.log("reward:", reward);
+
+                    unchecked {
+                        ++j;
+                    }
                 }
             }
 
@@ -328,13 +343,12 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Set max number can buy/claim/redeem each time
+     * @notice Set max number can buy/claim each time
      *
      * @param _maxNumber Max number each time
      */
     function setMaxNumberTicketsEachTime(uint256 _maxNumber)
         external
-        /// setMaxTicketsPerLottery
         onlyOwner
     {
         emit MaxNumberTicketsEachTimeChanged(
@@ -347,9 +361,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     /**
      * @notice Set treasury wallet address
      *
-     * @param _treasury wallet address
+     * @param _treasury Treasury address
      */
     function setTreasury(address _treasury) external onlyOwner {
+        emit TreasuryChanged(treasury, _treasury);
         treasury = _treasury;
     }
 
@@ -363,6 +378,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @dev Need to transfer the 4-digit number to a 5-digit number to be used here (+10000)
      *      Can not be called by a smart contract
      *      Can only purchase in the current round
+     *      E.g. You are selecting the number of 1-2-3-4 (lowest to highest)
+     *           You will need to pass a number "14321"
      *
      * @param _ticketNumbers Array of ticket numbers between 10,000 and 19,999
      */
@@ -374,16 +391,15 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 amountToBuy = _ticketNumbers.length;
         require(amountToBuy > 0, "No tickets are being bought");
         require(amountToBuy <= maxNumberTicketsEachTime, "Too many tickets");
+
         // Gas savings
+        Lottery storage lottery = lotteries[currentLotteryId];
         uint256 currentRound = currentLotteryId;
-        require(
-            lotteries[currentRound].status == Status.Open,
-            "Round not open"
-        );
+        require(lottery.status == Status.Open, "Round not open");
 
         // Calculate the number of DEG to pay
         uint256 degToPay = _calculateTotalPrice(
-            lotteries[currentRound].ticketPrice,
+            lottery.ticketPrice,
             amountToBuy
         );
 
@@ -395,9 +411,11 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Record the tickets bought
         for (uint256 i; i < amountToBuy; ) {
-            uint32 currentTicketNumber = _reverseTicketNumber(
-                _ticketNumbers[i]
-            );
+            // uint32 currentTicketNumber = _reverseTicketNumber(
+            //     _ticketNumbers[i]
+            // );
+
+            uint32 currentTicketNumber = _ticketNumbers[i];
 
             require(
                 (currentTicketNumber >= MIN_TICKET_NUMBER) &&
@@ -456,7 +474,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     ) external notContract nonReentrant {
         require(
             lotteries[_lotteryId].status == Status.Claimable,
-            "Not claimable"
+            "Round not claimable"
         );
 
         uint256 ticketAmount = _ticketIds.length;
@@ -469,26 +487,30 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         uint256 rewardToTransfer;
 
+        Lottery storage lottery = lotteries[_lotteryId];
+
         for (uint256 i; i < ticketAmount; ) {
             uint256 thisTicketId = _ticketIds[i];
 
             // Check the ticket id is inside the range
             require(
-                thisTicketId >= lotteries[_lotteryId].firstTicketId,
+                thisTicketId >= lottery.firstTicketId,
                 "Ticket id too small"
             );
             require(
-                thisTicketId < lotteries[_lotteryId].firstTicketIdNextRound,
+                thisTicketId < lottery.firstTicketIdNextRound,
                 "Ticket id too large"
             );
 
             // Check the ticket is owned by the user and reset this ticket
+            // If the owner is zero address, then it has been claimed
             require(
                 msg.sender == tickets[thisTicketId].owner,
                 "Not the ticket owner or already claimed"
             );
             tickets[thisTicketId].owner = address(0);
 
+            // Can not pass tickets with no prize
             uint256 rewardForTicketId = _calculateRewardsForTicketId(
                 _lotteryId,
                 thisTicketId,
@@ -516,7 +538,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             }
         }
 
-        // Transfer the prize to winner
         lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
 
         // Transfer the prize to the user
@@ -530,6 +551,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      *
      * @dev Callable by users only, not contract
      *      Gas cost may be oversized, recommended to get brackets offchain first
+     *      Get brackets offchain and call function "claimTickets"
      *
      * @param _lotteryId Lottery id
      */
@@ -540,12 +562,15 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     {
         require(
             lotteries[_lotteryId].status == Status.Claimable,
-            "this round of lottery are not ready for claiming"
+            "Round not claimable"
         );
 
         uint256 rewardToTransfer;
 
-        for (uint256 i; i < _userTicketIds[msg.sender][_lotteryId].length; ) {
+        // Gas savings
+        uint256 ticketAmount = _userTicketIds[msg.sender][_lotteryId].length;
+
+        for (uint256 i; i < ticketAmount; ) {
             uint256 thisTicketId = _userTicketIds[msg.sender][_lotteryId][i];
 
             Ticket memory thisTicket = tickets[thisTicketId];
@@ -568,20 +593,20 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         }
 
         // Transfer the prize to winner
-        lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
-
         DegisToken.transfer(msg.sender, rewardToTransfer);
+
+        lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
 
         emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
     }
 
     /**
-     * @notice Start the lottery
+     * @notice Start a new lottery round
      *
      * @param _endTime          EndTime of the lottery
      * @param _ticketPrice      Price of each ticket without discount
      * @param _rewardsBreakdown Breakdown of rewards per bracket (must sum to 10,000)(100 <=> 1)
-     * @param _fee              Treasury fee (10,000 = 100%, 100 = 1%) (set as 0)
+     * @param _fee              Treasury fee (10,000 = 100%, 100 = 1%)
      */
     function startLottery(
         uint256 _endTime,
@@ -632,6 +657,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             pendingInjectionNextLottery
         );
 
+        // Clear record for pending injection
         pendingInjectionNextLottery = 0;
     }
 
@@ -647,7 +673,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         );
 
         // require(
-        //     block.timestamp > _lotteries[_lotteryId].endTime,
+        //     block.timestamp > lotteries[_lotteryId].endTime,
         //     "this lottery has not reached the end time, only can be closed after the end time"
         // );
 
@@ -778,9 +804,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice Change the random generator contract address
+     *
      * @dev The calls to functions are used to verify the new generator implements them properly.
-     * It is necessary to wait for the VRF response before starting a round.
-     * Callable only by the contract owner
+     *      It is necessary to wait for the VRF response before starting a round.
+     *
      * @param _randomGeneratorAddress address of the random generator
      */
     function changeRandomGenerator(address _randomGeneratorAddress)
@@ -790,7 +817,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // We do not change the generator when a round has not been claimable
         require(
             lotteries[currentLotteryId].status == Status.Claimable,
-            "current lottery is not claimable"
+            "Round not claimable"
         );
 
         // Request a random number from the new generator
@@ -808,7 +835,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     /**
      * @notice Inject funds
      *
-     * @param _amount Amount to inject
+     * @dev Those DEG transferred to this contract but not by this function
+     *      will not be counted for prize pools
+     *
+     * @param _amount DEG amount to inject
      */
     function injectFunds(uint256 _amount) external {
         uint256 currentRound = currentLotteryId;
@@ -830,9 +860,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice Recover wrong tokens sent to the contract, only by the owner
-               All tokens except Degis and USDC are wrong tokens
-     * @param _tokenAddress the address of the token to withdraw
-     * @param _tokenAmount token amount to withdraw
+     *          All tokens except Degis are wrong tokens
+     *
+     * @param _tokenAddress Address of the token to withdraw
+     * @param _tokenAmount  Token amount to withdraw
      */
     function recoverWrongTokens(address _tokenAddress, uint256 _tokenAmount)
         external
@@ -897,9 +928,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice Calculate rewards for a given ticket
-     * @param _lotteryId: lottery id
-     * @param _ticketId: ticket id
-     * @param _bracket: bracket for the ticketId to verify the claim and calculate rewards
+     *
+     * @param _lotteryId Lottery id
+     * @param _ticketId  Ticket id
+     * @param _bracket   Bracket for the ticketId to verify the claim and calculate rewards
      */
     function _calculateRewardsForTicketId(
         uint256 _lotteryId,
@@ -939,7 +971,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @return reversedNumber Reversed number + 10000
      */
     function _reverseTicketNumber(uint256 _number)
-        internal
+        public
         pure
         returns (uint32)
     {

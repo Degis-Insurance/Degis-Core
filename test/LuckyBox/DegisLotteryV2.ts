@@ -234,7 +234,7 @@ describe("Degis Lottery V2", function () {
     it("should not be able to reset random generator address when not claimable", async function () {
       await expect(
         lottery.changeRandomGenerator(rng.address)
-      ).to.be.revertedWith("current lottery is not claimable");
+      ).to.be.revertedWith("Round not claimable");
     });
 
     it("should be able to inject funds", async function () {
@@ -288,7 +288,7 @@ describe("Degis Lottery V2", function () {
 
     it("should not be able to claim tickets if round is not claimable", async function () {
       await expect(lottery.claimTickets(1, [11111], [0])).to.be.revertedWith(
-        "Not claimable"
+        "Round not claimable"
       );
     });
 
@@ -325,8 +325,8 @@ describe("Degis Lottery V2", function () {
     it("should be able to show correct ticket number", async function () {
       const tickets = [12345];
 
-      const reverse = await lottery._reverseTicketNumber(tickets[0]);
-      expect(reverse).to.equal(15432);
+      // const reverse = await lottery._reverseTicketNumber(tickets[0]);
+      // expect(reverse).to.equal(15432);
     });
 
     it("should be able to buy 10 tickets", async function () {
@@ -478,6 +478,24 @@ describe("Degis Lottery V2", function () {
       expect(rewardPerTicketInBracket[0]).to.equal(prizeForBracket1);
     });
 
+    it("should be able to check user rewards", async function () {
+      const userReward = await lottery.viewUserRewards(
+        dev_account.address,
+        1,
+        1
+      );
+      const lotteryInfo = await lottery.lotteries(
+        await lottery.currentLotteryId()
+      );
+
+      // Total prize pool
+      const totalPrize = lotteryInfo.amountCollected;
+
+      const totalUserPrize = totalPrize.mul(80).div(100);
+
+      expect(userReward[0].mod(10 ** 8)).to.equal(totalUserPrize.mod(10 ** 8));
+    });
+
     it("should get reward equivalent to one correct number in right order", async function () {
       const lotteryInfo = await lottery.lotteries(
         await lottery.currentLotteryId()
@@ -609,7 +627,7 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should view a single lottery information", async function () {
-      const lotteryInfo = await lottery.viewAllLottery();
+      const lotteryInfo = await lottery.viewAllLottery(1, 1);
       expect(lotteryInfo[0].status).to.equal(3);
     });
   });
@@ -683,7 +701,7 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should view two lotteries information", async function () {
-      const lotteryInfo = await lottery.viewAllLottery();
+      const lotteryInfo = await lottery.viewAllLottery(1, 2);
       // console.log("lotteryInfo", lotteryInfo, "ends here");
       expect(lotteryInfo[0].status).to.equal(3);
       expect(lotteryInfo[1].status).to.equal(3);

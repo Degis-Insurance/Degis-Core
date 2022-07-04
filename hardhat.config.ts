@@ -37,8 +37,8 @@ import "hardhat-contract-sizer";
 // import "./tasks/naughtyPrice/addStablecoin";
 
 // // Lucky Box Tasks
-// import "./tasks/lucky/setAddress";
-// import "./tasks/lucky/degisLottery";
+import "./tasks/lucky/setAddress";
+import "./tasks/lucky/degisLottery";
 
 // // Token Tasks
 // import "./tasks/tokens/addMinterBurner";
