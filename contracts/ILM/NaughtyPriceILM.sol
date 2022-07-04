@@ -530,46 +530,50 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     ) external {
         if (_amount == 0) revert ILM__ZeroAmount();
 
-        address naughtyPair = pairs[_policyToken].naughtyPairAddress;
-        address lptoken = pairs[_policyToken].lptoken;
+        PairInfo storage pair = pairs[_policyToken];
+
+        address lptoken = pair.lptoken;
 
         uint256 lpBalance = LPToken(lptoken).balanceOf(msg.sender);
         uint256 lpToClaim = _amount > lpBalance ? lpBalance : _amount;
 
         // Total liquidity owned by the pool
-        uint256 totalLiquidity = INaughtyPair(naughtyPair).balanceOf(
-            address(this)
-        );
+        uint256 totalLiquidity = INaughtyPair(pair.naughtyPairAddress)
+            .balanceOf(address(this));
+
+        uint256 lpTotalSupply = LPToken(lptoken).totalSupply();
 
         // User's liquidity amount
-        uint256 userLiquidity = (lpToClaim * totalLiquidity) /
-            LPToken(lptoken).totalSupply();
+        uint256 userLiquidity = (lpToClaim * totalLiquidity) / lpTotalSupply;
 
         _updateWhenClaim(_policyToken);
 
-        // Remove liquidity
-        (uint256 policyTokenAmount, uint256 stablecoinAmount) = INaughtyRouter(
-            router
-        ).removeLiquidity(
-                _policyToken,
-                _stablecoin,
-                userLiquidity,
-                _amountAMin,
-                _amountBMin,
-                msg.sender,
-                block.timestamp + 60
-            );
+        {
+            // Remove liquidity
+            (
+                uint256 policyTokenAmount,
+                uint256 stablecoinAmount
+            ) = INaughtyRouter(router).removeLiquidity(
+                    _policyToken,
+                    _stablecoin,
+                    userLiquidity,
+                    _amountAMin,
+                    _amountBMin,
+                    msg.sender,
+                    block.timestamp + 60
+                );
+
+            emit Claim(msg.sender, policyTokenAmount, stablecoinAmount);
+        }
 
         IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
             _policyToken,
-            policyTokenAmount
+            (pair.amountA * lpToClaim) / lpTotalSupply
         );
 
         // Burn the user's lp tokens
         LPToken(lptoken).burn(msg.sender, lpToClaim);
-
-        emit Claim(msg.sender, policyTokenAmount, stablecoinAmount);
     }
 
     /**
