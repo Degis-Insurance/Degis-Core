@@ -4,13 +4,22 @@ pragma solidity ^0.8.13;
 
 import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
 import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
+import "./interfaces/IDegisLottery.sol";
 
 contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
+    // Coordinator address based on networks
+    // Fuji: 0x2eD832Ba664535e5886b75D64C46EB9a228C2610
+    // Mainnet: 0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634
     VRFCoordinatorV2Interface coordinator;
 
+    // Subscription id, created on chainlink website
+    // Fuji: 130
+    // Mainnet:
     uint64 subscriptionId;
 
     // Different networks and gas prices have different keyHash
+    // Fuji: 300gwei 0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61
+    // Mainnet: 500gwei 0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46
     bytes32 public keyHash;
 
     // Gas limit for callback
@@ -30,6 +39,11 @@ contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
 
     // Owner address
     address public owner;
+
+    // Latest lottery id
+    uint256 public latestLotteryId;
+
+    address public degisLottery;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -90,6 +104,10 @@ contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
         requestConfirmations = _requestConfirmations;
     }
 
+    function setDegisLottery(address _lottery) external onlyOwner {
+        degisLottery = _lottery;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -111,5 +129,16 @@ contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
         override
     {
         s_randomWords = _randomWords;
+
+        // Update latest lottery id
+        // Before this update, lottery can not make that round claimable
+        latestLotteryId = IDegisLottery(degisLottery).currentLotteryId();
+    }
+
+    /**
+     * @notice Random result function for lottery
+     */
+    function randomResult() external view returns (uint256) {
+        return s_randomWords[0];
     }
 }
