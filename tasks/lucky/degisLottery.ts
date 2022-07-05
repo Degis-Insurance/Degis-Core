@@ -8,6 +8,8 @@ import {
   DegisLotteryV2,
   DegisLotteryV2__factory,
   DegisLottery__factory,
+  RandomNumberGeneratorV2,
+  RandomNumberGeneratorV2__factory,
 } from "../../typechain";
 import { parseUnits } from "ethers/lib/utils";
 
@@ -33,7 +35,7 @@ task("startLotteryRound", "Start a new lottery round")
       endTime,
       0,
       [1000, 2000, 3000, 4000],
-      0
+      1000
     );
     console.log("Tx details: ", await tx.wait());
   });
@@ -79,3 +81,42 @@ task("drawLotteryRound", "Draw the final result of this round").setAction(
     console.log("Tx details: ", await tx.wait());
   }
 );
+
+task("requestRandom", "Request random number by VRF").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const randAddress = addressList[network.name].RandomNumberGeneratorV2;
+    const rand: RandomNumberGeneratorV2 = new RandomNumberGeneratorV2__factory(
+      dev_account
+    ).attach(randAddress);
+
+    const tx = await rand.requestRandomWords();
+    console.log("Tx details: ", await tx.wait());
+  }
+);
+
+task("checkRandom", "Check random number result").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const randAddress = addressList[network.name].RandomNumberGeneratorV2;
+  const rand: RandomNumberGeneratorV2 = new RandomNumberGeneratorV2__factory(
+    dev_account
+  ).attach(randAddress);
+
+  const res = await rand.randomResult();
+  console.log("Random result: ", res.toString());
+
+  const owner = await rand.owner();
+  console.log("owner: ", owner);
+});

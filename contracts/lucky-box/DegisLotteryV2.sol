@@ -573,9 +573,11 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         for (uint256 i; i < ticketAmount; ) {
             uint256 thisTicketId = _userTicketIds[msg.sender][_lotteryId][i];
 
-            Ticket memory thisTicket = tickets[thisTicketId];
-
-            require(msg.sender == thisTicket.owner, "Not the ticket owner");
+            require(
+                msg.sender == tickets[thisTicketId].owner,
+                "Not the ticket owner"
+            );
+            tickets[thisTicketId].owner = address(0);
 
             uint32 highestBracket = _getBracket(_lotteryId, thisTicketId);
             if (highestBracket < 4) {
@@ -678,7 +680,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         // );
 
         // Request a random number from the generator
-        randomGenerator.getRandomNumber();
+        randomGenerator.requestRandomWords();
 
         // Update the lottery status to "Close"
         lotteries[_lotteryId].status = Status.Close;
@@ -821,7 +823,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         );
 
         // Request a random number from the new generator
-        IRandomNumberGenerator(_randomGeneratorAddress).getRandomNumber();
+        IRandomNumberGenerator(_randomGeneratorAddress).requestRandomWords();
 
         // Get the finalNumber based on the randomResult
         IRandomNumberGenerator(_randomGeneratorAddress).randomResult();
@@ -976,7 +978,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         returns (uint32)
     {
         uint256 initNumber = _number - 10**4;
-        uint256 singleNumber;
+        uint256 singleNumber = 0;
         uint256 reversedNumber;
 
         for (uint256 i; i < 4; ) {

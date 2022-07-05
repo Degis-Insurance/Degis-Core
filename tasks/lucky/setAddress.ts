@@ -10,6 +10,8 @@ import {
   DegisLottery__factory,
   InsurancePool__factory,
   RandomNumberGenerator,
+  RandomNumberGeneratorV2,
+  RandomNumberGeneratorV2__factory,
   RandomNumberGenerator__factory,
   VRFMock,
   VRFMock__factory,
@@ -165,3 +167,30 @@ task("setOperator", "Set the operator address for degis lottery").setAction(
     console.log("The operator is: ", opAddress);
   }
 );
+
+task("setVRF", "Set lottery address in vrf v2").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const lotteryAddress = addressList[network.name].DegisLotteryV2;
+  const randAddress = addressList[network.name].RandomNumberGeneratorV2;
+
+  const rand: RandomNumberGeneratorV2 = new RandomNumberGeneratorV2__factory(
+    dev_account
+  ).attach(randAddress);
+
+  const lottery: DegisLotteryV2 = new DegisLotteryV2__factory(
+    dev_account
+  ).attach(lotteryAddress);
+
+  const tx = await rand.setDegisLottery(lotteryAddress);
+  console.log("Tx details:", await tx.wait());
+
+  const tx_2 = await lottery.changeRandomGenerator(randAddress);
+  console.log("Tx details:", await tx_2.wait());
+});
