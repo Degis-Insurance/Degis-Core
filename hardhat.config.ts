@@ -3,6 +3,7 @@ import * as dotenv from "dotenv";
 import { HardhatUserConfig, task } from "hardhat/config";
 import "@nomiclabs/hardhat-etherscan";
 import "@nomiclabs/hardhat-ethers";
+import "@openzeppelin/hardhat-upgrades";
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
@@ -13,20 +14,20 @@ import "hardhat-abi-exporter";
 import "hardhat-contract-sizer";
 
 // tasks;
-import "./tasks/clearRecord";
+// import "./tasks/clearRecord";
 
-import "./tasks/emergencyPool/deposit-withdraw";
+// import "./tasks/emergencyPool/deposit-withdraw";
 
-// Farming Tasks
-import "./tasks/farming/farmingPool";
-import "./tasks/farming/purchaseIncentive";
+// // Farming Tasks
+// import "./tasks/farming/farmingPool";
+// import "./tasks/farming/purchaseIncentive";
 
-// Miserable Flight Tasks
-import "./tasks/misrableFlight/sigManager";
-import "./tasks/misrableFlight/setAddress";
-import "./tasks/misrableFlight/policyFlow";
-import "./tasks/misrableFlight/insurancePool";
-import "./tasks/misrableFlight/flightOracle";
+// // Miserable Flight Tasks
+// import "./tasks/misrableFlight/sigManager";
+// import "./tasks/misrableFlight/setAddress";
+// import "./tasks/misrableFlight/policyFlow";
+// import "./tasks/misrableFlight/insurancePool";
+// import "./tasks/misrableFlight/flightOracle";
 
 // Naughty Price Tasks
 import "./tasks/naughtyPrice/setAddress";
@@ -36,38 +37,38 @@ import "./tasks/naughtyPrice/deployPool";
 import "./tasks/naughtyPrice/addStablecoin";
 import "./tasks/naughtyPrice/IDOPriceGetter";
 
-// Lucky Box Tasks
+// // Lucky Box Tasks
 import "./tasks/lucky/setAddress";
 import "./tasks/lucky/degisLottery";
 
-// Token Tasks
-import "./tasks/tokens/addMinterBurner";
-import "./tasks/tokens/mintToken";
+// // Token Tasks
+// import "./tasks/tokens/addMinterBurner";
+// import "./tasks/tokens/mintToken";
 
-// Staking Tasks
-import "./tasks/staking/stakingPoolFactory";
+// // Staking Tasks
+// import "./tasks/staking/stakingPoolFactory";
 
-import "./tasks/proxy/admin";
-import "./tasks/governance/VeDEG";
+// import "./tasks/proxy/admin";
+// import "./tasks/governance/VeDEG";
 
-// Income Sharing tasks
-import "./tasks/incomeSharing/setAddress";
-import "./tasks/incomeSharing/pool";
-import "./tasks/incomeSharing/incomeMaker";
-import "./tasks/general/index";
-import "./tasks/ILM/startStop";
+// // Income Sharing tasks
+// import "./tasks/incomeSharing/setAddress";
+// import "./tasks/incomeSharing/pool";
+// import "./tasks/incomeSharing/incomeMaker";
+// import "./tasks/general/index";
+// import "./tasks/ILM/startStop";
 
 dotenv.config();
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
-task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
-  const accounts = await hre.ethers.getSigners();
+// task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
+//   const accounts = await hre.ethers.getSigners();
 
-  for (const account of accounts) {
-    console.log(account.address);
-  }
-});
+//   for (const account of accounts) {
+//     console.log(account.address);
+//   }
+// });
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

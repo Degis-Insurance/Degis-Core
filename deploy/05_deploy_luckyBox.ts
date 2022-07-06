@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction } from "hardhat-deploy/types";
+import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
 import { readAddressList, storeAddressList } from "../scripts/contractAddress";
 
 // Deploy Treasury Box
@@ -24,33 +24,86 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const DegisToken = await get("DegisToken");
   const MockUSD = await get("MockUSD");
 
-  const keyhash_fuji_300GWEI =
-    "0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61";
-  const subscriptionId_fuji = 130;
-  const coordinator_fuji = "0x2eD832Ba664535e5886b75D64C46EB9a228C2610";
+  if (
+    network.name == "avax" ||
+    network.name == "avaxTest" ||
+    network.name == "fuji"
+  ) {
+    const coordinator = "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634";
+    const keyHash =
+      "0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46";
+    const id = 28;
+    const rand = await deploy("RandomNumberGeneratorV2", {
+      contract: "RandomNumberGeneratorV2",
+      from: deployer,
+      args: [coordinator, keyHash, id],
+      log: true,
+    });
+    addressList[network.name].RandomNumberGeneratorV2 = rand.address;
 
-  const rand = await deploy("RandomNumberGenerator", {
-    contract: "RandomNumberGeneratorV2",
-    from: deployer,
-    args: [coordinator_fuji, keyhash_fuji_300GWEI, subscriptionId_fuji],
-    log: true,
-  });
-  addressList[network.name].RandomNumberGeneratorV2 = rand.address;
+    const proxyOptions: ProxyOptions = {
+      proxyContract: "TransparentUpgradeableProxy",
+      viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [DegisToken.address, rand.address],
+        },
+      },
+    };
 
-  const lottery = await deploy("DegisLottery", {
-    contract: "DegisLotteryV2",
-    from: deployer,
-    args: [DegisToken.address, MockUSD.address, rand.address],
-    log: true,
-  });
-  addressList[network.name].DegisLottery = lottery.address;
+    const lottery = await deploy("DegisLotteryV2", {
+      contract: "DegisLotteryV2",
+      from: deployer,
+      proxy: proxyOptions,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].DegisLotteryV2 = lottery.address;
 
-  // Store the address list after deployment
-  storeAddressList(addressList);
+    // Store the address list after deployment
+    storeAddressList(addressList);
+
+    // await hre.run("setVRF");
+  } else {
+    const rand = await deploy("VRFMock", {
+      contract: "VRFMock",
+      from: deployer,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].VRFMock = rand.address;
+
+    const proxyOptions: ProxyOptions = {
+      proxyContract: "TransparentUpgradeableProxy",
+      viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [DegisToken.address, rand.address],
+        },
+      },
+    };
+
+    const lottery = await deploy("DegisLotteryV2", {
+      contract: "DegisLotteryV2",
+      from: deployer,
+      proxy: proxyOptions,
+      args: [],
+      log: true,
+    });
+    addressList[network.name].DegisLotteryV2 = lottery.address;
+
+    // Store the address list after deployment
+    storeAddressList(addressList);
+
+    await hre.run("setVRFMock");
+  }
 
   // Run some afterwars tasks
-  await hre.run("setLottery");
-  await hre.run("setRandGenerator");
+  // await hre.run("setLottery");
+  await hre.run("setTreasury");
+  await hre.run("setVRF");
 };
 
 func.tags = ["Lottery"];
