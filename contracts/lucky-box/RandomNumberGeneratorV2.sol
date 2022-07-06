@@ -14,7 +14,7 @@ contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
 
     // Subscription id, created on chainlink website
     // Fuji: 130
-    // Mainnet:
+    // Mainnet: 28 (test)
     uint64 public subscriptionId;
 
     // Different networks and gas prices have different keyHash
@@ -131,7 +131,7 @@ contract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {
         internal
         override
     {
-        randomResult = _randomWords[0];
+        randomResult = (_randomWords[0] % 10000) + 10000;
 
         // Update latest lottery id
         // Before this update, lottery can not make that round claimable

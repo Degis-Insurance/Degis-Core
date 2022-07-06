@@ -29,17 +29,17 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     network.name == "avaxTest" ||
     network.name == "fuji"
   ) {
-    // const coordinator = "0x2eD832Ba664535e5886b75D64C46EB9a228C2610";
-    // const keyHash =
-    //   "0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61";
-    // const id = 130;
-    // const rand = await deploy("RandomNumberGeneratorV2", {
-    //   contract: "RandomNumberGeneratorV2",
-    //   from: deployer,
-    //   args: [coordinator, keyHash, id],
-    //   log: true,
-    // });
-    // addressList[network.name].RandomNumberGeneratorV2 = rand.address;
+    const coordinator = "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634";
+    const keyHash =
+      "0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46";
+    const id = 28;
+    const rand = await deploy("RandomNumberGeneratorV2", {
+      contract: "RandomNumberGeneratorV2",
+      from: deployer,
+      args: [coordinator, keyHash, id],
+      log: true,
+    });
+    addressList[network.name].RandomNumberGeneratorV2 = rand.address;
 
     const proxyOptions: ProxyOptions = {
       proxyContract: "TransparentUpgradeableProxy",
@@ -47,7 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [DegisToken.address, 0],
+          args: [DegisToken.address, rand.address],
         },
       },
     };
@@ -103,6 +103,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Run some afterwars tasks
   // await hre.run("setLottery");
   await hre.run("setTreasury");
+  await hre.run("setVRF");
 };
 
 func.tags = ["Lottery"];

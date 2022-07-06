@@ -9,7 +9,7 @@ interface IRandomNumberGenerator {
 
     function requestRandomWords() external;
 
-    function randomResult() external view returns (uint32);
+    function randomResult() external view returns (uint256);
 
     function latestLotteryId() external view returns (uint256);
 }

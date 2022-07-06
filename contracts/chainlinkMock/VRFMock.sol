@@ -33,7 +33,7 @@ contract VRFMock is Ownable {
     /**
      * @notice Request randomness from Chainlink VRF
      */
-    function getRandomNumber() external {
+    function requestRandomWords() external {
         require(
             _msgSender() == address(DegisLottery) || _msgSender() == owner(),
             "Only DegisLottery"

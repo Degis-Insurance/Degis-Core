@@ -56,7 +56,9 @@ task("closeLotteryRound", "Settle the current lottery round").setAction(
       dev_account
     ).attach(lotteryAddress);
 
-    const tx = await lottery.closeLottery(1);
+    const currentRound = await lottery.currentLotteryId();
+
+    const tx = await lottery.closeLottery(currentRound);
     console.log("Tx details: ", await tx.wait());
   }
 );
@@ -77,7 +79,14 @@ task("drawLotteryRound", "Draw the final result of this round").setAction(
       dev_account
     ).attach(lotteryAddress);
 
-    const tx = await lottery.drawFinalNumberAndMakeLotteryClaimable(1, true);
+    const currentRound = await lottery.currentLotteryId();
+
+    console.log("current round: ", currentRound);
+
+    const tx = await lottery.drawFinalNumberAndMakeLotteryClaimable(
+      currentRound,
+      true
+    );
     console.log("Tx details: ", await tx.wait());
   }
 );

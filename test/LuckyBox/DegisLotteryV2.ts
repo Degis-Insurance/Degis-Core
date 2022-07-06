@@ -117,11 +117,11 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should be able to get random result", async function () {
-      await rng.getRandomNumber();
+      await rng.requestRandomWords();
       expect(await rng.seed()).to.equal(1);
       expect(await rng.randomResult()).to.equal(12345);
 
-      await rng.getRandomNumber();
+      await rng.requestRandomWords();
       expect(await rng.seed()).to.equal(2);
       expect(await rng.randomResult()).to.equal(14690);
     });
@@ -444,7 +444,6 @@ describe("Degis Lottery V2", function () {
 
       const lotteryInfo = await lottery.lotteries(lotteryId);
       finalNumber = lotteryInfo.finalNumber;
-      console.log("finalNumber", finalNumber);
     });
 
     it("should be able to reset random generator address", async function () {

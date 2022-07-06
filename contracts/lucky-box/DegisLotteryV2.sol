@@ -98,6 +98,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     mapping(uint32 => uint32) public _bracketCalculator;
 
+    // User address => lotteryId => Amount of tickets has claimed
+    mapping(address => mapping(uint256 => uint256)) public userClaimed;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -516,7 +519,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 thisTicketId,
                 _brackets[i]
             );
-            require(rewardForTicketId > 0, "No prize");
+            // require(rewardForTicketId > 0, "No prize");
 
             // If not claiming the highest prize, check if the user has a higher prize
             if (_brackets[i] < 3) {
@@ -538,10 +541,15 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             }
         }
 
-        lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+        // Record the amount has claimed in this round
+        userClaimed[msg.sender][_lotteryId] += ticketAmount;
 
         // Transfer the prize to the user
-        DegisToken.transfer(msg.sender, rewardToTransfer);
+        if (rewardToTransfer > 0) {
+            lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+
+            DegisToken.transfer(msg.sender, rewardToTransfer);
+        }
 
         emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
     }
@@ -594,10 +602,14 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             }
         }
 
-        // Transfer the prize to winner
-        DegisToken.transfer(msg.sender, rewardToTransfer);
+        if (rewardToTransfer > 0) {
+            // Transfer the prize to winner
+            DegisToken.transfer(msg.sender, rewardToTransfer);
 
-        lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+            lotteries[_lotteryId].pendingRewards -= rewardToTransfer;
+        }
+        // Record the amount has claimed in this round
+        userClaimed[msg.sender][_lotteryId] = ticketAmount;
 
         emit TicketsClaim(msg.sender, rewardToTransfer, _lotteryId);
     }
@@ -665,8 +677,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice Close a lottery
-     * @param _lotteryId lottery round
-     * @dev Callable only by the owner
+     *
+     * @param _lotteryId Lottery round
      */
     function closeLottery(uint256 _lotteryId) external onlyOwner nonReentrant {
         require(
@@ -674,10 +686,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             "this lottery is not open currently"
         );
 
-        // require(
-        //     block.timestamp > lotteries[_lotteryId].endTime,
-        //     "this lottery has not reached the end time, only can be closed after the end time"
-        // );
+        require(
+            block.timestamp > lotteries[_lotteryId].endTime,
+            "Not reach end time"
+        );
 
         // Request a random number from the generator
         randomGenerator.requestRandomWords();
@@ -710,7 +722,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         require(treasury != address(0), "Treasury is not set");
 
         // Get the final lucky numbers from randomGenerator
-        uint32 finalNumber = randomGenerator.randomResult();
+        uint32 finalNumber = uint32(randomGenerator.randomResult());
 
         Lottery storage lottery = lotteries[_lotteryId];
 

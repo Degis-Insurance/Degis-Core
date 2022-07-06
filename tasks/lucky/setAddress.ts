@@ -191,6 +191,6 @@ task("setVRF", "Set lottery address in vrf v2").setAction(async (_, hre) => {
   const tx = await rand.setDegisLottery(lotteryAddress);
   console.log("Tx details:", await tx.wait());
 
-  const tx_2 = await lottery.changeRandomGenerator(randAddress);
-  console.log("Tx details:", await tx_2.wait());
+  // const tx_2 = await lottery.changeRandomGenerator(randAddress);
+  // console.log("Tx details:", await tx_2.wait());
 });
