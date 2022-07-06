@@ -2,8 +2,6 @@ import { stablecoinToWei, toWei } from "../../test/utils";
 
 export const getFarmingSpeed = () => {
   const speed = [];
-
-  speed[0] = [];
 };
 
 // Farming Pool Upgradeable
@@ -29,7 +27,7 @@ const reward_1_basic: string[] = [
   toWei("0.174"),
 ];
 
-// 15 + 5 
+// 15 + 5
 // Last 5 days 1.2x speed
 const reward_1_speed: string[] = [
   toWei("0.042"),
@@ -111,3 +109,55 @@ const reward_4_basic: string[] = [
 ];
 // bonus 1000 deg / day
 const bonus_4 = toWei("0.01157");
+
+// Pool Id 6
+// Token: IM_AVAX_15.0_L_0107
+// Address: 0x6B657FB68907f0005931AA4088086a73Af4F0a40
+
+const basic_6 = toWei("0.03472"); // 3000 deg / day
+const bonus_6 = toWei("0.00694"); // 600 deg / day
+
+// Pool Id 7
+// Token: AVAX_15.0_L_0107
+// Address: 0x50064925F17FEC98A0DE254bAD226AEf01a72744
+
+const basic_7 = toWei("0.02893"); // 2500 deg / day
+const bonus_7 = toWei("0.00578"); // 500 deg / day
+
+// Pool Id 8
+// Token: IM_XAVA_0.62_L_1307
+// Address: 0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f
+
+const basic_8 = toWei("0.02315"); // 2000 deg / day
+const bonus_8 = toWei("0.00463"); // 400 deg / day
+
+// Pool Id 9
+// Token: XAVA_0.62_L_1307
+// Address: 0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521
+
+const basic_9 = toWei("0.01929"); // 1667 deg / day
+const bonus_9 = toWei("0.00385")  /// 333 deg / day
+
+
+// Pool Id 10
+// Token: IM_AVAX_16.5_L_1607
+// Address: 0x1FB6D47Add3C7CE818DE1fEA3259cB31B5403F69
+
+const basic_10 =  toWei("0.02315"); // 2000 deg / day
+const bonus_10 = toWei("0.00463"); // 400 deg / day
+
+// Pool Id 11
+// Token: IM_JOE_0.24_L_1607
+// Address: 0xb9365b58B07f49AD740fA72566B97970f62B6e2c
+
+const basic_11 = toWei("0.02315"); // 2000 deg / day
+const bonus_11 = toWei("0.00463"); // 400 deg / day
+
+// Pool Id 12
+// Token: AVAX_16.5_L_1607
+// Address:
+
+
+// Pool Id 13
+// Token: JOE_0.24_L_1607
+// Address: 

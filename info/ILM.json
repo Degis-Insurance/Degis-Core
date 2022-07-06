@@ -44,6 +44,34 @@
 			"deadline": "1654070400",
 			"lptoken": "0xdcc9c01261D4F432059140409aC13941e61F2b51",
 			"pairAddress": "0x342cF481c2eB573fb6474D8618dE095Ca5b8D70D"
+		},
+		"AVAX_15.0_L_0107": {
+			"policyToken": "0x832054E67bB3e9eaBc09D7fa02888b5d42274aC2",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1655366400",
+			"lptoken": "0x6B657FB68907f0005931AA4088086a73Af4F0a40",
+			"pairAddress": "0x50064925F17FEC98A0DE254bAD226AEf01a72744"
+		},
+		"XAVA_0.62_L_1307": {
+			"policyToken": "0xc883F576d69670BdCffc5d7160c6A9aCd417c4b6",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656403200",
+			"lptoken": "0xEa0C4b6307194EC20F2dB48e290A7e6dc148c31f",
+			"pairAddress": "0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521"
+		},
+		"AVAX_16.5_L_1607": {
+			"policyToken": "0xfBC8d1062B33E300e635ed78E3eD8352D560305a",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656662400",
+			"lptoken": "0x1FB6D47Add3C7CE818DE1fEA3259cB31B5403F69",
+			"pairAddress": "0x93C45304b4954A3f9111E92199A40a3D83bE67E9"
+		},
+		"JOE_0.24_L_1607": {
+			"policyToken": "0xeC2B2899e68d74E0F8f3202D9d059940a1e36EaB",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656662400",
+			"lptoken": "0xb9365b58B07f49AD740fA72566B97970f62B6e2c",
+			"pairAddress": "0xB1f288bf386690Ae8E9f13Ca6009fE3535d581af"
 		}
 	},
 	"avaxTest": {
@@ -60,6 +88,27 @@
 			"deadline": "1653840000",
 			"lptoken": "0x668b026597c4071F40485065C0eb80f06f104AbC",
 			"pairAddress": "0x32c121B39D94D72A3f5F62ca74237dBb8342a060"
+		},
+		"XAVA_0.62_L_2706": {
+			"policyToken": "0x7d79aC8bFC161a9D65025a44b2715F2eBb9A29a8",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656302700",
+			"lptoken": "0x75ab1b8ae0AB41eBddfdDcA2F3f57af066309885",
+			"pairAddress": "0x3A8A6B5b325f812EeCA30354B72bbd5Ddc884Db3"
+		},
+		"JOE_0.29_L_2706": {
+			"policyToken": "0x312cA510Ff3Cdc658b5F9542329bC613425F1cA1",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656302700",
+			"lptoken": "0x8026d5E60c158c28896323cbd65c8C227d653Eb1",
+			"pairAddress": "0xBd663931B9590e77ef45F73d836FBcbbd49F7d17"
+		},
+		"JOE_0.26_L_0107": {
+			"policyToken": "0x9717a44cAdB37E7F275ae445571d5032D2Fd6d55",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1656561600",
+			"lptoken": "0x8989369917737CDF8bE1F137414162C18E338156",
+			"pairAddress": "0x0Cc885bA9de677f59EDE136061DbE08909e3f0d0"
 		}
 	},
 	"localhost": {},

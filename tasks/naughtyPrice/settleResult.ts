@@ -35,6 +35,11 @@ task("settleNPToken", "Settle a naughty price token")
 
     const events = (await tx.wait()).events;
     console.log("events: ", events);
+
+    const policyTokenAddress = await core.findAddressbyName(policyTokenName);
+    const settleResult = await core.settleResult(policyTokenAddress);
+    console.log("settleResult: ", settleResult.price.toString());
+    console.log("settleResult: ", settleResult.isHappened);
   });
 
 task("collectIncome", "Collect income from policy core")
@@ -58,11 +63,18 @@ task("collectIncome", "Collect income from policy core")
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
-    const balanceBefore = await core.pendingIncomeToLottery(taskArgs.stablecoin);
+    const balanceBefore = await core.pendingIncomeToLottery(
+      taskArgs.stablecoin
+    );
     console.log("pending income to lottery: ", formatUnits(balanceBefore, 6));
 
-    const balance2Before = await core.pendingIncomeToSharing(taskArgs.stablecoin);
-    console.log("pending income to income sharing: ", formatUnits(balance2Before, 6));
+    const balance2Before = await core.pendingIncomeToSharing(
+      taskArgs.stablecoin
+    );
+    console.log(
+      "pending income to income sharing: ",
+      formatUnits(balance2Before, 6)
+    );
 
     // const tx = await core.collectIncome(taskArgs.stablecoin);
     // console.log("tx details:", await tx.wait());

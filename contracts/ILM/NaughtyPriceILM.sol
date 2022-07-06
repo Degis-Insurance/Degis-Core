@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
-import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
-import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
-import {ILMToken as LPToken} from "./ILMToken.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IPolicyCore } from "../naughty-price/interfaces/IPolicyCore.sol";
+import { INaughtyRouter } from "../naughty-price/interfaces/INaughtyRouter.sol";
+import { INaughtyPair } from "../naughty-price/interfaces/INaughtyPair.sol";
+import { ILMToken as LPToken } from "./ILMToken.sol";
 
 /**
  * @title Naughty Price Initial Liquidity Matching
@@ -82,6 +82,8 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     }
     // Policy Token Address => Pair Info
     mapping(address => PairInfo) public pairs;
+
+    mapping(address => uint256) public endPrice;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -528,47 +530,50 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     ) external {
         if (_amount == 0) revert ILM__ZeroAmount();
 
-        address naughtyPair = pairs[_policyToken].naughtyPairAddress;
-        address lptoken = pairs[_policyToken].lptoken;
+        PairInfo storage pair = pairs[_policyToken];
+
+        address lptoken = pair.lptoken;
 
         uint256 lpBalance = LPToken(lptoken).balanceOf(msg.sender);
         uint256 lpToClaim = _amount > lpBalance ? lpBalance : _amount;
 
         // Total liquidity owned by the pool
-        uint256 totalLiquidity = INaughtyPair(naughtyPair).balanceOf(
-            address(this)
-        );
+        uint256 totalLiquidity = INaughtyPair(pair.naughtyPairAddress)
+            .balanceOf(address(this));
+
+        uint256 lpTotalSupply = LPToken(lptoken).totalSupply();
 
         // User's liquidity amount
-        uint256 userLiquidity = (lpToClaim * totalLiquidity) /
-            LPToken(lptoken).totalSupply();
+        uint256 userLiquidity = (lpToClaim * totalLiquidity) / lpTotalSupply;
 
         _updateWhenClaim(_policyToken);
 
-        // Remove liquidity
-        (uint256 policyTokenAmount, uint256 stablecoinAmount) = INaughtyRouter(
-            router
-        ).removeLiquidity(
-                _policyToken,
-                _stablecoin,
-                userLiquidity,
-                _amountAMin,
-                _amountBMin,
-                msg.sender,
-                block.timestamp + 60
-            );
+        {
+            // Remove liquidity
+            (
+                uint256 policyTokenAmount,
+                uint256 stablecoinAmount
+            ) = INaughtyRouter(router).removeLiquidity(
+                    _policyToken,
+                    _stablecoin,
+                    userLiquidity,
+                    _amountAMin,
+                    _amountBMin,
+                    msg.sender,
+                    block.timestamp + 60
+                );
 
-        // Update user quota
+            emit Claim(msg.sender, policyTokenAmount, stablecoinAmount);
+        }
+
         IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
             _policyToken,
-            policyTokenAmount
+            (pair.amountA * lpToClaim) / lpTotalSupply
         );
 
         // Burn the user's lp tokens
         LPToken(lptoken).burn(msg.sender, lpToClaim);
-
-        emit Claim(msg.sender, policyTokenAmount, stablecoinAmount);
     }
 
     /**

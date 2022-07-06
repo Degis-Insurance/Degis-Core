@@ -20,8 +20,8 @@
 
 pragma solidity ^0.8.10;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import {Ownable} from "../utils/Ownable.sol";
+import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import { Ownable } from "../utils/Ownable.sol";
 
 /**
  * @title  Price Getter

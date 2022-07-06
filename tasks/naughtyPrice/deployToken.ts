@@ -32,6 +32,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     null,
     types.int
   )
+  .addParam("ido", "Whether it is an IDO token", null, types.boolean)
   .setAction(async (taskArgs, hre) => {
     const nameisCall = taskArgs.iscall == 1 ? "H" : "L";
     const boolisCall: boolean = taskArgs.iscall == 1 ? true : false;
@@ -46,6 +47,8 @@ task("deployNPToken", "Deploy a new naughty price token")
       "_" +
       taskArgs.round;
     console.log("Generated policy toke name: ", policyTokenName);
+
+    const isIDO = taskArgs.ido;
 
     let stablecoinAddress: string;
 
@@ -82,6 +85,15 @@ task("deployNPToken", "Deploy a new naughty price token")
     );
     const core: PolicyCore = PolicyCore.attach(policyCoreAddress);
 
+    const newName = await core._generateName(
+      taskArgs.name,
+      taskArgs.namedecimals,
+      parseUnits(taskArgs.k),
+      boolisCall,
+      taskArgs.round
+    );
+    console.log("Generated name: ", newName);
+
     const tx = await core.deployPolicyToken(
       taskArgs.name,
       stablecoinAddress,
@@ -91,7 +103,8 @@ task("deployNPToken", "Deploy a new naughty price token")
       parseUnits(taskArgs.k),
       taskArgs.round,
       toBN(tokenDeadline),
-      toBN(tokenSettleTime)
+      toBN(tokenSettleTime),
+      isIDO
     );
     console.log("tx details:", await tx.wait());
 
@@ -110,5 +123,10 @@ task("deployNPToken", "Deploy a new naughty price token")
     };
     tokenList[network.name][policyTokenName] = tokenObject;
     storeNaughtyTokenList(tokenList);
+
+    // const req = new XMLHttpRequest();
+    // const lark_url =
+    //   "https://open.larksuite.com/open-apis/bot/v2/hook/03430ecc-9b80-4b08-ab95-c34e8e27e01a";
+    
   });
 

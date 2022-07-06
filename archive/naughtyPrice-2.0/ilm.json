@@ -1,0 +1,11 @@
+{
+  "name": "ILM",
+  "network": "avax",
+  "proxy": {
+    "0x8b951630756Ac4DAC541E97DafDa9275C9370186": {
+      "impl": [
+        { "0x3b6Ae75B45eaA1e6A7D9B3491545dab3830FC4A5": "2022-5-31 2:19:33" }
+      ]
+    }
+  }
+}
