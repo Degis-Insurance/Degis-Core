@@ -18,16 +18,16 @@ import "hardhat-contract-sizer";
 
 // import "./tasks/emergencyPool/deposit-withdraw";
 
-// // Farming Tasks
-// import "./tasks/farming/farmingPool";
-// import "./tasks/farming/purchaseIncentive";
+// Farming Tasks
+import "./tasks/farming/farmingPool";
+import "./tasks/farming/purchaseIncentive";
 
-// // Miserable Flight Tasks
-// import "./tasks/misrableFlight/sigManager";
-// import "./tasks/misrableFlight/setAddress";
-// import "./tasks/misrableFlight/policyFlow";
-// import "./tasks/misrableFlight/insurancePool";
-// import "./tasks/misrableFlight/flightOracle";
+// Miserable Flight Tasks
+import "./tasks/misrableFlight/sigManager";
+import "./tasks/misrableFlight/setAddress";
+import "./tasks/misrableFlight/policyFlow";
+import "./tasks/misrableFlight/insurancePool";
+import "./tasks/misrableFlight/flightOracle";
 
 // Naughty Price Tasks
 import "./tasks/naughtyPrice/setAddress";

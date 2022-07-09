@@ -12,7 +12,15 @@ import "hardhat/console.sol";
 /**
  * @title DegisLotteryV2
  *
- * @dev
+ * @dev This lottery uses DEG as tickets and DEG as rewards also
+ *      Users can pay 10 DEG to buy one ticket and choose four digits for each ticket
+ *      After the lottery was closed, it will draw a final random number through Chainlink VRF
+ *      Users get rewards according to the how many numbers they matched with the final number
+ *      
+ *      Reward distribution:
+ *      80% of each round prize pool will be distributed to the winners (breakdowns for different levels)
+ *      20% of each round prize pool will be rolled to next round (except for treasury fee)
+ *      
  */
 
 contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
@@ -24,7 +32,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     // Treasury fee
-    uint256 public constant MAX_TREASURY_FEE = 3000; // 30%
+    uint256 public constant MAX_TREASURY_FEE = 2000; // 20%
 
     // Ticket numbers
     uint32 public constant MIN_TICKET_NUMBER = 10000;
@@ -63,7 +71,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     struct Lottery {
         // Slot 1
         Status status; // uint8
-        uint8 treasuryFee; // 500: 5% // 200: 2% // 50: 0.5%
+        uint32 treasuryFee; // 500: 5% // 200: 2% // 50: 0.5%
         uint32 startTime;
         uint32 endTime;
         uint32 finalNumber;
@@ -101,6 +109,12 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // User address => lotteryId => Amount of tickets has claimed
     mapping(address => mapping(uint256 => uint256)) public userClaimed;
 
+    // Default config parameters
+    // With global parameters, lottery operations can be set as auto tasks
+    uint256 public treasuryFee;
+    uint256[4] public rewardsBreakdown;
+    uint256 public roundLength;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -109,6 +123,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         uint256 oldMaxNumber,
         uint256 newMaxNumber
     );
+    event RoundLengthChanged(uint256 oldRoundLength, uint256 newRoundLength);
     event TreasuryChanged(address oldTreasury, address newTreasury);
     event AdminTokenRecovery(address token, uint256 amount);
     event LotteryClose(uint256 indexed lotteryId);
@@ -116,7 +131,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     event LotteryOpen(
         uint256 indexed lotteryId,
         uint256 startTime,
-        uint256 endTime,
+        uint256 roundLength,
         uint256 priceTicketInDegis,
         uint256[4] rewardsBreakdown,
         uint256 injectedAmount
@@ -162,13 +177,26 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         DegisToken = IERC20(_degis);
         randomGenerator = IRandomNumberGenerator(_randomGenerator);
 
+        // Set default ticket amount each time
         maxNumberTicketsEachTime = 10;
 
+        // Set default calculator
         _bracketCalculator[0] = 1;
         _bracketCalculator[1] = 11;
         _bracketCalculator[2] = 111;
         _bracketCalculator[3] = 1111;
+
+        // Ticket id start from 1
         currentTicketId = 1;
+
+        // Set default rewards breakdown
+        rewardsBreakdown[0] = 1000;
+        rewardsBreakdown[1] = 2000;
+        rewardsBreakdown[2] = 3000;
+        rewardsBreakdown[3] = 4000;
+
+        // Default treasury fee
+        treasuryFee = 500;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -283,6 +311,13 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
             _calculateRewardsForTicketId(_lotteryId, _ticketId, highestBracket);
     }
 
+    /**
+     * @notice View user rewards between rounds
+     *
+     * @param _user       User address
+     * @param _startRound Start lottery id
+     * @param _endRound   End lottery id
+     */
     function viewUserRewards(
         address _user,
         uint256 _startRound,
@@ -317,6 +352,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         }
     }
 
+    /**
+     * @notice View rewards for each ticket in a given lottery round, given bracket
+     */
     function viewRewardPerTicketInBracket(uint256 _lotteryId)
         external
         view
@@ -325,6 +363,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         return lotteries[_lotteryId].rewardPerTicketInBracket;
     }
 
+    /**
+     * @notice View winner ticket amount for a given lottery round, for each bracket
+     */
     function viewWinnerAmount(uint256 _lotteryId)
         external
         view
@@ -333,6 +374,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         return lotteries[_lotteryId].countWinnersPerBracket;
     }
 
+    /**
+     * @notice View rewards breakdown for a given lottery round
+     */
     function viewRewardsBreakdown(uint256 _lotteryId)
         external
         view
@@ -369,6 +413,17 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     function setTreasury(address _treasury) external onlyOwner {
         emit TreasuryChanged(treasury, _treasury);
         treasury = _treasury;
+    }
+
+    /**
+     * @notice Set round length
+     *
+     * @param _length New round length
+     */
+    function setRoundLength(uint256 _length) external onlyOwner {
+        require(_length > 0, "Zero round length");
+        emit RoundLengthChanged(roundLength, _length);
+        roundLength = _length;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -616,37 +671,13 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice Start a new lottery round
-     *
-     * @param _endTime          EndTime of the lottery
-     * @param _ticketPrice      Price of each ticket without discount
-     * @param _rewardsBreakdown Breakdown of rewards per bracket (must sum to 10,000)(100 <=> 1)
-     * @param _fee              Treasury fee (10,000 = 100%, 100 = 1%)
      */
-    function startLottery(
-        uint256 _endTime,
-        uint256 _ticketPrice,
-        uint256[4] calldata _rewardsBreakdown,
-        uint256 _fee
-    ) external onlyOwner {
+    function startLottery() external {
         require(
             (currentLotteryId == 0) ||
                 (lotteries[currentLotteryId].status == Status.Claimable),
             "Wrong status"
         );
-
-        require(_fee <= MAX_TREASURY_FEE, "Treasury fee too high");
-
-        require(
-            (_rewardsBreakdown[0] +
-                _rewardsBreakdown[1] +
-                _rewardsBreakdown[2] +
-                _rewardsBreakdown[3]) <= 10000,
-            "Rewards breakdown too high"
-        );
-
-        // If price is provided, use it
-        // Or use the default price
-        uint256 price = _ticketPrice > 0 ? _ticketPrice : DEFAULT_PRICE;
 
         // Gas savings
         uint256 currentId = ++currentLotteryId;
@@ -655,19 +686,19 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         newLottery.status = Status.Open;
         newLottery.startTime = uint32(block.timestamp);
-        newLottery.endTime = uint32(_endTime);
-        newLottery.ticketPrice = price;
-        newLottery.rewardsBreakdown = _rewardsBreakdown;
-        newLottery.treasuryFee = uint8(_fee);
+        newLottery.endTime = uint32(block.timestamp + roundLength);
+        newLottery.ticketPrice = DEFAULT_PRICE;
+        newLottery.rewardsBreakdown = rewardsBreakdown;
+        newLottery.treasuryFee = uint8(treasuryFee);
         newLottery.amountCollected = pendingInjectionNextLottery;
         newLottery.firstTicketId = currentTicketId;
 
         emit LotteryOpen(
             currentId,
             block.timestamp,
-            _endTime,
-            price,
-            _rewardsBreakdown,
+            roundLength,
+            DEFAULT_PRICE,
+            rewardsBreakdown,
             pendingInjectionNextLottery
         );
 
@@ -781,7 +812,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
                 // No winners, prize added to the amount to withdraw to treasury
             } else {
                 lottery.rewardPerTicketInBracket[j] = 0;
-                amountToTreasury +=
+                amountToNextLottery +=
                     (lottery.rewardsBreakdown[j] * amountToWinners) /
                     10000;
             }
@@ -909,7 +940,15 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         pure
         returns (uint256 totalPrice)
     {
-        totalPrice = (_price * _num * (DISCOUNT_DIVISOR**_num)) / 100**_num;
+        if (_num > 1) {
+            uint256 discountNum = _num - 1;
+
+            totalPrice =
+                (_price * _num * (DISCOUNT_DIVISOR**discountNum)) /
+                100**discountNum;
+        } else {
+            totalPrice = _price;
+        }
     }
 
     /**

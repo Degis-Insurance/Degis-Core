@@ -65,7 +65,9 @@
 		"IncomeMaker": "0xcBF3d1b380d1255FFe3019Cdb56faaBBf194bE8c",
 		"EmergencyPool": "0xEE453DcDa199a74E563fBe8b3b5425665D0325dF",
 		"ILM": "0x5655dDf58776A7F3722c592b524558de55Cf2DAB",
-		"IDOPriceGetter": "0x5d9171ad62511beD7D9f695f35df5490190a80e3"
+		"IDOPriceGetter": "0x5d9171ad62511beD7D9f695f35df5490190a80e3",
+		"RandomNumberGeneratorV2": "0xFCb21f8AF50bBd5bf740eC209f2351eF47dD2FC4",
+		"DegisLotteryV2": "0xaC5C233AeFC1C5d07AfADAfA5e1e8146b30fC675"
 	},
 	"localhost": {
 		"ProxyAdmin": "0x5FbDB2315678afecb367f032d93F642f64180aa3",

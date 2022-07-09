@@ -34,8 +34,8 @@ task("startLotteryRound", "Start a new lottery round")
     const tx = await lottery.startLottery(
       endTime,
       0,
-      [1000, 2000, 3000, 4000],
-      1000
+      [1000, 2000, 3000, 4000]
+      // 1000
     );
     console.log("Tx details: ", await tx.wait());
   });
