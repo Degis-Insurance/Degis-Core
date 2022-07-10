@@ -16,11 +16,11 @@ import "hardhat/console.sol";
  *      Users can pay 10 DEG to buy one ticket and choose four digits for each ticket
  *      After the lottery was closed, it will draw a final random number through Chainlink VRF
  *      Users get rewards according to the how many numbers they matched with the final number
- *      
+ *
  *      Reward distribution:
  *      80% of each round prize pool will be distributed to the winners (breakdowns for different levels)
  *      20% of each round prize pool will be rolled to next round (except for treasury fee)
- *      
+ *
  */
 
 contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
@@ -197,6 +197,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Default treasury fee
         treasuryFee = 500;
+
+        // Default round length
+        roundLength = 5 days;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -711,7 +714,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      *
      * @param _lotteryId Lottery round
      */
-    function closeLottery(uint256 _lotteryId) external onlyOwner nonReentrant {
+    function closeLottery(uint256 _lotteryId) external nonReentrant {
         require(
             lotteries[_lotteryId].status == Status.Open,
             "this lottery is not open currently"
@@ -741,7 +744,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     function drawFinalNumberAndMakeLotteryClaimable(
         uint256 _lotteryId,
         bool _autoInjection
-    ) external onlyOwner nonReentrant {
+    ) external nonReentrant {
         require(
             lotteries[_lotteryId].status == Status.Close,
             "Lottery not closed"

@@ -24,11 +24,13 @@ task("addFarmingPool", "Add new farming pool")
   .addParam("address", "The pool's address to be added", null, types.string)
   .addParam("reward", "Initial degis reward per second", null, types.string)
   .addParam("bonus", "Bonus degis reward per second", null, types.string)
+  .addParam("doubleReward", "Double reward token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const poolName = taskArgs.name;
     const lptokenAddress = taskArgs.address;
     const basicDegisPerSecond = taskArgs.reward;
     const bonusDegisPerSecond = taskArgs.bonus;
+    const doubleRewardTokenAddress = taskArgs.doubleReward;
 
     console.log("The pool name is: ", poolName);
     console.log("Pool address to be added: ", lptokenAddress);
@@ -69,7 +71,8 @@ task("addFarmingPool", "Add new farming pool")
       lptokenAddress,
       parseUnits(basicDegisPerSecond),
       parseUnits(bonusDegisPerSecond),
-      false
+      false,
+      doubleRewardTokenAddress
     );
     console.log("tx details: ", await tx.wait());
 
