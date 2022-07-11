@@ -28,6 +28,7 @@ import { Initializable } from "@openzeppelin/contracts-upgradeable/proxy/utils/I
 import { IDegisToken } from "../tokens/interfaces/IDegisToken.sol";
 import { Math } from "../libraries/Math.sol";
 import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
+import { IDoubleRewarder } from "./interfaces/IDoubleRewarder.sol";
 
 /**
  * @title  Farming Pool
@@ -39,7 +40,7 @@ import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
  *         The extra reward is shared by those staking lptokens with veDEG balances
  *         Every time the veDEG balance change, the reward will be updated
  *
- *         The basic reward depends on the liquidity inside the pool
+ *         The basic reward depends on the liquidity inside the pool (optional)
  *         Update with a piecewise function
  *         liquidity amount:   |---------------|------------------|----------------
  *                             0           threshold 1        threshold 2
@@ -47,6 +48,13 @@ import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
  *
  *         The speed update will be updated one tx after the last tx that triggers the threshold
  *         The reward update will be another one tx later
+ *
+ *         This piecewise-style reward can be used or not for each pool to decide
+ *         Ways to start pools: 1) set the basic reward to >0 2) set the piecewise and threshold to >0
+ *                 stop pools: 1) set the basic reward to 0 2) set the piecewise and threshold to 0
+ *
+ *         Double Reward
+ *
  */
 contract FarmingPoolUpgradeable is
     Initializable,
@@ -116,6 +124,11 @@ contract FarmingPoolUpgradeable is
     uint256 public currentRewardLevel;
 
     mapping(uint256 => uint256) public poolRewardLevel;
+
+    // Double reward token for a pool
+    mapping(uint256 => address) public doubleRewarder;
+
+    IDoubleRewarder public doubleRewarderContract;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -340,6 +353,13 @@ contract FarmingPoolUpgradeable is
         else isFarming[_poolId] = false;
     }
 
+    /**
+     * @notice Set double rewarder contract
+     */
+    function setDoubleRewarderContract(address _rewarder) external onlyOwner {
+        doubleRewarderContract = IDoubleRewarder(_rewarder);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // *********************************** Main Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -348,16 +368,21 @@ contract FarmingPoolUpgradeable is
      * @notice Add a new lp into the pool
      * @dev Can only be called by the owner
      *      The reward speed can be 0 and set later by setDegisReward function
-     * @param _lpToken LP token address
+     *      The pool may have a double reward token
+     *
+     * @param _lpToken             LP token address
      * @param _basicDegisPerSecond Basic reward speed(per second) for this new pool
      * @param _bonusDegisPerSecond Bonus reward speed(per second) for this new pool
-     * @param _withUpdate Whether update all pools' status
+     * @param _withUpdate          Whether update all pools' status
+     * @param _doubleRewardToken   Double reward token address
+     *
      */
     function add(
         address _lpToken,
         uint256 _basicDegisPerSecond,
         uint256 _bonusDegisPerSecond,
-        bool _withUpdate
+        bool _withUpdate,
+        address _doubleRewardToken
     ) public notZeroAddress(_lpToken) onlyOwner whenNotPaused {
         // Check if already exists, if the poolId is 0, that means not in the pool
         require(!_alreadyInPool(_lpToken), "Already in the pool");
@@ -389,9 +414,14 @@ contract FarmingPoolUpgradeable is
         // Store the poolId and set the farming status to true
         if (_basicDegisPerSecond > 0) isFarming[_nextPoolId] = true;
 
-        poolMapping[_lpToken] = _nextPoolId++;
+        uint256 currentId = _nextPoolId++;
+
+        poolMapping[_lpToken] = currentId;
 
         emit NewPoolAdded(_lpToken, _basicDegisPerSecond, _bonusDegisPerSecond);
+
+        // Record double reward token
+        doubleRewarder[currentId] = _doubleRewardToken;
     }
 
     /**
@@ -493,6 +523,15 @@ contract FarmingPoolUpgradeable is
                 .sqrt();
             // Update the pool's total bonus
             pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
+        }
+
+        // Double reward distribution
+        if (doubleRewarder[_poolId] != address(0)) {
+            doubleRewarderContract.distributeReward(
+                doubleRewarder[_poolId],
+                msg.sender,
+                user.stakingBalance
+            );
         }
 
         user.rewardDebt =

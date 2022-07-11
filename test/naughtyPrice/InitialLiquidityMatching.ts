@@ -169,7 +169,8 @@ describe("Initial Liquidity Matching", function () {
         toWei("100"),
         round,
         now + 86400 * 10,
-        now + 86400 * 10
+        now + 86400 * 10,
+        false
       );
 
       policyTokenAddress = await core.findAddressbyName(policyTokenName);
@@ -612,7 +613,22 @@ describe("Initial Liquidity Matching", function () {
 
     it("should be able to get degis fee when claim", async function () {
       const startTime = await getLatestBlockTimestamp(ethers.provider);
+
+      const nonce = await ethers.provider.getTransactionCount(ILM.address);
+      // lp token address deployed by ILM contract
+      const lptokenAddress = getContractAddress({
+        from: ILM.address,
+        nonce: nonce,
+      });
+
       await ILM.startILM(policyTokenAddress, usd.address, startTime + ILM_TIME);
+
+      const ILMToken_Factory: ILMToken__factory =
+        await ethers.getContractFactory("ILMToken");
+      const ILMToken: ILMToken = ILMToken_Factory.attach(lptokenAddress);
+
+      // Dev account
+      // Approve and deposit 200U (100 + 100)
       await usd.approve(ILM.address, stablecoinToWei("200"));
       await ILM.deposit(
         policyTokenAddress,
@@ -621,10 +637,13 @@ describe("Initial Liquidity Matching", function () {
         stablecoinToWei("100")
       );
 
+      // 2% fee
       expect(await degisToken.balanceOf(dev_account.address)).to.equal(
         toWei("98")
       );
 
+      // User1
+      // Approve and deposit 200U (100 + 100)
       await usd.mint(user1.address, stablecoinToWei("200"));
       await usd.connect(user1).approve(ILM.address, stablecoinToWei("200"));
       await ILM.connect(user1).deposit(
@@ -634,8 +653,11 @@ describe("Initial Liquidity Matching", function () {
         stablecoinToWei("100")
       );
 
+      // 2% fee
       expect(await degisToken.balanceOf(user1.address)).to.equal(toWei("98"));
 
+      // User2
+      // Approve and deposit 100U (50 + 50)
       await usd.mint(user2.address, stablecoinToWei("100"));
       await usd.connect(user2).approve(ILM.address, stablecoinToWei("100"));
       await ILM.connect(user2).deposit(
@@ -647,12 +669,29 @@ describe("Initial Liquidity Matching", function () {
 
       expect(await degisToken.balanceOf(user2.address)).to.equal(toWei("99"));
 
+      // Reach end time and finish ILM
       await setNextBlockTime(startTime + ILM_TIME + 100);
       const deadlineForPolicyToken = (
         await core.policyTokenInfoMapping(policyTokenName)
       ).deadline;
       await ILM.finishILM(policyTokenAddress, deadlineForPolicyToken, FEE_RATE);
 
+      // Dev account
+      // Claim 100 lp token
+
+      const lpTotalSupply = await ILMToken.totalSupply();
+      expect(lpTotalSupply).to.equal(stablecoinToWei("500"));
+
+      expect(
+        await core.getUserQuota(dev_account.address, policyTokenAddress)
+      ).to.equal(0);
+
+      const pairInfo = await ILM.pairs(policyTokenAddress);
+      expect(pairInfo.amountA).to.equal(stablecoinToWei("250"));
+
+      expect(await ILMToken.balanceOf(dev_account.address)).to.equal(
+        stablecoinToWei("200")
+      );
       await ILM.claim(
         policyTokenAddress,
         usd.address,
@@ -680,6 +719,7 @@ describe("Initial Liquidity Matching", function () {
         0,
         0
       );
+      expect(await ILMToken.balanceOf(dev_account.address)).to.equal(0);
       // Withdraw will not return degis token
       expect(await degisToken.balanceOf(dev_account.address)).to.equal(
         toWei("102.5")
@@ -708,6 +748,8 @@ describe("Initial Liquidity Matching", function () {
       const userInfo_1 = await ILM.users(user1.address, policyTokenAddress);
       expect(userInfo_1.degisDebt).to.equal(toWei("4.5"));
 
+      // LP Token: dev 200 - user1 200 - user2 100
+      // Quota: 250 * 100 / 500
       await ILM.connect(user2).claim(
         policyTokenAddress,
         usd.address,
@@ -723,12 +765,27 @@ describe("Initial Liquidity Matching", function () {
       const userInfo_2 = await ILM.users(user2.address, policyTokenAddress);
       expect(userInfo_2.degisDebt).to.equal(toWei("2.25"));
 
-      const quota = await core.getUserQuota(
+      // Check user quota update
+      const quota_dev = await core.getUserQuota(
         dev_account.address,
         policyTokenAddress
       );
-      console.log(quota);
-      expect(quota).to.equal(stablecoinToWei("99.9996"));
+      console.log(quota_dev);
+      expect(quota_dev).to.equal(stablecoinToWei("100"));
+
+      const quota_user1 = await core.getUserQuota(
+        user1.address,
+        policyTokenAddress
+      );
+      console.log(quota_user1);
+      expect(quota_user1).to.equal(stablecoinToWei("100"));
+
+      const quota_user2 = await core.getUserQuota(
+        user2.address,
+        policyTokenAddress
+      );
+      console.log(quota_user2);
+      expect(quota_user2).to.equal(stablecoinToWei("50"));
     });
 
     it("should be able to swap after finish ILM", async function () {

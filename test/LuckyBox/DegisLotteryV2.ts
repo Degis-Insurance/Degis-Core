@@ -45,7 +45,7 @@ describe("Degis Lottery V2", function () {
     BigNumber.from(4000),
   ];
 
-  const treasuryFee = 0;
+  const treasuryFee = 500;
   const realTreasuryFee = 2000;
 
   beforeEach(async function () {
@@ -131,6 +131,10 @@ describe("Degis Lottery V2", function () {
     let now: number;
     const roundLength = 60 * 60 * 24 * 7; // 1 week
 
+    beforeEach(async function () {
+      await lottery.setRoundLength(roundLength);
+    });
+
     it("should be able to change maxNumberTicketsEachTime", async function () {
       // Decrease
       await lottery.setMaxNumberTicketsEachTime(5);
@@ -148,22 +152,18 @@ describe("Degis Lottery V2", function () {
       const initStatus = await lottery.lotteries(currentLotteryId.add(1));
       expect(initStatus.status).to.equal(0);
 
-      await expect(
-        lottery.startLottery(
-          now + roundLength,
-          toWei("10"),
-          defaultRewardBreakdown, // 10%, 20%, 30%, 40% for 80% of total prize pool
-          treasuryFee
-        )
-      )
+      const pendingInjectionToNext =
+        await lottery.pendingInjectionNextLottery();
+
+      await expect(lottery.startLottery())
         .to.emit(lottery, "LotteryOpen")
         .withArgs(
           currentLotteryId.add(1),
           now + 1,
-          now + roundLength,
+          roundLength,
           toWei("10"),
           defaultRewardBreakdown,
-          treasuryFee
+          pendingInjectionToNext
         );
 
       const status = await lottery.lotteries(currentLotteryId.add(1));
@@ -177,27 +177,20 @@ describe("Degis Lottery V2", function () {
       expect(status.pendingRewards).to.equal(0);
     });
 
-    it("should not be able to start a lottery if rewards breakdown too high", async function () {
-      now = await getLatestBlockTimestamp(ethers.provider);
-      await expect(
-        lottery.startLottery(
-          now + roundLength,
-          toWei("10"),
-          [1001, 2000, 3000, 4000],
-          treasuryFee
-        )
-      ).to.be.revertedWith("Rewards breakdown too high");
-    });
+    // it("should not be able to start a lottery if rewards breakdown too high", async function () {
+    //   now = await getLatestBlockTimestamp(ethers.provider);
+    //   await expect(lottery.startLottery()).to.be.revertedWith(
+    //     "Rewards breakdown too high"
+    //   );
+    // });
 
     it("should be able to close a lottery", async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        treasuryFee
-      );
+
+      await lottery.startLottery();
       const currentLotteryId = await lottery.currentLotteryId();
+
+      await setNextBlockTime(now + roundLength + 2);
 
       await expect(lottery.closeLottery(currentLotteryId))
         .to.emit(lottery, "LotteryClose")
@@ -207,16 +200,27 @@ describe("Degis Lottery V2", function () {
       expect(status.status).to.equal(2); // 2 = closed
     });
 
-    it("should be able to draw final number and make the round claimable", async function () {
+    it("should not be able to close a lottery when not reached end time", async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        treasuryFee
+
+      await lottery.startLottery();
+      const currentLotteryId = await lottery.currentLotteryId();
+
+      await expect(lottery.closeLottery(currentLotteryId)).to.be.revertedWith(
+        "Not reach end time"
       );
 
+      const status = await lottery.lotteries(currentLotteryId);
+      expect(status.status).to.equal(1); // 2 = closed
+    });
+
+    it("should be able to draw final number and make the round claimable", async function () {
+      now = await getLatestBlockTimestamp(ethers.provider);
+      await lottery.startLottery();
+
       const currentLotteryId = await lottery.currentLotteryId();
+
+      await setNextBlockTime(now + roundLength + 2);
 
       await lottery.closeLottery(currentLotteryId);
 
@@ -239,12 +243,7 @@ describe("Degis Lottery V2", function () {
 
     it("should be able to inject funds", async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        treasuryFee
-      );
+      await lottery.startLottery();
 
       const lotteryId = await lottery.currentLotteryId();
 
@@ -261,12 +260,7 @@ describe("Degis Lottery V2", function () {
 
     it("should not be able to withdraw degis tokens", async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        0
-      );
+      await lottery.startLottery();
 
       await lottery.injectFunds(toWei("10"));
 
@@ -292,19 +286,12 @@ describe("Degis Lottery V2", function () {
       );
     });
 
-    it("should not allow non owner to open lotteries", async function () {
-      now = await getLatestBlockTimestamp(ethers.provider);
-      await expect(
-        lottery
-          .connect(user1)
-          .startLottery(
-            now + roundLength,
-            toWei("10"),
-            defaultRewardBreakdown,
-            treasuryFee
-          )
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-    });
+    // it("should not allow non owner to open lotteries", async function () {
+    //   now = await getLatestBlockTimestamp(ethers.provider);
+    //   await expect(lottery.connect(user1).startLottery()).to.be.revertedWith(
+    //     "Ownable: caller is not the owner"
+    //   );
+    // });
   });
 
   describe("Lottery with open status", function () {
@@ -314,12 +301,7 @@ describe("Degis Lottery V2", function () {
     beforeEach(async function () {
       now = await getLatestBlockTimestamp(ethers.provider);
 
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        treasuryFee
-      );
+      await lottery.startLottery();
     });
 
     it("should be able to show correct ticket number", async function () {
@@ -332,11 +314,11 @@ describe("Degis Lottery V2", function () {
     it("should be able to buy 10 tickets", async function () {
       await expect(lottery.buyTickets(tenTicketsArray))
         .to.emit(lottery, "TicketsPurchased")
-        .withArgs(dev_account.address, 1, 10, toWei("81.707280688754689024"));
+        .withArgs(dev_account.address, 1, 10, toWei("83.374776213014988800"));
 
       await expect(lottery.connect(user1).buyTickets(tenTicketsArray))
         .to.emit(lottery, "TicketsPurchased")
-        .withArgs(user1.address, 1, 10, toWei("81.707280688754689024"));
+        .withArgs(user1.address, 1, 10, toWei("83.374776213014988800"));
     });
 
     it("should not be able to buy 11 tickets", async function () {
@@ -354,11 +336,11 @@ describe("Degis Lottery V2", function () {
 
       await expect(lottery.buyTickets(elevenTicketsArray))
         .to.emit(lottery, "TicketsPurchased")
-        .withArgs(dev_account.address, 1, 11, toWei("88.080448582477554767"));
+        .withArgs(dev_account.address, 1, 11, toWei("89.878008757630157926"));
 
       await expect(lottery.connect(user1).buyTickets(elevenTicketsArray))
         .to.emit(lottery, "TicketsPurchased")
-        .withArgs(user1.address, 1, 11, toWei("88.080448582477554767"));
+        .withArgs(user1.address, 1, 11, toWei("89.878008757630157926"));
     });
 
     it("should not be able to buy more than 11 tickets after reduction", async function () {
@@ -388,14 +370,13 @@ describe("Degis Lottery V2", function () {
     const roundLength = 60 * 60 * 24 * 7; // 1 week
 
     beforeEach(async function () {
+      await lottery.setRoundLength(roundLength);
+
       now = await getLatestBlockTimestamp(ethers.provider);
 
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        0
-      );
+      await lottery.startLottery();
+
+      await setNextBlockTime(now + roundLength + 2);
 
       const lotteryId = await lottery.currentLotteryId();
       await lottery.closeLottery(lotteryId);
@@ -418,19 +399,18 @@ describe("Degis Lottery V2", function () {
     //];
 
     beforeEach(async function () {
+      await lottery.setRoundLength(roundLength);
+
       now = await getLatestBlockTimestamp(ethers.provider);
 
-      await lottery.startLottery(
-        now + roundLength,
-        toWei("10"),
-        defaultRewardBreakdown,
-        treasuryFee
-      );
+      await lottery.startLottery();
       await lottery.buyTickets(tenTicketsArray);
 
       const lotteryId = await lottery.currentLotteryId();
 
       await lottery.setTreasury(dev_account.address);
+
+      await setNextBlockTime(now + roundLength + 2);
       await lottery.closeLottery(lotteryId);
 
       //
@@ -547,7 +527,7 @@ describe("Degis Lottery V2", function () {
     it("it should get reward equivalent to four correct numbers in right order", async function () {
       await expect(lottery.claimTickets(1, [4], [3]))
         .to.emit(lottery, "TicketsClaim")
-        .withArgs(dev_account.address, toWei("26.146329820401500487"), 1);
+        .withArgs(dev_account.address, toWei("26.679928388164796416"), 1);
     });
 
     it("should be able to get multiple rewards equivalent to specified tickets in right order", async function () {
@@ -558,27 +538,31 @@ describe("Degis Lottery V2", function () {
     });
 
     it("should not get reward equivalent to one correct number in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [5], [0])).to.be.revertedWith(
-        "No prize"
-      );
+      // await expect(lottery.claimTickets(1, [5], [0])).to.be.revertedWith(
+      //   "No prize"
+      // );
+
+      await expect(lottery.claimTickets(1, [5], [0]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, 0, 1);
     });
 
     it("should not get reward equivalent to two correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [6], [1])).to.be.revertedWith(
-        "No prize"
-      );
+      await expect(lottery.claimTickets(1, [6], [1]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, 0, 1);
     });
 
     it("should not get reward equivalent to three correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [7], [2])).to.be.revertedWith(
-        "No prize"
-      );
+      await expect(lottery.claimTickets(1, [7], [2]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, 0, 1);
     });
 
     it("should not get reward equivalent to four correct numbers in wrong order", async function () {
-      await expect(lottery.claimTickets(1, [8], [3])).to.be.revertedWith(
-        "No prize"
-      );
+      await expect(lottery.claimTickets(1, [8], [3]))
+        .to.emit(lottery, "TicketsClaim")
+        .withArgs(dev_account.address, 0, 1);
     });
 
     it("should be able to claim all tickets", async function () {
@@ -634,32 +618,31 @@ describe("Degis Lottery V2", function () {
   describe("past lotteries", async function () {
     let now: number;
     let oldLotteryId: BigNumber, lotteryId: BigNumber;
+    const roundLength = 60 * 60 * 24 * 7;
 
     beforeEach(async function () {
-      now = getNow();
+      await lottery.setRoundLength(roundLength);
 
-      await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
-        toWei("10"),
-        defaultRewardBreakdown,
-        0
-      );
+      now = await getLatestBlockTimestamp(ethers.provider);
+      await lottery.startLottery();
+
       await lottery.buyTickets(tenTicketsArray);
       oldLotteryId = await lottery.currentLotteryId();
       await lottery.setTreasury(dev_account.address);
+
+      await setNextBlockTime(now + roundLength + 2);
       await lottery.closeLottery(oldLotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(oldLotteryId, true);
 
       // claim only half of winning tickets
       await lottery.claimTickets(1, [3, 4], [2, 3]);
-      await lottery.startLottery(
-        60 * 60 * 24 * 3 + now,
-        toWei("10"),
-        defaultRewardBreakdown,
-        0
-      );
+
+      now = await getLatestBlockTimestamp(ethers.provider);
+      await lottery.startLottery();
       lotteryId = await lottery.currentLotteryId();
       await lottery.buyTickets([14690]);
+
+      await setNextBlockTime(now + roundLength + 2);
       await lottery.closeLottery(lotteryId);
       await lottery.drawFinalNumberAndMakeLotteryClaimable(lotteryId, true);
     });
@@ -692,7 +675,8 @@ describe("Degis Lottery V2", function () {
     it("should be able to claim previous tickets despite current lottery fully claimed", async function () {
       await expect(lottery.claimAllTickets(2))
         .to.emit(lottery, "TicketsClaim")
-        .withArgs(dev_account.address, toWei("8.365265964080300097"), 2);
+        .withArgs(dev_account.address, toWei("7.201989258224719462"), 2);
+
       await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
         lottery,
         "TicketsClaim"
@@ -747,3 +731,11 @@ describe("Degis Lottery V2", function () {
     });
   });
 });
+
+// hre can be used in hardhat environment but not with mocha built-in test
+async function setNextBlockTime(time: number) {
+  await hre.network.provider.request({
+    method: "evm_setNextBlockTimestamp",
+    params: [time],
+  });
+}

@@ -311,7 +311,7 @@ describe("Vote Escrowed Degis", function () {
   describe("Work with Farming Pool", function () {
     beforeEach(async function () {
       await usd.approve(pool.address, stablecoinToWei("100"));
-      await pool.add(usd.address, toWei("1"), toWei("1"), false);
+      await pool.add(usd.address, toWei("1"), toWei("1"), false, zeroAddress());
 
       await degis.mintDegis(dev_account.address, toWei("1000"));
       await degis.approve(veDEG.address, toWei("1000"));
@@ -409,7 +409,7 @@ describe("Vote Escrowed Degis", function () {
   describe("Whitelist contract burn veDEG", function () {
     beforeEach(async function () {
       await usd.approve(pool.address, stablecoinToWei("100"));
-      await pool.add(usd.address, toWei("1"), toWei("1"), false);
+      await pool.add(usd.address, toWei("1"), toWei("1"), false, zeroAddress());
 
       await degis.mintDegis(dev_account.address, toWei("1000"));
       await degis.approve(veDEG.address, toWei("1000"));

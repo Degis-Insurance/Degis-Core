@@ -3,6 +3,8 @@ import { ethers } from "hardhat";
 import {
   DegisToken,
   DegisToken__factory,
+  DoubleRewarder,
+  DoubleRewarder__factory,
   MockERC20,
   MockERC20__factory,
   MockUSD,
@@ -115,12 +117,24 @@ describe("Farming Pool Upgradeable", function () {
     });
 
     it("should not be able to set start block after start mining", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       await expect(pool.setStartTimestamp(60000)).to.be.revertedWith(
         "Can not set start timestamp after adding a pool"
       );
 
-      await pool.add(lptoken_2.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_2.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       await expect(pool.setStartTimestamp(60000)).to.be.revertedWith(
         "Can not set start timestamp after adding a pool"
       );
@@ -135,7 +149,13 @@ describe("Farming Pool Upgradeable", function () {
         .withArgs(dev_account.address);
 
       await expect(
-        pool.add(lptoken_1.address, toWei("5"), toWei("1"), false)
+        pool.add(
+          lptoken_1.address,
+          toWei("5"),
+          toWei("1"),
+          false,
+          zeroAddress()
+        )
       ).to.be.revertedWith("Pausable: paused");
     });
 
@@ -143,7 +163,7 @@ describe("Farming Pool Upgradeable", function () {
       await pool.pause();
 
       await expect(
-        pool.add(lptoken_1.address, toWei("5"), 0, false)
+        pool.add(lptoken_1.address, toWei("5"), 0, false, zeroAddress())
       ).to.be.revertedWith("Pausable: paused");
 
       await expect(pool.unpause())
@@ -151,7 +171,13 @@ describe("Farming Pool Upgradeable", function () {
         .withArgs(dev_account.address);
 
       await expect(
-        pool.add(lptoken_1.address, toWei("5"), toWei("1"), false)
+        pool.add(
+          lptoken_1.address,
+          toWei("5"),
+          toWei("1"),
+          false,
+          zeroAddress()
+        )
       ).to.emit(pool, "NewPoolAdded");
     });
 
@@ -160,11 +186,27 @@ describe("Farming Pool Upgradeable", function () {
         ethers.provider
       );
 
-      await expect(pool.add(lptoken_1.address, toWei("5"), toWei("1"), false))
+      await expect(
+        pool.add(
+          lptoken_1.address,
+          toWei("5"),
+          toWei("1"),
+          false,
+          zeroAddress()
+        )
+      )
         .to.emit(pool, "NewPoolAdded")
         .withArgs(lptoken_1.address, toWei("5"), toWei("1"));
 
-      await expect(pool.add(lptoken_2.address, toWei("5"), toWei("1"), false))
+      await expect(
+        pool.add(
+          lptoken_2.address,
+          toWei("5"),
+          toWei("1"),
+          false,
+          zeroAddress()
+        )
+      )
         .to.emit(pool, "NewPoolAdded")
         .withArgs(lptoken_2.address, toWei("5"), toWei("1"));
 
@@ -212,15 +254,33 @@ describe("Farming Pool Upgradeable", function () {
     });
 
     it("should not be able to add two same pools", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       await expect(
-        pool.add(lptoken_1.address, toWei("5"), toWei("1"), false)
+        pool.add(
+          lptoken_1.address,
+          toWei("5"),
+          toWei("1"),
+          false,
+          zeroAddress()
+        )
       ).to.be.revertedWith("Already in the pool");
     });
 
     it("should be able to set degis reward of a pool", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       const poolId = await pool.poolMapping(lptoken_1.address);
 
       await expect(pool.setDegisReward(poolId, toWei("10"), toWei("2"), false))
@@ -237,7 +297,13 @@ describe("Farming Pool Upgradeable", function () {
     });
 
     it("should be able to stop a existing pool", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       const poolId = await pool.poolMapping(lptoken_1.address);
 
@@ -255,7 +321,13 @@ describe("Farming Pool Upgradeable", function () {
     });
 
     it("should be able to restart a farming pool", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       const poolId = await pool.poolMapping(lptoken_1.address);
 
       // Stop a pool
@@ -283,10 +355,22 @@ describe("Farming Pool Upgradeable", function () {
     beforeEach(async function () {
       // Add lptoken_1
       // Reward speed: 5 degis per block
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       // Add lptoken_3
       // Reward speed: 5 degis per block
-      await pool.add(lptoken_3.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_3.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
     });
 
     it("should be able to deposit lptokens", async function () {
@@ -491,10 +575,22 @@ describe("Farming Pool Upgradeable", function () {
     beforeEach(async function () {
       // Add lptoken_1
       // Reward speed: 5 degis per block
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
       // Add lptoken_3
       // Reward speed: 5 degis per block
-      await pool.add(lptoken_3.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_3.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       // Mint degis
       await degis.mintDegis(dev_account.address, toWei("100"));
@@ -534,21 +630,41 @@ describe("Farming Pool Upgradeable", function () {
 
   describe("Pool Update", function () {
     it("should be able to update the pools when add a new pool", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
       await pool.stake(1, toWei("100"));
 
       // accDegisPerShare = 5 * 1 * 1e12 / 100 = 5e10
-      await expect(pool.add(lptoken_2.address, toWei("5"), toWei("1"), true))
+      await expect(
+        pool.add(lptoken_2.address, toWei("5"), toWei("1"), true, zeroAddress())
+      )
         .to.emit(pool, "PoolUpdated")
         .withArgs(1, parseUnits("5", 10), 0);
     });
 
     it("should be able to update the pools when stop a pool", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
-      await pool.add(lptoken_2.address, toWei("5"), toWei("1"), true);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
+      await pool.add(
+        lptoken_2.address,
+        toWei("5"),
+        toWei("1"),
+        true,
+        zeroAddress()
+      );
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
@@ -563,27 +679,47 @@ describe("Farming Pool Upgradeable", function () {
     });
 
     it("should be able to update correctly when restart a farming pool", async function () {
-      await pool.add(lptoken_1.address, toWei("1"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("1"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
       await pool.stake(1, toWei("100"));
 
       await mineBlocks(5);
-      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("5"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("5")
+      );
 
       await pool.setDegisReward(1, 0, 0, true);
-      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("6")
+      );
       await mineBlocks(5);
-      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("6"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("6")
+      );
 
-      await pool.setDegisReward(1, toWei("1"), toWei("1"), true)
+      await pool.setDegisReward(1, toWei("1"), toWei("1"), true);
       await mineBlocks(5);
-      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(toWei("11"));
+      expect(await pool.pendingDegis(1, dev_account.address)).to.equal(
+        toWei("11")
+      );
     });
 
     it("should be able to manually mass update the pools", async function () {
-      await pool.add(lptoken_1.address, toWei("5"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("5"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
@@ -598,7 +734,13 @@ describe("Farming Pool Upgradeable", function () {
 
   describe("Piecewise reward change", function () {
     beforeEach(async function () {
-      await pool.add(lptoken_1.address, toWei("1"), toWei("1"), false);
+      await pool.add(
+        lptoken_1.address,
+        toWei("1"),
+        toWei("1"),
+        false,
+        zeroAddress()
+      );
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
@@ -728,6 +870,47 @@ describe("Farming Pool Upgradeable", function () {
       expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("15"));
       expect((await pool.poolList(1)).basicDegisPerSecond).to.equal(toWei("1"));
     });
+  });
+
+  describe("Double Reward", function () {
+    let doubleRewardToken: MockERC20;
+    let doubleRewardContract: DoubleRewarder;
+
+    beforeEach(async function () {
+      // Deploy double reward token
+      const doubleRewardTokenFactory: MockERC20__factory =
+        await ethers.getContractFactory("MockERC20");
+      doubleRewardToken = await doubleRewardTokenFactory.deploy();
+
+      // Deploy double reward contract
+      const DoubleRewardContractFactory: DoubleRewarder__factory =
+        await ethers.getContractFactory("DoubleRewarder");
+      doubleRewardContract = await DoubleRewardContractFactory.deploy(
+        pool.address
+      );
+
+      // Add a pool with double reward
+      await pool.add(
+        lptoken_1.address,
+        toWei("1"),
+        toWei("1"),
+        false,
+        doubleRewardToken.address
+      );
+
+      await lptoken_1.mint(dev_account.address, toWei("1000"));
+      await lptoken_1.approve(pool.address, toWei("1000"));
+    });
+
+    it("should be able to add double reward token", async function () {
+      await expect(
+        doubleRewardContract.addRewardToken(doubleRewardToken.address)
+      )
+        .to.emit(doubleRewardContract, "NewRewardTokenAdded")
+        .withArgs(doubleRewardToken.address);
+    });
+
+    it("should be able to get double reward when deposit", async function () {});
   });
 });
 

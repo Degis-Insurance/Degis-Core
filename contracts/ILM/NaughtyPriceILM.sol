@@ -569,7 +569,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         IPolicyCore(policyCore).updateUserQuota(
             msg.sender,
             _policyToken,
-            (pair.amountA * lpToClaim) / lpTotalSupply
+            (pair.amountA * lpToClaim) / (pair.amountA + pair.amountB)
         );
 
         // Burn the user's lp tokens

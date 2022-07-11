@@ -133,7 +133,8 @@ describe("Income Maker", function () {
         toWei("20000"),
         "2201",
         now + 60000,
-        now + 90000
+        now + 90000,
+        false
       );
 
       await core.deployPool(policyTokenName, usd.address, now + 60000, feeRate);

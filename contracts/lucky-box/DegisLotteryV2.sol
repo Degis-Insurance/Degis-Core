@@ -692,7 +692,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         newLottery.endTime = uint32(block.timestamp + roundLength);
         newLottery.ticketPrice = DEFAULT_PRICE;
         newLottery.rewardsBreakdown = rewardsBreakdown;
-        newLottery.treasuryFee = uint8(treasuryFee);
+        newLottery.treasuryFee = uint32(treasuryFee);
         newLottery.amountCollected = pendingInjectionNextLottery;
         newLottery.firstTicketId = currentTicketId;
 

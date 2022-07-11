@@ -84,7 +84,8 @@ describe("Naughty Router", function () {
       toWei("24000"),
       "2112",
       toBN(deadline),
-      toBN(settleTimestamp)
+      toBN(settleTimestamp),
+      false
     );
 
     await core.deployPool(policyTokenName, usd.address, toBN(deadline), 20);
@@ -340,7 +341,8 @@ describe("Naughty Router", function () {
         toWei("25000"),
         "2112",
         toBN(deadline),
-        toBN(settleTimestamp)
+        toBN(settleTimestamp),
+        false
       );
 
       // 50% tx fee
