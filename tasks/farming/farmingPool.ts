@@ -3,10 +3,14 @@ import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
 import {
+  DoubleRewarder,
+  DoubleRewarder__factory,
   FarmingPool,
   FarmingPoolUpgradeable,
   FarmingPoolUpgradeable__factory,
   FarmingPool__factory,
+  MockERC20,
+  MockERC20__factory,
 } from "../../typechain";
 import {
   readAddressList,
@@ -24,13 +28,13 @@ task("addFarmingPool", "Add new farming pool")
   .addParam("address", "The pool's address to be added", null, types.string)
   .addParam("reward", "Initial degis reward per second", null, types.string)
   .addParam("bonus", "Bonus degis reward per second", null, types.string)
-  .addParam("doubleReward", "Double reward token address", null, types.string)
+  .addParam("doublereward", "Double reward token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const poolName = taskArgs.name;
     const lptokenAddress = taskArgs.address;
     const basicDegisPerSecond = taskArgs.reward;
     const bonusDegisPerSecond = taskArgs.bonus;
-    const doubleRewardTokenAddress = taskArgs.doubleReward;
+    const doubleRewardTokenAddress = taskArgs.doublereward;
 
     console.log("The pool name is: ", poolName);
     console.log("Pool address to be added: ", lptokenAddress);
@@ -319,3 +323,90 @@ task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
     console.log("Tx details: ", formatEther(poolInfo.bonusDegisPerSecond));
   }
 );
+
+task("addDoubleReward", "Add double reward to a farming pool")
+  .addParam("token", "Token address", null, types.string)
+  .addParam("lptoken", "LPToken address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
+    const doubleRewarderContract: DoubleRewarder = new DoubleRewarder__factory(
+      dev_account
+    ).attach(doubleRewarderAddress);
+
+    const tx = await doubleRewarderContract.addRewardToken(
+      taskArgs.token,
+      taskArgs.lptoken
+    );
+    console.log("Tx details: ", await tx.wait());
+  });
+
+task("setDoubleRewardSpeed", "Add double reward to a farming pool")
+  .addParam("token", "Token address", null, types.string)
+  .addParam("lptoken", "LPToken address", null, types.string)
+  .addParam("reward", "Reward speed", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
+    const doubleRewarderContract: DoubleRewarder = new DoubleRewarder__factory(
+      dev_account
+    ).attach(doubleRewarderAddress);
+
+    const tx = await doubleRewarderContract.setRewardSpeed(
+      taskArgs.lptoken,
+      taskArgs.token,
+      parseUnits(taskArgs.reward)
+    );
+    console.log("Tx details: ", await tx.wait());
+  });
+
+task("setDoubleRewardContract", "Set the double reward contract").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
+
+    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+    const pool: FarmingPoolUpgradeable = new FarmingPoolUpgradeable__factory(
+      dev_account
+    ).attach(farmingPoolAddress);
+
+    const tx = await pool.setDoubleRewarderContract(doubleRewarderAddress);
+    console.log("Tx details: ", await tx.wait());
+  }
+);
+
+//npx hardhat addFarmingPool --network avaxTest --name testDouble --address 0x0c1902987652d5a6168dd65ee6b2536456ef92d3 --reward 0.1 --bonus 0 --doubleReward 0xf6924B8037b6235BC010C9Fdb69721C29B40c953
+
+task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const erc20Address = addressList[network.name].MockERC20;
+  const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
+    erc20Address
+  );
+
+  const address = "";
+  const amount = "0";
+
+  const tx = await erc20Contract.mint(address, parseUnits(amount));
+  console.log("Tx details: ", await tx.wait());
+});

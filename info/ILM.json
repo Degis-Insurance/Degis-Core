@@ -72,6 +72,12 @@
 			"deadline": "1656662400",
 			"lptoken": "0xb9365b58B07f49AD740fA72566B97970f62B6e2c",
 			"pairAddress": "0xB1f288bf386690Ae8E9f13Ca6009fE3535d581af"
+		},
+		"XAVA_0.42_L_2807": {
+			"policyToken": "0xf74A720781BD0F504181a6755abA1BdA2D6B4655",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1657699200",
+			"lptoken": "0x8FbFAcd0396cD5C242011BC9d1a3940faA6D23A1"
 		}
 	},
 	"avaxTest": {

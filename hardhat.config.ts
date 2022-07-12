@@ -56,7 +56,7 @@ import "./tasks/lucky/degisLottery";
 // import "./tasks/incomeSharing/pool";
 // import "./tasks/incomeSharing/incomeMaker";
 // import "./tasks/general/index";
-// import "./tasks/ILM/startStop";
+import "./tasks/ILM/startStop";
 
 dotenv.config();
 

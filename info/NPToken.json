@@ -132,6 +132,11 @@
 			"address": "0xeC2B2899e68d74E0F8f3202D9d059940a1e36EaB",
 			"deadline": 1657872000,
 			"settleTime": 1657958400
+		},
+		"XAVA_0.42_L_2807": {
+			"address": "0xf74A720781BD0F504181a6755abA1BdA2D6B4655",
+			"deadline": 1658908800,
+			"settleTime": 1658995200
 		}
 	},
 	"avaxTest": {

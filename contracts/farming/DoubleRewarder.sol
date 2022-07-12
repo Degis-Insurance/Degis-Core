@@ -195,6 +195,8 @@ contract DoubleRewarder is OwnableUpgradeable {
         uint256 _lpAmount,
         uint256 _lpSupply
     ) external onlyFarmingPool supported(_rewardToken) {
+        require(pools[_rewardToken].lpToken == _lpToken, "Not match");
+
         updatePool(_rewardToken, _lpSupply);
 
         PoolInfo memory pool = pools[_rewardToken];

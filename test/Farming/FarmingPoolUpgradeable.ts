@@ -988,6 +988,13 @@ describe("Farming Pool Upgradeable", function () {
 
       await pool.stake(1, toWei("1"));
 
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          dev_account.address
+        )
+      ).to.equal(0);
+
       await pool.connect(user1).stake(1, toWei("1"));
 
       expect(
