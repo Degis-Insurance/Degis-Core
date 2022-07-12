@@ -57,6 +57,7 @@ Mint a new policy token to an address
 Transfer the owner of a policy token and update the information in policyFlow
 
 Need approval and is prepared for secondary market
+If you just transfer the policy token, you will not transfer the right for claiming payoff
 
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -65,9 +66,9 @@ Need approval and is prepared for secondary market
 |`_to` | address | The new owner of the policy
 |`_tokenId` | uint256 | Token id of the policy
 
-### getTokenURI
+### _getTokenURI
 ```solidity
-  function getTokenURI(
+  function _getTokenURI(
     uint256 _tokenId
   ) internal returns (string)
 ```
@@ -79,12 +80,26 @@ Get the tokenURI, the metadata is from policyFlow contract
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_tokenId` | uint256 | Token Id of the policy token
 
-### constructTokenURI
+### _constructTokenURI
 ```solidity
-  function constructTokenURI(
+  function _constructTokenURI(
+    struct FDPolicyToken.PolicyTokenURIParam _params
   ) internal returns (string)
 ```
 Construct the metadata of a specific policy token
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_params` | struct FDPolicyToken.PolicyTokenURIParam | The parameters of the policy token
+
+## Events
+### PolicyFlowUpdated
+```solidity
+  event PolicyFlowUpdated(
+  )
+```
 
 
 

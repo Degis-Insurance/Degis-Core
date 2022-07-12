@@ -22,27 +22,18 @@ An abstraction representing a pool, see IlluviumPoolBase for details
 
 
 
-### isFlashPool
+### startTimestamp
 ```solidity
-  function isFlashPool(
-  ) external returns (bool)
-```
-
-
-
-
-### startBlock
-```solidity
-  function startBlock(
+  function startTimestamp(
   ) external returns (uint256)
 ```
 
 
 
 
-### degisPerBlock
+### degisPerSecond
 ```solidity
-  function degisPerBlock(
+  function degisPerSecond(
   ) external returns (uint256)
 ```
 
@@ -67,18 +58,18 @@ An abstraction representing a pool, see IlluviumPoolBase for details
 
 
 
-### pendingRewards
+### pendingReward
 ```solidity
-  function pendingRewards(
+  function pendingReward(
   ) external returns (uint256)
 ```
 
 
 
 
-### setDegisPerBlock
+### setDegisPerSecond
 ```solidity
-  function setDegisPerBlock(
+  function setDegisPerSecond(
   ) external
 ```
 

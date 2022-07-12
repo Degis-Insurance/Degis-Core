@@ -34,9 +34,9 @@
 
 
 
-### BuyNewPolicy
+### NewPolicyBought
 ```solidity
-  event BuyNewPolicy(
+  event NewPolicyBought(
   )
 ```
 

@@ -58,13 +58,22 @@ Get user tickets info
 
 
 
+### getLotteriesStageInfo
+```solidity
+  function getLotteriesStageInfo(
+  ) external returns (uint256[] stageProportion, uint256[] stageReward, uint256[] stageAmount, uint256[] stageWeight)
+```
+Get lottery stage info
+
+
+
 ### setOperatorAddress
 ```solidity
   function setOperatorAddress(
     address _operatorAddress
   ) external
 ```
-Set operator, treasury, and injector addresses
+Set operator address
 
 Only callable by the owner
 
@@ -76,11 +85,32 @@ Only callable by the owner
 ### setRandomNumberGenerator
 ```solidity
   function setRandomNumberGenerator(
+    address _randomNumberGenerator
   ) external
 ```
+Set Random Number Generator contract address
 
+Only callable by the owner
 
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_randomNumberGenerator` | address | Address of the Random Number Generator contract
 
+### setEndTime
+```solidity
+  function setEndTime(
+    uint256 _endTime
+  ) external
+```
+Change the end time of current round (only if it was set a wrong number)
+
+Normally this function is not needed
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_endTime` | uint256 | New end time
 
 ### startLottery
 ```solidity
@@ -92,12 +122,13 @@ Only callable by the owner
 Start the lottery
 
 Callable only by operator
-
+Stage proportion must sum to 10,000(100 <=> 1)
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_endTime` | uint256 | endTime of the lottery (timestamp in s)
-|`_stageProportion` | uint256[4] | breakdown of rewards per bracket (must sum to 10,000)(100 <=> 1)
+|`_endTime` | uint256 | EndTime of the lottery (UNIX timestamp in s)
+|`_stageProportion` | uint256[4] | Breakdown of rewards per bracket
+
 
 ### closeLottery
 ```solidity
@@ -106,7 +137,8 @@ Callable only by operator
 ```
 Close a lottery
 
-Callable only by the operator
+Callable by any address and need to meet the endtime condition
+Normally it's automatically called by our contract
 
 
 ### buyTickets
@@ -141,20 +173,13 @@ Callable by users
 |`_ticketNumbers` | uint256[] | Array of ticket numbers
 
 
-### injectFunds
+### updateBalance
 ```solidity
-  function injectFunds(
-    uint256 _amount
-  ) external
+  function updateBalance(
+  ) public
 ```
-Inject funds
 
-Callable by owner(incentive) or injector address(insurancePool income)
-            First transfer USD and then call this function to record
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_amount` | uint256 | amount to inject 
+
 
 
 ### drawLottery
@@ -165,15 +190,15 @@ Callable by owner(incentive) or injector address(insurancePool income)
 Draw the final number, calculate reward in DEG for each group,
         and make this lottery claimable (need to wait for the random generator)
 
-Callable only by the operator
+Callable by any address
 
 
-### receiveRward
+### pendingReward
 ```solidity
-  function receiveRward(
+  function pendingReward(
     uint256 _lotteryId,
     address user
-  ) public returns (uint256)
+  ) public returns (uint256 reward)
 ```
 Receive award from a lottery
 
@@ -206,9 +231,10 @@ Callable by users only, not contract!
     uint256 _tokenAmount
   ) external
 ```
-Recover wrong tokens sent to the contract, only by the owner
-               All tokens except DEG and USD are wrong tokens
+Recover wrong tokens sent to the contract
 
+   Only callable by the owner
+   All tokens except DEG and USD are wrong tokens
 
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -256,9 +282,9 @@ Update the status to finish redeeming a ticket
 |`_ticketAmount` | uint256 | Amount of this number are being redeemed
 |`_ticketWeight` | uint256 | Weight of this ticket, depends on round
 
-### _encodedNumber
+### _encodeNumber
 ```solidity
-  function _encodedNumber(
+  function _encodeNumber(
     uint256 _number,
     uint256 _position
   ) internal returns (uint256)
@@ -281,18 +307,18 @@ Check if an address is a contract
 
 
 
-### _viewUserTicetAmount
+### _viewUserTicketAmount
 ```solidity
-  function _viewUserTicetAmount(
+  function _viewUserTicketAmount(
   ) internal returns (uint256)
 ```
 
 
 
 
-### _viewUserTicetWeight
+### _viewUserTicketWeight
 ```solidity
-  function _viewUserTicetWeight(
+  function _viewUserTicketWeight(
   ) internal returns (uint256)
 ```
 
@@ -393,6 +419,14 @@ Check if an address is a contract
 ### AdminTokenRecovery
 ```solidity
   event AdminTokenRecovery(
+  )
+```
+
+
+
+### UpdateBalance
+```solidity
+  event UpdateBalance(
   )
 ```
 

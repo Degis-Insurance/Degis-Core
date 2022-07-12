@@ -13,17 +13,25 @@ Core logic of Naughty Price Product
         When the event does not happen, the PolicyToken depositors can
         redeem their 1 deposited Stablecoin
 
+
    Most of the functions to be called from outside will use the name of policyToken
         rather than the address (easy to read).
         Other variables or functions still use address to index.
-        The rule of policyToken naming is Original Token Name + Strike Price + Lower or Higher + Date
-        E.g.  AVAX_30_L_2101, BTC_30000_L_2102, ETH_8000_H_2109
+        The rule of policyToken naming is:
+             Original Token Name(with decimals) + Strike Price + Lower or Higher + Date
+        E.g.  AVAX_30.0_L_2101, BTC_30000.0_L_2102, ETH_8000.0_H_2109
+        (the original name need to be the same as in the chainlink oracle)
+        There are three decimals for a policy token:
+             1. Name decimals: Only for generating the name of policyToken
+             2. Token decimals: The decimals of the policyToken
+                (should be the same as the paired stablecoin)
+             3. Price decimals: Always 18. The oracle result will be transferred for settlement
 
 ## Functions
-### constructor
+### initialize
 ```solidity
-  function constructor(
-    address _usdt,
+  function initialize(
+    address _usdc,
     address _factory,
     address _priceGetter
   ) public
@@ -34,15 +42,15 @@ Constructor, for some addresses
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_usdt` | address | USDT is the first stablecoin supported in the pool
-|`_factory` | address | Address of naughty factory
+|`_usdc` | address |        USDC.e is the first stablecoin supported in the pool
+|`_factory` | address |     Address of naughty factory
 |`_priceGetter` | address | Address of the oracle contract
 
 ### findAddressbyName
 ```solidity
   function findAddressbyName(
     string _policyTokenName
-  ) public returns (address)
+  ) public returns (address policyTokenAddress)
 ```
 Find the token address by its name
 
@@ -50,7 +58,7 @@ Find the token address by its name
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_policyTokenName` | string | Name of the policy token (e.g. "AVAX30L202103")
+|`_policyTokenName` | string | Name of the policy token (e.g. "AVAX_30_L_2103")
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
@@ -60,7 +68,7 @@ Find the token address by its name
 ```solidity
   function findNamebyAddress(
     address _policyTokenAddress
-  ) public returns (string)
+  ) public returns (string policyTokenName)
 ```
 Find the token name by its address
 
@@ -92,20 +100,20 @@ Find the token information by its name
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`policyTokenInfo`| struct PolicyCore.PolicyTokenInfo | PolicyToken detail information
-### checkUserQuota
+### getUserQuota
 ```solidity
-  function checkUserQuota(
+  function getUserQuota(
     address _user,
     address _policyTokenAddress
   ) external returns (uint256 _quota)
 ```
-Check a user's quota for a certain policy token
+Get a user's quota for a certain policy token
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_user` | address | Address of the user to be checked
+|`_user` | address |               Address of the user to be checked
 |`_policyTokenAddress` | address | Address of the policy token
 
 #### Return Values:
@@ -119,6 +127,7 @@ Check a user's quota for a certain policy token
 ```
 Get the information about all the tokens
 
+Include all active&expired tokens
 
 
 #### Return Values:
@@ -131,7 +140,7 @@ Get the information about all the tokens
     address _newStablecoin
   ) external
 ```
-Add a newly supported stablecoin
+Add a new supported stablecoin
 
 
 #### Parameters:
@@ -153,10 +162,10 @@ Change the address of lottery
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_lotteryAddress` | address | Address of the new lottery
 
-### setEmergencyPool
+### setIncomeSharing
 ```solidity
-  function setEmergencyPool(
-    address _emergencyPool
+  function setIncomeSharing(
+    address _incomeSharing
   ) external
 ```
 Change the address of emergency pool
@@ -165,7 +174,7 @@ Change the address of emergency pool
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_emergencyPool` | address | Address of the new emergencyPool
+|`_incomeSharing` | address | Address of the new incomeSharing
 
 ### setNaughtyRouter
 ```solidity
@@ -181,36 +190,86 @@ Change the address of naughty router
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_router` | address | Address of the new naughty router
 
-### deployPolicyToken
+### setILMContract
 ```solidity
-  function deployPolicyToken(
-    string _tokenName,
-    bool _isCall,
-    uint256 _decimals,
-    uint256 _strikePrice,
-    uint256 _deadline,
-    uint256 _settleTimestamp
-  ) external returns (address)
+  function setILMContract(
+    address _ILM
+  ) external
 ```
-Deploy a new policy token and return the token address
+Change the address of ILM
 
-Only the owner can deploy new policy token
-     The name form is like "AVAX_50_L_202101" and is built inside the contract.
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_tokenName` | string | Name of the original token (e.g. AVAX, BTC, ETH...)
-|`_isCall` | bool | The policy is for higher or lower than the strike price (call / put)
-|`_decimals` | uint256 | Decimals of this token's price (0~18)
-|`_strikePrice` | uint256 | Strike price of the policy (have not been transferred with 1e18)
-|`_deadline` | uint256 | Deadline of this policy token (deposit / redeem / swap)
-|`_settleTimestamp` | uint256 | Can settle after this timestamp (for oracle)
+|`_ILM` | address | Address of the new ILM
 
-#### Return Values:
-| Name                           | Type          | Description                                                                  |
-| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`policyTokenAddress`| address | The address of the policy token just deployed
+### setIncomeToLottery
+```solidity
+  function setIncomeToLottery(
+    uint256 _toLottery
+  ) external
+```
+Change the income part to lottery
+
+The remaining part will be distributed to incomeSharing
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_toLottery` | uint256 | Proportion to lottery
+
+### setIDOPriceGetter
+```solidity
+  function setIDOPriceGetter(
+    address _idoPriceGetter
+  ) external
+```
+Set IDO price getter contract
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_idoPriceGetter` | address | Address of the new IDO price getter contract
+
+### deployPolicyToken
+```solidity
+  function deployPolicyToken(
+    string _tokenName,
+    address _stablecoin,
+    bool _isCall,
+    uint256 _nameDecimals,
+    uint256 _tokenDecimals,
+    uint256 _strikePrice,
+    string _round,
+    uint256 _deadline,
+    uint256 _settleTimestamp,
+    bool _isIDOPool
+  ) external
+```
+Deploy a new policy token and return the token address
+
+Only the owner can deploy new policy tokens
+     The name form is like "AVAX_50_L_2203" and is built inside the contract
+     Name decimals and token decimals are different here
+     The original token name should be the same in Chainlink PriceFeeds
+     Those tokens that are not listed on Chainlink are not supported
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_tokenName` | string |       Name of the original token (e.g. AVAX, BTC, ETH...)
+|`_stablecoin` | address |      Address of the stablecoin (Just for check decimals here)
+|`_isCall` | bool |          The policy is for higher or lower than the strike price (call / put)
+|`_nameDecimals` | uint256 |    Decimals of this token's name (0~18)
+|`_tokenDecimals` | uint256 |   Decimals of this token's value (0~18) (same as paired stablecoin)
+|`_strikePrice` | uint256 |     Strike price of the policy (have already been transferred with 1e18)
+|`_round` | string |           Round of the token (e.g. 2203 -> expired at 22 March)
+|`_deadline` | uint256 |        Deadline of this policy token (deposit / redeem / swap)
+|`_settleTimestamp` | uint256 | Can settle after this timestamp (for oracle)
+|`_isIDOPool` | bool |       Whether this token is an IDO pool
+
 ### deployPool
 ```solidity
   function deployPool(
@@ -227,21 +286,17 @@ Deploy a new pair (pool)
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the stable coin
-|`_poolDeadline` | uint256 | Swapping deadline of the pool
-|`_feeRate` | uint256 | Fee rate given to LP holders
+|`_stablecoin` | address |      Address of the stable coin
+|`_poolDeadline` | uint256 |    Swapping deadline of the pool (normally the same as the token's deadline)
+|`_feeRate` | uint256 |         Fee rate given to LP holders
 
-#### Return Values:
-| Name                           | Type          | Description                                                                  |
-| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`poolAddress`| address | The address of the pool just deployed
 ### deposit
 ```solidity
   function deposit(
     string _policyTokenName,
     address _stablecoin,
     uint256 _amount
-  ) external
+  ) public
 ```
 Deposit stablecoins and get policy tokens
 
@@ -250,8 +305,8 @@ Deposit stablecoins and get policy tokens
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the sable coin
-|`_amount` | uint256 | Amount of stablecoin (also the amount of policy tokens)
+|`_stablecoin` | address |      Address of the stable coin
+|`_amount` | uint256 |          Amount of stablecoin
 
 ### delegateDeposit
 ```solidity
@@ -270,9 +325,9 @@ Only called by the router contract
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the sable coin
-|`_amount` | uint256 | Amount of stablecoin (also the amount of policy tokens)
-|`_user` | address | Address to receive the policy tokens
+|`_stablecoin` | address |      Address of the sable coin
+|`_amount` | uint256 |          Amount of stablecoin
+|`_user` | address |            Address to receive the policy tokens
 
 ### redeem
 ```solidity
@@ -282,7 +337,7 @@ Only called by the router contract
     uint256 _amount
   ) public
 ```
-Burn policy tokens and redeem USDT
+Burn policy tokens and redeem stablecoins
 
 Redeem happens before the deadline and is different from claim/settle
 
@@ -290,8 +345,8 @@ Redeem happens before the deadline and is different from claim/settle
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the stablecoin
-|`_amount` | uint256 | Amount of USDT (also the amount of policy tokens)
+|`_stablecoin` | address |      Address of the stablecoin
+|`_amount` | uint256 |          Amount to redeem
 
 ### redeemAfterSettlement
 ```solidity
@@ -307,7 +362,7 @@ Redeem policy tokens and get stablecoins by the user himeself
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the stablecoin
+|`_stablecoin` | address |      Address of the stablecoin
 
 ### claim
 ```solidity
@@ -325,8 +380,8 @@ It is done after result settlement and only if the result is true
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of the policy token
-|`_stablecoin` | address | Address of the stable coin
-|`_amount` | uint256 | Amount of USDT (also the amount of policy tokens)
+|`_stablecoin` | address |      Address of the stable coin
+|`_amount` | uint256 |          Amount of stablecoin
 
 ### settleFinalResult
 ```solidity
@@ -351,7 +406,7 @@ Get the final price from the PriceGetter contract
     uint256 _stopIndex
   ) public
 ```
-Settle the policies when then insurance event do not happen
+Settle the policies for the users when insurance events do not happen
         Funds are automatically distributed back to the depositors
 
    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
@@ -360,63 +415,91 @@ Settle the policies when then insurance event do not happen
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenName` | string | Name of policy token
-|`_stablecoin` | address | Address of stablecoin
-|`_startIndex` | uint256 | Settlement start index
-|`_stopIndex` | uint256 | Settlement stop index
+|`_stablecoin` | address |      Address of stablecoin
+|`_startIndex` | uint256 |      Settlement start index
+|`_stopIndex` | uint256 |       Settlement stop index
 
-### _finishSettlement
+### collectIncome
 ```solidity
-  function _finishSettlement(
-    address _policyTokenAddress,
+  function collectIncome(
     address _stablecoin
-  ) internal
+  ) public
 ```
-Finish settlement process
+Collect the income
+
+Can be done by anyone, only when there is some income to be distributed
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_stablecoin` | address | Address of stablecoin
+
+### updateUserQuota
+```solidity
+  function updateUserQuota(
+    address _user,
+    address _policyToken,
+    uint256 _amount
+  ) external
+```
+Update user quota from ILM when claim
+
+
+When you claim your liquidity from ILM, you will get normal quota as you are using policyCore
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_user` | address |        User address
+|`_policyToken` | address | PolicyToken address
+|`_amount` | uint256 |      Quota amount
+
+### _deployPool
+```solidity
+  function _deployPool(
+    address _policyTokenAddress,
+    address _stablecoin,
+    uint256 _poolDeadline,
+    uint256 _feeRate
+  ) internal returns (address)
+```
+Finish deploying a pool
+
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_policyTokenAddress` | address | Address of the policy token
-|`_stablecoin` | address | Address of stable coin
+|`_stablecoin` | address |         Address of the stable coin
+|`_poolDeadline` | uint256 |       Swapping deadline of the pool (normally the same as the token's deadline)
+|`_feeRate` | uint256 |            Fee rate given to LP holders
 
-### _mintPolicyToken
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`poolAddress`| address | Address of the pool
+### _deposit
 ```solidity
-  function _mintPolicyToken(
-    address _policyTokenAddress,
+  function _deposit(
+    string _policyTokenName,
+    address _stablecoin,
     uint256 _amount,
     address _user
   ) internal
 ```
-Mint Policy Token 1:1 USD
-        The policy token need to be deployed first!
+Finish Deposit
 
 
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_policyTokenAddress` | address | Address of the policy token
-|`_amount` | uint256 | Amount to mint
-|`_user` | address | Address to receive the policy token
-
-### _redeemPolicyToken
-```solidity
-  function _redeemPolicyToken(
-    address _policyTokenAddress,
-    address _stablecoin,
-    uint256 _amount
-  ) internal
-```
-Finish the process of redeeming policy tokens
-
-This internal function is used for redeeming and claiming
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_policyTokenAddress` | address | Address of policy token
-|`_stablecoin` | address | Address of stable coin
-|`_amount` | uint256 | Amount to claim
+|`_policyTokenName` | string | Name of the policy token
+|`_stablecoin` | address | Address of the sable coin
+|`_amount` | uint256 | Amount of stablecoin
+|`_user` | address | Address to receive the policy tokens
 
 ### _settlePolicy
 ```solidity
@@ -425,9 +508,10 @@ This internal function is used for redeeming and claiming
     address _stablecoin,
     uint256 _start,
     uint256 _stop
-  ) internal
+  ) internal returns (uint256 amountRemaining)
 ```
 Settle the policy when the event does not happen
+
 
 
 #### Parameters:
@@ -438,6 +522,28 @@ Settle the policy when the event does not happen
 |`_start` | uint256 | Start index
 |`_stop` | uint256 | Stop index
 
+### _chargeFee
+```solidity
+  function _chargeFee(
+    address _stablecoin,
+    uint256 _amount
+  ) internal returns (uint256)
+```
+Charge fee when redeem / claim
+
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_stablecoin` | address | Stablecoin address
+|`_amount` | uint256 |     Amount to redeem / claim
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`amountWithFee`| uint256 | Amount with fee
 ### _generateName
 ```solidity
   function _generateName(
@@ -445,21 +551,44 @@ Settle the policy when the event does not happen
     uint256 _decimals,
     uint256 _strikePrice,
     bool _isCall,
-    uint256 _round
-  ) internal returns (string)
+    string _round
+  ) public returns (string)
 ```
 Generate the policy token name
+
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_tokenName` | string | Name of the token
-|`_decimals` | uint256 | Decimals of the name generation (0,1=>1)
-|`_strikePrice` | uint256 | Strike price of the policy
-|`_isCall` | bool | The policy's payoff is triggered when higher or lower
-|`_round` | uint256 | Round of the policy (e.g. 2112, 2201)
+|`_tokenName` | string |   Name of the stike token (BTC, ETH, AVAX...)
+|`_decimals` | uint256 |    Decimals of the name generation (0,1=>1, 2=>2)
+|`_strikePrice` | uint256 | Strike price of the policy (18 decimals)
+|`_isCall` | bool |      The policy's payoff is triggered when higher(true) or lower(false)
+|`_round` | string |       Round of the policy, named by <month><day> (e.g. 0320, 1215)
 
+### _frac
+```solidity
+  function _frac(
+    uint256 x
+  ) internal returns (uint256 result)
+```
+Calculate the fraction part of a number
+
+
+The scale is fixed as 1e18 (decimal fraction)
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`x` | uint256 | Number to calculate
+
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`result`| uint256 | Fraction result
 ## Events
 ### LotteryChanged
 ```solidity
@@ -469,9 +598,9 @@ Generate the policy token name
 
 
 
-### EmergencyPoolChanged
+### IncomeSharingChanged
 ```solidity
-  event EmergencyPoolChanged(
+  event IncomeSharingChanged(
   )
 ```
 
@@ -480,6 +609,22 @@ Generate the policy token name
 ### NaughtyRouterChanged
 ```solidity
   event NaughtyRouterChanged(
+  )
+```
+
+
+
+### ILMChanged
+```solidity
+  event ILMChanged(
+  )
+```
+
+
+
+### IncomeToLotteryChanged
+```solidity
+  event IncomeToLotteryChanged(
   )
 ```
 
@@ -501,6 +646,14 @@ Generate the policy token name
 
 
 
+### PoolDeployedWithInitialLiquidity
+```solidity
+  event PoolDeployedWithInitialLiquidity(
+  )
+```
+
+
+
 ### Deposit
 ```solidity
   event Deposit(
@@ -512,6 +665,22 @@ Generate the policy token name
 ### DelegateDeposit
 ```solidity
   event DelegateDeposit(
+  )
+```
+
+
+
+### Redeem
+```solidity
+  event Redeem(
+  )
+```
+
+
+
+### RedeemAfterSettlement
+```solidity
+  event RedeemAfterSettlement(
   )
 ```
 
@@ -533,9 +702,25 @@ Generate the policy token name
 
 
 
-### FinishSettlementPolicies
+### PolicyTokensSettledForUsers
 ```solidity
-  event FinishSettlementPolicies(
+  event PolicyTokensSettledForUsers(
+  )
+```
+
+
+
+### UpdateUserQuota
+```solidity
+  event UpdateUserQuota(
+  )
+```
+
+
+
+### IDOPriceGetterChanged
+```solidity
+  event IDOPriceGetterChanged(
   )
 ```
 

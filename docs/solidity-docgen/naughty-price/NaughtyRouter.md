@@ -5,9 +5,9 @@ Router for the pool, you can add/remove liquidity or swap A for B.
 
 
 ## Functions
-### constructor
+### initialize
 ```solidity
-  function constructor(
+  function initialize(
   ) public
 ```
 
@@ -42,28 +42,47 @@ Set the address of buyer token
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_buyerToken` | address | Address of new buyer token
 
+### setNaughtyFactory
+```solidity
+  function setNaughtyFactory(
+    address _naughtyFactory
+  ) external
+```
+Set the address of factory
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_naughtyFactory` | address | Address of new naughty factory
+
 ### addLiquidityWithUSD
 ```solidity
   function addLiquidityWithUSD(
     address _tokenA,
     address _tokenB,
-    uint256 _amountUSD,
+    uint256 _amountADesired,
+    uint256 _amountBDesired,
+    uint256 _amountAMin,
+    uint256 _amountBMin,
     address _to,
-    uint256 _minRatio,
     uint256 _deadline
-  ) external
+  ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity)
 ```
 Add liquidity but only provide stablecoins
 
+Only difference with addLiquidity is that mintPolicyTokenForUser
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_tokenA` | address | Address of policyToken
 |`_tokenB` | address | Address of stablecoin
-|`_amountUSD` | uint256 | Amount of stablecoins provided
+|`_amountADesired` | uint256 | Amount of policyToken desired
+|`_amountBDesired` | uint256 | Amount of stablecoin desired
+|`_amountAMin` | uint256 | Minimum amount of policy token
+|`_amountBMin` | uint256 | Minimum amount of stablecoin
 |`_to` | address | Address that receive the lp token, normally the user himself
-|`_minRatio` | uint256 | Minimum ratio (divided by 100)(amountMin / amountDesired)
 |`_deadline` | uint256 | Transaction will revert after this deadline
 
 ### addLiquidity
@@ -187,9 +206,9 @@ Amount in is fixed
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`amountOut`| uint256 | Amounts to be really given out
-### transferHelper
+### _transferHelper
 ```solidity
-  function transferHelper(
+  function _transferHelper(
     address _token,
     address _from,
     address _to,
@@ -211,6 +230,7 @@ Finish the erc20 transfer operation
 ```solidity
   function _swap(
     address _pair,
+    address _tokenIn,
     uint256 _amountIn,
     uint256 _amountOut,
     bool _isBuying,
@@ -224,14 +244,15 @@ Finish swap process
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_pair` | address | Address of the pair
+|`_tokenIn` | address | Address of the input token
 |`_amountIn` | uint256 | Amount of tokens put in
 |`_amountOut` | uint256 | Amount of tokens get out
 |`_isBuying` | bool | Whether this is a purchase or a sell
 |`_to` | address | Address of the user
 
-### mintPolicyTokensForUser
+### _mintPolicyTokensForUser
 ```solidity
-  function mintPolicyTokensForUser(
+  function _mintPolicyTokensForUser(
     address _policyTokenAddress,
     address _stablecoin,
     uint256 _amount,
@@ -240,7 +261,7 @@ Finish swap process
 ```
 Used when users only provide stablecoins and want to mint & add liquidity in one step
 
-Need have approval before
+Need have approval before (done by the user himself)
 
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -269,22 +290,6 @@ Fetche the reserves for a pair
 You need to sort the token order by yourself!
      No matter your input order, the return value will always start with policy token reserve.
 
-
-### _getPairAddress
-```solidity
-  function _getPairAddress(
-    address tokenA,
-    address tokenB
-  ) internal returns (address)
-```
-Get pair address
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`tokenA` | address | TokenA address
-|`tokenB` | address | TokenB address
 
 ### _getAmountOut
 ```solidity
@@ -334,7 +339,8 @@ Used when swap tokens for exact tokens (out is fixed)
     uint256 _reserveB
   ) internal returns (uint256 amountB)
 ```
-Given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
+Given some amount of an asset and pair reserves
+        returns an equivalent amount of the other asset
 
 Used when add or remove liquidity
 
@@ -346,6 +352,22 @@ Used when add or remove liquidity
 |`_reserveB` | uint256 | Reserve of tokenB
 
 ## Events
+### PolicyCoreChanged
+```solidity
+  event PolicyCoreChanged(
+  )
+```
+
+
+
+### BuyerTokenChanged
+```solidity
+  event BuyerTokenChanged(
+  )
+```
+
+
+
 ### LiquidityAdded
 ```solidity
   event LiquidityAdded(

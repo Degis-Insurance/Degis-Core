@@ -2,6 +2,15 @@
 
 
 ## Functions
+### initialize
+```solidity
+  function initialize(
+  ) external
+```
+
+
+
+
 ### factory
 ```solidity
   function factory(
@@ -86,15 +95,6 @@
 ### sync
 ```solidity
   function sync(
-  ) external
-```
-
-
-
-
-### initialize
-```solidity
-  function initialize(
   ) external
 ```
 

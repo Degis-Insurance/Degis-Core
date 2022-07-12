@@ -11,7 +11,8 @@ This is the contract for the naughtyPrice swapping pair.
   function initialize(
     address _token0,
     address _token1,
-    uint256 _deadline
+    uint256 _deadline,
+    uint256 _feeRate
   ) external
 ```
 Initialize the contract status after the deployment by factory
@@ -23,6 +24,7 @@ Initialize the contract status after the deployment by factory
 |`_token0` | address | Token0 address (policy token address)
 |`_token1` | address | Token1 address (stablecoin address)
 |`_deadline` | uint256 | Deadline for this pool
+|`_feeRate` | uint256 | Fee rate to LP holders (1000 <=> 100%)
 
 ### getReserves
 ```solidity

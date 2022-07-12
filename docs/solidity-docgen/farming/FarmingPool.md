@@ -1,6 +1,11 @@
 This contract is for LPToken mining on Degis
 
-   The pool id starts from 1 not 0
+   The pool id starts from 1 rather than 0
+        The degis reward is calculated by timestamp rather than block number
+
+        VeDEG will boost the farming speed by having a extra reward type
+        The extra reward is shared by those staking lptokens with veDEG balances
+        Every time the veDEG balance change, the reward will be updated
 
 ## Functions
 ### constructor
@@ -41,84 +46,112 @@ Get the total pool list
 
 
 
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`pooList`| struct FarmingPool.PoolInfo[] | Total pool list
 ### getUserBalance
 ```solidity
   function getUserBalance(
     uint256 _poolId,
     address _user
-  ) external returns (uint256 _balance)
+  ) external returns (uint256)
 ```
-Get user balance
+Get a user's balance
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_poolId` | uint256 | Id of the pool
-|`_user` | address | Address of the user
+|`_user` | address | User address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`_balance`| uint256 | User's balance (lpToken)
-### setStartBlock
+|`balance`| uint256 | User's balance (lpToken)
+### pause
 ```solidity
-  function setStartBlock(
-    uint256 _startBlock
+  function pause(
   ) external
 ```
-Set the start block number
+
+
+
+
+### unpause
+```solidity
+  function unpause(
+  ) external
+```
+
+
+
+
+### setVeDEG
+```solidity
+  function setVeDEG(
+  ) external
+```
+
+
+
+
+### setStartTimestamp
+```solidity
+  function setStartTimestamp(
+    uint256 _startTimestamp
+  ) external
+```
+Set the start block timestamp
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_startBlock` | uint256 | New start block number
+|`_startTimestamp` | uint256 | New start block timestamp
 
 ### add
 ```solidity
   function add(
     address _lpToken,
-    uint256 _degisPerBlock,
+    uint256 _basicDegisPerSecond,
+    uint256 _bonusDegisPerSecond,
     bool _withUpdate
   ) public
 ```
-Add a new lp to the pool. Can only be called by the owner.
+Add a new lp into the pool
 
+Can only be called by the owner
+     The reward speed can be 0 and set later by setDegisReward function
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_lpToken` | address | LP token address
-|`_degisPerBlock` | uint256 | Reward distribution per block for this new pool
+|`_basicDegisPerSecond` | uint256 | Basic reward speed(per second) for this new pool
+|`_bonusDegisPerSecond` | uint256 | Bonus reward speed(per second) for this new pool
 |`_withUpdate` | bool | Whether update all pools' status
-
-### stop
-```solidity
-  function stop(
-  ) public
-```
-
-
-
 
 ### setDegisReward
 ```solidity
   function setDegisReward(
     uint256 _poolId,
-    uint256 _degisPerBlock,
+    uint256 _basicDegisPerSecond,
+    uint256 _bonusDegisPerSecond,
     bool _withUpdate
   ) public
 ```
-Update the degisPerBlock for a specific pool (set to 0 to stop farming)
+Update the degisPerSecond for a specific pool (set to 0 to stop farming)
 
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_poolId` | uint256 | Id of the farming pool
-|`_degisPerBlock` | uint256 | New reward amount per block
-|`_withUpdate` | bool | Whether update all the pool
+|`_basicDegisPerSecond` | uint256 | New basic reward amount per second
+|`_bonusDegisPerSecond` | uint256 | New bonus reward amount per second
+|`_withUpdate` | bool | Whether update all pools
 
 ### stake
 ```solidity
@@ -129,6 +162,7 @@ Update the degisPerBlock for a specific pool (set to 0 to stop farming)
 ```
 Stake LP token into the farming pool
 
+Can only stake to the pools that are still farming
 
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -152,6 +186,22 @@ Withdraw lptoken from the pool
 |`_poolId` | uint256 | Id of the farming pool
 |`_amount` | uint256 | Amount of lp tokens to withdraw
 
+### harvest
+```solidity
+  function harvest(
+    uint256 _poolId,
+    address _to
+  ) public
+```
+Harvest the degis reward and can be sent to another address
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_poolId` | uint256 | Id of the farming pool
+|`_to` | address | Receiver of degis rewards
+
 ### updatePool
 ```solidity
   function updatePool(
@@ -166,31 +216,6 @@ Update the pool's reward status
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_poolId` | uint256 | Id of the farming pool
 
-### harvest
-```solidity
-  function harvest(
-    uint256 Id,
-    address _to
-  ) public
-```
-Harvest the degis reward and can be sent to another address
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`Id` | uint256 | of the farming pool
-|`_to` | address | Receiver of degis rewards.
-
-### harvestAndCompound
-```solidity
-  function harvestAndCompound(
-  ) public
-```
-
-
-
-
 ### massUpdatePools
 ```solidity
   function massUpdatePools(
@@ -198,33 +223,53 @@ Harvest the degis reward and can be sent to another address
 ```
 Update all farming pools (except for those stopped ones)
 
+Can be called by anyone
+     Only update those active pools
 
 
-### _alreadyInPool
+### updateBonus
 ```solidity
-  function _alreadyInPool(
-    address _lpTokenAddress
-  ) internal returns (bool _isInPool)
+  function updateBonus(
+    address _user,
+    uint256 _newVeDEGBalance
+  ) external
 ```
-Check if a lptoken has been added into the pool before
+Update a user's bonus
 
-This can be written as a modifier, I just want to test the error form
+When veDEG has balance change
+     Only called by veDEG contract
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_lpTokenAddress` | address | LP token address
+|`_user` | address | User address
+|`_newVeDEGBalance` | uint256 | New veDEG balance
+
+### _alreadyInPool
+```solidity
+  function _alreadyInPool(
+    address _lpToken
+  ) internal returns (bool _isInPool)
+```
+Check if a lptoken has been added into the pool before
+
+This can also be written as a modifier
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_lpToken` | address | LP token address
 
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`_isInPool`| bool | Wether this lp already in pool
+|`_isInPool`| bool | Wether this lp is already in pool
 ### _safeDegisTransfer
 ```solidity
   function _safeDegisTransfer(
     address _to,
     uint256 _amount
-  ) internal
+  ) internal returns (uint256)
 ```
 Safe degis transfer (check if the pool has enough DEGIS token)
 
@@ -235,10 +280,31 @@ Safe degis transfer (check if the pool has enough DEGIS token)
 |`_to` | address | User's address
 |`_amount` | uint256 | Amount to transfer
 
-## Events
-### StartBlockChanged
+### _safeLPTransfer
 ```solidity
-  event StartBlockChanged(
+  function _safeLPTransfer(
+    bool _out,
+    address _lpToken,
+    address _user,
+    uint256 _amount
+  ) internal returns (uint256)
+```
+Finish the transfer of LP Token
+
+The lp token may have loss during transfer
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_out` | bool | Whether the lp token is out
+|`_lpToken` | address | LP token address
+|`_user` | address | User address
+|`_amount` | uint256 | Amount of lp tokens
+
+## Events
+### StartTimestampChanged
+```solidity
+  event StartTimestampChanged(
   )
 ```
 
@@ -268,14 +334,6 @@ Safe degis transfer (check if the pool has enough DEGIS token)
 
 
 
-### HarvestAndCompound
-```solidity
-  event HarvestAndCompound(
-  )
-```
-
-
-
 ### NewPoolAdded
 ```solidity
   event NewPoolAdded(
@@ -284,9 +342,9 @@ Safe degis transfer (check if the pool has enough DEGIS token)
 
 
 
-### RestartFarmingPool
+### FarmingPoolStarted
 ```solidity
-  event RestartFarmingPool(
+  event FarmingPoolStarted(
   )
 ```
 
@@ -295,6 +353,14 @@ Safe degis transfer (check if the pool has enough DEGIS token)
 ### FarmingPoolStopped
 ```solidity
   event FarmingPoolStopped(
+  )
+```
+
+
+
+### DegisRewardChanged
+```solidity
+  event DegisRewardChanged(
   )
 ```
 

@@ -11,10 +11,19 @@ Views random result
 
 
 
+### requestRandomWords
+```solidity
+  function requestRandomWords(
+  ) external
+```
+
+
+
+
 ### randomResult
 ```solidity
   function randomResult(
-  ) external returns (uint32)
+  ) external returns (uint256)
 ```
 
 

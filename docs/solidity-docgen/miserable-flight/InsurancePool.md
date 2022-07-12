@@ -8,7 +8,7 @@ Insurance pool is the reserved risk pool for flight delay product.
   function constructor(
     address _emergencyPool,
     address _degisLottery,
-    address _usdtAddress
+    address _usdAddress
   ) public
 ```
 Constructor function
@@ -19,7 +19,7 @@ Constructor function
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_emergencyPool` | address | Emergency pool address
 |`_degisLottery` | address | Lottery address
-|`_usdtAddress` | address | USDT address
+|`_usdAddress` | address | USDToken address
 
 ### getUserBalance
 ```solidity
@@ -57,7 +57,7 @@ Get the balance that one user(LP) can unlock
 #### Return Values:
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
-|`_unlockedAmount`| uint256 | Unlocked amount of the pool
+|`_unlockedAmount`| uint256 | Unlocked amount of the user
 ### checkCapacity
 ```solidity
   function checkCapacity(
@@ -99,9 +99,9 @@ Set the address of policyFlow
 
 
 
-### setIncomeDistribution
+### setRewardDistribution
 ```solidity
-  function setIncomeDistribution(
+  function setRewardDistribution(
     uint256[3] _newDistribution
   ) public
 ```
@@ -220,62 +220,6 @@ Pay a claim
 |`_realPayoff` | uint256 | Real payoff of the policy
 |`_user` | address | Address of the policy claimer
 
-### revertUnstakeRequest
-```solidity
-  function revertUnstakeRequest(
-    address _user
-  ) public
-```
-revert the last unstake request for a user
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_user` | address | user's address
-
-### revertAllUnstakeRequest
-```solidity
-  function revertAllUnstakeRequest(
-    address _user
-  ) public
-```
-revert all unstake requests for a user
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_user` | address | user's address
-
-### _removeAllRequest
-```solidity
-  function _removeAllRequest(
-    address _user
-  ) internal
-```
-Remove all unstake requests for a user
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_user` | address | User's address
-
-### _removeOneRequest
-```solidity
-  function _removeOneRequest(
-    address _user
-  ) internal
-```
-Remove one(the latest) unstake requests for a user
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_user` | address | User's address
-
 ### _deposit
 ```solidity
   function _deposit(
@@ -314,7 +258,7 @@ LPValue will not change during withdraw
 ```solidity
   function _distributePremium(
     uint256 _premium
-  ) internal
+  ) internal returns (uint256)
 ```
 Distribute the premium to lottery and emergency pool
 
@@ -342,19 +286,4 @@ Normally it will update when claim or expire
 Update the pool's locked ratio
 
 
-
-### _dealUnstakeQueue
-```solidity
-  function _dealUnstakeQueue(
-    uint256 remainingPayoff
-  ) internal
-```
-When some capacity unlocked, deal with the unstake queue
-
-Normally we do not need this process
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`remainingPayoff` | uint256 | Remaining payoff amount
 

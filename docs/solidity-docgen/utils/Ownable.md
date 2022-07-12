@@ -1,5 +1,5 @@
 
-
+The owner can be set during deployment, not default to be msg.sender
 
 ## Functions
 ### constructor

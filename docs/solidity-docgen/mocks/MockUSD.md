@@ -4,19 +4,19 @@ This is the MockUSD used in testnet
 
 
 ## Functions
-### getAllUsers
+### mint
 ```solidity
-  function getAllUsers(
-  ) external returns (address[])
+  function mint(
+  ) public
 ```
 
 
 
 
-### mint
+### decimals
 ```solidity
-  function mint(
-  ) public
+  function decimals(
+  ) public returns (uint8)
 ```
 
 

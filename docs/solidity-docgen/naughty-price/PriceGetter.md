@@ -10,7 +10,8 @@ This is the contract for getting price feed from chainlink.
   function constructor(
   ) public
 ```
-Constructor function, initialize some price feed
+Constructor function, initialize some price feeds
+        The first supported tokens are AVAX, BTC and ETH
 
 
 
@@ -24,13 +25,15 @@ Constructor function, initialize some price feed
 ```
 Set a price feed oracle address for a token
 
+Only callable by the owner
+     The price result decimal should be less than 18
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`_tokenName` | string | Address of the token
+|`_tokenName` | string |   Address of the token
 |`_feedAddress` | address | Price feed oracle address
-|`_decimals` | uint256 | Decimals of this price feed service
+|`_decimals` | uint256 |    Decimals of this price feed service
 
 ### getLatestPrice
 ```solidity

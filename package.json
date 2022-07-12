@@ -70,7 +70,7 @@
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.13",
     "sol2uml": "^1.1.29",
-    "solc-0.8": "npm:solc@0.8.10",
+    "solc-0.8": "npm:solc@0.8.13",
     "solhint": "^3.3.6",
     "solidity-coverage": "https://github.com/jbx-protocol/solidity-coverage.git#0fcd2f608c0e3e00bf66ab62c7610f5ea553fba8",
     "solidity-docgen": "^0.5.16",

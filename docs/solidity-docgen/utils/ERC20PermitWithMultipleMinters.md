@@ -1,23 +1,15 @@
 This is contract used for ERC20 tokens that has multiple minters and burners.
+
+   The minters and burners are some contracts in Degis that need to issue DEG.
         It has basic implementations for ERC20 and also the owner control.
         Even if the owner is renounced to zero address, the token can still be minted/burned.
         DegisToken and BuyerToken are both this kind ERC20 token.
-
 
 ## Functions
 ### constructor
 ```solidity
   function constructor(
   ) public
-```
-
-
-
-
-### getMinterList
-```solidity
-  function getMinterList(
-  ) external returns (address[])
 ```
 
 
@@ -110,16 +102,6 @@ Burn tokens
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_account` | address | address
 |`_amount` | uint256 | amount to be burned
-
-### _addMinter
-```solidity
-  function _addMinter(
-  ) internal
-```
-Finish the process of adding a new minter.
-
-   Also used in constructor.
-
 
 ## Events
 ### MinterAdded

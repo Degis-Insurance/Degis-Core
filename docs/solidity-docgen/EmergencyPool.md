@@ -38,6 +38,24 @@ The ownership need to be transferred to another contract in the future
 |`_tokenAddress` | address | Address of the ERC20 token
 |`_amount` | uint256 | The amount that the user want to unstake
 
+### useFund
+```solidity
+  function useFund(
+    address _tokenAddress,
+    address _receiver,
+    uint256 _amount
+  ) external
+```
+Use emergency pool fund
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_tokenAddress` | address | Address of the ERC20 token
+|`_receiver` | address | Address of the receiver
+|`_amount` | uint256 | The amount to use
+
 ## Events
 ### Deposit
 ```solidity
@@ -50,6 +68,14 @@ The ownership need to be transferred to another contract in the future
 ### Withdraw
 ```solidity
   event Withdraw(
+  )
+```
+
+
+
+### UseFund
+```solidity
+  event UseFund(
   )
 ```
 

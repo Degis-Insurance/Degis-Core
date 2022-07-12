@@ -5,66 +5,82 @@
 ### constructor
 ```solidity
   function constructor(
-    address _degisToken
   ) public
 ```
 
-Creates/deploys a factory instance
 
 
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_degisToken` | address | Degis token address
 
 ### getPoolAddress
 ```solidity
   function getPoolAddress(
+    address _poolToken
   ) external returns (address)
 ```
+Get the pool address from pool token address
 
-
-
-
-### getPoolData
-```solidity
-  function getPoolData(
-  ) public returns (struct StakingPoolFactory.PoolData)
-```
-
-
-
-
-### setDegisPerBlock
-```solidity
-  function setDegisPerBlock(
-  ) external
-```
-Set degis per block
-
-
-
-### createPool
-```solidity
-  function createPool(
-    address poolToken,
-    uint256 startBlock,
-    uint256 degisPerBlock
-  ) external
-```
-
-Creates a staking pool and registers it within the factory
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
-|`poolToken` | address | pool token address 
-|`startBlock` | uint256 | init block to be used for the pool created
-|`degisPerBlock` | uint256 | weight of the pool to be created
+|`_poolToken` | address | Pool token address
 
-### registerPool
+### getPoolData
 ```solidity
-  function registerPool(
+  function getPoolData(
+    address _poolToken
+  ) public returns (struct StakingPoolFactory.PoolData)
+```
+Get pool data from pool token address
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_poolToken` | address | Pool token address
+
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`poolData`| struct StakingPoolFactory.PoolData | Pool data struct
+### setDegisPerSecond
+```solidity
+  function setDegisPerSecond(
+    address _pool,
+    uint256 _degisPerSecond
+  ) external
+```
+Set degis per second for a pool
+
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_pool` | address | Address of the staking pool
+|`_degisPerSecond` | uint256 | Degis reward per second
+
+### createPool
+```solidity
+  function createPool(
+    address _poolToken,
+    uint256 _startTimestamp,
+    uint256 _degisPerSecond
+  ) external
+```
+Creates a staking pool and registers it within the factory
+
+Only called by the owner
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_poolToken` | address | Pool token address
+|`_startTimestamp` | uint256 | Start timestamp for reward
+|`_degisPerSecond` | uint256 | Reward speed
+
+### _registerPool
+```solidity
+  function _registerPool(
     address _poolAddr
   ) internal
 ```
@@ -97,28 +113,14 @@ With this function, we only need to add factory contract into minterList
 ### PoolRegistered
 ```solidity
   event PoolRegistered(
-    address by,
-    address poolToken,
-    address poolAddress,
-    uint256 degisPerBlock,
-    bool isFlashPool
   )
 ```
 
-Fired in createPool() and registerPool()
 
 
-#### Parameters:
-| Name                           | Type          | Description                                    |
-| :----------------------------- | :------------ | :--------------------------------------------- |
-|`by`| address | who deploys a new pool
-|`poolToken`| address | pool token address 
-|`poolAddress`| address | deployed pool instance address
-|`degisPerBlock`| uint256 | pool weight
-|`isFlashPool`| bool | flag indicating if pool is a flash pool
-### DegisPerBlockChanged
+### DegisPerSecondChanged
 ```solidity
-  event DegisPerBlockChanged(
+  event DegisPerSecondChanged(
   )
 ```
 

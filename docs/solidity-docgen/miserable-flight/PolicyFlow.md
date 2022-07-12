@@ -2,10 +2,31 @@
 
 
 ## Functions
-### constructor
+### initialize
 ```solidity
-  function constructor(
+  function initialize(
+    address _insurancePool,
+    address _policyToken,
+    address _sigManager,
+    address _buyerToken
   ) public
+```
+Initializer of the PolicyFlow contract
+
+Upgradeable contracts do not have a constrcutor
+
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_insurancePool` | address | The InsurancePool contract address
+|`_policyToken` | address | The PolicyToken contract address
+|`_sigManager` | address | The SigManager contract address
+|`_buyerToken` | address | The BuyerToken contract address
+
+### __PolicyFlow_init
+```solidity
+  function __PolicyFlow_init(
+  ) internal
 ```
 
 
@@ -19,6 +40,7 @@
 ```
 Show a user's policies (all)
 
+Should only be checked for frontend
 
 #### Parameters:
 | Name | Type | Description                                                          |
@@ -65,9 +87,9 @@ Get the policy buyer by policyId
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`buyerAddress`| address | The buyer of this policy
-### changeFee
+### setFee
 ```solidity
-  function changeFee(
+  function setFee(
     uint256 _fee
   ) external
 ```
@@ -79,9 +101,9 @@ Change the oracle fee
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_fee` | uint256 | New oracle fee
 
-### changeMaxPayoff
+### setMaxPayoff
 ```solidity
-  function changeMaxPayoff(
+  function setMaxPayoff(
     uint256 _newMaxPayoff
   ) external
 ```
@@ -93,9 +115,9 @@ Change the max payoff
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_newMaxPayoff` | uint256 | New maxpayoff amount
 
-### changeMinTimeBeforeDeparture
+### setMinTimeBeforeDeparture
 ```solidity
-  function changeMinTimeBeforeDeparture(
+  function setMinTimeBeforeDeparture(
     uint256 _newMinTime
   ) external
 ```
@@ -161,13 +183,14 @@ Set the new delay threshold used for calculating payoff
 Buy a new flight delay policy
 
 The transaction should have the signature from the backend server
+Premium is in stablecoin, so it is 6 decimals
 
 #### Parameters:
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_productId` | uint256 | ID of the purchased product (0: flightdelay; 1,2,3...: others)
 |`_flightNumber` | string | Flight number in string (e.g. "AQ1299")
-|`_premium` | uint256 | Premium of this policy (decimals: 18)
+|`_premium` | uint256 | Premium of this policy (decimals: 6)
 |`_departureTimestamp` | uint256 | Departure date of this flight (unix timestamp in s, not ms!)
 |`_landingDate` | uint256 | Landing date of this flight (uinx timestamp in s, not ms!)
 |`_deadline` | uint256 | Deadline for this purchase request
@@ -176,16 +199,25 @@ The transaction should have the signature from the backend server
 ### newClaimRequest
 ```solidity
   function newClaimRequest(
+    uint256 _policyId,
+    string _flightNumber,
+    string _timestamp,
+    string _path,
+    bool _forceUpdate
   ) public
 ```
 Make a claim request
- @param _policyId The total order/id of the policy
- @param _flightNumber The flight number
- @param _timestamp The flight departure timestamp
- @param _path Which data in json needs to get
- @param _forceUpdate Owner can force to update
 
+Anyone can make a new claim
 
+#### Parameters:
+| Name | Type | Description                                                          |
+| :--- | :--- | :------------------------------------------------------------------- |
+|`_policyId` | uint256 | The total order/id of the policy
+|`_flightNumber` | string | The flight number
+|`_timestamp` | string | The flight departure timestamp
+|`_path` | string | Which data in json needs to get
+|`_forceUpdate` | bool | Owner can force to update
 
 ### policyOwnerTransfer
 ```solidity
@@ -240,9 +272,9 @@ check the policy and then determine whether we can afford it
 |`_user` | uint256 | user's address
 |`_policyId` | address | the unique policy ID
 
-### policyExpired
+### _policyExpired
 ```solidity
-  function policyExpired(
+  function _policyExpired(
     uint256 _premium,
     uint256 _payoff,
     address _user,
@@ -303,9 +335,9 @@ The payoff formula
   function _checkSignature(
     bytes signature,
     string _flightNumber,
-    address _address,
+    uint256 _address,
     uint256 _premium,
-    uint256 _deadline
+    address _deadline
   ) internal
 ```
 Check whether the signature is valid
@@ -316,9 +348,9 @@ Check whether the signature is valid
 | :--- | :--- | :------------------------------------------------------------------- |
 |`signature` | bytes | 65 byte array: [[v (1)], [r (32)], [s (32)]]
 |`_flightNumber` | string | Flight number
-|`_address` | address | userAddress
+|`_address` | uint256 | userAddress
 |`_premium` | uint256 | Premium of the policy
-|`_deadline` | uint256 | Deadline of the application
+|`_deadline` | address | Deadline of the application
 
 ## Events
 ### FeeChanged
@@ -372,6 +404,14 @@ Check whether the signature is valid
 ### NewPolicyApplication
 ```solidity
   event NewPolicyApplication(
+  )
+```
+
+
+
+### NewClaimRequest
+```solidity
+  event NewClaimRequest(
   )
 ```
 

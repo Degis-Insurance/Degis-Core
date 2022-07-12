@@ -83,3 +83,12 @@
 
 
 
+### updateBonus
+```solidity
+  function updateBonus(
+  ) external
+```
+
+
+
+

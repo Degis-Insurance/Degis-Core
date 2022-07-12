@@ -48,6 +48,16 @@ Burn some policy tokens
 |`_account` | address | Address to burn tokens
 |`_amount` | uint256 | Amount to be burned
 
+### decimals
+```solidity
+  function decimals(
+  ) public returns (uint8)
+```
+Get the decimals of this token
+
+It should be the same as its paired stablecoin
+
+
 ## Events
 ### Mint
 ```solidity

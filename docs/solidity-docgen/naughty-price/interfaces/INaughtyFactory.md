@@ -29,3 +29,21 @@
 
 
 
+### incomeMaker
+```solidity
+  function incomeMaker(
+  ) external returns (address)
+```
+
+
+
+
+### incomeMakerProportion
+```solidity
+  function incomeMakerProportion(
+  ) external returns (uint256)
+```
+
+
+
+

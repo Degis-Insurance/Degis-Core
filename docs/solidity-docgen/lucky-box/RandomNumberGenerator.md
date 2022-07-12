@@ -94,10 +94,14 @@ Request randomness from Chainlink VRF
   function _rand(
   ) internal returns (uint256)
 ```
+Get the random number
 
 
 
-
+#### Return Values:
+| Name                           | Type          | Description                                                                  |
+| :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
+|`randomNumber`| uint256 | the random result
 ### fulfillRandomness
 ```solidity
   function fulfillRandomness(

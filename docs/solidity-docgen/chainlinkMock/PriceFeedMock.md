@@ -2,32 +2,14 @@
 
 
 ## Functions
-### constructor
+### setResult
 ```solidity
-  function constructor(
+  function setResult(
   ) public
 ```
-Constructor function, initialize some price feed
 
+For test, you can set the result you want
 
-
-### setPriceFeed
-```solidity
-  function setPriceFeed(
-    string _tokenName,
-    address _feedAddress,
-    uint256 _decimals
-  ) public
-```
-Set a price feed oracle address for a token
-
-
-#### Parameters:
-| Name | Type | Description                                                          |
-| :--- | :--- | :------------------------------------------------------------------- |
-|`_tokenName` | string | Address of the token
-|`_feedAddress` | address | Price feed oracle address
-|`_decimals` | uint256 | Decimals of this price feed service
 
 ### getLatestPrice
 ```solidity
@@ -47,15 +29,6 @@ Get latest price of a token
 | Name                           | Type          | Description                                                                  |
 | :----------------------------- | :------------ | :--------------------------------------------------------------------------- |
 |`price`| uint256 | The latest price
-### _rand
-```solidity
-  function _rand(
-  ) internal returns (uint256)
-```
-
-
-
-
 ## Events
 ### PriceFeedChanged
 ```solidity

@@ -16,9 +16,9 @@ Set the address for the DegisLottery
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_degisLottery` | address | address of the PancakeSwap lottery
 
-### getRandomNumber
+### requestRandomWords
 ```solidity
-  function getRandomNumber(
+  function requestRandomWords(
   ) external
 ```
 Request randomness from Chainlink VRF

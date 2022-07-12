@@ -23,7 +23,7 @@ Mint degis tokens
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_account` | address | Receiver's address
-|`_amount` | uint256 | Amount to be minted
+|`_amount` | uint256 |  Amount to be minted
 
 ### burnDegis
 ```solidity
@@ -39,5 +39,5 @@ Burn degis tokens
 | Name | Type | Description                                                          |
 | :--- | :--- | :------------------------------------------------------------------- |
 |`_account` | address | Receiver's address
-|`_amount` | uint256 | Amount to be burned
+|`_amount` | uint256 |  Amount to be burned
 

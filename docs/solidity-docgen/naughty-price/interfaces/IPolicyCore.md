@@ -20,73 +20,19 @@ Find the name by address
 
 
 
-### getPolicyTokenInfo
-```solidity
-  function getPolicyTokenInfo(
-  ) external returns (struct IPolicyCore.PolicyTokenInfo)
-```
-Get the policy token information
-
-
-
-### getAllTokens
-```solidity
-  function getAllTokens(
-  ) external returns (struct IPolicyCore.PolicyTokenInfo[])
-```
-
-
-
-
-### checkUserQuota
-```solidity
-  function checkUserQuota(
-  ) external returns (uint256 _quota)
-```
-
-
-
-
 ### supportedStablecoin
 ```solidity
   function supportedStablecoin(
   ) external returns (bool)
 ```
+Check whether the stablecoin is supported
 
 
 
-
-### addStablecoin
+### delegateDeposit
 ```solidity
-  function addStablecoin(
+  function delegateDeposit(
   ) external
-```
-
-
-
-
-### setLottery
-```solidity
-  function setLottery(
-  ) external
-```
-
-
-
-
-### setEmergencyPool
-```solidity
-  function setEmergencyPool(
-  ) external
-```
-
-
-
-
-### deployPolicyToken
-```solidity
-  function deployPolicyToken(
-  ) external returns (address)
 ```
 
 
@@ -101,36 +47,18 @@ Get the policy token information
 
 
 
-### deposit
+### getPolicyTokenInfo
 ```solidity
-  function deposit(
-  ) external
+  function getPolicyTokenInfo(
+  ) external returns (struct IPolicyCore.PolicyTokenInfo)
 ```
 
 
 
 
-### delegateDeposit
+### updateUserQuota
 ```solidity
-  function delegateDeposit(
-  ) external
-```
-
-
-
-
-### redeem
-```solidity
-  function redeem(
-  ) external
-```
-
-
-
-
-### claim
-```solidity
-  function claim(
+  function updateUserQuota(
   ) external
 ```
 
