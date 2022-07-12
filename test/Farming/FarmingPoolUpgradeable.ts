@@ -885,9 +885,10 @@ describe("Farming Pool Upgradeable", function () {
       // Deploy double reward contract
       const DoubleRewardContractFactory: DoubleRewarder__factory =
         await ethers.getContractFactory("DoubleRewarder");
-      doubleRewardContract = await DoubleRewardContractFactory.deploy(
-        pool.address
-      );
+      doubleRewardContract = await DoubleRewardContractFactory.deploy();
+      await doubleRewardContract.initialize(pool.address);
+
+      await pool.setDoubleRewarderContract(doubleRewardContract.address);
 
       // Add a pool with double reward
       await pool.add(
@@ -900,17 +901,141 @@ describe("Farming Pool Upgradeable", function () {
 
       await lptoken_1.mint(dev_account.address, toWei("1000"));
       await lptoken_1.approve(pool.address, toWei("1000"));
+
+      await lptoken_1.mint(user1.address, toWei("1000"));
+      await lptoken_1.connect(user1).approve(pool.address, toWei("1000"));
+
+      await doubleRewardToken.mint(doubleRewardContract.address, toWei("100"));
     });
 
     it("should be able to add double reward token", async function () {
       await expect(
-        doubleRewardContract.addRewardToken(doubleRewardToken.address)
+        doubleRewardContract.addRewardToken(
+          doubleRewardToken.address,
+          lptoken_1.address
+        )
       )
         .to.emit(doubleRewardContract, "NewRewardTokenAdded")
         .withArgs(doubleRewardToken.address);
     });
 
-    it("should be able to get double reward when deposit", async function () {});
+    it("should be able to get double reward when deposit", async function () {
+      await doubleRewardContract.addRewardToken(
+        doubleRewardToken.address,
+        lptoken_1.address
+      );
+      await doubleRewardContract.setRewardSpeed(
+        lptoken_1.address,
+        doubleRewardToken.address,
+        toWei("2")
+      );
+
+      // Stake for 1
+      await pool.stake(1, toWei("1"));
+
+      await mineBlocks(5);
+
+      // Stake for 1
+      await pool.stake(1, toWei("1"));
+
+      // DEG reward = 6 * 1 = 6
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("6"));
+      // Double reward = 6 * 2 = 12
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("12")
+      );
+
+      await pool.stake(1, toWei("1"));
+
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("7"));
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("14")
+      );
+    });
+
+    it("should be able to get double reward when multi-users deposit", async function () {
+      await doubleRewardContract.addRewardToken(
+        doubleRewardToken.address,
+        lptoken_1.address
+      );
+      await doubleRewardContract.setRewardSpeed(
+        lptoken_1.address,
+        doubleRewardToken.address,
+        toWei("2")
+      );
+
+      await pool.stake(1, toWei("1"));
+
+      await pool.connect(user1).stake(1, toWei("1"));
+
+      await pool.stake(1, toWei("1"));
+      expect(await degis.balanceOf(dev_account.address)).to.equal(toWei("1.5"));
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("3")
+      );
+    });
+
+    it("should be able to check pending reward for double reward token", async function () {
+      await doubleRewardContract.addRewardToken(
+        doubleRewardToken.address,
+        lptoken_1.address
+      );
+      await doubleRewardContract.setRewardSpeed(
+        lptoken_1.address,
+        doubleRewardToken.address,
+        toWei("2")
+      );
+
+      await pool.stake(1, toWei("1"));
+
+      await pool.connect(user1).stake(1, toWei("1"));
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          dev_account.address
+        )
+      ).to.equal(toWei("2"));
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          user1.address
+        )
+      ).to.equal(0);
+
+      await mineBlocks(1);
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          dev_account.address
+        )
+      ).to.equal(toWei("3"));
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          user1.address
+        )
+      ).to.equal(toWei("1"));
+
+      await mineBlocks(1);
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          dev_account.address
+        )
+      ).to.equal(toWei("4"));
+
+      expect(
+        await doubleRewardContract.pendingReward(
+          doubleRewardToken.address,
+          user1.address
+        )
+      ).to.equal(toWei("2"));
+    });
   });
 });
 

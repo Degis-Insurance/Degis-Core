@@ -277,6 +277,19 @@ contract FarmingPoolUpgradeable is
         }
     }
 
+    function pendingDoubleReward(uint256 _poolId, address _user)
+        external
+        view
+        returns (address doubleRewardToken, uint256 pending)
+    {
+        doubleRewardToken = doubleRewarder[_poolId];
+
+        pending = doubleRewarderContract.pendingReward(
+            doubleRewardToken,
+            _user
+        );
+    }
+
     /**
      * @notice Get the total pool list
      * @return pooList Total pool list
@@ -426,10 +439,11 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update the degisPerSecond for a specific pool (set to 0 to stop farming)
-     * @param _poolId Id of the farming pool
+     *
+     * @param _poolId              Id of the farming pool
      * @param _basicDegisPerSecond New basic reward amount per second
      * @param _bonusDegisPerSecond New bonus reward amount per second
-     * @param _withUpdate Whether update all pools
+     * @param _withUpdate          Whether update all pools
      */
     function setDegisReward(
         uint256 _poolId,
@@ -470,7 +484,9 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Stake LP token into the farming pool
+     *
      * @dev Can only stake to the pools that are still farming
+     *
      * @param _poolId Id of the farming pool
      * @param _amount Staking amount
      */
@@ -527,10 +543,13 @@ contract FarmingPoolUpgradeable is
 
         // Double reward distribution
         if (doubleRewarder[_poolId] != address(0)) {
+            uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(this));
             doubleRewarderContract.distributeReward(
+                pool.lpToken,
                 doubleRewarder[_poolId],
                 msg.sender,
-                user.stakingBalance
+                user.stakingBalance,
+                lpSupply - actualAmount
             );
         }
 
@@ -545,7 +564,8 @@ contract FarmingPoolUpgradeable is
     }
 
     /**
-     * @notice Withdraw lptoken from the pool
+     * @notice Withdraw lptoken from the pool\
+     *
      * @param _poolId Id of the farming pool
      * @param _amount Amount of lp tokens to withdraw
      */
@@ -601,6 +621,18 @@ contract FarmingPoolUpgradeable is
             pool.totalBonus = pool.totalBonus + user.bonus - oldBonus;
         }
 
+        // Double reward distribution
+        if (doubleRewarder[_poolId] != address(0)) {
+            uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(this));
+            doubleRewarderContract.distributeReward(
+                pool.lpToken,
+                doubleRewarder[_poolId],
+                msg.sender,
+                user.stakingBalance,
+                lpSupply + actualAmount
+            );
+        }
+
         user.rewardDebt =
             (user.stakingBalance *
                 pool.accDegisPerShare +
@@ -613,8 +645,9 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Harvest the degis reward and can be sent to another address
+     *
      * @param _poolId Id of the farming pool
-     * @param _to Receiver of degis rewards
+     * @param _to     Receiver of degis rewards
      */
     function harvest(uint256 _poolId, address _to)
         public
@@ -641,6 +674,18 @@ contract FarmingPoolUpgradeable is
         extraClaimable[_poolId][msg.sender] = 0;
 
         require(pendingReward > 0, "No pending reward");
+
+        // Double reward distribution
+        if (doubleRewarder[_poolId] != address(0)) {
+            uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(this));
+            doubleRewarderContract.distributeReward(
+                pool.lpToken,
+                doubleRewarder[_poolId],
+                msg.sender,
+                user.stakingBalance,
+                lpSupply
+            );
+        }
 
         // Update the reward debt
         user.rewardDebt =

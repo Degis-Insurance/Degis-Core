@@ -2,11 +2,13 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./interfaces/IFarmingPool.sol";
+
+import "hardhat/console.sol";
 
 /**
  * @title Degis Double Rewarder Contract
@@ -18,30 +20,7 @@ import "./interfaces/IFarmingPool.sol";
  *
  */
 
-// ---------------------------------------------------------------------------------------- //
-// ************************************* Variables **************************************** //
-// ---------------------------------------------------------------------------------------- //
-
-// ---------------------------------------------------------------------------------------- //
-// *************************************** Errors ***************************************** //
-// ---------------------------------------------------------------------------------------- //
-// ---------------------------------------------------------------------------------------- //
-// ************************************* Constructor ************************************** //
-// ---------------------------------------------------------------------------------------- //
-
-// ---------------------------------------------------------------------------------------- //
-// ************************************ View Functions ************************************ //
-// ---------------------------------------------------------------------------------------- //
-// ---------------------------------------------------------------------------------------- //
-// ************************************ Set Functions ************************************* //
-// ---------------------------------------------------------------------------------------- //
-// ---------------------------------------------------------------------------------------- //
-// ************************************ Main Functions ************************************ //
-// ---------------------------------------------------------------------------------------- //
-// ---------------------------------------------------------------------------------------- //
-// *********************************** Internal Functions ********************************* //
-// ---------------------------------------------------------------------------------------- //
-contract DoubleRewarder is Ownable {
+contract DoubleRewarder is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
@@ -50,11 +29,16 @@ contract DoubleRewarder is Ownable {
 
     uint256 private constant SCALE = 1e12;
 
-    IFarmingPool public immutable farmingPool;
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
+    IFarmingPool public farmingPool;
 
     mapping(address => bool) public supportedRewardToken;
 
     struct PoolInfo {
+        address lpToken;
         uint256 rewardPerSecond;
         uint256 accTokenPerShare;
         uint256 lastRewardTimestamp;
@@ -98,8 +82,9 @@ contract DoubleRewarder is Ownable {
      * @notice Constructor
      *         Only need to set farming pool address
      */
-    constructor(IFarmingPool _pool) {
-        farmingPool = _pool;
+    function initialize(address _farmingPool) public initializer {
+        __Ownable_init();
+        farmingPool = IFarmingPool(_farmingPool);
     }
 
     /**
@@ -122,10 +107,11 @@ contract DoubleRewarder is Ownable {
         UserInfo storage user = userInfo[_user];
 
         uint256 accTokenPerShare = pool.accTokenPerShare;
-        uint256 lpSupply = IERC20(_token).balanceOf(address(farmingPool));
+
+        uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(farmingPool));
 
         if (block.timestamp > pool.lastRewardTimestamp && lpSupply != 0) {
-            uint256 timeElapsed = block.timestamp + pool.lastRewardTimestamp;
+            uint256 timeElapsed = block.timestamp - pool.lastRewardTimestamp;
 
             uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
 
@@ -140,21 +126,20 @@ contract DoubleRewarder is Ownable {
      *
      * @param _rewardToken Reward token address
      */
-    function updatePool(address _rewardToken) public supported(_rewardToken) {
+    function updatePool(address _rewardToken, uint256 _lpSupply)
+        public
+        supported(_rewardToken)
+    {
         PoolInfo storage pool = pools[_rewardToken];
 
         if (block.timestamp > pool.lastRewardTimestamp) {
-            uint256 lpSupply = IERC20(_rewardToken).balanceOf(
-                address(farmingPool)
-            );
-
-            if (lpSupply > 0) {
+            if (_lpSupply > 0) {
                 uint256 timeElapsed = block.timestamp -
                     pool.lastRewardTimestamp;
 
                 uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
 
-                pool.accTokenPerShare += (tokenReward * SCALE) / lpSupply;
+                pool.accTokenPerShare += (tokenReward * SCALE) / _lpSupply;
             }
 
             pool.lastRewardTimestamp = block.timestamp;
@@ -164,25 +149,32 @@ contract DoubleRewarder is Ownable {
     /**
      * @notice Set reward speed for a pool
      *
-     * @param _token  Reward token address
-     * @param _reward Reward per second
+     * @param _lpToken       LP token address
+     * @param _rewardToken   Reward token address
+     * @param _reward        Reward per second
      */
-    function setRewardSpeed(address _token, uint256 _reward)
-        external
-        supported(_token)
-        onlyOwner
-    {
-        updatePool(_token);
+    function setRewardSpeed(
+        address _lpToken,
+        address _rewardToken,
+        uint256 _reward
+    ) external supported(_rewardToken) onlyOwner {
+        uint256 lpSupply = IERC20(_lpToken).balanceOf(address(farmingPool));
+        updatePool(_rewardToken, lpSupply);
 
-        emit RewardRateUpdated(pools[_token].rewardPerSecond, _reward);
+        emit RewardRateUpdated(pools[_rewardToken].rewardPerSecond, _reward);
 
-        pools[_token].rewardPerSecond = _reward;
+        pools[_rewardToken].rewardPerSecond = _reward;
     }
 
-    function addRewardToken(address _token) external onlyOwner {
+    function addRewardToken(address _token, address _lpToken)
+        external
+        onlyOwner
+    {
         require(pools[_token].lastRewardTimestamp == 0, "Already exist");
 
         supportedRewardToken[_token] = true;
+
+        pools[_token].lpToken = _lpToken;
 
         emit NewRewardTokenAdded(_token);
     }
@@ -191,19 +183,24 @@ contract DoubleRewarder is Ownable {
      * @notice Distribute reward when user get reward in farming pool
      *         User lpAmount will be updated here
      *
-     * @param _token    Reward token address
-     * @param _user     User address
-     * @param _lpAmount LP amount of user
+     * @param _lpToken     LP token address
+     * @param _rewardToken Reward token address
+     * @param _user        User address
+     * @param _lpAmount    LP amount of user
      */
     function distributeReward(
-        address _token,
+        address _lpToken,
+        address _rewardToken,
         address _user,
-        uint256 _lpAmount
-    ) external onlyFarmingPool supported(_token) {
-        updatePool(_token);
+        uint256 _lpAmount,
+        uint256 _lpSupply
+    ) external onlyFarmingPool supported(_rewardToken) {
+        updatePool(_rewardToken, _lpSupply);
 
-        PoolInfo memory pool = pools[_token];
+        PoolInfo memory pool = pools[_rewardToken];
         UserInfo storage user = userInfo[_user];
+
+        console.log("user amount", user.amount);
 
         // Get pending reward
         uint256 pending = (user.amount * pool.accTokenPerShare) /
@@ -215,10 +212,19 @@ contract DoubleRewarder is Ownable {
         // Effects before interactions to prevent re-entrancy
         user.amount = _lpAmount;
 
+        console.log("user amount after", user.amount);
+
         user.rewardDebt = (_lpAmount * pool.accTokenPerShare) / SCALE;
 
         if (prevAmount > 0) {
-            uint256 actualReward = _safeRewardTransfer(_token, _user, pending);
+            uint256 actualReward = _safeRewardTransfer(
+                _rewardToken,
+                _user,
+                pending
+            );
+
+            console.log("actual reward", actualReward);
+            console.log("pending result", pending);
 
             emit DistributeReward(_user, actualReward);
         }
@@ -226,7 +232,8 @@ contract DoubleRewarder is Ownable {
 
     /**
      * @notice Safe degis transfer (check if the pool has enough DEGIS token)
-     * @param _to User's address
+     *
+     * @param _to     User address
      * @param _amount Amount to transfer
      */
     function _safeRewardTransfer(
