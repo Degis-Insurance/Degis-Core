@@ -45,7 +45,7 @@ contract DoubleRewarder is OwnableUpgradeable {
     }
 
     /// @notice Info of the poolInfo.
-    mapping(address => PoolInfo) pools;
+    mapping(address => PoolInfo) public pools;
 
     struct UserInfo {
         uint256 amount;

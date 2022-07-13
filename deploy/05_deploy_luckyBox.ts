@@ -22,7 +22,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const addressList = readAddressList();
 
   const DegisToken = await get("DegisToken");
-  const MockUSD = await get("MockUSD");
+  // const MockUSD = await get("MockUSD");
 
   if (
     network.name == "avax" ||
@@ -32,7 +32,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const coordinator = "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634";
     const keyHash =
       "0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46";
-    const id = 28;
+    // const id = 28;
+    const id = 30;
     const rand = await deploy("RandomNumberGeneratorV2", {
       contract: "RandomNumberGeneratorV2",
       from: deployer,

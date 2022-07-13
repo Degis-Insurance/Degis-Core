@@ -7,8 +7,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/IRandomNumberGenerator.sol";
 import "./MathLib.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title DegisLotteryV2
  *
@@ -51,21 +49,26 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     IERC20 public DegisToken;
     IRandomNumberGenerator public randomGenerator;
 
+    // Address to receive treasury fee
     address public treasury;
 
-    uint256 public currentLotteryId; // Total Rounds
+    // Current lottery round
+    uint256 public currentLotteryId;
 
-    uint256 public currentTicketId; // Total Tickets
+    // Current ticket id (start from 1)
+    uint256 public currentTicketId;
 
+    // Max amount of tickets can be bought each time
     uint256 public maxNumberTicketsEachTime;
 
+    // Pending reward to be injected to next round
     uint256 public pendingInjectionNextLottery;
 
     enum Status {
-        Pending,
-        Open,
-        Close,
-        Claimable
+        Pending, // Default status
+        Open, // Lottery is open, before closing
+        Close, // Lottery is closed, after closing before drawing final result
+        Claimable // Lottery is claimable, after drawing final result
     }
 
     struct Lottery {
@@ -104,6 +107,7 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // User Address => Lottery Round => Tickets
     mapping(address => mapping(uint256 => uint256[])) public _userTicketIds;
 
+    // Calculator for each bracket
     mapping(uint32 => uint32) public _bracketCalculator;
 
     // User address => lotteryId => Amount of tickets has claimed
@@ -196,10 +200,10 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         rewardsBreakdown[3] = 4000;
 
         // Default treasury fee
-        treasuryFee = 500;
+        // treasuryFee = 500;
 
         // Default round length
-        roundLength = 5 days;
+        roundLength = 3 days;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -220,28 +224,29 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Get the reward per ticket in 4 brackets
+     * @notice Get a user's ticekts in a given lottery round
      *
-     * @param _wallet address to check owned tickets
+     * @param _wallet    Address to check owned tickets
+     * @param _lotteryId Lottery id to check
      *
-     * @return _lotteryId lottery id to verify ownership
+     * @return ticketIds Ticket ids this user has in this round
      */
     function viewWalletTicketIds(address _wallet, uint256 _lotteryId)
         external
         view
         returns (uint256[] memory)
     {
-        uint256[] memory result = _userTicketIds[_wallet][_lotteryId];
-        return result;
+        uint256[] memory ticketIds = _userTicketIds[_wallet][_lotteryId];
+        return ticketIds;
     }
 
     /**
      * @notice View lottery information
      *
      * @param _startId Start lottery id
-     * @param _endId End lottery id
+     * @param _endId   End lottery id
      *
-     * @return Array of lottery information
+     * @return allLottery Array of lottery information
      */
     function viewAllLottery(uint256 _startId, uint256 _endId)
         external
@@ -256,16 +261,16 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice View ticker statuses and numbers for an array of ticket ids
-     * @param _ticketIds: array of _ticketId
+     * @notice View ticker numbers for an array of ticket ids
+     *
+     * @param _ticketIds Array of ticketId
+     *
+     * @return ticketNumbers Array of ticket numbers
      */
     function viewNumbersPerTicketId(uint256[] calldata _ticketIds)
         external
         view
-        returns (
-            /// ticketIdsNumbersAndStatuses
-            uint32[] memory
-        )
+        returns (uint32[] memory)
     {
         uint256 length = _ticketIds.length;
         uint32[] memory ticketNumbers = new uint32[](length);
@@ -320,6 +325,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
      * @param _user       User address
      * @param _startRound Start lottery id
      * @param _endRound   End lottery id
+     *
+     * @return userRewards Array of user rewards (round as index)
      */
     function viewUserRewards(
         address _user,
@@ -331,17 +338,12 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
         for (uint256 i = _startRound; i <= _endRound; ) {
             uint256 ticketAmount = _userTicketIds[_user][i].length;
 
-            console.log("ticket amount: ", ticketAmount);
-            console.log("gas used: ", gasleft());
-
             if (ticketAmount > 0) {
                 uint256[] memory ticketIds = _userTicketIds[_user][i];
 
                 for (uint256 j; j < ticketAmount; ) {
                     uint256 reward = viewRewardsForTicketId(i, ticketIds[j]);
                     userRewards[i - 1] += reward;
-
-                    console.log("reward:", reward);
 
                     unchecked {
                         ++j;
@@ -356,7 +358,9 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
     }
 
     /**
-     * @notice View rewards for each ticket in a given lottery round, given bracket
+     * @notice View reward per ticket in a given round
+     *
+     * @return rewardPerTicketInBracket  Reward per ticket in a given round
      */
     function viewRewardPerTicketInBracket(uint256 _lotteryId)
         external
@@ -368,6 +372,8 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
     /**
      * @notice View winner ticket amount for a given lottery round, for each bracket
+     *
+     * @return countWinnersPerBracket Array of winner ticket amount for each bracket
      */
     function viewWinnerAmount(uint256 _lotteryId)
         external
@@ -472,10 +478,6 @@ contract DegisLotteryV2 is ReentrancyGuardUpgradeable, OwnableUpgradeable {
 
         // Record the tickets bought
         for (uint256 i; i < amountToBuy; ) {
-            // uint32 currentTicketNumber = _reverseTicketNumber(
-            //     _ticketNumbers[i]
-            // );
-
             uint32 currentTicketNumber = _ticketNumbers[i];
 
             require(

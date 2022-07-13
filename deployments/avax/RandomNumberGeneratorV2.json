@@ -1,0 +1,466 @@
+{
+  "address": "0x11cB000d047b7b215c5F04460aC1819Ea67C535A",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_vrfCoordinator",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_keyHash",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint64",
+          "name": "_subscriptionId",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "have",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "want",
+          "type": "address"
+        }
+      ],
+      "name": "OnlyCoordinatorCanFulfill",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        }
+      ],
+      "name": "RequestRandomWords",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "callbackGasLimit",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "coordinator",
+      "outputs": [
+        {
+          "internalType": "contract VRFCoordinatorV2Interface",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "degisLottery",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "keyHash",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "latestLotteryId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "randomResult",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "requestId",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256[]",
+          "name": "randomWords",
+          "type": "uint256[]"
+        }
+      ],
+      "name": "rawFulfillRandomWords",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "requestConfirmations",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "requestRandomWords",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "s_requestId",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_coordinator",
+          "type": "address"
+        }
+      ],
+      "name": "setCoordinator",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_lottery",
+          "type": "address"
+        }
+      ],
+      "name": "setDegisLottery",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "_keyHash",
+          "type": "bytes32"
+        }
+      ],
+      "name": "setKeyHash",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint16",
+          "name": "_requestConfirmations",
+          "type": "uint16"
+        }
+      ],
+      "name": "setRequestConfirmations",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint64",
+          "name": "_subscriptionId",
+          "type": "uint64"
+        }
+      ],
+      "name": "setSubscriptionId",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "_wordsPerTime",
+          "type": "uint32"
+        }
+      ],
+      "name": "setWordsPerTime",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "subscriptionId",
+      "outputs": [
+        {
+          "internalType": "uint64",
+          "name": "",
+          "type": "uint64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "wordsPerTime",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd692838046da6ee4966bd51f4d56c60813d03b8377cca2139a02a732d97ce1e2",
+  "receipt": {
+    "to": null,
+    "from": "0xeB496257B64Cc2D39c291B209F465f3cfADE0873",
+    "contractAddress": "0x11cB000d047b7b215c5F04460aC1819Ea67C535A",
+    "transactionIndex": 0,
+    "gasUsed": "851600",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x2878be93a0f138930c028a0c27cc8f29c63503e9939b72648732b096ab1da2ab",
+    "transactionHash": "0xd692838046da6ee4966bd51f4d56c60813d03b8377cca2139a02a732d97ce1e2",
+    "logs": [],
+    "blockNumber": 17256502,
+    "cumulativeGasUsed": "851600",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [
+    "0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634",
+    "0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46",
+    30
+  ],
+  "numDeployments": 1,
+  "solcInputHash": "a9d0a8dbbc90ef056e46c7cb80c61b46",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_vrfCoordinator\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"_keyHash\",\"type\":\"bytes32\"},{\"internalType\":\"uint64\",\"name\":\"_subscriptionId\",\"type\":\"uint64\"}],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"have\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"want\",\"type\":\"address\"}],\"name\":\"OnlyCoordinatorCanFulfill\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"}],\"name\":\"RequestRandomWords\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"callbackGasLimit\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"coordinator\",\"outputs\":[{\"internalType\":\"contract VRFCoordinatorV2Interface\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"degisLottery\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"keyHash\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"latestLotteryId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"randomResult\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"requestId\",\"type\":\"uint256\"},{\"internalType\":\"uint256[]\",\"name\":\"randomWords\",\"type\":\"uint256[]\"}],\"name\":\"rawFulfillRandomWords\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestConfirmations\",\"outputs\":[{\"internalType\":\"uint16\",\"name\":\"\",\"type\":\"uint16\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestRandomWords\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"s_requestId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_coordinator\",\"type\":\"address\"}],\"name\":\"setCoordinator\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_lottery\",\"type\":\"address\"}],\"name\":\"setDegisLottery\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"_keyHash\",\"type\":\"bytes32\"}],\"name\":\"setKeyHash\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint16\",\"name\":\"_requestConfirmations\",\"type\":\"uint16\"}],\"name\":\"setRequestConfirmations\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint64\",\"name\":\"_subscriptionId\",\"type\":\"uint64\"}],\"name\":\"setSubscriptionId\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint32\",\"name\":\"_wordsPerTime\",\"type\":\"uint32\"}],\"name\":\"setWordsPerTime\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"subscriptionId\",\"outputs\":[{\"internalType\":\"uint64\",\"name\":\"\",\"type\":\"uint64\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"wordsPerTime\",\"outputs\":[{\"internalType\":\"uint32\",\"name\":\"\",\"type\":\"uint32\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/lucky-box/RandomNumberGeneratorV2.sol\":\"RandomNumberGeneratorV2\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"details\":{\"constantOptimizer\":true,\"cse\":true,\"deduplicate\":true,\"inliner\":true,\"jumpdestRemover\":true,\"orderLiterals\":true,\"peephole\":true,\"yul\":true,\"yulDetails\":{\"optimizerSteps\":\"dhfoDgvulfnTUtnIf\",\"stackAllocation\":true}},\"runs\":1000},\"remappings\":[]},\"sources\":{\"@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.4;\\n\\n/** ****************************************************************************\\n * @notice Interface for contracts using VRF randomness\\n * *****************************************************************************\\n * @dev PURPOSE\\n *\\n * @dev Reggie the Random Oracle (not his real job) wants to provide randomness\\n * @dev to Vera the verifier in such a way that Vera can be sure he's not\\n * @dev making his output up to suit himself. Reggie provides Vera a public key\\n * @dev to which he knows the secret key. Each time Vera provides a seed to\\n * @dev Reggie, he gives back a value which is computed completely\\n * @dev deterministically from the seed and the secret key.\\n *\\n * @dev Reggie provides a proof by which Vera can verify that the output was\\n * @dev correctly computed once Reggie tells it to her, but without that proof,\\n * @dev the output is indistinguishable to her from a uniform random sample\\n * @dev from the output space.\\n *\\n * @dev The purpose of this contract is to make it easy for unrelated contracts\\n * @dev to talk to Vera the verifier about the work Reggie is doing, to provide\\n * @dev simple access to a verifiable source of randomness. It ensures 2 things:\\n * @dev 1. The fulfillment came from the VRFCoordinator\\n * @dev 2. The consumer contract implements fulfillRandomWords.\\n * *****************************************************************************\\n * @dev USAGE\\n *\\n * @dev Calling contracts must inherit from VRFConsumerBase, and can\\n * @dev initialize VRFConsumerBase's attributes in their constructor as\\n * @dev shown:\\n *\\n * @dev   contract VRFConsumer {\\n * @dev     constructor(<other arguments>, address _vrfCoordinator, address _link)\\n * @dev       VRFConsumerBase(_vrfCoordinator) public {\\n * @dev         <initialization with other arguments goes here>\\n * @dev       }\\n * @dev   }\\n *\\n * @dev The oracle will have given you an ID for the VRF keypair they have\\n * @dev committed to (let's call it keyHash). Create subscription, fund it\\n * @dev and your consumer contract as a consumer of it (see VRFCoordinatorInterface\\n * @dev subscription management functions).\\n * @dev Call requestRandomWords(keyHash, subId, minimumRequestConfirmations,\\n * @dev callbackGasLimit, numWords),\\n * @dev see (VRFCoordinatorInterface for a description of the arguments).\\n *\\n * @dev Once the VRFCoordinator has received and validated the oracle's response\\n * @dev to your request, it will call your contract's fulfillRandomWords method.\\n *\\n * @dev The randomness argument to fulfillRandomWords is a set of random words\\n * @dev generated from your requestId and the blockHash of the request.\\n *\\n * @dev If your contract could have concurrent requests open, you can use the\\n * @dev requestId returned from requestRandomWords to track which response is associated\\n * @dev with which randomness request.\\n * @dev See \\\"SECURITY CONSIDERATIONS\\\" for principles to keep in mind,\\n * @dev if your contract could have multiple requests in flight simultaneously.\\n *\\n * @dev Colliding `requestId`s are cryptographically impossible as long as seeds\\n * @dev differ.\\n *\\n * *****************************************************************************\\n * @dev SECURITY CONSIDERATIONS\\n *\\n * @dev A method with the ability to call your fulfillRandomness method directly\\n * @dev could spoof a VRF response with any random value, so it's critical that\\n * @dev it cannot be directly called by anything other than this base contract\\n * @dev (specifically, by the VRFConsumerBase.rawFulfillRandomness method).\\n *\\n * @dev For your users to trust that your contract's random behavior is free\\n * @dev from malicious interference, it's best if you can write it so that all\\n * @dev behaviors implied by a VRF response are executed *during* your\\n * @dev fulfillRandomness method. If your contract must store the response (or\\n * @dev anything derived from it) and use it later, you must ensure that any\\n * @dev user-significant behavior which depends on that stored value cannot be\\n * @dev manipulated by a subsequent VRF request.\\n *\\n * @dev Similarly, both miners and the VRF oracle itself have some influence\\n * @dev over the order in which VRF responses appear on the blockchain, so if\\n * @dev your contract could have multiple VRF requests in flight simultaneously,\\n * @dev you must ensure that the order in which the VRF responses arrive cannot\\n * @dev be used to manipulate your contract's user-significant behavior.\\n *\\n * @dev Since the block hash of the block which contains the requestRandomness\\n * @dev call is mixed into the input to the VRF *last*, a sufficiently powerful\\n * @dev miner could, in principle, fork the blockchain to evict the block\\n * @dev containing the request, forcing the request to be included in a\\n * @dev different block with a different hash, and therefore a different input\\n * @dev to the VRF. However, such an attack would incur a substantial economic\\n * @dev cost. This cost scales with the number of blocks the VRF oracle waits\\n * @dev until it calls responds to a request. It is for this reason that\\n * @dev that you can signal to an oracle you'd like them to wait longer before\\n * @dev responding to the request (however this is not enforced in the contract\\n * @dev and so remains effective only in the case of unmodified oracle software).\\n */\\nabstract contract VRFConsumerBaseV2 {\\n  error OnlyCoordinatorCanFulfill(address have, address want);\\n  address private immutable vrfCoordinator;\\n\\n  /**\\n   * @param _vrfCoordinator address of VRFCoordinator contract\\n   */\\n  constructor(address _vrfCoordinator) {\\n    vrfCoordinator = _vrfCoordinator;\\n  }\\n\\n  /**\\n   * @notice fulfillRandomness handles the VRF response. Your contract must\\n   * @notice implement it. See \\\"SECURITY CONSIDERATIONS\\\" above for important\\n   * @notice principles to keep in mind when implementing your fulfillRandomness\\n   * @notice method.\\n   *\\n   * @dev VRFConsumerBaseV2 expects its subcontracts to have a method with this\\n   * @dev signature, and will call it once it has verified the proof\\n   * @dev associated with the randomness. (It is triggered via a call to\\n   * @dev rawFulfillRandomness, below.)\\n   *\\n   * @param requestId The Id initially returned by requestRandomness\\n   * @param randomWords the VRF output expanded to the requested number of words\\n   */\\n  function fulfillRandomWords(uint256 requestId, uint256[] memory randomWords) internal virtual;\\n\\n  // rawFulfillRandomness is called by VRFCoordinator when it receives a valid VRF\\n  // proof. rawFulfillRandomness then calls fulfillRandomness, after validating\\n  // the origin of the call\\n  function rawFulfillRandomWords(uint256 requestId, uint256[] memory randomWords) external {\\n    if (msg.sender != vrfCoordinator) {\\n      revert OnlyCoordinatorCanFulfill(msg.sender, vrfCoordinator);\\n    }\\n    fulfillRandomWords(requestId, randomWords);\\n  }\\n}\\n\",\"keccak256\":\"0x3d709a5e0f1f9b8841172b10ba8af785dd51a13eda9fc395723a706e51329904\",\"license\":\"MIT\"},\"@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol\":{\"content\":\"// SPDX-License-Identifier: MIT\\npragma solidity ^0.8.0;\\n\\ninterface VRFCoordinatorV2Interface {\\n  /**\\n   * @notice Get configuration relevant for making requests\\n   * @return minimumRequestConfirmations global min for request confirmations\\n   * @return maxGasLimit global max for request gas limit\\n   * @return s_provingKeyHashes list of registered key hashes\\n   */\\n  function getRequestConfig()\\n    external\\n    view\\n    returns (\\n      uint16,\\n      uint32,\\n      bytes32[] memory\\n    );\\n\\n  /**\\n   * @notice Request a set of random words.\\n   * @param keyHash - Corresponds to a particular oracle job which uses\\n   * that key for generating the VRF proof. Different keyHash's have different gas price\\n   * ceilings, so you can select a specific one to bound your maximum per request cost.\\n   * @param subId  - The ID of the VRF subscription. Must be funded\\n   * with the minimum subscription balance required for the selected keyHash.\\n   * @param minimumRequestConfirmations - How many blocks you'd like the\\n   * oracle to wait before responding to the request. See SECURITY CONSIDERATIONS\\n   * for why you may want to request more. The acceptable range is\\n   * [minimumRequestBlockConfirmations, 200].\\n   * @param callbackGasLimit - How much gas you'd like to receive in your\\n   * fulfillRandomWords callback. Note that gasleft() inside fulfillRandomWords\\n   * may be slightly less than this amount because of gas used calling the function\\n   * (argument decoding etc.), so you may need to request slightly more than you expect\\n   * to have inside fulfillRandomWords. The acceptable range is\\n   * [0, maxGasLimit]\\n   * @param numWords - The number of uint256 random values you'd like to receive\\n   * in your fulfillRandomWords callback. Note these numbers are expanded in a\\n   * secure way by the VRFCoordinator from a single random value supplied by the oracle.\\n   * @return requestId - A unique identifier of the request. Can be used to match\\n   * a request to a response in fulfillRandomWords.\\n   */\\n  function requestRandomWords(\\n    bytes32 keyHash,\\n    uint64 subId,\\n    uint16 minimumRequestConfirmations,\\n    uint32 callbackGasLimit,\\n    uint32 numWords\\n  ) external returns (uint256 requestId);\\n\\n  /**\\n   * @notice Create a VRF subscription.\\n   * @return subId - A unique subscription id.\\n   * @dev You can manage the consumer set dynamically with addConsumer/removeConsumer.\\n   * @dev Note to fund the subscription, use transferAndCall. For example\\n   * @dev  LINKTOKEN.transferAndCall(\\n   * @dev    address(COORDINATOR),\\n   * @dev    amount,\\n   * @dev    abi.encode(subId));\\n   */\\n  function createSubscription() external returns (uint64 subId);\\n\\n  /**\\n   * @notice Get a VRF subscription.\\n   * @param subId - ID of the subscription\\n   * @return balance - LINK balance of the subscription in juels.\\n   * @return reqCount - number of requests for this subscription, determines fee tier.\\n   * @return owner - owner of the subscription.\\n   * @return consumers - list of consumer address which are able to use this subscription.\\n   */\\n  function getSubscription(uint64 subId)\\n    external\\n    view\\n    returns (\\n      uint96 balance,\\n      uint64 reqCount,\\n      address owner,\\n      address[] memory consumers\\n    );\\n\\n  /**\\n   * @notice Request subscription owner transfer.\\n   * @param subId - ID of the subscription\\n   * @param newOwner - proposed new owner of the subscription\\n   */\\n  function requestSubscriptionOwnerTransfer(uint64 subId, address newOwner) external;\\n\\n  /**\\n   * @notice Request subscription owner transfer.\\n   * @param subId - ID of the subscription\\n   * @dev will revert if original owner of subId has\\n   * not requested that msg.sender become the new owner.\\n   */\\n  function acceptSubscriptionOwnerTransfer(uint64 subId) external;\\n\\n  /**\\n   * @notice Add a consumer to a VRF subscription.\\n   * @param subId - ID of the subscription\\n   * @param consumer - New consumer which can use the subscription\\n   */\\n  function addConsumer(uint64 subId, address consumer) external;\\n\\n  /**\\n   * @notice Remove a consumer from a VRF subscription.\\n   * @param subId - ID of the subscription\\n   * @param consumer - Consumer to remove from the subscription\\n   */\\n  function removeConsumer(uint64 subId, address consumer) external;\\n\\n  /**\\n   * @notice Cancel a subscription\\n   * @param subId - ID of the subscription\\n   * @param to - Where to send the remaining LINK to\\n   */\\n  function cancelSubscription(uint64 subId, address to) external;\\n}\\n\",\"keccak256\":\"0xcb29ee50ee2b05441e4deebf8b4756a0feec4f5497e36b6a1ca320f7ce561802\",\"license\":\"MIT\"},\"contracts/lucky-box/RandomNumberGeneratorV2.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\n\\r\\npragma solidity ^0.8.13;\\r\\n\\r\\nimport \\\"@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol\\\";\\r\\nimport \\\"@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol\\\";\\r\\nimport \\\"./interfaces/IDegisLottery.sol\\\";\\r\\n\\r\\ncontract RandomNumberGeneratorV2 is VRFConsumerBaseV2 {\\r\\n    // Coordinator address based on networks\\r\\n    // Fuji: 0x2eD832Ba664535e5886b75D64C46EB9a228C2610\\r\\n    // Mainnet: 0xd5D517aBE5cF79B7e95eC98dB0f0277788aFF634\\r\\n    VRFCoordinatorV2Interface public coordinator;\\r\\n\\r\\n    // Subscription id, created on chainlink website\\r\\n    // Fuji: 130\\r\\n    // Mainnet: 28 (test)\\r\\n    uint64 public subscriptionId;\\r\\n\\r\\n    // Different networks and gas prices have different keyHash\\r\\n    // Fuji: 300gwei 0x354d2f95da55398f44b7cff77da56283d9c6c829a4bdf1bbcaf2ad6a4d081f61\\r\\n    // Mainnet: 500gwei 0x89630569c9567e43c4fe7b1633258df9f2531b62f2352fa721cf3162ee4ecb46\\r\\n    bytes32 public keyHash;\\r\\n\\r\\n    // Gas limit for callback\\r\\n    uint32 public callbackGasLimit = 100000;\\r\\n\\r\\n    // Confirmations for each request\\r\\n    uint16 public requestConfirmations = 3;\\r\\n\\r\\n    // Request 1 random number each time\\r\\n    uint32 public wordsPerTime = 1;\\r\\n\\r\\n    // Store the latest result\\r\\n    uint256 public randomResult;\\r\\n\\r\\n    // Store the latest request id\\r\\n    uint256 public s_requestId;\\r\\n\\r\\n    // Owner address\\r\\n    address public owner;\\r\\n\\r\\n    // Latest lottery id\\r\\n    uint256 public latestLotteryId;\\r\\n\\r\\n    address public degisLottery;\\r\\n\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n    // *************************************** Events ***************************************** //\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n\\r\\n    event RequestRandomWords(uint256 requestId);\\r\\n\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n    // ************************************* Constructor ************************************** //\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n\\r\\n    constructor(\\r\\n        address _vrfCoordinator,\\r\\n        bytes32 _keyHash,\\r\\n        uint64 _subscriptionId\\r\\n    ) VRFConsumerBaseV2(_vrfCoordinator) {\\r\\n        // Set coordinator address depends on networks\\r\\n        coordinator = VRFCoordinatorV2Interface(_vrfCoordinator);\\r\\n\\r\\n        // Set keyhash depends on networks and gas price\\r\\n        keyHash = _keyHash;\\r\\n\\r\\n        // Subscription id depends on networks\\r\\n        subscriptionId = _subscriptionId;\\r\\n\\r\\n        owner = msg.sender;\\r\\n    }\\r\\n\\r\\n    modifier onlyOwner() {\\r\\n        require(\\r\\n            msg.sender == owner || msg.sender == degisLottery,\\r\\n            \\\"Only owner or lottery\\\"\\r\\n        );\\r\\n        _;\\r\\n    }\\r\\n\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n    // ************************************ Set Functions ************************************* //\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n\\r\\n    function setKeyHash(bytes32 _keyHash) external onlyOwner {\\r\\n        keyHash = _keyHash;\\r\\n    }\\r\\n\\r\\n    function setSubscriptionId(uint64 _subscriptionId) external onlyOwner {\\r\\n        subscriptionId = _subscriptionId;\\r\\n    }\\r\\n\\r\\n    function setCoordinator(address _coordinator) external onlyOwner {\\r\\n        coordinator = VRFCoordinatorV2Interface(_coordinator);\\r\\n    }\\r\\n\\r\\n    function setWordsPerTime(uint32 _wordsPerTime) external onlyOwner {\\r\\n        wordsPerTime = _wordsPerTime;\\r\\n    }\\r\\n\\r\\n    function setRequestConfirmations(uint16 _requestConfirmations)\\r\\n        external\\r\\n        onlyOwner\\r\\n    {\\r\\n        requestConfirmations = _requestConfirmations;\\r\\n    }\\r\\n\\r\\n    function setDegisLottery(address _lottery) external onlyOwner {\\r\\n        degisLottery = _lottery;\\r\\n    }\\r\\n\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n    // ************************************ Main Functions ************************************ //\\r\\n    // ---------------------------------------------------------------------------------------- //\\r\\n\\r\\n    function requestRandomWords() external onlyOwner {\\r\\n        s_requestId = coordinator.requestRandomWords(\\r\\n            keyHash,\\r\\n            subscriptionId,\\r\\n            requestConfirmations,\\r\\n            callbackGasLimit,\\r\\n            wordsPerTime\\r\\n        );\\r\\n\\r\\n        emit RequestRandomWords(s_requestId);\\r\\n    }\\r\\n\\r\\n    function fulfillRandomWords(uint256, uint256[] memory _randomWords)\\r\\n        internal\\r\\n        override\\r\\n    {\\r\\n        randomResult = (_randomWords[0] % 10000) + 10000;\\r\\n\\r\\n        // Update latest lottery id\\r\\n        // Before this update, lottery can not make that round claimable\\r\\n        latestLotteryId = IDegisLottery(degisLottery).currentLotteryId();\\r\\n    }\\r\\n}\\r\\n\",\"keccak256\":\"0xbf51ca6582c544726158aa31ed043d2a861a077f07d2ffad8a6a393c39d9946d\",\"license\":\"GPL-3.0-or-later\"},\"contracts/lucky-box/interfaces/IDegisLottery.sol\":{\"content\":\"// SPDX-License-Identifier: GPL-3.0-or-later\\r\\npragma solidity ^0.8.10;\\r\\n\\r\\ninterface IDegisLottery {\\r\\n    /**\\r\\n     * @notice Inject funds\\r\\n     * @param _amount amount to inject in USD\\r\\n     * @dev Callable by operator\\r\\n     */\\r\\n    function injectFunds(uint256 _amount) external;\\r\\n\\r\\n    /**\\r\\n     * @notice View current lottery id\\r\\n     */\\r\\n    function currentLotteryId() external view returns (uint256);\\r\\n}\\r\\n\",\"keccak256\":\"0x4b8a94e1f8c4a0f39512403454f45882fba8290fbe74d66d8f3577192b81c0e3\",\"license\":\"GPL-3.0-or-later\"}},\"version\":1}",
+  "bytecode": "0x60a0604052600280546001600160501b03191666010003000186a01790553480156200002a57600080fd5b5060405162000e4838038062000e488339810160408190526200004d916200010b565b6001600160a01b039092166080819052600080546001939093556001600160401b03909316600160a01b026001600160e01b031990921617179055600580546001600160a01b0319163317905562000163565b60006001600160a01b0382165b92915050565b620000be81620000a0565b8114620000ca57600080fd5b50565b8051620000ad81620000b3565b80620000be565b8051620000ad81620000da565b6001600160401b038116620000be565b8051620000ad81620000ee565b600080600060608486031215620001255762000125600080fd5b6000620001338686620000cd565b93505060206200014686828701620000e1565b92505060406200015986828701620000fe565b9150509250925092565b608051610cc262000186600039600081816102ff01526103270152610cc26000f3fe608060405234801561001057600080fd5b50600436106101515760003560e01c80638ea98117116100cd578063e0c8628911610081578063ea7b4f7711610066578063ea7b4f77146102c5578063eed8e1ee146102d8578063ef7525b5146102e157600080fd5b8063e0c86289146102b4578063e89e106a146102bc57600080fd5b8063a2596a6a116100b2578063a2596a6a14610264578063b0fb162f1461027e578063bff9e65f146102a157600080fd5b80638ea981171461023e578063985447101461025157600080fd5b8063265f01731161012457806361728f391161010957806361728f39146102025780638824f5a71461020b5780638da5cb5b1461021e57600080fd5b8063265f0173146101d957806342619f66146101ec57600080fd5b806309c1ba2e146101565780630a009097146101875780631fe543e3146101a757806324f74697146101bc575b600080fd5b60005461017190600160a01b900467ffffffffffffffff1681565b60405161017e919061081a565b60405180910390f35b60005461019a906001600160a01b031681565b60405161017e919061085e565b6101ba6101b5366004610994565b6102f4565b005b6002546101cc9063ffffffff1681565b60405161017e91906109f8565b6101ba6101e7366004610a1a565b610391565b6101f560035481565b60405161017e9190610a41565b6101f560015481565b6101ba610219366004610a64565b6103ff565b600554610231906001600160a01b031681565b60405161017e9190610a8e565b6101ba61024c366004610a1a565b610462565b6101ba61025f366004610a9c565b6104d0565b6002546101cc906601000000000000900463ffffffff1681565b60025461029490640100000000900461ffff1681565b60405161017e9190610ac7565b600754610231906001600160a01b031681565b6101ba610514565b6101f560045481565b6101ba6102d3366004610af0565b610657565b6101f560065481565b6101ba6102ef366004610b28565b6106d8565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461038357337f00000000000000000000000000000000000000000000000000000000000000006040517f1cf993f400000000000000000000000000000000000000000000000000000000815260040161037a929190610b49565b60405180910390fd5b61038d8282610743565b5050565b6005546001600160a01b03163314806103b457506007546001600160a01b031633145b6103d05760405162461bcd60e51b815260040161037a90610b6b565b6007805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b6005546001600160a01b031633148061042257506007546001600160a01b031633145b61043e5760405162461bcd60e51b815260040161037a90610b6b565b6002805461ffff9092166401000000000265ffff0000000019909216919091179055565b6005546001600160a01b031633148061048557506007546001600160a01b031633145b6104a15760405162461bcd60e51b815260040161037a90610b6b565b6000805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b6005546001600160a01b03163314806104f357506007546001600160a01b031633145b61050f5760405162461bcd60e51b815260040161037a90610b6b565b600155565b6005546001600160a01b031633148061053757506007546001600160a01b031633145b6105535760405162461bcd60e51b815260040161037a90610b6b565b6000546001546002546040517f5d3b1d300000000000000000000000000000000000000000000000000000000081526001600160a01b03841693635d3b1d30936105d7939092600160a01b90920467ffffffffffffffff1691640100000000820461ffff169163ffffffff8082169266010000000000009092041690600401610ba6565b6020604051808303816000875af11580156105f6573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061061a9190610bfd565b60048190556040517f266c84dd4be4409a1875fe8504433bb6b885408c1f5b34e8ecae604804927ba49161064d91610a41565b60405180910390a1565b6005546001600160a01b031633148061067a57506007546001600160a01b031633145b6106965760405162461bcd60e51b815260040161037a90610b6b565b6000805467ffffffffffffffff909216600160a01b027fffffffff0000000000000000ffffffffffffffffffffffffffffffffffffffff909216919091179055565b6005546001600160a01b03163314806106fb57506007546001600160a01b031633145b6107175760405162461bcd60e51b815260040161037a90610b6b565b6002805463ffffffff90921666010000000000000269ffffffff00000000000019909216919091179055565b6127108160008151811061075957610759610c1e565b602002602001015161076b9190610c4a565b61077790612710610c74565b600355600754604080517f6be4097c00000000000000000000000000000000000000000000000000000000815290516001600160a01b0390921691636be4097c916004808201926020929091908290030181865afa1580156107dd573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906108019190610bfd565b6006555050565b67ffffffffffffffff81165b82525050565b602081016108288284610808565b92915050565b60006001600160a01b038216610828565b60006108288261082e565b60006108288261083f565b6108148161084a565b602081016108288284610855565b805b811461087957600080fd5b50565b80356108288161086c565b634e487b7160e01b600052604160045260246000fd5b601f19601f830116810181811067ffffffffffffffff821117156108c3576108c3610887565b6040525050565b60006108d560405190565b90506108e1828261089d565b919050565b600067ffffffffffffffff82111561090057610900610887565b5060209081020190565b600061091d610918846108e6565b6108ca565b8381529050602080820190840283018581111561093c5761093c600080fd5b835b8181101561095e57610950878261087c565b83526020928301920161093e565b5050509392505050565b600082601f83011261097c5761097c600080fd5b813561098c84826020860161090a565b949350505050565b600080604083850312156109aa576109aa600080fd5b60006109b6858561087c565b925050602083013567ffffffffffffffff8111156109d6576109d6600080fd5b6109e285828601610968565b9150509250929050565b63ffffffff8116610814565b6020810161082882846109ec565b61086e8161082e565b803561082881610a06565b600060208284031215610a2f57610a2f600080fd5b600061098c8484610a0f565b80610814565b602081016108288284610a3b565b61ffff811661086e565b803561082881610a4f565b600060208284031215610a7957610a79600080fd5b600061098c8484610a59565b6108148161082e565b602081016108288284610a85565b600060208284031215610ab157610ab1600080fd5b600061098c848461087c565b61ffff8116610814565b602081016108288284610abd565b67ffffffffffffffff811661086e565b803561082881610ad5565b600060208284031215610b0557610b05600080fd5b600061098c8484610ae5565b63ffffffff811661086e565b803561082881610b11565b600060208284031215610b3d57610b3d600080fd5b600061098c8484610b1d565b60408101610b578285610a85565b610b646020830184610a85565b9392505050565b6020808252810161082881601581527f4f6e6c79206f776e6572206f72206c6f74746572790000000000000000000000602082015260400190565b60a08101610bb48288610a3b565b610bc16020830187610808565b610bce6040830186610abd565b610bdb60608301856109ec565b610be860808301846109ec565b9695505050505050565b80516108288161086c565b600060208284031215610c1257610c12600080fd5b600061098c8484610bf2565b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052601260045260246000fd5b600082610c5957610c59610c34565b500690565b634e487b7160e01b600052601160045260246000fd5b60008219821115610c8757610c87610c5e565b50019056fea2646970667358221220ce374707c4304d60f8582106fa77f057921bd5ad0ef6a4d88f5c95aaa0c439bd64736f6c634300080d0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101515760003560e01c80638ea98117116100cd578063e0c8628911610081578063ea7b4f7711610066578063ea7b4f77146102c5578063eed8e1ee146102d8578063ef7525b5146102e157600080fd5b8063e0c86289146102b4578063e89e106a146102bc57600080fd5b8063a2596a6a116100b2578063a2596a6a14610264578063b0fb162f1461027e578063bff9e65f146102a157600080fd5b80638ea981171461023e578063985447101461025157600080fd5b8063265f01731161012457806361728f391161010957806361728f39146102025780638824f5a71461020b5780638da5cb5b1461021e57600080fd5b8063265f0173146101d957806342619f66146101ec57600080fd5b806309c1ba2e146101565780630a009097146101875780631fe543e3146101a757806324f74697146101bc575b600080fd5b60005461017190600160a01b900467ffffffffffffffff1681565b60405161017e919061081a565b60405180910390f35b60005461019a906001600160a01b031681565b60405161017e919061085e565b6101ba6101b5366004610994565b6102f4565b005b6002546101cc9063ffffffff1681565b60405161017e91906109f8565b6101ba6101e7366004610a1a565b610391565b6101f560035481565b60405161017e9190610a41565b6101f560015481565b6101ba610219366004610a64565b6103ff565b600554610231906001600160a01b031681565b60405161017e9190610a8e565b6101ba61024c366004610a1a565b610462565b6101ba61025f366004610a9c565b6104d0565b6002546101cc906601000000000000900463ffffffff1681565b60025461029490640100000000900461ffff1681565b60405161017e9190610ac7565b600754610231906001600160a01b031681565b6101ba610514565b6101f560045481565b6101ba6102d3366004610af0565b610657565b6101f560065481565b6101ba6102ef366004610b28565b6106d8565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461038357337f00000000000000000000000000000000000000000000000000000000000000006040517f1cf993f400000000000000000000000000000000000000000000000000000000815260040161037a929190610b49565b60405180910390fd5b61038d8282610743565b5050565b6005546001600160a01b03163314806103b457506007546001600160a01b031633145b6103d05760405162461bcd60e51b815260040161037a90610b6b565b6007805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b6005546001600160a01b031633148061042257506007546001600160a01b031633145b61043e5760405162461bcd60e51b815260040161037a90610b6b565b6002805461ffff9092166401000000000265ffff0000000019909216919091179055565b6005546001600160a01b031633148061048557506007546001600160a01b031633145b6104a15760405162461bcd60e51b815260040161037a90610b6b565b6000805473ffffffffffffffffffffffffffffffffffffffff19166001600160a01b0392909216919091179055565b6005546001600160a01b03163314806104f357506007546001600160a01b031633145b61050f5760405162461bcd60e51b815260040161037a90610b6b565b600155565b6005546001600160a01b031633148061053757506007546001600160a01b031633145b6105535760405162461bcd60e51b815260040161037a90610b6b565b6000546001546002546040517f5d3b1d300000000000000000000000000000000000000000000000000000000081526001600160a01b03841693635d3b1d30936105d7939092600160a01b90920467ffffffffffffffff1691640100000000820461ffff169163ffffffff8082169266010000000000009092041690600401610ba6565b6020604051808303816000875af11580156105f6573d6000803e3d6000fd5b505050506040513d601f19601f8201168201806040525081019061061a9190610bfd565b60048190556040517f266c84dd4be4409a1875fe8504433bb6b885408c1f5b34e8ecae604804927ba49161064d91610a41565b60405180910390a1565b6005546001600160a01b031633148061067a57506007546001600160a01b031633145b6106965760405162461bcd60e51b815260040161037a90610b6b565b6000805467ffffffffffffffff909216600160a01b027fffffffff0000000000000000ffffffffffffffffffffffffffffffffffffffff909216919091179055565b6005546001600160a01b03163314806106fb57506007546001600160a01b031633145b6107175760405162461bcd60e51b815260040161037a90610b6b565b6002805463ffffffff90921666010000000000000269ffffffff00000000000019909216919091179055565b6127108160008151811061075957610759610c1e565b602002602001015161076b9190610c4a565b61077790612710610c74565b600355600754604080517f6be4097c00000000000000000000000000000000000000000000000000000000815290516001600160a01b0390921691636be4097c916004808201926020929091908290030181865afa1580156107dd573d6000803e3d6000fd5b505050506040513d601f19601f820116820180604052508101906108019190610bfd565b6006555050565b67ffffffffffffffff81165b82525050565b602081016108288284610808565b92915050565b60006001600160a01b038216610828565b60006108288261082e565b60006108288261083f565b6108148161084a565b602081016108288284610855565b805b811461087957600080fd5b50565b80356108288161086c565b634e487b7160e01b600052604160045260246000fd5b601f19601f830116810181811067ffffffffffffffff821117156108c3576108c3610887565b6040525050565b60006108d560405190565b90506108e1828261089d565b919050565b600067ffffffffffffffff82111561090057610900610887565b5060209081020190565b600061091d610918846108e6565b6108ca565b8381529050602080820190840283018581111561093c5761093c600080fd5b835b8181101561095e57610950878261087c565b83526020928301920161093e565b5050509392505050565b600082601f83011261097c5761097c600080fd5b813561098c84826020860161090a565b949350505050565b600080604083850312156109aa576109aa600080fd5b60006109b6858561087c565b925050602083013567ffffffffffffffff8111156109d6576109d6600080fd5b6109e285828601610968565b9150509250929050565b63ffffffff8116610814565b6020810161082882846109ec565b61086e8161082e565b803561082881610a06565b600060208284031215610a2f57610a2f600080fd5b600061098c8484610a0f565b80610814565b602081016108288284610a3b565b61ffff811661086e565b803561082881610a4f565b600060208284031215610a7957610a79600080fd5b600061098c8484610a59565b6108148161082e565b602081016108288284610a85565b600060208284031215610ab157610ab1600080fd5b600061098c848461087c565b61ffff8116610814565b602081016108288284610abd565b67ffffffffffffffff811661086e565b803561082881610ad5565b600060208284031215610b0557610b05600080fd5b600061098c8484610ae5565b63ffffffff811661086e565b803561082881610b11565b600060208284031215610b3d57610b3d600080fd5b600061098c8484610b1d565b60408101610b578285610a85565b610b646020830184610a85565b9392505050565b6020808252810161082881601581527f4f6e6c79206f776e6572206f72206c6f74746572790000000000000000000000602082015260400190565b60a08101610bb48288610a3b565b610bc16020830187610808565b610bce6040830186610abd565b610bdb60608301856109ec565b610be860808301846109ec565b9695505050505050565b80516108288161086c565b600060208284031215610c1257610c12600080fd5b600061098c8484610bf2565b634e487b7160e01b600052603260045260246000fd5b634e487b7160e01b600052601260045260246000fd5b600082610c5957610c59610c34565b500690565b634e487b7160e01b600052601160045260246000fd5b60008219821115610c8757610c87610c5e565b50019056fea2646970667358221220ce374707c4304d60f8582106fa77f057921bd5ad0ef6a4d88f5c95aaa0c439bd64736f6c634300080d0033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {},
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 26514,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "coordinator",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_contract(VRFCoordinatorV2Interface)1560"
+      },
+      {
+        "astId": 26516,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "subscriptionId",
+        "offset": 20,
+        "slot": "0",
+        "type": "t_uint64"
+      },
+      {
+        "astId": 26518,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "keyHash",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_bytes32"
+      },
+      {
+        "astId": 26521,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "callbackGasLimit",
+        "offset": 0,
+        "slot": "2",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 26524,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "requestConfirmations",
+        "offset": 4,
+        "slot": "2",
+        "type": "t_uint16"
+      },
+      {
+        "astId": 26527,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "wordsPerTime",
+        "offset": 6,
+        "slot": "2",
+        "type": "t_uint32"
+      },
+      {
+        "astId": 26529,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "randomResult",
+        "offset": 0,
+        "slot": "3",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 26531,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "s_requestId",
+        "offset": 0,
+        "slot": "4",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 26533,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "owner",
+        "offset": 0,
+        "slot": "5",
+        "type": "t_address"
+      },
+      {
+        "astId": 26535,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "latestLotteryId",
+        "offset": 0,
+        "slot": "6",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 26537,
+        "contract": "contracts/lucky-box/RandomNumberGeneratorV2.sol:RandomNumberGeneratorV2",
+        "label": "degisLottery",
+        "offset": 0,
+        "slot": "7",
+        "type": "t_address"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_bytes32": {
+        "encoding": "inplace",
+        "label": "bytes32",
+        "numberOfBytes": "32"
+      },
+      "t_contract(VRFCoordinatorV2Interface)1560": {
+        "encoding": "inplace",
+        "label": "contract VRFCoordinatorV2Interface",
+        "numberOfBytes": "20"
+      },
+      "t_uint16": {
+        "encoding": "inplace",
+        "label": "uint16",
+        "numberOfBytes": "2"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint32": {
+        "encoding": "inplace",
+        "label": "uint32",
+        "numberOfBytes": "4"
+      },
+      "t_uint64": {
+        "encoding": "inplace",
+        "label": "uint64",
+        "numberOfBytes": "8"
+      }
+    }
+  }
+}

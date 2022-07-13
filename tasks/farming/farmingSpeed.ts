@@ -136,14 +136,13 @@ const bonus_8 = toWei("0.00463"); // 400 deg / day
 // Address: 0xEAF7BbBa1BDb671Ca232E2998B10c3f207c7f521
 
 const basic_9 = toWei("0.01929"); // 1667 deg / day
-const bonus_9 = toWei("0.00385")  /// 333 deg / day
-
+const bonus_9 = toWei("0.00385"); /// 333 deg / day
 
 // Pool Id 10
 // Token: IM_AVAX_16.5_L_1607
 // Address: 0x1FB6D47Add3C7CE818DE1fEA3259cB31B5403F69
 
-const basic_10 =  toWei("0.02315"); // 2000 deg / day
+const basic_10 = toWei("0.02315"); // 2000 deg / day
 const bonus_10 = toWei("0.00463"); // 400 deg / day
 
 // Pool Id 11
@@ -157,7 +156,19 @@ const bonus_11 = toWei("0.00463"); // 400 deg / day
 // Token: AVAX_16.5_L_1607
 // Address:
 
+const basic_12 = toWei("0.01929"); // 1667 deg / day
+const bonus_12 = toWei("0.00385"); /// 333 deg / day
 
 // Pool Id 13
 // Token: JOE_0.24_L_1607
-// Address: 
+// Address:
+
+const basic_13 = toWei("0.01929"); // 1667 deg / day
+const bonus_13 = toWei("0.00385"); /// 333 deg / day
+
+// Pool Id 14
+// Token: IM_XAVA_0.42_L_2807
+// Address:
+// npx hardhat setFarmingPoolDegisReward --network avax --id 14 --reward 0.02315 --bonus 0.00463    
+const basic_14 = toWei("0.02315"); // 2000 deg / day
+const bonus_14 = toWei("0.00463"); // 400 deg / day
