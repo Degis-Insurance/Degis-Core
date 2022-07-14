@@ -116,6 +116,12 @@
 			"deadline": "1656561600",
 			"lptoken": "0x8989369917737CDF8bE1F137414162C18E338156",
 			"pairAddress": "0x0Cc885bA9de677f59EDE136061DbE08909e3f0d0"
+		},
+		"DCAR_0.33_L_1507": {
+			"policyToken": "0x7BEBcC8A3aB9E518de37cA22a78eD07e1b745602",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1657800000",
+			"lptoken": "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50"
 		}
 	},
 	"localhost": {},

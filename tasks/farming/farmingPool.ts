@@ -71,14 +71,14 @@ task("addFarmingPool", "Add new farming pool")
     console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
     console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
 
-    // const tx = await farmingPool.add(
-    //   lptokenAddress,
-    //   parseUnits(basicDegisPerSecond),
-    //   parseUnits(bonusDegisPerSecond),
-    //   false,
-    //   doubleRewardTokenAddress
-    // );
-    // console.log("tx details: ", await tx.wait());
+    const tx = await farmingPool.add(
+      lptokenAddress,
+      parseUnits(basicDegisPerSecond),
+      parseUnits(bonusDegisPerSecond),
+      false,
+      doubleRewardTokenAddress
+    );
+    console.log("tx details: ", await tx.wait());
 
     // Check the result
     const poolId = await farmingPool.poolMapping(lptokenAddress);
@@ -404,9 +404,14 @@ task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
     erc20Address
   );
 
-  const address = "";
-  const amount = "0";
+  const doubleRewardContractAddress = addressList[network.name].DoubleRewarder;
 
-  const tx = await erc20Contract.mint(address, parseUnits(amount));
+  const address = "";
+  const amount = "1000000";
+
+  const tx = await erc20Contract.mint(
+    doubleRewardContractAddress,
+    parseUnits(amount)
+  );
   console.log("Tx details: ", await tx.wait());
 });

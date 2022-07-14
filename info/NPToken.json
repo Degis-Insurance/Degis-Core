@@ -209,6 +209,11 @@
 			"address": "0x9717a44cAdB37E7F275ae445571d5032D2Fd6d55",
 			"deadline": 1656648000,
 			"settleTime": 1656662400
+		},
+		"DCAR_0.33_L_1507": {
+			"address": "0x7BEBcC8A3aB9E518de37cA22a78eD07e1b745602",
+			"deadline": 1657872000,
+			"settleTime": 1657875600
 		}
 	},
 	"localhost": {}

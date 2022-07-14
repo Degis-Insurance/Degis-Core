@@ -242,6 +242,13 @@
 			"poolId": 13,
 			"reward": "0.1",
 			"bonus": "0.0"
+		},
+		"14": {
+			"name": "IM_DCAR_0.33_L_1507",
+			"address": "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50",
+			"poolId": 14,
+			"reward": "0.0",
+			"bonus": "0.0"
 		}
 	},
 	"localhost": {

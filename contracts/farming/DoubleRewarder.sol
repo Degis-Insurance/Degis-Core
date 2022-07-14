@@ -54,6 +54,9 @@ contract DoubleRewarder is OwnableUpgradeable {
     /// @notice Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
 
+    mapping(address => uint256) public userPendingReward;
+    mapping(address => bool) public claimable;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -63,6 +66,10 @@ contract DoubleRewarder is OwnableUpgradeable {
     event NewRewardTokenAdded(address rewardToken);
 
     event RewardRateUpdated(uint256 oldRate, uint256 newRate);
+
+    event RewardClaimable(address rewardToken);
+
+    event ClaimReward(address rewardToken, address user, uint256 amount);
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************** Modifiers *************************************** //
@@ -85,6 +92,15 @@ contract DoubleRewarder is OwnableUpgradeable {
     function initialize(address _farmingPool) public initializer {
         __Ownable_init();
         farmingPool = IFarmingPool(_farmingPool);
+    }
+
+    /**
+     * @notice Make a reward token claimable
+     */
+    function setClaimable(address _rewardToken) external onlyOwner {
+        claimable[_rewardToken] = true;
+
+        emit RewardClaimable(_rewardToken);
     }
 
     /**
@@ -166,17 +182,23 @@ contract DoubleRewarder is OwnableUpgradeable {
         pools[_rewardToken].rewardPerSecond = _reward;
     }
 
-    function addRewardToken(address _token, address _lpToken)
+    /**
+     * @notice Add a new reward token
+     *
+     * @param _rewardToken Reward token address
+     * @param _lpToken     LP token address
+     */
+    function addRewardToken(address _rewardToken, address _lpToken)
         external
         onlyOwner
     {
-        require(pools[_token].lastRewardTimestamp == 0, "Already exist");
+        require(pools[_rewardToken].lastRewardTimestamp == 0, "Already exist");
 
-        supportedRewardToken[_token] = true;
+        supportedRewardToken[_rewardToken] = true;
 
-        pools[_token].lpToken = _lpToken;
+        pools[_rewardToken].lpToken = _lpToken;
 
-        emit NewRewardTokenAdded(_token);
+        emit NewRewardTokenAdded(_rewardToken);
     }
 
     /**
@@ -219,17 +241,41 @@ contract DoubleRewarder is OwnableUpgradeable {
         user.rewardDebt = (_lpAmount * pool.accTokenPerShare) / SCALE;
 
         if (prevAmount > 0) {
-            uint256 actualReward = _safeRewardTransfer(
-                _rewardToken,
-                _user,
-                pending
-            );
+            // uint256 actualReward = _safeRewardTransfer(
+            //     _rewardToken,
+            //     _user,
+            //     pending
+            // );
 
-            console.log("actual reward", actualReward);
-            console.log("pending result", pending);
+            // Record the reward and distribute later
+            userPendingReward[msg.sender] += pending;
 
-            emit DistributeReward(_user, actualReward);
+            emit DistributeReward(_user, pending);
         }
+    }
+
+    /**
+     * @notice Claim pending reward
+     *         During IDO protection, the insured token have not been issued yet
+     *         So we need to claim the pending reward later (after the farming)
+     *
+     * @param _rewardToken Reward token address
+     */
+    function claim(address _rewardToken) external supported(_rewardToken) {
+        require(claimable[_rewardToken], "Not claimable");
+
+        uint256 pending = userPendingReward[msg.sender];
+
+        uint256 actualAmount = _safeRewardTransfer(
+            _rewardToken,
+            msg.sender,
+            pending
+        );
+
+        // Only record those reward really been transferred
+        userPendingReward[msg.sender] -= actualAmount;
+
+        emit ClaimReward(_rewardToken, msg.sender, actualAmount);
     }
 
     /**

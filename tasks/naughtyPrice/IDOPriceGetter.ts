@@ -57,8 +57,8 @@ task("addIDOPriceFeed", "Deploy a new naughty price token")
       policyTokenName,
       joePair,
       18,
-      1200,
-      1656648000
+      600,
+      1657868400
     );
 
     console.log("Tx details: ", await tx.wait());
