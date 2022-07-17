@@ -19,4 +19,4 @@ task: finishILM
 
 4. Normal Naughty Price Farming Pool and later operations
 
-//npx hardhat stopILM --network avax --name XAVA_0.42_L_2807 --policytoken 0xf74A720781BD0F504181a6755abA1BdA2D6B4655 --deadline 1658908800  
+//npx hardhat stopILM --network avax --name JOE_0.29_L_3107 --policytoken 0x69dAF2F6346CbD17eef5677500E0298da45d05CE --deadline 1659168000  

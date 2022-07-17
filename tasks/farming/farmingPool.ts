@@ -34,12 +34,17 @@ task("addFarmingPool", "Add new farming pool")
     const lptokenAddress = taskArgs.address;
     const basicDegisPerSecond = taskArgs.reward;
     const bonusDegisPerSecond = taskArgs.bonus;
-    const doubleRewardTokenAddress = taskArgs.doublereward;
+    const doubleRewardTokenAddress =
+      taskArgs.doublereward == "0"
+        ? ethers.constants.AddressZero
+        : taskArgs.doublereward;
 
     console.log("The pool name is: ", poolName);
     console.log("Pool address to be added: ", lptokenAddress);
     console.log("Basic reward speed: ", basicDegisPerSecond, "degis/second");
     console.log("Bonus reward speed: ", bonusDegisPerSecond, "degis/second");
+
+    console.log("Double reward token address: ", doubleRewardTokenAddress);
 
     const { network } = hre;
 
@@ -71,14 +76,14 @@ task("addFarmingPool", "Add new farming pool")
     console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
     console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
 
-    const tx = await farmingPool.add(
-      lptokenAddress,
-      parseUnits(basicDegisPerSecond),
-      parseUnits(bonusDegisPerSecond),
-      false,
-      doubleRewardTokenAddress
-    );
-    console.log("tx details: ", await tx.wait());
+    // const tx = await farmingPool.add(
+    //   lptokenAddress,
+    //   parseUnits(basicDegisPerSecond),
+    //   parseUnits(bonusDegisPerSecond),
+    //   false,
+    //   doubleRewardTokenAddress
+    // );
+    // console.log("tx details: ", await tx.wait());
 
     // Check the result
     const poolId = await farmingPool.poolMapping(lptokenAddress);
@@ -324,8 +329,8 @@ task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   }
 );
 
-task("addDoubleReward", "Add double reward to a farming pool")
-  .addParam("token", "Token address", null, types.string)
+task("addDoubleRewardToken", "Add double reward to a farming pool")
+  .addParam("token", "Reward token address", null, types.string)
   .addParam("lptoken", "LPToken address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
@@ -414,4 +419,91 @@ task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
     parseUnits(amount)
   );
   console.log("Tx details: ", await tx.wait());
+});
+
+task("setClaimable", "Set double reward token claimable").setAction(
+  async (_, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
+    const doubleRewarder = new DoubleRewarder__factory(dev_account).attach(
+      doubleRewarderAddress
+    );
+
+    const erc20Address = addressList[network.name].MockERC20;
+    const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
+      erc20Address
+    );
+
+    const balance = await erc20Contract.balanceOf(doubleRewarderAddress);
+
+    console.log("Balance: ", formatEther(balance));
+
+    const tx = await doubleRewarder.setClaimable(erc20Address);
+    console.log("Tx details: ", await tx.wait());
+  }
+);
+
+task("tt", "tt").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
+  const doubleRewarder = new DoubleRewarder__factory(dev_account).attach(
+    doubleRewarderAddress
+  );
+
+  const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
+  const pool: FarmingPoolUpgradeable = new FarmingPoolUpgradeable__factory(
+    dev_account
+  ).attach(farmingPoolAddress);
+
+  const rewardToken = "0x62B08d3173960B54C6A4a5d8C937108AbC6D4EAF";
+
+  const lptoken = await doubleRewarder.pools(rewardToken);
+  console.log("lp token", lptoken.lpToken);
+  console.log("speed", formatEther(lptoken.rewardPerSecond));
+  console.log("acc", formatEther(lptoken.accTokenPerShare));
+  console.log("last", lptoken.lastRewardTimestamp.toString());
+
+  const user = await doubleRewarder.userInfo(
+    "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
+  );
+  console.log("user amount", user.amount.toString());
+  console.log("user reward debt", user.rewardDebt.toString());
+
+  const rewarder = await pool.doubleRewarder(14);
+  console.log("rewarder", rewarder);
+
+  const pending = await doubleRewarder.pendingReward(
+    rewardToken,
+    "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
+  );
+  console.log("pending", pending.toString());
+
+  const erc20Address = "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50";
+  const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
+    erc20Address
+  );
+
+  const balance = await erc20Contract.balanceOf(pool.address);
+  console.log("balance", balance.toString());
+
+  const userPending = await doubleRewarder.userPendingReward(
+    "0xf15051fac04bdfdaf666806d1b4086ed3221d773",
+    erc20Address
+  );
+  console.log("userPending", userPending.toString());
+
+  // const tx = await doubleRewarder.clearRewardDebt(
+  //   "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
+  // );
+  // console.log("tx", await tx.wait());
 });

@@ -54,7 +54,10 @@ contract DoubleRewarder is OwnableUpgradeable {
     /// @notice Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
 
-    mapping(address => uint256) public userPendingReward;
+    // User address => reward token address => pending reward
+    mapping(address => mapping(address => uint256)) public userPendingReward;
+
+    // Reward token address => claimable
     mapping(address => bool) public claimable;
 
     // ---------------------------------------------------------------------------------------- //
@@ -248,7 +251,7 @@ contract DoubleRewarder is OwnableUpgradeable {
             // );
 
             // Record the reward and distribute later
-            userPendingReward[msg.sender] += pending;
+            userPendingReward[_user][_rewardToken] += pending;
 
             emit DistributeReward(_user, pending);
         }
@@ -264,7 +267,7 @@ contract DoubleRewarder is OwnableUpgradeable {
     function claim(address _rewardToken) external supported(_rewardToken) {
         require(claimable[_rewardToken], "Not claimable");
 
-        uint256 pending = userPendingReward[msg.sender];
+        uint256 pending = userPendingReward[msg.sender][_rewardToken];
 
         uint256 actualAmount = _safeRewardTransfer(
             _rewardToken,
@@ -273,7 +276,7 @@ contract DoubleRewarder is OwnableUpgradeable {
         );
 
         // Only record those reward really been transferred
-        userPendingReward[msg.sender] -= actualAmount;
+        userPendingReward[msg.sender][_rewardToken] -= actualAmount;
 
         emit ClaimReward(_rewardToken, msg.sender, actualAmount);
     }
@@ -309,5 +312,9 @@ contract DoubleRewarder is OwnableUpgradeable {
             address(msg.sender),
             IERC20(_token).balanceOf(address(this))
         );
+    }
+
+    function clearRewardDebt(address user) external onlyOwner {
+        userInfo[user].rewardDebt = 0;
     }
 }

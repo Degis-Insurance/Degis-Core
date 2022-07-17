@@ -79,6 +79,20 @@
 			"deadline": "1657699200",
 			"lptoken": "0x8FbFAcd0396cD5C242011BC9d1a3940faA6D23A1",
 			"pairAddress": "0x7d90E3b14dF279d8532E4F7868A063376060e584"
+		},
+		"AVAX_19.7_L_3107": {
+			"policyToken": "0x26611255B9B40C3bEDf2c395860fE91e23256f32",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1657958400",
+			"lptoken": "0x94DCDE2472c1F05EA1bBC60E000Fc2f817755c29",
+			"pairAddress": "0x1e9BEC3B25adb786e737C0C574B534118F8035f0"
+		},
+		"JOE_0.29_L_3107": {
+			"policyToken": "0x69dAF2F6346CbD17eef5677500E0298da45d05CE",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1657958400",
+			"lptoken": "0xdC1Be03A71c438Cee28321E7E8C2643c5B9a9aE8",
+			"pairAddress": "0x3f55D634d4a80d3a415e69a64555A46047b4EAb5"
 		}
 	},
 	"avaxTest": {
@@ -121,7 +135,8 @@
 			"policyToken": "0x7BEBcC8A3aB9E518de37cA22a78eD07e1b745602",
 			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
 			"deadline": "1657800000",
-			"lptoken": "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50"
+			"lptoken": "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50",
+			"pairAddress": "0xe13cd179CaE44223bD1f55044aB8D2A34Dda4FCA"
 		}
 	},
 	"localhost": {},
