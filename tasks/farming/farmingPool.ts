@@ -43,7 +43,6 @@ task("addFarmingPool", "Add new farming pool")
     console.log("Pool address to be added: ", lptokenAddress);
     console.log("Basic reward speed: ", basicDegisPerSecond, "degis/second");
     console.log("Bonus reward speed: ", bonusDegisPerSecond, "degis/second");
-
     console.log("Double reward token address: ", doubleRewardTokenAddress);
 
     const { network } = hre;
@@ -76,14 +75,14 @@ task("addFarmingPool", "Add new farming pool")
     console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
     console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
 
-    // const tx = await farmingPool.add(
-    //   lptokenAddress,
-    //   parseUnits(basicDegisPerSecond),
-    //   parseUnits(bonusDegisPerSecond),
-    //   false,
-    //   doubleRewardTokenAddress
-    // );
-    // console.log("tx details: ", await tx.wait());
+    const tx = await farmingPool.add(
+      lptokenAddress,
+      parseUnits(basicDegisPerSecond),
+      parseUnits(bonusDegisPerSecond),
+      false,
+      doubleRewardTokenAddress
+    );
+    console.log("tx details: ", await tx.wait());
 
     // Check the result
     const poolId = await farmingPool.poolMapping(lptokenAddress);

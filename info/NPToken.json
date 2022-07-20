@@ -224,6 +224,16 @@
 			"address": "0x7BEBcC8A3aB9E518de37cA22a78eD07e1b745602",
 			"deadline": 1657872000,
 			"settleTime": 1657875600
+		},
+		"AVAX_25.0_L_2007": {
+			"address": "0x05cD6e33f7B7e960a2ed626EDa03D01dacf20581",
+			"deadline": 1658304000,
+			"settleTime": 1658304000
+		},
+		"DCAR_0.25_L_2007": {
+			"address": "0x37b87C7eF85417e2FeFe1e1899c5382B0cdAF990",
+			"deadline": 1658304000,
+			"settleTime": 1658304000
 		}
 	},
 	"localhost": {}

@@ -137,6 +137,19 @@
 			"deadline": "1657800000",
 			"lptoken": "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50",
 			"pairAddress": "0xe13cd179CaE44223bD1f55044aB8D2A34Dda4FCA"
+		},
+		"AVAX_25.0_L_2007": {
+			"policyToken": "0x05cD6e33f7B7e960a2ed626EDa03D01dacf20581",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1658296800",
+			"lptoken": "0xF234c3124C63a663e997d192e7977B00EeB1a4a4"
+		},
+		"DCAR_0.25_L_2007": {
+			"policyToken": "0x37b87C7eF85417e2FeFe1e1899c5382B0cdAF990",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1658296800",
+			"lptoken": "0xAEf14996b8d37bd5C7cbACDA06D101D85A89A58c",
+			"pairAddress": "0xfEcca93E5bBBa4D76C1732d758DF8827eE0f327F"
 		}
 	},
 	"localhost": {},

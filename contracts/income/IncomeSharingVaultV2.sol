@@ -134,13 +134,13 @@ contract IncomeSharingVaultV2 is
                 address(this)
             );
 
-            if (currentRewardBalance == lastRewardBalance[_poolId]) return 0;
+            if (currentRewardBalance != lastRewardBalance[_poolId]) {
+                uint256 newReward = currentRewardBalance -
+                    lastRewardBalance[_poolId];
 
-            uint256 newReward = currentRewardBalance -
-                lastRewardBalance[_poolId];
-
-            accRewardPerShare += (newReward * SCALE) / pool.totalAmount;
-
+                accRewardPerShare += (newReward * SCALE) / pool.totalAmount;
+            }
+            
             uint256 pending = (user.totalAmount * accRewardPerShare) /
                 SCALE -
                 user.rewardDebt;
@@ -319,6 +319,7 @@ contract IncomeSharingVaultV2 is
         user.rewardDebt = (user.totalAmount * pool.accRewardPerShare) / SCALE;
 
         uint256 reward = _safeRewardTransfer(pool.rewardToken, _to, pending);
+        lastRewardBalance[_poolId] -= reward;
 
         emit Harvest(msg.sender, _poolId, reward);
     }
@@ -340,7 +341,7 @@ contract IncomeSharingVaultV2 is
         );
 
         if (
-            currentRewardBalance <= lastRewardBalance[_poolId] ||
+            currentRewardBalance == lastRewardBalance[_poolId] ||
             totalAmount == 0
         ) {
             pool.lastRewardTimestamp = block.timestamp;
@@ -357,6 +358,12 @@ contract IncomeSharingVaultV2 is
         lastRewardBalance[_poolId] = currentRewardBalance;
 
         emit PoolUpdated(_poolId, pool.accRewardPerShare);
+    }
+
+    function updateLastRewardBalance(uint256 _poolId) external onlyOwner {
+        uint256 currentRewardBalance = IERC20(pools[_poolId].rewardToken)
+            .balanceOf(address(this));
+        lastRewardBalance[_poolId] = currentRewardBalance;
     }
 
     // ---------------------------------------------------------------------------------------- //

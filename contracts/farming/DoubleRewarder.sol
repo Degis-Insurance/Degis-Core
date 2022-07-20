@@ -44,14 +44,14 @@ contract DoubleRewarder is OwnableUpgradeable {
         uint256 lastRewardTimestamp;
     }
 
-    /// @notice Info of the poolInfo.
+    // Reward token address => pool info
     mapping(address => PoolInfo) public pools;
 
     struct UserInfo {
         uint256 amount;
         uint256 rewardDebt;
     }
-    /// @notice Info of each user that stakes LP tokens.
+    // User address => user info
     mapping(address => UserInfo) public userInfo;
 
     // User address => reward token address => pending reward
@@ -123,18 +123,22 @@ contract DoubleRewarder is OwnableUpgradeable {
         require(pools[_token].lastRewardTimestamp > 0, "Non exist pool");
 
         PoolInfo memory pool = pools[_token];
-        UserInfo storage user = userInfo[_user];
+        UserInfo memory user = userInfo[_user];
 
         uint256 accTokenPerShare = pool.accTokenPerShare;
 
         uint256 lpSupply = IERC20(pool.lpToken).balanceOf(address(farmingPool));
 
-        if (block.timestamp > pool.lastRewardTimestamp && lpSupply != 0) {
-            uint256 timeElapsed = block.timestamp - pool.lastRewardTimestamp;
+        // If still distributing reward
+        if (pool.rewardPerSecond > 0) {
+            if (block.timestamp > pool.lastRewardTimestamp && lpSupply > 0) {
+                uint256 timeElapsed = block.timestamp -
+                    pool.lastRewardTimestamp;
 
-            uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
+                uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
 
-            accTokenPerShare += (tokenReward * SCALE) / lpSupply;
+                accTokenPerShare += (tokenReward * SCALE) / lpSupply;
+            }
         }
 
         pending = ((user.amount * accTokenPerShare) / SCALE) - user.rewardDebt;
@@ -144,6 +148,7 @@ contract DoubleRewarder is OwnableUpgradeable {
      * @notice Update double reward pool
      *
      * @param _rewardToken Reward token address
+     * @param _lpSupply    LP token balance of farming pool
      */
     function updatePool(address _rewardToken, uint256 _lpSupply)
         public
@@ -151,8 +156,8 @@ contract DoubleRewarder is OwnableUpgradeable {
     {
         PoolInfo storage pool = pools[_rewardToken];
 
-        if (block.timestamp > pool.lastRewardTimestamp) {
-            if (_lpSupply > 0) {
+        if (pool.rewardPerSecond > 0) {
+            if (block.timestamp > pool.lastRewardTimestamp && _lpSupply > 0) {
                 uint256 timeElapsed = block.timestamp -
                     pool.lastRewardTimestamp;
 
@@ -160,9 +165,9 @@ contract DoubleRewarder is OwnableUpgradeable {
 
                 pool.accTokenPerShare += (tokenReward * SCALE) / _lpSupply;
             }
-
-            pool.lastRewardTimestamp = block.timestamp;
         }
+
+        pool.lastRewardTimestamp = block.timestamp;
     }
 
     /**
@@ -212,6 +217,7 @@ contract DoubleRewarder is OwnableUpgradeable {
      * @param _rewardToken Reward token address
      * @param _user        User address
      * @param _lpAmount    LP amount of user
+     * @param _lpSupply    LP token balance of farming pool
      */
     function distributeReward(
         address _lpToken,
@@ -227,8 +233,6 @@ contract DoubleRewarder is OwnableUpgradeable {
         PoolInfo memory pool = pools[_rewardToken];
         UserInfo storage user = userInfo[_user];
 
-        console.log("user amount", user.amount);
-
         // Get pending reward
         uint256 pending = (user.amount * pool.accTokenPerShare) /
             SCALE -
@@ -238,8 +242,6 @@ contract DoubleRewarder is OwnableUpgradeable {
 
         // Effects before interactions to prevent re-entrancy
         user.amount = _lpAmount;
-
-        console.log("user amount after", user.amount);
 
         user.rewardDebt = (_lpAmount * pool.accTokenPerShare) / SCALE;
 

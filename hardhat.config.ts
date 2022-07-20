@@ -52,9 +52,9 @@ import "./tasks/lucky/degisLottery";
 // import "./tasks/governance/VeDEG";
 
 // // Income Sharing tasks
-// import "./tasks/incomeSharing/setAddress";
-// import "./tasks/incomeSharing/pool";
-// import "./tasks/incomeSharing/incomeMaker";
+import "./tasks/incomeSharing/setAddress";
+import "./tasks/incomeSharing/pool";
+import "./tasks/incomeSharing/incomeMaker";
 // import "./tasks/general/index";
 import "./tasks/ILM/startStop";
 

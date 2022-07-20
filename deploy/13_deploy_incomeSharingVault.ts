@@ -29,7 +29,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   };
   const incomeSharingVault = await deploy("IncomeSharingVault", {
-    contract: "IncomeSharingVault",
+    contract: "IncomeSharingVaultV2",
     from: deployer,
     proxy: proxyOptions,
     args: [],
@@ -45,6 +45,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // await hre.run("setIncomeSharingInCore");
   // await hre.run("addIncomeSharingWL");
   // await hre.run("setLotteryAndIncomeInCore")
+
+  // await hre.run("updateLastRewardBalance");
 };
 
 func.tags = ["IncomeSharing"];

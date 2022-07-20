@@ -270,6 +270,20 @@
 			"poolId": 15,
 			"reward": "0.0",
 			"bonus": "0.0"
+		},
+		"16": {
+			"name": "IM_DCAR_0.25_L_2007",
+			"address": "0xAEf14996b8d37bd5C7cbACDA06D101D85A89A58c",
+			"poolId": 16,
+			"reward": "0.0",
+			"bonus": "0.0"
+		},
+		"17": {
+			"name": "DCAR_0.25_L_2007",
+			"address": "0xfEcca93E5bBBa4D76C1732d758DF8827eE0f327F",
+			"poolId": 17,
+			"reward": "0.0",
+			"bonus": "0.0"
 		}
 	},
 	"localhost": {
