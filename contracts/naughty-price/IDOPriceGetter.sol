@@ -176,8 +176,18 @@ contract IDOPriceGetter is OwnableUpgradeable {
         );
     }
 
-    function setPrice(string calldata _policyToken) external onlyOwner {
-        
+    /**
+     * @notice Set price in avax
+     *         Price in avax should be in 1e18
+     *
+     * @param _policyToken Policy token name
+     * @param _price       Price in avax
+     */
+    function setPrice(string calldata _policyToken, uint256 _price)
+        external
+        onlyOwner
+    {
+        priceFeeds[_policyToken].priceAverage = _price;
     }
 
     // ---------------------------------------------------------------------------------------- //

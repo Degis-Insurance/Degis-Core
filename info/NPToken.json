@@ -147,6 +147,11 @@
 			"address": "0x69dAF2F6346CbD17eef5677500E0298da45d05CE",
 			"deadline": 1659168000,
 			"settleTime": 1659254400
+		},
+		"DCAR_0.33_L_0508": {
+			"address": "0x0B354627e8e4ebfA045d4000543f639d8D0B7C62",
+			"deadline": 1659625200,
+			"settleTime": 1659711600
 		}
 	},
 	"avaxTest": {

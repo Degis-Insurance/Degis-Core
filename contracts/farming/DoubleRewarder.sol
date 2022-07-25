@@ -60,6 +60,11 @@ contract DoubleRewarder is OwnableUpgradeable {
     // Reward token address => claimable
     mapping(address => bool) public claimable;
 
+    // Reward token address => Real reward token address
+    // Some double reward farming start before the real reward token is deployed
+    // So user get pending reward for the reward token address but they get real reward token when they claim the reward
+    mapping(address => address) public realRewardToken;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -97,14 +102,9 @@ contract DoubleRewarder is OwnableUpgradeable {
         farmingPool = IFarmingPool(_farmingPool);
     }
 
-    /**
-     * @notice Make a reward token claimable
-     */
-    function setClaimable(address _rewardToken) external onlyOwner {
-        claimable[_rewardToken] = true;
-
-        emit RewardClaimable(_rewardToken);
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ View Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Get pending reward
@@ -144,31 +144,9 @@ contract DoubleRewarder is OwnableUpgradeable {
         pending = ((user.amount * accTokenPerShare) / SCALE) - user.rewardDebt;
     }
 
-    /**
-     * @notice Update double reward pool
-     *
-     * @param _rewardToken Reward token address
-     * @param _lpSupply    LP token balance of farming pool
-     */
-    function updatePool(address _rewardToken, uint256 _lpSupply)
-        public
-        supported(_rewardToken)
-    {
-        PoolInfo storage pool = pools[_rewardToken];
-
-        if (pool.rewardPerSecond > 0) {
-            if (block.timestamp > pool.lastRewardTimestamp && _lpSupply > 0) {
-                uint256 timeElapsed = block.timestamp -
-                    pool.lastRewardTimestamp;
-
-                uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
-
-                pool.accTokenPerShare += (tokenReward * SCALE) / _lpSupply;
-            }
-        }
-
-        pool.lastRewardTimestamp = block.timestamp;
-    }
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Set Functions ************************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Set reward speed for a pool
@@ -207,6 +185,55 @@ contract DoubleRewarder is OwnableUpgradeable {
         pools[_rewardToken].lpToken = _lpToken;
 
         emit NewRewardTokenAdded(_rewardToken);
+    }
+
+    /**
+     * @notice Make a reward token claimable
+     *         If the token has been deployed when the farming start,
+     *         then the real reward token should be address(0)
+     *
+     * @param _rewardToken Reward token address (may be a mocked address)
+     * @param _realRewardToken Real reward token adedress
+     */
+    function setClaimable(address _rewardToken, address _realRewardToken)
+        external
+        onlyOwner
+    {
+        claimable[_rewardToken] = true;
+
+        realRewardToken[_rewardToken] = _realRewardToken;
+
+        emit RewardClaimable(_rewardToken);
+    }
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************ Main Functions ************************************ //
+    // ---------------------------------------------------------------------------------------- //
+
+    /**
+     * @notice Update double reward pool
+     *
+     * @param _rewardToken Reward token address
+     * @param _lpSupply    LP token balance of farming pool
+     */
+    function updatePool(address _rewardToken, uint256 _lpSupply)
+        public
+        supported(_rewardToken)
+    {
+        PoolInfo storage pool = pools[_rewardToken];
+
+        if (pool.rewardPerSecond > 0) {
+            if (block.timestamp > pool.lastRewardTimestamp && _lpSupply > 0) {
+                uint256 timeElapsed = block.timestamp -
+                    pool.lastRewardTimestamp;
+
+                uint256 tokenReward = timeElapsed * pool.rewardPerSecond;
+
+                pool.accTokenPerShare += (tokenReward * SCALE) / _lpSupply;
+            }
+        }
+
+        pool.lastRewardTimestamp = block.timestamp;
     }
 
     /**
@@ -271,8 +298,14 @@ contract DoubleRewarder is OwnableUpgradeable {
 
         uint256 pending = userPendingReward[msg.sender][_rewardToken];
 
+        // If this reward token need another address as real reward token
+        address realRewardTokenAddress = realRewardToken[_rewardToken] ==
+            address(0)
+            ? _rewardToken
+            : realRewardToken[_rewardToken];
+
         uint256 actualAmount = _safeRewardTransfer(
-            _rewardToken,
+            realRewardTokenAddress,
             msg.sender,
             pending
         );
@@ -282,6 +315,10 @@ contract DoubleRewarder is OwnableUpgradeable {
 
         emit ClaimReward(_rewardToken, msg.sender, actualAmount);
     }
+
+    // ---------------------------------------------------------------------------------------- //
+    // *********************************** Internal Functions ********************************* //
+    // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Safe degis transfer (check if the pool has enough DEGIS token)
@@ -314,9 +351,5 @@ contract DoubleRewarder is OwnableUpgradeable {
             address(msg.sender),
             IERC20(_token).balanceOf(address(this))
         );
-    }
-
-    function clearRewardDebt(address user) external onlyOwner {
-        userInfo[user].rewardDebt = 0;
     }
 }

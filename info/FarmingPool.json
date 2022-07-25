@@ -157,6 +157,36 @@
 			"reward": "0.02315",
 			"bonus": "0.00463"
 		},
+		"18": {
+			"name": "AVAX_19.7_L_3107",
+			"address": "0x1e9BEC3B25adb786e737C0C574B534118F8035f0",
+			"poolId": 18,
+			"reward": "0.01929",
+			"bonus": "0.00385"
+		},
+		"19": {
+			"name": "JOE_0.29_L_3107",
+			"address": "0x3f55D634d4a80d3a415e69a64555A46047b4EAb5",
+			"poolId": 19,
+			"reward": "0.01929",
+			"bonus": "0.00385"
+		},
+		"20": {
+			"name": "IM_DCAR_0.33_L_0508",
+			"address": "0xa56cd42C41461Bd7CD7747F41e4094F9943ea512",
+			"poolId": 20,
+			"reward": "0.01157",
+			"bonus": "0.00231",
+			"doubleRewardTokenAddress": "0x27b09b18f7928E96A6773Cb1A44acC59e918e79e"
+		},
+		"21": {
+			"name": "DCAR_0.33_L_0508",
+			"address": "0xFE52a64Ecf9a8fC06B08a9099C816075b36F2CB5",
+			"poolId": 21,
+			"reward": "0.01929",
+			"bonus": "0.00385",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",
 			"address": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",

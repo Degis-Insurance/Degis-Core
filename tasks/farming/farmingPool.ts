@@ -89,6 +89,8 @@ task("addFarmingPool", "Add new farming pool")
     const poolInfo = await farmingPool.poolList(poolId);
     console.log("Pool info: ", poolInfo);
 
+    const doubleReward = await farmingPool.doubleRewarder(poolId);
+
     // Store the new farming pool
     const poolObject = {
       name: poolName,
@@ -96,6 +98,7 @@ task("addFarmingPool", "Add new farming pool")
       poolId: poolId.toNumber(),
       reward: formatEther(poolInfo.basicDegisPerSecond),
       bonus: formatEther(poolInfo.bonusDegisPerSecond),
+      doubleRewardTokenAddress: doubleReward,
     };
     farmingPoolList[network.name][poolId.toNumber()] = poolObject;
 
@@ -343,8 +346,15 @@ task("addDoubleRewardToken", "Add double reward to a farming pool")
       dev_account
     ).attach(doubleRewarderAddress);
 
+    let rewardTokenAddress: string;
+    if (taskArgs.token == "0") {
+      rewardTokenAddress = ethers.Wallet.createRandom().address;
+    } else rewardTokenAddress = taskArgs.token;
+
+    console.log("The reward token address is: ", rewardTokenAddress);
+
     const tx = await doubleRewarderContract.addRewardToken(
-      taskArgs.token,
+      rewardTokenAddress,
       taskArgs.lptoken
     );
     console.log("Tx details: ", await tx.wait());
@@ -420,8 +430,10 @@ task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
   console.log("Tx details: ", await tx.wait());
 });
 
-task("setClaimable", "Set double reward token claimable").setAction(
-  async (_, hre) => {
+task("setClaimable", "Set double reward token claimable")
+  .addParam("token", "Token address", null, types.string)
+  .addParam("realtoken", "Real token address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
     // Signers
@@ -433,19 +445,20 @@ task("setClaimable", "Set double reward token claimable").setAction(
       doubleRewarderAddress
     );
 
-    const erc20Address = addressList[network.name].MockERC20;
     const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
-      erc20Address
+      taskArgs.realtoken
     );
 
     const balance = await erc20Contract.balanceOf(doubleRewarderAddress);
 
-    console.log("Balance: ", formatEther(balance));
+    console.log("Real Reward Token Balance: ", formatEther(balance));
 
-    const tx = await doubleRewarder.setClaimable(erc20Address);
+    const tx = await doubleRewarder.setClaimable(
+      taskArgs.token,
+      taskArgs.realtoken
+    );
     console.log("Tx details: ", await tx.wait());
-  }
-);
+  });
 
 task("tt", "tt").setAction(async (_, hre) => {
   const { network } = hre;

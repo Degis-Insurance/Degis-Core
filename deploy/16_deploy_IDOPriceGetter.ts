@@ -47,7 +47,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Store the address list after deployment
   storeAddressList(addressList);
 
-  await hre.run("setIDOPriceGetter");
+  // await hre.run("setIDOPriceGetter");
 };
 
 func.tags = ["IDOPriceGetter"];

@@ -93,6 +93,14 @@
 			"deadline": "1657958400",
 			"lptoken": "0xdC1Be03A71c438Cee28321E7E8C2643c5B9a9aE8",
 			"pairAddress": "0x3f55D634d4a80d3a415e69a64555A46047b4EAb5"
+		},
+		"DCAR_0.33_L_0508": {
+			"policyToken": "0x0B354627e8e4ebfA045d4000543f639d8D0B7C62",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1658415600",
+			"lptoken": "0xa56cd42C41461Bd7CD7747F41e4094F9943ea512",
+			"dd":"0x27b09b18f7928E96A6773Cb1A44acC59e918e79e",
+			"pairAddress": "0xFE52a64Ecf9a8fC06B08a9099C816075b36F2CB5"
 		}
 	},
 	"avaxTest": {
