@@ -13,7 +13,8 @@
     "./scripts",
     "./test",
     "./typechain",
-    "./deployments"
-, "tasks/clearRecord.ts"  ],
+    "./deployments",
+    "tasks/clearRecord.ts"
+  ],
   "files": ["./hardhat.config.ts"]
 }

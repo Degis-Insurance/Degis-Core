@@ -22,7 +22,6 @@ describe("Shield Token", function () {
   let dev_account: SignerWithAddress;
 
   let shield: Shield;
-  let veDEG: VoteEscrowedDegis;
   let degis: DegisToken;
   let farmingPool: FarmingPoolUpgradeable;
   let mockUSD: MockUSD;
@@ -39,11 +38,8 @@ describe("Shield Token", function () {
     ).deploy();
     await farmingPool.initialize(degis.address);
 
-    veDEG = await new VoteEscrowedDegis__factory(dev_account).deploy();
-    await veDEG.initialize(degis.address, farmingPool.address);
-
     shield = await new Shield__factory(dev_account).deploy();
-    await shield.initialize(veDEG.address);
+    await shield.initialize();
 
     ptpPool = await new MockPTP__factory(dev_account).deploy();
   });
@@ -76,10 +72,6 @@ describe("Shield Token", function () {
         "0x66357dCaCe80431aee0A7507e2E361B7e2402370"
       );
     });
-
-    it("should have the correct veDEG address", async function () {
-      expect(await shield.veDEG()).to.equal(veDEG.address);
-    });
   });
 
   describe("Owner Functions", function () {
@@ -103,7 +95,7 @@ describe("Shield Token", function () {
     beforeEach(async function () {
       await shield.addSupportedStablecoin(mockUSD.address);
       await shield.setPTPPool(ptpPool.address);
-      await shield.approveStablecoin(mockUSD.address);
+      await shield.approveStablecoin(mockUSD.address, ptpPool.address);
     });
     it("should be able to deposit stablecoins and get shield", async function () {
       await mockUSD.approve(shield.address, stablecoinToWei("1000"));

@@ -45,7 +45,7 @@ describe("Degis Lottery V2", function () {
     BigNumber.from(4000),
   ];
 
-  const treasuryFee = 500;
+  const treasuryFee = 0;
   const realTreasuryFee = 2000;
 
   beforeEach(async function () {
@@ -675,7 +675,7 @@ describe("Degis Lottery V2", function () {
     it("should be able to claim previous tickets despite current lottery fully claimed", async function () {
       await expect(lottery.claimAllTickets(2))
         .to.emit(lottery, "TicketsClaim")
-        .withArgs(dev_account.address, toWei("7.201989258224719462"), 2);
+        .withArgs(dev_account.address, toWei("8.535985677632959283"), 2);
 
       await expect(lottery.claimTickets(1, [1, 2], [0, 1])).to.emit(
         lottery,

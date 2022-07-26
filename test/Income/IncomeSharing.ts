@@ -660,6 +660,7 @@ describe("Income Sharing", function () {
       await usd.mint(incomeV2.address, stablecoinToWei("100"));
 
       await incomeV2.deposit(1, deposit_num);
+      // Distribute 100U after this deposit
       expect(await usd.balanceOf(dev_account.address)).to.equal(
         stablecoinToWei("100100")
       );
@@ -678,7 +679,9 @@ describe("Income Sharing", function () {
         stablecoinToWei("100")
       );
 
-      expect(await incomeV2.pendingReward(1, dev_account.address)).to.equal(0);
+      expect(await incomeV2.pendingReward(1, dev_account.address)).to.equal(
+        stablecoinToWei("100")
+      );
 
       await incomeV2.withdraw(1, deposit_num);
       expect(await usd.balanceOf(dev_account.address)).to.equal(

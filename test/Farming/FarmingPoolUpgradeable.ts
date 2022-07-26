@@ -1156,7 +1156,10 @@ describe("Farming Pool Upgradeable", function () {
         doubleRewardContract.claim(doubleRewardToken.address)
       ).to.be.revertedWith("Not claimable");
 
-      await doubleRewardContract.setClaimable(doubleRewardToken.address);
+      await doubleRewardContract.setClaimable(
+        doubleRewardToken.address,
+        doubleRewardToken.address
+      );
 
       expect(
         await doubleRewardContract.userPendingReward(
