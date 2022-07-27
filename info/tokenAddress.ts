@@ -17,6 +17,9 @@ export const getTokenAddressOnAVAX = (name: string): string => {
     case "USDT":
       return "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7";
 
+    case "YUSD":
+      return "0x111111111111ed1D73f860F57b2798b683f2d325";
+
     default:
       return "";
   }

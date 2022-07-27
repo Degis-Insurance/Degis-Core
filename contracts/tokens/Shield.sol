@@ -22,6 +22,9 @@ import { IPlatypusPool } from "./interfaces/IPlatypusPool.sol";
  *         Currently, the swap is done inside Platypus & Curve
  *
  *         The stablecoin and its swapping pool should be supported
+ *
+ *         When deposit, the toToken is USDC, which pool to use depends on tokenToPoolForDeposit(token)
+ *         When withdraw, the fromToken is USDC, which pool to use depends on tokenToPoolForWithdraw(token)
  */
 contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     using SafeERC20 for IERC20;
@@ -40,6 +43,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     address public constant DAIe = 0xd586E7F844cEa2F87f50152665BCbc2C279D8d70;
     address public constant YUSD = 0x111111111111ed1D73f860F57b2798b683f2d325;
 
+    uint256 public constant PLATYPUS_SWAP = 1;
+    uint256 public constant CURVE_SWAP = 2;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -52,9 +58,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     address public constant CURVE_YUSD =
         0x1da20Ac34187b2d9c74F729B85acB225D3341b25;
 
-    // address public USDCeUSDCPOOL; // 0x3a43A5851A3e3E0e25A3c1089670269786be1577;
-    // address public aTRICURVEPOOL; // 0xB755B949C126C04e0348DD881a5cF55d424742B2;
-
     // Stablecoin => whether supported
     mapping(address => bool) public supportedStablecoin;
 
@@ -63,6 +66,15 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     // User staked USDC balance
     mapping(address => uint256) public userBalance;
+
+    // Token address => swap pool address
+    // If fromToken is x, then use mapping(x) to swap
+    mapping(address => address) public tokenToPoolForDeposit;
+    // If toToken is x, then use mapping(x) to swap
+    mapping(address => address) public tokenToPoolForWithdraw;
+
+    // Curve pool address => Token address => Token index
+    mapping(address => mapping(address => int128)) public curvePoolTokenIndex;
 
     // ------------------------------------------------------------------------- --------------- //
     // *************************************** Events ***************************************** //
@@ -97,6 +109,26 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         supportedStablecoin[DAIe] = true;
         // YUSD
         supportedStablecoin[YUSD] = true;
+
+        IERC20(USDC).approve(PTP_MAIN, type(uint256).max);
+        IERC20(USDT).approve(PTP_MAIN, type(uint256).max);
+        IERC20(USDTe).approve(PTP_MAIN, type(uint256).max);
+        IERC20(USDCe).approve(PTP_MAIN, type(uint256).max);
+        IERC20(DAIe).approve(PTP_MAIN, type(uint256).max);
+
+        IERC20(YUSD).approve(CURVE_YUSD, type(uint256).max);
+
+        // YUSD pool indexes
+        curvePoolTokenIndex[CURVE_YUSD][YUSD] = 0;
+        curvePoolTokenIndex[CURVE_YUSD][USDC] = 1;
+        curvePoolTokenIndex[CURVE_YUSD][USDT] = 2;
+
+        // Token to pool
+        tokenToPoolForDeposit[YUSD] = CURVE_YUSD;
+        tokenToPoolForDeposit[USDT] = PTP_MAIN;
+        tokenToPoolForDeposit[USDTe] = PTP_MAIN;
+        tokenToPoolForDeposit[USDCe] = PTP_MAIN;
+        tokenToPoolForDeposit[DAIe] = PTP_MAIN;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -115,6 +147,38 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         supportedStablecoin[_stablecoin] = true;
 
         emit AddStablecoin(_stablecoin);
+    }
+
+    /**
+     * @notice Add new curve pool
+     *
+     * @param _pool   Curve pool address
+     * @param _tokens Tokens inside this pool
+     */
+    function addCurvePool(address _pool, address[] calldata _tokens)
+        external
+        onlyOwner
+    {
+        uint256 length = _tokens.length;
+        for (uint256 i; i < length; ) {
+            curvePoolTokenIndex[_pool][_tokens[i]] = int128(int256(i));
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function setTokenToPool(
+        bool _isDeposit,
+        address _token,
+        address _pool
+    ) external onlyOwner {
+        if (_isDeposit) {
+            tokenToPoolForDeposit[_token] = _pool;
+        } else {
+            tokenToPoolForWithdraw[_token] = _pool;
+        }
     }
 
     /**
@@ -148,9 +212,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     ) external {
         require(supportedStablecoin[_stablecoin], "Stablecoin not supported");
 
-        // Actual shield amount
-        uint256 outAmount;
-
         // Transfer stablecoin to this contract
         IERC20(_stablecoin).safeTransferFrom(
             msg.sender,
@@ -158,16 +219,31 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             _amount
         );
 
+        // Actual shield amount
+        uint256 outAmount;
+
         if (_stablecoin != USDC) {
             // Swap stablecoin to USDC and directly goes to this contract
-            outAmount = _swap(
-                _type,
-                _stablecoin,
-                USDC,
-                _amount,
-                _minAmount,
-                address(this)
-            );
+            if (_type == PLATYPUS_SWAP) {
+                outAmount = _ptpSwap(
+                    tokenToPoolForDeposit[_stablecoin],
+                    _stablecoin,
+                    USDC,
+                    _amount,
+                    _minAmount,
+                    address(this)
+                );
+            }
+            // Curve YUSD swap
+            else if (_type == CURVE_SWAP) {
+                outAmount = _curveSwap(
+                    tokenToPoolForDeposit[_stablecoin],
+                    _stablecoin,
+                    USDC,
+                    _amount,
+                    _minAmount
+                );
+            } else revert("No swap pair");
         } else {
             outAmount = _amount;
         }
@@ -179,46 +255,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         _mint(msg.sender, outAmount);
 
         emit Deposit(msg.sender, _stablecoin, _amount, outAmount);
-    }
-
-    /**
-     * @notice Finish the swap process
-     *
-     * @param _type        Swap type
-     * @param _fromToken   Input token address
-     * @param _toToken     Taget token address
-     * @param _fromAmount  Input stablecoin amount
-     * @param _minToAmount Minimum amount output
-     * @param _to          Address to receive the tokens
-     */
-    function _swap(
-        uint256 _type,
-        address _fromToken,
-        address _toToken,
-        uint256 _fromAmount,
-        uint256 _minToAmount,
-        address _to
-    ) internal returns (uint256 actualAmount) {
-        // PTP Main swap
-        if (_type == 0) {
-            actualAmount = _ptpSwap(
-                _fromToken,
-                _toToken,
-                _fromAmount,
-                _minToAmount,
-                _to
-            );
-        }
-        // Curve YUSD swap
-        else if (_type == 1) {
-            actualAmount = _curveSwap(
-                CURVE_YUSD,
-                _fromToken,
-                _toToken,
-                _fromAmount,
-                _minToAmount
-            );
-        } else revert("Deposit swap failed");
     }
 
     /**
@@ -239,23 +275,36 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
         require(userBalance[msg.sender] >= _amount, "Insufficient balance");
 
+        uint256 actualAmount;
+
         if (_stablecoin == USDC) withdraw(_amount);
-        else if (_type == 0) {
-            // Swap USDC to stablecoin and directly
-            uint256 actualAmount = _ptpSwap(
-                USDC,
-                _stablecoin,
-                _amount,
-                _minAmount,
-                address(this)
-            );
+        else {
+            if (_type == PLATYPUS_SWAP) {
+                // Swap USDC to stablecoin and directly
+                actualAmount = _ptpSwap(
+                    tokenToPoolForWithdraw[_stablecoin],
+                    USDC,
+                    _stablecoin,
+                    _amount,
+                    _minAmount,
+                    address(this)
+                );
+            } else if (_type == CURVE_SWAP) {
+                actualAmount = _curveSwap(
+                    tokenToPoolForWithdraw[_stablecoin],
+                    USDC,
+                    _stablecoin,
+                    _amount,
+                    _minAmount
+                );
+            }
 
             withdraw(actualAmount);
         }
     }
 
     /**
-     * @notice Withdraw stablecoins
+     * @notice Withdraw USDC
      *
      * @param _amount Amount of Shield to be burned
      */
@@ -276,6 +325,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Withdraw all of a user's balance
+     *         This function only return USDC back
      */
     function withdrawAll() external {
         require(userBalance[msg.sender] > 0, "Insufficient balance");
@@ -294,8 +344,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Swap stablecoin to USDC in Platypus
+     * @notice Swap stablecoins in Platypus
      *
+     * @param _pool        Platypus pool address
      * @param _fromToken   From token address
      * @param _toToken     To token address
      * @param _fromAmount  Amount of from token
@@ -303,26 +354,14 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      * @param _to          Address that will receive the output token
      */
     function _ptpSwap(
+        address _pool,
         address _fromToken,
         address _toToken,
         uint256 _fromAmount,
         uint256 _minToAmount,
         address _to
     ) internal returns (uint256 actualAmount) {
-        // Calldata for Platypus swap function
-        // bytes memory data = abi.encodeWithSignature(
-        //     "swap(address,address,uint256,uint256,address,uint256)",
-        //     _fromToken,
-        //     _toToken,
-        //     _fromAmount,
-        //     _minToAmount,
-        //     _to,
-        //     _deadline
-        // );
-
-        // (bool success, bytes memory res) = PTP_MAIN.call(data);
-
-        (actualAmount, ) = IPlatypusPool(PTP_MAIN).swap(
+        (actualAmount, ) = IPlatypusPool(_pool).swap(
             _fromToken,
             _toToken,
             _fromAmount,
@@ -330,12 +369,19 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             _to,
             block.timestamp + 10
         );
-
-        // require(success, "PTP swap failed");
-
-        // (actualAmount, ) = abi.decode(res, (uint256, uint256));
     }
 
+    /**
+     * @notice Swap stablecoins in Curve
+     *
+     * @param _pool         Curve pool address
+     * @param _fromToken    From token address
+     * @param _toToken      To token address
+     * @param _amountIn     Amount of from token
+     * @param _minAmountOut Minimum output amount
+     *
+     * @return actualAmountOut Actual output amount after swap
+     */
     function _curveSwap(
         address _pool,
         address _fromToken,
@@ -343,8 +389,8 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         uint256 _amountIn,
         uint256 _minAmountOut
     ) internal returns (uint256 actualAmountOut) {
-        int128 indexFromToken = _getCurveIndex(_pool, _fromToken);
-        int128 indexToToken = _getCurveIndex(_pool, _toToken);
+        int128 indexFromToken = curvePoolTokenIndex[_pool][_fromToken];
+        int128 indexToToken = curvePoolTokenIndex[_pool][_toToken];
 
         actualAmountOut = ICurvePool(_pool).exchange(
             indexFromToken,
@@ -352,29 +398,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             _amountIn,
             _minAmountOut
         );
-    }
-
-    /**
-     * @notice Get curve token index
-     */
-    function _getCurveIndex(address _pool, address _token)
-        internal
-        returns (int128)
-    {
-        int128 length = (ICurvePool(_pool).N_COINS());
-
-        for (int128 i; i < length; ) {
-            if (ICurvePool(_pool).coins(uint128(i)) == _token) {
-                return i;
-            }
-
-            unchecked {
-                ++i;
-            }
-        }
-
-        // If no index is found, revert
-        revert("Token not in the pool");
     }
 
     /**

@@ -33,6 +33,7 @@ task("shieldApprove", "Approve stablecoins for shield")
     );
 
     const ptpPoolAddress = await shield.PTP_MAIN();
+    const crvPoolAddress = await shield.CURVE_YUSD();
 
     const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
 
@@ -43,7 +44,7 @@ task("shieldApprove", "Approve stablecoins for shield")
 
     const tx = await shield.approveStablecoin(
       stablecoinAddress,
-      ptpPoolAddress
+      crvPoolAddress
     );
     console.log("Tx details: ", await tx.wait());
   });
@@ -97,7 +98,7 @@ task("shieldDeposit", "Deposit stablecoin to get shield")
 
     // Signers
     const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    console.log("The default signer is: ", dev_account.address);
 
     const shieldAddress = addressList[network.name].Shield;
     const shield: Shield = new Shield__factory(dev_account).attach(
@@ -126,7 +127,47 @@ task("shieldDeposit", "Deposit stablecoin to get shield")
       console.log("Tx details: ", await tx_1.wait());
     }
 
-    const tx = await shield.deposit(
+    const type = taskArgs.stablecoin == "YUSD" ? 1 : 0;
+
+    const amount =
+      taskArgs.stablecoin == "YUSD"
+        ? toWei(taskArgs.amount)
+        : stablecoinToWei(taskArgs.amount);
+
+    const tx = await shield.deposit(type, stablecoinAddress, amount, 0);
+    console.log("Tx details: ", await tx.wait());
+
+    const shieldBalance = await shield.balanceOf(dev_account.address);
+    console.log("Shield balance: ", formatUnits(shieldBalance, 6));
+
+    const userBalanceRecord = await shield.userBalance(dev_account.address);
+    console.log("User balance: ", formatUnits(userBalanceRecord, 6));
+  });
+
+task("shieldWithdraw", "Withdraw shield and get stablecoins back")
+  .addParam("stablecoin", "Output stablecoin name", null, types.string)
+  .addParam("amount", "Withdraw amount", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The dfault signer is: ", dev_account.address);
+
+    const shieldAddress = addressList[network.name].Shield;
+    const shield: Shield = new Shield__factory(dev_account).attach(
+      shieldAddress
+    );
+
+    const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+    if (stablecoinAddress == "") {
+      console.log("Invalid stablecoin address");
+      return;
+    }
+
+    const tx = await shield["withdraw(uint256,address,uint256,uint256)"](
       0,
       stablecoinAddress,
       stablecoinToWei(taskArgs.amount),
