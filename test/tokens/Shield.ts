@@ -68,7 +68,7 @@ describe("Shield Token", function () {
     });
 
     it("should have the correct ptpPool address", async function () {
-      expect(await shield.PTPPOOL()).to.equal(
+      expect(await shield.PTP_MAIN()).to.equal(
         "0x66357dCaCe80431aee0A7507e2E361B7e2402370"
       );
     });
@@ -81,26 +81,27 @@ describe("Shield Token", function () {
         .withArgs(mockUSD.address);
     });
 
-    it("should be able to set ptpPool address", async function () {
-      await expect(shield.setPTPPool(ptpPool.address))
-        .to.emit(shield, "SetPTPPool")
-        .withArgs(
-          "0x66357dCaCe80431aee0A7507e2E361B7e2402370",
-          ptpPool.address
-        );
-    });
+    // it("should be able to set ptpPool address", async function () {
+    //   await expect(shield.setPTPPool(ptpPool.address))
+    //     .to.emit(shield, "SetPTPPool")
+    //     .withArgs(
+    //       "0x66357dCaCe80431aee0A7507e2E361B7e2402370",
+    //       ptpPool.address
+    //     );
+    // });
   });
 
   describe("Main Functions", function () {
     beforeEach(async function () {
       await shield.addSupportedStablecoin(mockUSD.address);
-      await shield.setPTPPool(ptpPool.address);
+      // await shield.setPTPPool(ptpPool.address);
       await shield.approveStablecoin(mockUSD.address, ptpPool.address);
     });
     it("should be able to deposit stablecoins and get shield", async function () {
       await mockUSD.approve(shield.address, stablecoinToWei("1000"));
       await expect(
         shield.deposit(
+          0,
           mockUSD.address,
           stablecoinToWei("100"),
           stablecoinToWei("90")

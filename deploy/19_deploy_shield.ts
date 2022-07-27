@@ -38,7 +38,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const shield = await deploy("Shield", {
     contract: "Shield",
     from: deployer,
-    proxy: true,
+    proxy: proxyOptions,
     args: [],
     log: true,
   });
@@ -49,5 +49,5 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 };
 
-func.tags = ["MockERC20"];
+func.tags = ["Shield"];
 export default func;

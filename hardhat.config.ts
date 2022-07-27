@@ -44,6 +44,7 @@ import "./tasks/lucky/degisLottery";
 // // Token Tasks
 // import "./tasks/tokens/addMinterBurner";
 // import "./tasks/tokens/mintToken";
+import "./tasks/tokens/shield";
 
 // // Staking Tasks
 // import "./tasks/staking/stakingPoolFactory";
