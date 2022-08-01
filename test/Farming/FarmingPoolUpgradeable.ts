@@ -1171,6 +1171,79 @@ describe("Farming Pool Upgradeable", function () {
       await expect(doubleRewardContract.claim(doubleRewardToken.address))
         .to.emit(doubleRewardContract, "ClaimReward")
         .withArgs(doubleRewardToken.address, dev_account.address, toWei("3"));
+
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("3")
+      );
+    });
+
+    it("should be able to claim reward during farming", async function () {
+      await doubleRewardContract.addRewardToken(
+        doubleRewardToken.address,
+        lptoken_1.address
+      );
+      await doubleRewardContract.setRewardSpeed(
+        lptoken_1.address,
+        doubleRewardToken.address,
+        toWei("6")
+      );
+
+      await pool.stake(1, toWei("1"));
+
+      // Dev: 6  User1: 0
+      await pool.connect(user1).stake(1, toWei("1"));
+
+      // Dev: 6 + 3  User1: 3
+      await pool.stake(1, toWei("1"));
+
+      // Dev: 13 (9)(0)  User1: 5 (0)(0)
+      await doubleRewardContract.setClaimable(
+        doubleRewardToken.address,
+        doubleRewardToken.address
+      );
+
+      // Dev: 17 (9)(9)  User1: 7 (0)(0)
+      await doubleRewardContract.claim(doubleRewardToken.address);
+
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("9")
+      );
+
+      // Dev: 21 (9)(9)  User1: 9 (0)(0)
+      await mineBlocks(1);
+
+      // expect(
+      //   await doubleRewardContract.pendingReward(
+      //     doubleRewardToken.address,
+      //     dev_account.address
+      //   )
+      // ).to.equal(toWei("9"));
+      expect(
+        await doubleRewardContract.userPendingReward(
+          dev_account.address,
+          doubleRewardToken.address
+        )
+      ).to.equal(0);
+      // Dev: 25 (9)(9)  User1: 11 (0)(0)
+      await doubleRewardContract.claim(doubleRewardToken.address);
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("9")
+      );
+
+      // Dev: 29 (29)(9)  User1: 15 (0)(0)
+      await pool.harvest(1, dev_account.address);
+      expect(
+        await doubleRewardContract.userPendingReward(
+          dev_account.address,
+          doubleRewardToken.address
+        )
+      ).to.equal(toWei("20")); // 29 - 9 = 20
+
+      // Dev: 33 (29)(29)  User1: 17 (0)(0)
+      await doubleRewardContract.claim(doubleRewardToken.address);
+      expect(await doubleRewardToken.balanceOf(dev_account.address)).to.equal(
+        toWei("29")
+      );
     });
 
     // Case: Double reward token is added but reward is zero

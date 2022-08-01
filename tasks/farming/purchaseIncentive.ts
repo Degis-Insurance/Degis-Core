@@ -107,14 +107,14 @@ task(
     toWei("70000"),
   ];
   const pieceWise = [
-    toWei("1000"),
-    toWei("2000"),
-    toWei("3000"),
-    toWei("4000"),
-    toWei("5000"),
-    toWei("6000"),
-    toWei("7000"),
-    toWei("8000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
+    toWei("10000"),
   ];
 
   const { network } = hre;

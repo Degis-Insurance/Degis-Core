@@ -317,9 +317,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         // Burn shield token
         _burn(msg.sender, realAmount);
 
-        // Transfer USDC back
-        IERC20(USDC).safeTransfer(msg.sender, _amount);
-
         emit Withdraw(msg.sender, realAmount);
     }
 

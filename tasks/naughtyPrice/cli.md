@@ -18,9 +18,10 @@ npx hardhat deployNPToken --network avax --name JOE --stablecoin USDC.e --k 0.29
 
 npx hardhat deployNPToken --network fuji --name AVAX --stablecoin USDC.e --k 1.0 --namedecimals 0 --iscall 0 --round 8896 --deadline 1656258300 --settletime 1656258300 --ido true
 
-
- npx hardhat deployNPToken --network avaxTest --name DCAR --stablecoin USDC.e --k 0.25 --namedecimals 2 --iscall 0 --round 2007 --deadline 1658304000 --settletime 1658304000  --ido true
-
 npx hardhat addFarmingPool --network avaxTest --name DCAR_0.25_L_2007 --address 0xAEf14996b8d37bd5C7cbACDA06D101D85A89A58c --reward 0 --bonus 0 --doublereward 0x90ff1B7E4a1360f095fD03CbE9C2a63879fA32E2
 
-npx hardhat deployNPToken --network avax --name DCAR --stablecoin USDC.e --k 0.33 --namedecimals 2 --iscall 0 --round 0508 --deadline 1659625200 --settletime 1659711600 --ido true    
+npx hardhat deployNPToken --network avax --name AVAX --stablecoin USDC.e --k 24.3 --namedecimals 1 --iscall 0 --round 1708 --deadline 1660464000 --settletime 1660723200 --ido false
+
+npx hardhat deployNPToken --network avax --name XAVA --stablecoin USDC.e --k 0.52 --namedecimals 2 --iscall 0 --round 1708 --deadline 1660464000 --settletime 1660723200 --ido false
+
+npx hardhat deployNPToken --network avax --name JOE --stablecoin USDC.e --k 0.37 --namedecimals 2 --iscall 0 --round 1708 --deadline 1660464000 --settletime 1660723200 --ido false

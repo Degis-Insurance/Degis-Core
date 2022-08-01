@@ -430,6 +430,8 @@ task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
   console.log("Tx details: ", await tx.wait());
 });
 
+
+
 task("setClaimable", "Set double reward token claimable")
   .addParam("token", "Token address", null, types.string)
   .addParam("realtoken", "Real token address", null, types.string)
