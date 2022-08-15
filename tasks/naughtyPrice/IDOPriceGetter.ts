@@ -53,12 +53,16 @@ task("addIDOPriceFeed", "Deploy a new naughty price token")
       dev_account
     ).attach(idoPriceGetterAddress);
 
+    const decimals = 18;
+    const sampleInterval = 600; // 10 min
+    const startTime = 1659679200;
+
     const tx = await idoPriceGetter.addIDOPair(
       policyTokenName,
       joePair,
-      18,
-      600,
-      1658300400
+      decimals,
+      sampleInterval,
+      startTime
     );
 
     console.log("Tx details: ", await tx.wait());

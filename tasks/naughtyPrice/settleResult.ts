@@ -76,8 +76,8 @@ task("collectIncome", "Collect income from policy core")
       formatUnits(balance2Before, 6)
     );
 
-    // const tx = await core.collectIncome(taskArgs.stablecoin);
-    // console.log("tx details:", await tx.wait());
+    const tx = await core.collectIncome(taskArgs.stablecoin);
+    console.log("tx details:", await tx.wait());
 
     // old policy core
     // const oldCore = new PolicyCore__factory(dev_account).attach(

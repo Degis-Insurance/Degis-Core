@@ -29,4 +29,6 @@ task: finishILM
 
 // npx hardhat stopILM --network avax --name JOE_0.37_L_1708 --policytoken 0xFE21553f50d05552860F3396da5D092517470f38 --deadline 1660464000
 
+//npx hardhat startILM --network avax --policytoken 0xBACaa17927aD15A0E2CC2a82D87727FDd6f0F727 --stablecoin USDC.e --deadline 1660550400
+
 // npx hardhat addFarmingPool --network avax --name AVAX_0.37_L_1708 --address 0xa031C7a8F46bCFd0174Dc6B8c9e0b92c6915123F --reward 0.01929 --bonus 0.00385 --doublereward 0

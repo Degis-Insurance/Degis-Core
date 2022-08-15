@@ -102,24 +102,6 @@
 			"dd": "0x27b09b18f7928E96A6773Cb1A44acC59e918e79e",
 			"pairAddress": "0xFE52a64Ecf9a8fC06B08a9099C816075b36F2CB5"
 		},
-		"AVAX_24.3_L_1508": {
-			"policyToken": "0x693540e24728AF240E1b46d029Ee92157a71f482",
-			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
-			"deadline": "1659254400",
-			"lptoken": "0x673F679C5A8296d12987747A0Cc3E5c01A76c09C"
-		},
-		"XAVA_0.52_L_1508": {
-			"policyToken": "0x6F94fd150Dc3341d5d4dD013fa2cf1C36FaF1808",
-			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
-			"deadline": "1659254400",
-			"lptoken": "0x867159995D5472e010C2b6BE928eBb0469B63317"
-		},
-		"JOE_0.37_L_1508": {
-			"policyToken": "0xdA1353a37d445018990Df02643DAc6D53ba912AA",
-			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
-			"deadline": "1659254400",
-			"lptoken": "0x69D4b2E376A1DE99472f4461148F54EE3668e9cd"
-		},
 		"AVAX_24.3_L_1708": {
 			"policyToken": "0xf3aF12288580c5B33EeDe074d32bf6321dCE8E5b",
 			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
@@ -140,6 +122,34 @@
 			"deadline": "1659254400",
 			"lptoken": "0xEEa92b19B95CF08B68FBd69D5eDB2Ef04E83C3B3",
 			"pairAddress": "0xa031C7a8F46bCFd0174Dc6B8c9e0b92c6915123F"
+		},
+		"AVAX_29.7_L_0109": {
+			"policyToken": "0xd5710bfFE57e5FD5E15182EE20D92DbF45621Df7",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1660550400",
+			"lptoken": "0x788792E6eB040Fa0c124b078fF4177a36385a5f0",
+			"pairAddress": "0xaEec467A1D83f704D41f22A3ABEBb5BaAe9ac71d"
+		},
+		"XAVA_0.55_L_0109": {
+			"policyToken": "0x7085bf80F62a44eBA6797a7cd94c43E7132D0BB0",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1660550400",
+			"lptoken": "0xD29d081d8D08625b8bE334c20516F155F62c9f3d",
+			"pairAddress": "0xE38FEbcd0D7E9426Bd0A425Fa42B7290B2FAf81b"
+		},
+		"JOE_0.38_L_0109": {
+			"policyToken": "0x2Ac71D4aFb90C84d0A3F941c2Fa9577A2eAd8691",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1660550400",
+			"lptoken": "0x170AB59E6b965630241BE3a4A76cE3Ca1a0aaC69",
+			"pairAddress": "0x520742B9C1c32c59922260E3A7EAc8fAeDda7A5f"
+		},
+		"BTC_24980.0_L_0109": {
+			"policyToken": "0xBACaa17927aD15A0E2CC2a82D87727FDd6f0F727",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1660550400",
+			"lptoken": "0x4267C2e3f60F1a996d88BEF9Edd43f93a53aB83D",
+			"pairAddress": "0xC7e560e595601b182Cb44689F1dC614333FdFd31"
 		}
 	},
 	"avaxTest": {

@@ -270,6 +270,9 @@ contract IDOPriceGetter is OwnableUpgradeable {
         // AVAX price, 1e18 scale
         uint256 avaxPrice = basePriceGetter.getLatestPrice("AVAX");
 
+        // Warning: for DCAR we tempararily double the price because the settlement price is 0.165
+        //          but we set it as 0.33 (they changed the ido price after this round online)
+
         // This final price is also multiplied by 1e18
         price = (avaxPrice * priceInAVAX) / 1e18;
     }

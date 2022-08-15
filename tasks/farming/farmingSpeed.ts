@@ -172,3 +172,4 @@ const bonus_13 = toWei("0.00385"); /// 333 deg / day
 // npx hardhat setFarmingPoolDegisReward --network avax --id 14 --reward 0.02315 --bonus 0.00463    
 const basic_14 = toWei("0.02315"); // 2000 deg / day
 const bonus_14 = toWei("0.00463"); // 400 deg / day
+
