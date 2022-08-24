@@ -35,6 +35,14 @@ task("shieldApprove", "Approve stablecoins for shield")
     const ptpPoolAddress = await shield.PTP_MAIN();
     const crvPoolAddress = await shield.CURVE_YUSD();
 
+    let poolAddressToApprove;
+
+    if (taskArgs.stablecoin == "YUSD") {
+      poolAddressToApprove = crvPoolAddress;
+    } else {
+      poolAddressToApprove = ptpPoolAddress;
+    }
+
     const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
 
     if (stablecoinAddress == "") {
@@ -44,7 +52,7 @@ task("shieldApprove", "Approve stablecoins for shield")
 
     const tx = await shield.approveStablecoin(
       stablecoinAddress,
-      crvPoolAddress
+      poolAddressToApprove
     );
     console.log("Tx details: ", await tx.wait());
   });
@@ -180,4 +188,39 @@ task("shieldWithdraw", "Withdraw shield and get stablecoins back")
 
     const userBalanceRecord = await shield.userBalance(dev_account.address);
     console.log("User balance: ", formatUnits(userBalanceRecord, 6));
+  });
+
+
+  task("setTokenToPool", "Set token to pool for shield")
+  .addParam("stablecoin", "Stablecoin name", null, types.string)
+  .addParam("pool", "Pool name", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The dfault signer is: ", dev_account.address);
+
+    const shieldAddress = addressList[network.name].Shield;
+    const shield: Shield = new Shield__factory(dev_account).attach(
+      shieldAddress
+    );
+
+    const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+    if (stablecoinAddress == "") {
+      console.log("Invalid stablecoin address");
+      return;
+    }
+
+    const tx = await shield.setTokenToPool(
+      false,
+      stablecoinAddress,
+      taskArgs.pool
+    );
+    console.log("Tx details: ", await tx.wait());
+
+    const tokenToPoolForWithdraw = await shield.tokenToPoolForWithdraw(stablecoinAddress);
+    console.log("tokenToPoolForWithdraw: ", tokenToPoolForWithdraw);
   });

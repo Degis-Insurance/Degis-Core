@@ -125,10 +125,20 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
         // Token to pool
         tokenToPoolForDeposit[YUSD] = CURVE_YUSD;
+        tokenToPoolForWithdraw[YUSD] = CURVE_YUSD;
+
         tokenToPoolForDeposit[USDT] = PTP_MAIN;
+        tokenToPoolForWithdraw[USDT] = PTP_MAIN;
+
         tokenToPoolForDeposit[USDTe] = PTP_MAIN;
+        tokenToPoolForWithdraw[USDTe] = PTP_MAIN;
+
+        
         tokenToPoolForDeposit[USDCe] = PTP_MAIN;
+        tokenToPoolForWithdraw[USDCe] = PTP_MAIN;
+        
         tokenToPoolForDeposit[DAIe] = PTP_MAIN;
+        tokenToPoolForWithdraw[DAIe] = PTP_MAIN;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -200,6 +210,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      * @notice Deposit tokens and mint Shield
      *         If the input is USDC, no swap needed, otherwise, swap to USDC
      *
+     * @param _type       Swap type (1 for PTP, 2 for Curve)
      * @param _stablecoin Stablecoin address
      * @param _amount     Input stablecoin amount
      * @param _minAmount  Minimum amount output (if need swap)
@@ -277,7 +288,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
         uint256 actualAmount;
 
-        if (_stablecoin == USDC) withdraw(_amount);
+        if (_stablecoin == USDC) withdraw(_stablecoin, _amount);
         else {
             if (_type == PLATYPUS_SWAP) {
                 // Swap USDC to stablecoin and directly
@@ -299,7 +310,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
                 );
             }
 
-            withdraw(actualAmount);
+            withdraw(_stablecoin, actualAmount);
         }
     }
 
@@ -308,9 +319,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      *
      * @param _amount Amount of Shield to be burned
      */
-    function withdraw(uint256 _amount) public {
+    function withdraw(address _stablecoin, uint256 _amount) public {
         // Transfer USDC back
-        uint256 realAmount = _safeTokenTransfer(USDC, _amount);
+        uint256 realAmount = _safeTokenTransfer(_stablecoin, _amount);
 
         userBalance[msg.sender] -= realAmount;
 
@@ -326,7 +337,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      */
     function withdrawAll() external {
         require(userBalance[msg.sender] > 0, "Insufficient balance");
-        withdraw(userBalance[msg.sender]);
+        withdraw(USDC, userBalance[msg.sender]);
     }
 
     /**
