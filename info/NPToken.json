@@ -274,6 +274,21 @@
 			"address": "0x37b87C7eF85417e2FeFe1e1899c5382B0cdAF990",
 			"deadline": 1658304000,
 			"settleTime": 1658304000
+		},
+		"AVAX_23.1_L_2508": {
+			"address": "0x800529e6887f7e21212D6469AA7436b0c658FF1C",
+			"deadline": 1661410800,
+			"settleTime": 1661410800
+		},
+		"AVAX_23.6_L_2508": {
+			"address": "0x95C5690f37Ece244c6e4b9b90338D5D135099A76",
+			"deadline": 1661419800,
+			"settleTime": 1661419800
+		},
+		"AVAX_23.3_L_2908": {
+			"address": "0xf0D9Ad4855aB4b3B581c89Abb3465B5E2Ad46DC6",
+			"deadline": 1661760000,
+			"settleTime": 1661774400
 		}
 	},
 	"localhost": {}

@@ -9,7 +9,7 @@
 
 npx hardhat addFarmingPool --network avaxTest --name DCAR_0.25_L_2007 --address 0xAEf14996b8d37bd5C7cbACDA06D101D85A89A58c --reward 0 --bonus 0 --doublereward 0x90ff1B7E4a1360f095fD03CbE9C2a63879fA32E2
 
-npx hardhat deployNPToken --network avax --name AVAX --stablecoin USDC.e --k 29.7 --namedecimals 1 --iscall 0 --round 0109 --deadline 1661760000 --settletime 1662019200 --ido false
+npx hardhat deployNPToken --network avaxTest --name AVAX --stablecoin shield --k 23.1 --namedecimals 1 --iscall 0 --round 2508 --deadline 1661410800 --settletime 1661410800 --ido false
 
 npx hardhat deployNPToken --network avax --name XAVA --stablecoin USDC.e --k 0.55 --namedecimals 2 --iscall 0 --round 0109 --deadline 1661760000 --settletime 1662019200 --ido false
 

@@ -58,7 +58,11 @@ task("deployNPToken", "Deploy a new naughty price token")
     const tokenList = readNaughtyTokenList();
 
     if (network.name == "avax" || network.name == "avaxTest") {
-      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      if (taskArgs.stablecoin == "shield") {
+        stablecoinAddress = addressList[network.name].Shield;
+      } else {
+        stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      }
     } else stablecoinAddress = addressList[network.name].MockUSD;
 
     console.log("Stablecoin address: ", stablecoinAddress);
@@ -127,6 +131,4 @@ task("deployNPToken", "Deploy a new naughty price token")
     // const req = new XMLHttpRequest();
     // const lark_url =
     //   "https://open.larksuite.com/open-apis/bot/v2/hook/03430ecc-9b80-4b08-ab95-c34e8e27e01a";
-    
   });
-

@@ -42,7 +42,11 @@ task("startILM", "Start a new round ILM")
 
     let stablecoinAddress: string;
     if (network.name == "avax" || network.name == "avaxTest") {
-      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      if (taskArgs.stablecoin == "shield") {
+        stablecoinAddress = addressList[network.name].Shield;
+      } else {
+        stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      }
     } else stablecoinAddress = addressList[network.name].MockUSD;
 
     console.log("Stablecoin address: ", stablecoinAddress);
@@ -151,7 +155,11 @@ task("approveStablecoin", "Approve stablecoin for ILM")
 
     let stablecoinAddress: string;
     if (network.name == "avax" || network.name == "avaxTest") {
-      stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      if (taskArgs.stablecoin == "shield") {
+        stablecoinAddress = addressList[network.name].Shield;
+      } else {
+        stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+      }
     } else stablecoinAddress = addressList[network.name].MockUSD;
 
     console.log("Stablecoin address: ", stablecoinAddress);

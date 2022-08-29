@@ -5,7 +5,7 @@ import { readAddressList } from "../../scripts/contractAddress";
 
 import { PolicyCore, PolicyCore__factory } from "../../typechain";
 
-task("addStablecoin", "Set the contract addresses inside naughty factory")
+task("addStablecoin", "Add supported stablecoin address")
   .addParam("address", "Stablecoin address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
@@ -22,7 +22,7 @@ task("addStablecoin", "Set the contract addresses inside naughty factory")
     const addressList = readAddressList();
 
     // Get policy core contract instance
-    const policyCoreAddress = addressList[network.name].PolicyCore;
+    const policyCoreAddress = addressList[network.name].PolicyCoreUpgradeable;
     const PolicyCore: PolicyCore__factory = await hre.ethers.getContractFactory(
       "PolicyCore"
     );

@@ -135,7 +135,7 @@ task("shieldDeposit", "Deposit stablecoin to get shield")
       console.log("Tx details: ", await tx_1.wait());
     }
 
-    const type = taskArgs.stablecoin == "YUSD" ? 1 : 0;
+    const type = taskArgs.stablecoin == "YUSD" ? 2 : 1;
 
     const amount =
       taskArgs.stablecoin == "YUSD"
@@ -175,12 +175,17 @@ task("shieldWithdraw", "Withdraw shield and get stablecoins back")
       return;
     }
 
-    const tx = await shield["withdraw(uint256,address,uint256,uint256)"](
-      0,
-      stablecoinAddress,
-      stablecoinToWei(taskArgs.amount),
-      0
-    );
+    const tokenToPool = await shield.tokenToPoolForWithdraw(stablecoinAddress);
+    console.log("token to pool", tokenToPool);
+
+    // const tx = await shield["withdraw(uint256,address,uint256,uint256)"](
+    //   2,
+    //   stablecoinAddress,
+    //   stablecoinToWei(taskArgs.amount),
+    //   0
+    // );
+
+    const tx = await shield.withdrawAll();
     console.log("Tx details: ", await tx.wait());
 
     const shieldBalance = await shield.balanceOf(dev_account.address);
@@ -190,8 +195,7 @@ task("shieldWithdraw", "Withdraw shield and get stablecoins back")
     console.log("User balance: ", formatUnits(userBalanceRecord, 6));
   });
 
-
-  task("setTokenToPool", "Set token to pool for shield")
+task("setTokenToPool", "Set token to pool for shield")
   .addParam("stablecoin", "Stablecoin name", null, types.string)
   .addParam("pool", "Pool name", null, types.string)
   .setAction(async (taskArgs, hre) => {
@@ -221,6 +225,8 @@ task("shieldWithdraw", "Withdraw shield and get stablecoins back")
     );
     console.log("Tx details: ", await tx.wait());
 
-    const tokenToPoolForWithdraw = await shield.tokenToPoolForWithdraw(stablecoinAddress);
+    const tokenToPoolForWithdraw = await shield.tokenToPoolForWithdraw(
+      stablecoinAddress
+    );
     console.log("tokenToPoolForWithdraw: ", tokenToPoolForWithdraw);
   });
