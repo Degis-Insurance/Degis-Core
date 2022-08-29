@@ -150,6 +150,30 @@
 			"deadline": "1660550400",
 			"lptoken": "0x4267C2e3f60F1a996d88BEF9Edd43f93a53aB83D",
 			"pairAddress": "0xC7e560e595601b182Cb44689F1dC614333FdFd31"
+		},
+		"AVAX_18.0_L_1609": {
+			"policyToken": "0x3Ec0B96A9af12a5F7d7a444B775422Dd91E5c1eB",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1661846400",
+			"lptoken": "0x19391B00FD846D26DAeb31A11e3800003ED1F67D"
+		},
+		"XAVA_0.32_L_1609": {
+			"policyToken": "0x98535d11e9d9289755C9ef7051cFF822a48CF3fC",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1661846400",
+			"lptoken": "0xE27E42d6A1714F0a8924C0df6B6Fa1624fC33F05"
+		},
+		"JOE_0.22_L_1609": {
+			"policyToken": "0x05Fde05524CD2751748C218ED1e6C4A9fC83dBA1",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1661846400",
+			"lptoken": "0xFbCEbE90B5C2d8aC907D4B016fAE28B3f553f8f9"
+		},
+		"BTC_19900.0_L_1609": {
+			"policyToken": "0x2Dd6e189c4d7CC556537bB15389C192540D09B29",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1661846400",
+			"lptoken": "0x584E0034A340376BbA9140FafA2C6a67E2977D7a"
 		}
 	},
 	"avaxTest": {
