@@ -19,45 +19,45 @@ import "hardhat-contract-sizer";
 // import "./tasks/emergencyPool/deposit-withdraw";
 
 // Farming Tasks
-import "./tasks/farming/farmingPool";
-import "./tasks/farming/purchaseIncentive";
+// import "./tasks/farming/farmingPool";
+// import "./tasks/farming/purchaseIncentive";
 
-// Miserable Flight Tasks
-import "./tasks/misrableFlight/sigManager";
-import "./tasks/misrableFlight/setAddress";
-import "./tasks/misrableFlight/policyFlow";
-import "./tasks/misrableFlight/insurancePool";
-import "./tasks/misrableFlight/flightOracle";
+// // Miserable Flight Tasks
+// import "./tasks/misrableFlight/sigManager";
+// import "./tasks/misrableFlight/setAddress";
+// import "./tasks/misrableFlight/policyFlow";
+// import "./tasks/misrableFlight/insurancePool";
+// import "./tasks/misrableFlight/flightOracle";
 
-// Naughty Price Tasks
-import "./tasks/naughtyPrice/setAddress";
-import "./tasks/naughtyPrice/settleResult";
-import "./tasks/naughtyPrice/deployToken";
-import "./tasks/naughtyPrice/deployPool";
-import "./tasks/naughtyPrice/addStablecoin";
-import "./tasks/naughtyPrice/IDOPriceGetter";
+// // Naughty Price Tasks
+// import "./tasks/naughtyPrice/setAddress";
+// import "./tasks/naughtyPrice/settleResult";
+// import "./tasks/naughtyPrice/deployToken";
+// import "./tasks/naughtyPrice/deployPool";
+// import "./tasks/naughtyPrice/addStablecoin";
+// import "./tasks/naughtyPrice/IDOPriceGetter";
 
-// // Lucky Box Tasks
-import "./tasks/lucky/setAddress";
-import "./tasks/lucky/degisLottery";
+// // // Lucky Box Tasks
+// import "./tasks/lucky/setAddress";
+// import "./tasks/lucky/degisLottery";
 
-// // Token Tasks
-// import "./tasks/tokens/addMinterBurner";
-// import "./tasks/tokens/mintToken";
-import "./tasks/tokens/shield";
+// // // Token Tasks
+// // import "./tasks/tokens/addMinterBurner";
+// // import "./tasks/tokens/mintToken";
+// import "./tasks/tokens/shield";
 
-// // Staking Tasks
-// import "./tasks/staking/stakingPoolFactory";
+// // // Staking Tasks
+// // import "./tasks/staking/stakingPoolFactory";
 
-// import "./tasks/proxy/admin";
-// import "./tasks/governance/VeDEG";
+// // import "./tasks/proxy/admin";
+// // import "./tasks/governance/VeDEG";
 
-// // Income Sharing tasks
-import "./tasks/incomeSharing/setAddress";
-import "./tasks/incomeSharing/pool";
-import "./tasks/incomeSharing/incomeMaker";
-// import "./tasks/general/index";
-import "./tasks/ILM/startStop";
+// // // Income Sharing tasks
+// import "./tasks/incomeSharing/setAddress";
+// import "./tasks/incomeSharing/pool";
+// import "./tasks/incomeSharing/incomeMaker";
+// // import "./tasks/general/index";
+// import "./tasks/ILM/startStop";
 
 dotenv.config();
 

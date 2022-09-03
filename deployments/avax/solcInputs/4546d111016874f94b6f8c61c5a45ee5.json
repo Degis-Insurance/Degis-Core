@@ -1,0 +1,44 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/income/IncomeCompensate.sol": {
+      "content": "// SPDX-License-Identifier: MIT\n\npragma solidity ^0.8.13;\n\ninterface IERC20 {\n    function transfer(address to, uint256 amount) external returns (bool);\n}\n\ncontract IncomeCompensate {\n    address public constant incomeSharingVault =\n        0x7a5c17292AFfb5cFFd34991058e44C81C856f10b;\n\n    address public constant USDCe = 0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664;\n\n    function compensate(address _user, uint256 _amount) external {\n        require(msg.sender == incomeSharingVault, \"Only vault\");\n\n        IERC20(USDCe).transfer(_user, _amount);\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 1000,
+      "details": {
+        "yul": true,
+        "yulDetails": {
+          "stackAllocation": true,
+          "optimizerSteps": "dhfoDgvulfnTUtnIf"
+        }
+      }
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "storageLayout",
+          "devdoc",
+          "userdoc",
+          "evm.gasEstimates",
+          "devdoc",
+          "userdoc"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}

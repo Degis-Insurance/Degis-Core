@@ -8,6 +8,8 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
 
+import { IIncomeSharingCompensate } from "./interfaces/IIncomeSharingCompensate.sol";
+
 import "hardhat/console.sol";
 
 /**
@@ -65,6 +67,9 @@ contract IncomeSharingVaultV2 is
     uint256 public nextPool;
 
     mapping(uint256 => uint256) public lastRewardBalance;
+
+    // @audit Add compensate pool
+    address public compensate;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -140,7 +145,7 @@ contract IncomeSharingVaultV2 is
 
                 accRewardPerShare += (newReward * SCALE) / pool.totalAmount;
             }
-            
+
             uint256 pending = (user.totalAmount * accRewardPerShare) /
                 SCALE -
                 user.rewardDebt;
@@ -202,6 +207,10 @@ contract IncomeSharingVaultV2 is
         emit RewardSpeedSet(_poolId, _rewardPerSecond);
     }
 
+    function setCompensate(address _compensate) external onlyOwner {
+        compensate = _compensate;
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -235,6 +244,13 @@ contract IncomeSharingVaultV2 is
                 pending
             );
             lastRewardBalance[_poolId] -= reward;
+
+            // @audit Compensate reward from another pool
+            uint256 diff = pending - reward;
+            if (diff > 0) {
+                IIncomeSharingCompensate(compensate).compensate(msg.sender, diff);
+            }
+
             emit Harvest(msg.sender, _poolId, reward);
         }
 
@@ -282,6 +298,13 @@ contract IncomeSharingVaultV2 is
             pending
         );
         lastRewardBalance[_poolId] -= reward;
+
+        // @audit Compensate reward from another pool
+        uint256 diff = pending - reward;
+        if (diff > 0) {
+            IIncomeSharingCompensate(compensate).compensate(msg.sender, diff);
+        }
+
         emit Harvest(msg.sender, _poolId, reward);
 
         // Update user info
@@ -320,6 +343,12 @@ contract IncomeSharingVaultV2 is
 
         uint256 reward = _safeRewardTransfer(pool.rewardToken, _to, pending);
         lastRewardBalance[_poolId] -= reward;
+
+        // @audit Compensate reward from another pool
+        uint256 diff = pending - reward;
+        if (diff > 0) {
+            IIncomeSharingCompensate(compensate).compensate(_to, diff);
+        }
 
         emit Harvest(msg.sender, _poolId, reward);
     }
