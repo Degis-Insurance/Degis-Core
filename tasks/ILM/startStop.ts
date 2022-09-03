@@ -115,8 +115,8 @@ task("stopILM", "Stop a round ILM")
       return;
     }
 
-    const tx = await ILM.finishILM(taskArgs.policytoken, taskArgs.deadline, 50);
-    console.log("tx details:", await tx.wait());
+    // const tx = await ILM.finishILM(taskArgs.policytoken, taskArgs.deadline, 50);
+    // console.log("tx details:", await tx.wait());
 
     const pairInfo = await ILM.pairs(taskArgs.policytoken);
 
