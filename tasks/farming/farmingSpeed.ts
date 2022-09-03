@@ -173,3 +173,12 @@ const bonus_13 = toWei("0.00385"); /// 333 deg / day
 const basic_14 = toWei("0.02315"); // 2000 deg / day
 const bonus_14 = toWei("0.00463"); // 400 deg / day
 
+
+
+
+const fixed_basic_im = toWei("0.01736"); // 1500 deg / day
+const fixed_bonus_im = toWei("0.00347"); // 300 deg / day
+
+
+const fixed_basic = toWei("0.01446") // 1250 deg / day
+const fixed_bonus = toWei("0.00289"); // 250 deg / day
