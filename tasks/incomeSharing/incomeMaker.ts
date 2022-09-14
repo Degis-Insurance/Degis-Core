@@ -77,9 +77,11 @@ task("convertIncome", "Convert income from maker to income sharing vault")
     const tx = await maker.convertIncome(policyTokenAddress, usdAddress);
     console.log("Tx details: ", await tx.wait());
 
-
     const balAfter = await usd.balanceOf(
       addressList[network.name].IncomeSharingVault
     );
     console.log("Income sharing vault bal after: ", formatUnits(balAfter, 6));
+
+    const diff = balAfter.sub(balBefore);
+    console.log("New income: ", formatUnits(diff, 6));
   });

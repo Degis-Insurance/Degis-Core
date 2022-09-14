@@ -19,7 +19,7 @@ import "hardhat-contract-sizer";
 // import "./tasks/emergencyPool/deposit-withdraw";
 
 // Farming Tasks
-// import "./tasks/farming/farmingPool";
+import "./tasks/farming/farmingPool";
 // import "./tasks/farming/purchaseIncentive";
 
 // // Miserable Flight Tasks
@@ -32,7 +32,7 @@ import "hardhat-contract-sizer";
 // // Naughty Price Tasks
 // import "./tasks/naughtyPrice/setAddress";
 // import "./tasks/naughtyPrice/settleResult";
-// import "./tasks/naughtyPrice/deployToken";
+import "./tasks/naughtyPrice/deployToken";
 // import "./tasks/naughtyPrice/deployPool";
 // import "./tasks/naughtyPrice/addStablecoin";
 // import "./tasks/naughtyPrice/IDOPriceGetter";
@@ -55,9 +55,9 @@ import "hardhat-contract-sizer";
 // // // Income Sharing tasks
 // import "./tasks/incomeSharing/setAddress";
 // import "./tasks/incomeSharing/pool";
-// import "./tasks/incomeSharing/incomeMaker";
+import "./tasks/incomeSharing/incomeMaker";
 // // import "./tasks/general/index";
-// import "./tasks/ILM/startStop";
+import "./tasks/ILM/startStop";
 
 dotenv.config();
 
