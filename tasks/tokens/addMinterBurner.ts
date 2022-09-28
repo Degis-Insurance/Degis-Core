@@ -61,14 +61,13 @@ task("addMinterBurner", "add minter/burner manually")
     console.log("\nFinish Adding minter or burner...\n");
   });
 
-task("addStakingMinter", "add staking minter manually")
-  .addParam("address", "staking minter address", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    const minterAddress = taskArgs.address;
-
+task("addStakingMinter", "add staking minter manually").setAction(
+  async (_, hre) => {
     const addressList = readAddressList();
 
     const { network } = hre;
+
+    const stakingPoolAddress = addressList[network.name].StakingPoolFactory;
 
     // Get the token contract instance
     const DegisToken: DegisToken__factory = await hre.ethers.getContractFactory(
@@ -78,12 +77,13 @@ task("addStakingMinter", "add staking minter manually")
       addressList[network.name]["DegisToken"]
     );
 
-    const isAlready = await degis.isMinter(minterAddress);
+    const isAlready = await degis.isMinter(stakingPoolAddress);
     if (!isAlready) {
-      const tx = await degis.addMinter(minterAddress);
+      const tx = await degis.addMinter(stakingPoolAddress);
       console.log(await tx.wait());
     }
-  });
+  }
+);
 
 task("addFarmingMinter", "Add degis minter to farming contract").setAction(
   async (_, hre) => {
@@ -137,8 +137,7 @@ task(
   if (!isAlready_1) {
     const tx_1 = await buyer.addMinter(routerAddress);
     console.log(await tx_1.wait());
-  }
-  else console.log("already minter")
+  } else console.log("already minter");
 });
 
 task("addAllMinterBurner", "Add minter for degis/buyer tokens").setAction(

@@ -52,6 +52,7 @@ task("setStakingReward", "Set the degis reward of a staking pool")
     console.log("Degis reward after set: ", formatEther(degisR));
   });
 
+// Start timestamp can be set as 0
 task("deployStakingPool", "Deploy a new staking pool")
   .addParam("pooltoken", "Address of the pool token", null, types.string)
   .addParam("start", "Staking pool start timestamp", null, types.int)
@@ -59,7 +60,7 @@ task("deployStakingPool", "Deploy a new staking pool")
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolTokenAddress = taskArgs.pooltoken;
-    const startBlock = taskArgs.start;
+    const startTimestamp = taskArgs.start;
     const degisPerSecond = taskArgs.reward;
 
     // Network info
@@ -83,7 +84,7 @@ task("deployStakingPool", "Deploy a new staking pool")
     // Deploy pool
     const tx = await factory.createPool(
       poolTokenAddress,
-      startBlock,
+      startTimestamp,
       parseUnits(degisPerSecond)
     );
     console.log("Tx details: ", await tx.wait());

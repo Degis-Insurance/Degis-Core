@@ -16,7 +16,7 @@ import {
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
 task("startIncomeSharingPool", "Start a new income sharing pool")
-  .addParam("pid", "The pool id", null, types.string)
+  .addParam("token", "The pool reward token", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
@@ -39,15 +39,14 @@ task("startIncomeSharingPool", "Start a new income sharing pool")
       dev_account
     ).attach(vaultAddress);
 
-    // Check the result
-    const poolInfo = await vault.pools(taskArgs.pid);
-    console.log("Income sharing pool info: ", poolInfo);
+    // Set
+    const tx = await vault.startPool(taskArgs.token);
+    console.log("Tx details: ", await tx.wait());
 
-    if (poolInfo.available == false) {
-      // Set
-      const tx = await vault.startPool(usdAddress);
-      console.log("Tx details: ", await tx.wait());
-    } else console.log("pool id ", taskArgs.pid, " already started");
+    // Check the result
+    const poolId = await vault.nextPool();
+    const poolInfo = await vault.pools(poolId.sub(1));
+    console.log("Income sharing pool info: ", poolInfo);
   });
 
 task("setIncomeSpeed", "Set income sharing speed")

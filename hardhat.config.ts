@@ -42,19 +42,19 @@ import "./tasks/naughtyPrice/deployToken";
 // import "./tasks/lucky/degisLottery";
 
 // // // Token Tasks
-// // import "./tasks/tokens/addMinterBurner";
-// // import "./tasks/tokens/mintToken";
-// import "./tasks/tokens/shield";
+import "./tasks/tokens/addMinterBurner";
+import "./tasks/tokens/mintToken";
+import "./tasks/tokens/shield";
 
 // // // Staking Tasks
-// // import "./tasks/staking/stakingPoolFactory";
+import "./tasks/staking/stakingPoolFactory";
 
 // // import "./tasks/proxy/admin";
 // // import "./tasks/governance/VeDEG";
 
 // // // Income Sharing tasks
-// import "./tasks/incomeSharing/setAddress";
-// import "./tasks/incomeSharing/pool";
+import "./tasks/incomeSharing/setAddress";
+import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
 // // import "./tasks/general/index";
 import "./tasks/ILM/startStop";
