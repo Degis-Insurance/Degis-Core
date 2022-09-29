@@ -19,13 +19,14 @@
 */
 pragma solidity ^0.8.10;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../tokens/interfaces/IDegisToken.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "hardhat/console.sol";
+
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens
@@ -127,6 +128,12 @@ contract PurchaseIncentiveVault is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Initialize the contract
+     *
+     * @param _buyerToken   The address of buyer token
+     * @param _degisToken   The address of degis token
+     */
     function initialize(address _buyerToken, address _degisToken)
         public
         initializer
@@ -149,6 +156,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Check if admins can distribute now
+     *
      * @dev Should pass the distribution interval
      */
     modifier hasPassedInterval() {
@@ -164,8 +172,10 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get the amount of users in _round, used for distribution
-     * @param _round Round number to check
-     * @return totalUsers Total amount of users in _round
+     *
+     * @param _round        Round number to check
+     *
+     * @return totalUsers   Total amount of users in _round
      */
     function getTotalUsersInRound(uint256 _round)
         external
@@ -177,8 +187,10 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get the user addresses in _round
-     * @param _round Round number to check
-     * @return users All user addresses in this round
+     *
+     * @param _round    Round number to check
+     *
+     * @return users    All user addresses in this round
      */
     function getUsersInRound(uint256 _round)
         external
@@ -190,7 +202,9 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get user's pending rounds
-     * @param _user User address to check
+     *
+     * @param _user     User address to check
+     *
      * @return pendingRounds User's pending rounds
      */
     function getUserPendingRounds(address _user)
@@ -203,8 +217,10 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get your shares in the current round
-     * @param _user Address of the user
-     * @param _round Round number
+     *
+     * @param _user     Address of the user
+     * @param _round    Round number
+     *
      * @return userShares User's shares in the current round
      */
     function getUserShares(address _user, uint256 _round)
@@ -217,7 +233,9 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get a user's pending reward
+     *
      * @param _user User address
+     *
      * @return userPendingReward User's pending reward
      */
     function pendingReward(address _user)
@@ -245,7 +263,9 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Get degis reward per round
+     *
      * @dev Depends on the total shares in this round
+     *
      * @return rewardPerRound Degis reward per round
      */
     function getRewardPerRound() public view returns (uint256 rewardPerRound) {
@@ -282,6 +302,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Set degis distribution per round
+     *
      * @param _degisPerRound Degis distribution per round
      */
     function setDegisPerRound(uint256 _degisPerRound) external onlyOwner {
@@ -291,6 +312,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Set a new distribution interval
+     *
      * @param _newInterval The new interval
      */
     function setDistributionInterval(uint256 _newInterval) external onlyOwner {
@@ -300,6 +322,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Set the threshold and piecewise reward
+     *
      * @param _threshold The threshold
      * @param _reward The piecewise reward
      */
@@ -317,6 +340,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Stake buyer tokens into this contract
+     *
      * @param _amount Amount of buyer tokens to stake
      */
     function stake(uint256 _amount) external nonReentrant whenNotPaused {
@@ -355,6 +379,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Redeem buyer token from the vault
+     *
      * @param _amount Amount to redeem
      */
     function redeem(uint256 _amount) external nonReentrant whenNotPaused {
@@ -382,6 +407,7 @@ contract PurchaseIncentiveVault is
 
     /**
      * @notice Setttle the current round
+     *
      * @dev Callable by any address, must pass the distribution interval
      */
     function settleCurrentRound() external hasPassedInterval whenNotPaused {
@@ -432,9 +458,8 @@ contract PurchaseIncentiveVault is
         } else users[msg.sender].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
-        
 
-        for (uint256 i = startIndex; i < startIndex + roundsToClaim;) {
+        for (uint256 i = startIndex; i < startIndex + roundsToClaim; ) {
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=

@@ -152,6 +152,11 @@ contract FarmingPoolUpgradeable is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Initialize the contract
+     *
+     * @param _degis Degis token address
+     */
     function initialize(address _degis) public initializer {
         require(_degis != address(0), "Zero address");
 
@@ -183,6 +188,8 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice The address can not be zero
+     *
+     * @param _address The address to check if not zero
      */
     modifier notZeroAddress(address _address) {
         require(_address != address(0), "Zero address");
@@ -191,6 +198,8 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice The pool is still in farming
+     *
+     * @param _poolId The pool id to check if still farming
      */
     modifier stillFarming(uint256 _poolId) {
         require(isFarming[_poolId], "Pool is not farming");
@@ -203,8 +212,10 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Check the amount of pending degis reward
-     * @param _poolId PoolId of this farming pool
-     * @param _user User address
+     *
+     * @param _poolId   PoolId of this farming pool
+     * @param _user     User address
+     *
      * @return pendingDegisAmount Amount of pending degis
      */
     function pendingDegis(uint256 _poolId, address _user)
@@ -266,6 +277,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Get the total pool list
+     *
      * @return pooList Total pool list
      */
     function getPoolList() external view returns (PoolInfo[] memory) {
@@ -274,9 +286,11 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Get a user's balance
-     * @param _poolId Id of the pool
-     * @param _user User address
-     * @return balance User's balance (lpToken)
+     *
+     * @param _poolId   Id of the pool
+     * @param _user     User address
+     *
+     * @return balance  User's balance (lpToken)
      */
     function getUserBalance(uint256 _poolId, address _user)
         external
@@ -298,12 +312,18 @@ contract FarmingPoolUpgradeable is
         _unpause();
     }
 
+    /**
+     * @notice Set the veDEG address
+     *
+     * @param _veDEG VeDEG address
+     */
     function setVeDEG(address _veDEG) external onlyOwner {
         veDEG = IVeDEG(_veDEG);
     }
 
     /**
      * @notice Set the start block timestamp
+     *
      * @param _startTimestamp New start block timestamp
      */
     function setStartTimestamp(uint256 _startTimestamp)
@@ -323,9 +343,10 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Set piecewise reward and threshold
-     * @param _poolId Id of the pool
-     * @param _threshold Piecewise threshold
-     * @param _reward Piecewise reward
+     *
+     * @param _poolId       Id of the pool
+     * @param _threshold    Piecewise threshold
+     * @param _reward       Piecewise reward
      */
     function setPiecewise(
         uint256 _poolId,
@@ -346,12 +367,14 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Add a new lp into the pool
+     *
      * @dev Can only be called by the owner
      *      The reward speed can be 0 and set later by setDegisReward function
-     * @param _lpToken LP token address
-     * @param _basicDegisPerSecond Basic reward speed(per second) for this new pool
-     * @param _bonusDegisPerSecond Bonus reward speed(per second) for this new pool
-     * @param _withUpdate Whether update all pools' status
+     *
+     * @param _lpToken              LP token address
+     * @param _basicDegisPerSecond  Basic reward speed(per second) for this new pool
+     * @param _bonusDegisPerSecond  Bonus reward speed(per second) for this new pool
+     * @param _withUpdate           Whether update all pools' status
      */
     function add(
         address _lpToken,
@@ -396,10 +419,11 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update the degisPerSecond for a specific pool (set to 0 to stop farming)
-     * @param _poolId Id of the farming pool
-     * @param _basicDegisPerSecond New basic reward amount per second
-     * @param _bonusDegisPerSecond New bonus reward amount per second
-     * @param _withUpdate Whether update all pools
+     *
+     * @param _poolId               Id of the farming pool
+     * @param _basicDegisPerSecond  New basic reward amount per second
+     * @param _bonusDegisPerSecond  New bonus reward amount per second
+     * @param _withUpdate           Whether update all pools
      */
     function setDegisReward(
         uint256 _poolId,
@@ -440,7 +464,9 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Stake LP token into the farming pool
+     *
      * @dev Can only stake to the pools that are still farming
+     *
      * @param _poolId Id of the farming pool
      * @param _amount Staking amount
      */
@@ -507,6 +533,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Withdraw lptoken from the pool
+     *
      * @param _poolId Id of the farming pool
      * @param _amount Amount of lp tokens to withdraw
      */
@@ -574,6 +601,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Harvest the degis reward and can be sent to another address
+     *
      * @param _poolId Id of the farming pool
      * @param _to Receiver of degis rewards
      */
@@ -619,6 +647,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update the pool's reward status
+     *
      * @param _poolId Id of the farming pool
      */
     function updatePool(uint256 _poolId) public {
@@ -682,6 +711,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update all farming pools (except for those stopped ones)
+     *
      * @dev Can be called by anyone
      *      Only update those active pools
      */
@@ -697,10 +727,12 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update a user's bonus
+     *
      * @dev When veDEG has balance change
      *      Only called by veDEG contract
-     * @param _user User address
-     * @param _newVeDEGBalance New veDEG balance
+     *
+     * @param _user             User address
+     * @param _newVeDEGBalance  New veDEG balance
      */
     function updateBonus(address _user, uint256 _newVeDEGBalance) external {
         require(msg.sender == address(veDEG), "Only veDEG contract");
@@ -755,9 +787,12 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Check if a lptoken has been added into the pool before
+     *
      * @dev This can also be written as a modifier
-     * @param _lpToken LP token address
-     * @return _isInPool Wether this lp is already in pool
+     *
+     * @param _lpToken      LP token address
+     *
+     * @return _isInPool    Wether this lp is already in pool
      */
     function _alreadyInPool(address _lpToken)
         internal
@@ -771,8 +806,11 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Safe degis transfer (check if the pool has enough DEGIS token)
+     *
      * @param _to User's address
      * @param _amount Amount to transfer
+     *
+     * @return _amount Actual amount transferred
      */
     function _safeDegisTransfer(address _to, uint256 _amount)
         internal
@@ -792,11 +830,15 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Finish the transfer of LP Token
+     *
      * @dev The lp token may have loss during transfer
-     * @param _out Whether the lp token is out
-     * @param _lpToken LP token address
-     * @param _user User address
-     * @param _amount Amount of lp tokens
+     *
+     * @param _out      Whether the lp token is out
+     * @param _lpToken  LP token address
+     * @param _user     User address
+     * @param _amount   Amount of lp tokens
+     *
+     * @return _amount Actual amount of lp tokens transferred
      */
     function _safeLPTransfer(
         bool _out,
@@ -819,6 +861,7 @@ contract FarmingPoolUpgradeable is
 
     /**
      * @notice Update the reward speed
+     *
      * @param _poolId Pool ID
      */
     function _updateRewardSpeed(uint256 _poolId) internal {
