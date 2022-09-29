@@ -216,12 +216,15 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Swap stablecoin to USDC in PTP
+     *
      * @param _fromToken   From token address
      * @param _toToken     To token address
      * @param _fromAmount  Amount of from token
      * @param _minToAmount Minimun output amount
      * @param _to          Address that will receive the output token
      * @param _deadline    Deadline for this transaction
+     *
+     * @return actualAmount Actual output amount
      */
     function _swap(
         address _fromToken,
@@ -252,9 +255,11 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Safe token transfer
+     *
      * @dev Not allowed to transfer more tokens than the current balance
-     * @param _token  Token address to be transferred
-     * @param _amount Amount of token to be transferred
+     * @param _token    Token address to be transferred
+     * @param _amount   Amount of token to be transferred
+     *
      * @return realAmount Real amount that has been transferred
      */
     function _safeTokenTransfer(address _token, uint256 _amount)
