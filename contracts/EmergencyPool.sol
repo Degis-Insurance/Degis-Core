@@ -49,7 +49,7 @@ contract EmergencyPool is Ownable {
     /**
      * @notice Manually stake into the pool
      * @param _tokenAddress Address of the ERC20 token
-     * @param _amount The amount that the user want to stake
+     * @param _amount       The amount that the user want to stake
      */
     function deposit(address _tokenAddress, uint256 _amount) external {
         require(_amount > 0, "Amount must be greater than 0");
@@ -66,8 +66,9 @@ contract EmergencyPool is Ownable {
     /**
      * @notice Withdraw the asset when emergency (only by the owner)
      * @dev The ownership need to be transferred to another contract in the future
+     *
      * @param _tokenAddress Address of the ERC20 token
-     * @param _amount The amount that the user want to unstake
+     * @param _amount       The amount that the user want to unstake
      */
     function emergencyWithdraw(address _tokenAddress, uint256 _amount)
         external
@@ -82,9 +83,10 @@ contract EmergencyPool is Ownable {
 
     /**
      * @notice Use emergency pool fund
+     *
      * @param _tokenAddress Address of the ERC20 token
-     * @param _receiver Address of the receiver
-     * @param _amount The amount to use    
+     * @param _receiver     Address of the receiver
+     * @param _amount       The amount to use    
      */
     function useFund(
         address _tokenAddress,

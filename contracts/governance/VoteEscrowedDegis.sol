@@ -161,6 +161,12 @@ contract VoteEscrowedDegis is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Initialize the contract
+     *
+     * @param _degis Degis token address
+     * @param _farmingPool Farming pool address
+     */
     function initialize(address _degis, address _farmingPool)
         public
         initializer
@@ -195,10 +201,12 @@ contract VoteEscrowedDegis is
      * @notice Not callable by smart contract
      * @dev Checked first by msg.sender == tx.origin
      *      Then if the contract is whitelisted, it will still pass the check
+     *
+     * @param _address Address to verify if not a contract
      */
-    modifier notContract(address _addr) {
-        if (_addr != tx.origin) {
-            if (!whitelist[_addr]) revert VED__NotWhiteListed();
+    modifier notContract(address _address) {
+        if (_address != tx.origin) {
+            if (!whitelist[_address]) revert VED__NotWhiteListed();
         }
         _;
     }
@@ -218,8 +226,10 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Calculate the amount of veDEG that can be claimed by user
-     * @param _user User address
-     * @return claimableAmount Claimable amount of the user
+     *
+     * @param _user             User address
+     *
+     * @return claimableAmount  Claimable amount of the user
      */
     function claimable(address _user) public view returns (uint256) {
         if (_user == address(0)) revert VED__ZeroAddress();
@@ -288,6 +298,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Add a new whitelist address
      * @dev Only callable by the owner
+     *
      * @param _account Address to add
      */
     function addWhitelist(address _account) external onlyOwner {
@@ -298,6 +309,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Remove a new whitelist address
      * @dev Only callable by the owner
+     *
      * @param _account Address to remove
      */
     function removeWhitelist(address _account) external onlyOwner {
@@ -307,6 +319,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Set maxCap ratio
+     *
      * @param _maxCapRatio the new max ratio
      */
     function setMaxCapRatio(uint256 _maxCapRatio) external onlyOwner {
@@ -317,6 +330,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Set generationRate
+     *
      * @param _generationRate New generation rate
      */
     function setGenerationRate(uint256 _generationRate) external onlyOwner {
@@ -325,6 +339,11 @@ contract VoteEscrowedDegis is
         generationRate = _generationRate;
     }
 
+    /**
+     * @notice Set contract Address of Stakable NFTs
+     *
+     * @param _nftStaking New farming pool address
+     */
     function setNFTStaking(address _nftStaking) external onlyOwner {
         emit NFTStakingChanged(nftStaking, _nftStaking);
         nftStaking = _nftStaking;
@@ -337,6 +356,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Depisit degis for veDEG
      * @dev Only EOA or whitelisted contract address
+     *
      * @param _amount Amount to deposit
      */
     function deposit(uint256 _amount)
@@ -368,6 +388,8 @@ contract VoteEscrowedDegis is
     /**
      * @notice Deposit for the max time
      * @dev Release the max amount one time
+     *
+     * @param _amount Amount to deposit
      */
     function depositMaxTime(uint256 _amount)
         external
@@ -404,6 +426,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Withdraw degis token
      * @dev User will lose all veDEG once he withdrawed
+     *
      * @param _amount Amount to withdraw
      */
     function withdraw(uint256 _amount)
@@ -470,6 +493,7 @@ contract VoteEscrowedDegis is
      * @notice Lock veDEG token
      * @dev Only whitelisted contract
      *      Income sharing contract will lock veDEG as entrance
+     *
      * @param _to User address
      * @param _amount Amount to lock
      */
@@ -485,6 +509,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Unlock veDEG token
+     *
      * @param _to User address
      * @param _amount Amount to unlock
      */
@@ -502,6 +527,7 @@ contract VoteEscrowedDegis is
      * @notice Burn veDEG
      * @dev Only whitelisted contract
      *      For future use, some contracts may need veDEG for entrance
+     *
      * @param _to Address to burn
      * @param _amount Amount to burn
      */
@@ -578,6 +604,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Finish claiming veDEG
+     *
      * @param _user User address
      */
     function _claim(address _user) internal {
@@ -595,6 +622,7 @@ contract VoteEscrowedDegis is
     /**
      * @notice Update the bonus in farming pool
      * @dev Every time when token is transferred (balance change)
+     *
      * @param _user User address
      * @param _newBalance New veDEG balance
      */
@@ -607,6 +635,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Lock veDEG token
+     *
      * @param _to User address
      * @param _amount Amount to lock
      */
@@ -616,6 +645,7 @@ contract VoteEscrowedDegis is
 
     /**
      * @notice Unlock veDEG token
+     *
      * @param _to User address
      * @param _amount Amount to unlock
      */
