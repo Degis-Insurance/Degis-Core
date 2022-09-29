@@ -19,14 +19,14 @@
 */
 
 pragma solidity ^0.8.10;
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {StringsUtils} from "../libraries/StringsUtils.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
-import {IPriceGetter} from "./interfaces/IPriceGetter.sol";
-import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
-import {INPPolicyToken} from "./interfaces/INPPolicyToken.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { StringsUtils } from "../libraries/StringsUtils.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
+import { IPriceGetter } from "./interfaces/IPriceGetter.sol";
+import { INaughtyFactory } from "./interfaces/INaughtyFactory.sol";
+import { INPPolicyToken } from "./interfaces/INPPolicyToken.sol";
 
 /**
  * @title  PolicyCore
@@ -214,6 +214,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Constructor, for some addresses
+     *
      * @param _usdc        USDC.e is the first stablecoin supported in the pool
      * @param _factory     Address of naughty factory
      * @param _priceGetter Address of the oracle contract
@@ -254,6 +255,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Check whether the policy token is paired with this stablecoin
+     *
      * @param _policyTokenName Policy token name
      * @param _stablecoin      Stablecoin address
      */
@@ -271,6 +273,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Check if the policy token has been deployed, used when deploying pools
+     *
      * @param _policyTokenName Name of the policy token inside the pair
      */
     modifier deployedPolicy(string memory _policyTokenName) {
@@ -286,6 +289,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Deposit/Redeem/Swap only before deadline
      * @dev Each pool will also have this deadline
      *      That needs to be set inside naughtyFactory
+     *
      * @param _policyTokenName Name of the policy token
      */
     modifier beforeDeadline(string memory _policyTokenName) {
@@ -330,8 +334,9 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Find the token address by its name
-     * @param _policyTokenName Name of the policy token (e.g. "AVAX_30_L_2103")
-     * @return policyTokenAddress Address of the policy token
+     *
+     * @param _policyTokenName      Name of the policy token (e.g. "AVAX_30_L_2103")
+     * @return policyTokenAddress   Address of the policy token
      */
     function findAddressbyName(string memory _policyTokenName)
         public
@@ -346,8 +351,9 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Find the token name by its address
-     * @param _policyTokenAddress Address of the policy token
-     * @return policyTokenName Name of the policy token
+     *
+     * @param _policyTokenAddress   Address of the policy token
+     * @return policyTokenName      Name of the policy token
      */
     function findNamebyAddress(address _policyTokenAddress)
         public
@@ -361,7 +367,9 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Find the token information by its name
+     *
      * @param _policyTokenName Name of the policy token (e.g. "AVAX30L202103")
+     *
      * @return policyTokenInfo PolicyToken detail information
      */
     function getPolicyTokenInfo(string memory _policyTokenName)
@@ -374,8 +382,10 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Get a user's quota for a certain policy token
+     *
      * @param _user               Address of the user to be checked
      * @param _policyTokenAddress Address of the policy token
+     *
      * @return _quota User's quota result
      */
     function getUserQuota(address _user, address _policyTokenAddress)
@@ -389,6 +399,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Get the information about all the tokens
      * @dev Include all active&expired tokens
+     *
      * @return tokensInfo Token information list
      */
     function getAllTokens() external view returns (PolicyTokenInfo[] memory) {
@@ -408,6 +419,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Add a new supported stablecoin
+     *
      * @param _newStablecoin Address of the new stablecoin
      */
     function addStablecoin(address _newStablecoin) external onlyOwner {
@@ -417,6 +429,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Change the address of lottery
+     *
      * @param _lotteryAddress Address of the new lottery
      */
     function setLottery(address _lotteryAddress) external onlyOwner {
@@ -426,6 +439,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Change the address of emergency pool
+     *
      * @param _incomeSharing Address of the new incomeSharing
      */
     function setIncomeSharing(address _incomeSharing) external onlyOwner {
@@ -435,6 +449,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Change the address of naughty router
+     *
      * @param _router Address of the new naughty router
      */
     function setNaughtyRouter(address _router) external onlyOwner {
@@ -444,6 +459,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Change the address of ILM
+     *
      * @param _ILM Address of the new ILM
      */
     function setILMContract(address _ILM) external onlyOwner {
@@ -454,6 +470,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Change the income part to lottery
      * @dev The remaining part will be distributed to incomeSharing
+     *
      * @param _toLottery Proportion to lottery
      */
     function setIncomeToLottery(uint256 _toLottery) external onlyOwner {
@@ -473,6 +490,7 @@ contract PolicyCore is OwnableUpgradeable {
      *      Name decimals and token decimals are different here
      *      The original token name should be the same in Chainlink PriceFeeds
      *      Those tokens that are not listed on Chainlink are not supported
+     *
      * @param _tokenName       Name of the original token (e.g. AVAX, BTC, ETH...)
      * @param _stablecoin      Address of the stablecoin (Just for check decimals here)
      * @param _isCall          The policy is for higher or lower than the strike price (call / put)
@@ -551,6 +569,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Deploy a new pair (pool)
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the stable coin
      * @param _poolDeadline    Swapping deadline of the pool (normally the same as the token's deadline)
@@ -593,6 +612,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Deposit stablecoins and get policy tokens
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the stable coin
      * @param _amount          Amount of stablecoin
@@ -613,6 +633,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Delegate deposit (deposit and mint for other addresses)
      * @dev Only called by the router contract
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the sable coin
      * @param _amount          Amount of stablecoin
@@ -648,6 +669,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Burn policy tokens and redeem stablecoins
      * @dev Redeem happens before the deadline and is different from claim/settle
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the stablecoin
      * @param _amount          Amount to redeem
@@ -687,6 +709,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Redeem policy tokens and get stablecoins by the user himeself
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the stablecoin
      */
@@ -742,6 +765,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Claim a payoff based on policy tokens
      * @dev It is done after result settlement and only if the result is true
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the stable coin
      * @param _amount          Amount of stablecoin
@@ -786,6 +810,7 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Get the final price from the PriceGetter contract
+     *
      * @param _policyTokenName Name of the policy token
      */
     function settleFinalResult(string memory _policyTokenName)
@@ -831,6 +856,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Settle the policies for the users when insurance events do not happen
      *         Funds are automatically distributed back to the depositors
      * @dev    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
+     *
      * @param _policyTokenName Name of policy token
      * @param _stablecoin      Address of stablecoin
      * @param _startIndex      Settlement start index
@@ -918,6 +944,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Collect the income
      * @dev Can be done by anyone, only when there is some income to be distributed
+     *
      * @param _stablecoin Address of stablecoin
      */
     function collectIncome(address _stablecoin) public {
@@ -942,8 +969,8 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Update user quota from ILM when claim
-     *
      * @dev When you claim your liquidity from ILM, you will get normal quota as you are using policyCore
+     *
      * @param _user        User address
      * @param _policyToken PolicyToken address
      * @param _amount      Quota amount
@@ -972,7 +999,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _poolDeadline       Swapping deadline of the pool (normally the same as the token's deadline)
      * @param _feeRate            Fee rate given to LP holders
      *
-     * @return poolAddress Address of the pool
+     * @return poolAddress        Address of the pool
      */
     function _deployPool(
         address _policyTokenAddress,
@@ -997,10 +1024,10 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Finish Deposit
      *
-     * @param _policyTokenName Name of the policy token
-     * @param _stablecoin Address of the sable coin
-     * @param _amount Amount of stablecoin
-     * @param _user Address to receive the policy tokens
+     * @param _policyTokenName  Name of the policy token
+     * @param _stablecoin       Address of the sable coin
+     * @param _amount           Amount of stablecoin
+     * @param _user             Address to receive the policy tokens
      */
     function _deposit(
         string memory _policyTokenName,
@@ -1032,10 +1059,10 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Settle the policy when the event does not happen
      *
-     * @param _policyTokenAddress Address of policy token
-     * @param _stablecoin Address of stable coin
-     * @param _start Start index
-     * @param _stop Stop index
+     * @param _policyTokenAddress   Address of policy token
+     * @param _stablecoin           Address of stable coin
+     * @param _start                Start index
+     * @param _stop                 Stop index
      */
     function _settlePolicy(
         address _policyTokenAddress,
@@ -1134,7 +1161,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Calculate the fraction part of a number
      *
      * @dev The scale is fixed as 1e18 (decimal fraction)
-     *      
+     *
      * @param x Number to calculate
      *
      * @return result Fraction result

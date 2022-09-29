@@ -107,6 +107,15 @@ contract IDOPriceGetter is OwnableUpgradeable {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Add IDO pair info
+     *
+     * @param _policyToken  Name of the policy base token
+     * @param _pair         Pair address on TraderJoe
+     * @param _decimals     Pair decimals
+     * @param _interval     Pair interval
+     * @param _startTime    Start time of IDO
+     */
     function addIDOPair(
         string calldata _policyToken,
         address _pair,
@@ -146,6 +155,11 @@ contract IDOPriceGetter is OwnableUpgradeable {
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     @notice Sample price from Oracle
+     *
+     * @param _policyToken  Name of policy base token
+     */
     function samplePrice(string calldata _policyToken) external {
         IDOPriceInfo storage priceFeed = priceFeeds[_policyToken];
 
@@ -185,7 +199,7 @@ contract IDOPriceGetter is OwnableUpgradeable {
 
             priceFeed.priceCumulativeLast = price1Cumulative;
         }
-        
+
         priceFeed.priceAverage = newPriceAverage;
 
         // Update lastTimestamp

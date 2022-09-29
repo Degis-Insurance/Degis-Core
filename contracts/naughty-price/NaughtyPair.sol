@@ -20,12 +20,12 @@
 
 pragma solidity ^0.8.10;
 
-import {Math} from "../libraries/Math.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "../utils/ReentrancyGuard.sol";
-import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
+import { Math } from "../libraries/Math.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuard } from "../utils/ReentrancyGuard.sol";
+import { INaughtyFactory } from "./interfaces/INaughtyFactory.sol";
 
 /**
  * @title  Naughty Pair
@@ -115,10 +115,11 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
     /**
      * @notice Initialize the contract status after the deployment by factory
-     * @param _token0 Token0 address (policy token address)
-     * @param _token1 Token1 address (stablecoin address)
+     *
+     * @param _token0   Token0 address (policy token address)
+     * @param _token1   Token1 address (stablecoin address)
      * @param _deadline Deadline for this pool
-     * @param _feeRate Fee rate to LP holders (1000 <=> 100%)
+     * @param _feeRate  Fee rate to LP holders (1000 <=> 100%)
      */
     function initialize(
         address _token0,
@@ -147,9 +148,10 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
     /**
      * @notice Get reserve0 (Policy token) and reserve1 (stablecoin).
+     *
      * @dev This function always put policy token at the first place!
-     * @return _reserve0 Reserve of token0
-     * @return _reserve1 Reserve of token1
+     * @return _reserve0    Reserve of token0
+     * @return _reserve1    Reserve of token1
      */
     function getReserves()
         public
@@ -167,8 +169,8 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
     /**
      * @notice Mint LP Token to liquidity providers
      *         Called when adding liquidity.
-     * @param to The user address
-     * @return liquidity The LP token amount
+     * @param to            The user address
+     * @return liquidity    The LP token amount
      */
     function mint(address to)
         external
@@ -258,9 +260,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
     /**
      * @notice Finish the swap process
-     * @param _amount0Out Amount of token0 to be given out (may be 0)
-     * @param _amount1Out Amount of token1 to be given out (may be 0)
-     * @param _to Address to receive the swap result
+     * @param _amount0Out   Amount of token0 to be given out (may be 0)
+     * @param _amount1Out   Amount of token1 to be given out (may be 0)
+     * @param _to           Address to receive the swap result
      */
     function swap(
         uint256 _amount0Out,
@@ -355,9 +357,9 @@ contract NaughtyPair is ERC20("Naughty Pool LP", "NLP"), ReentrancyGuard {
 
     /**
      * @notice Get the smaller one of two numbers
-     * @param x The first number
-     * @param y The second number
-     * @return z The smaller one
+     * @param x     The first number
+     * @param y     The second number
+     * @return z    The smaller one
      */
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x < y ? x : y;

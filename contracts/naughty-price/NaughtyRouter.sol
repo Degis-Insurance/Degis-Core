@@ -19,14 +19,14 @@
 */
 pragma solidity ^0.8.10;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IBuyerToken} from "../tokens/interfaces/IBuyerToken.sol";
-import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
-import {INaughtyFactory} from "./interfaces/INaughtyFactory.sol";
-import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IBuyerToken } from "../tokens/interfaces/IBuyerToken.sol";
+import { INaughtyPair } from "./interfaces/INaughtyPair.sol";
+import { INaughtyFactory } from "./interfaces/INaughtyFactory.sol";
+import { IPolicyCore } from "./interfaces/IPolicyCore.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
 
 /**
  * @title  NaughtyRouter
@@ -137,14 +137,15 @@ contract NaughtyRouter is OwnableUpgradeable {
     /**
      * @notice Add liquidity but only provide stablecoins
      * @dev Only difference with addLiquidity is that mintPolicyTokenForUser
-     * @param _tokenA Address of policyToken
-     * @param _tokenB Address of stablecoin
-     * @param _amountADesired Amount of policyToken desired
-     * @param _amountBDesired Amount of stablecoin desired
-     * @param _amountAMin Minimum amount of policy token
-     * @param _amountBMin Minimum amount of stablecoin
-     * @param _to Address that receive the lp token, normally the user himself
-     * @param _deadline Transaction will revert after this deadline
+     *
+     * @param _tokenA           Address of policyToken
+     * @param _tokenB           Address of stablecoin
+     * @param _amountADesired   Amount of policyToken desired
+     * @param _amountBDesired   Amount of stablecoin desired
+     * @param _amountAMin       Minimum amount of policy token
+     * @param _amountBMin       Minimum amount of stablecoin
+     * @param _to               Address that receive the lp token, normally the user himself
+     * @param _deadline         Transaction will revert after this deadline
      */
     function addLiquidityWithUSD(
         address _tokenA,
@@ -195,17 +196,18 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Add liquidity function
-     * @param _tokenA Address of policyToken
-     * @param _tokenB Address of stablecoin
-     * @param _amountADesired Amount of policyToken desired
-     * @param _amountBDesired Amount of stablecoin desired
-     * @param _amountAMin Minimum amoutn of policy token
-     * @param _amountBMin Minimum amount of stablecoin
-     * @param _to Address that receive the lp token, normally the user himself
-     * @param _deadline Transaction will revert after this deadline
-     * @return amountA Amount of tokenA to be input
-     * @return amountB Amount of tokenB to be input
-     * @return liquidity LP token to be mint
+     *
+     * @param _tokenA           Address of policyToken
+     * @param _tokenB           Address of stablecoin
+     * @param _amountADesired   Amount of policyToken desired
+     * @param _amountBDesired   Amount of stablecoin desired
+     * @param _amountAMin       Minimum amoutn of policy token
+     * @param _amountBMin       Minimum amount of stablecoin
+     * @param _to               Address that receive the lp token, normally the user himself
+     * @param _deadline         Transaction will revert after this deadline
+     * @return amountA          Amount of tokenA to be input
+     * @return amountB          Amount of tokenB to be input
+     * @return liquidity        LP token to be mint
      */
     function addLiquidity(
         address _tokenA,
@@ -251,15 +253,16 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Remove liquidity from the pool
-     * @param _tokenA Address of policy token
-     * @param _tokenB Address of stablecoin
-     * @param _liquidity The lptoken amount to be removed
-     * @param _amountAMin Minimum amount of tokenA given out
-     * @param _amountBMin Minimum amount of tokenB given out
-     * @param _to User address
-     * @param _deadline Deadline of this transaction
-     * @return amountA Amount of token0 given out
-     * @return amountB Amount of token1 given out
+     *
+     * @param _tokenA       Address of policy token
+     * @param _tokenB       Address of stablecoin
+     * @param _liquidity    The lptoken amount to be removed
+     * @param _amountAMin   Minimum amount of tokenA given out
+     * @param _amountBMin   Minimum amount of tokenB given out
+     * @param _to           User address
+     * @param _deadline     Deadline of this transaction
+     * @return amountA      Amount of token0 given out
+     * @return amountB      Amount of token1 given out
      */
     function removeLiquidity(
         address _tokenA,
@@ -292,13 +295,14 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Amount out is fixed
-     * @param _amountInMax Maximum token input
-     * @param _amountOut Fixed token output
-     * @param _tokenIn Address of input token
-     * @param _tokenOut Address of output token
-     * @param _to User address
-     * @param _deadline Deadline for this specific swap
-     * @return amountIn Amounts to be really put in
+     *
+     * @param _amountInMax  Maximum token input
+     * @param _amountOut    Fixed token output
+     * @param _tokenIn      Address of input token
+     * @param _tokenOut     Address of output token
+     * @param _to           User address
+     * @param _deadline     Deadline for this specific swap
+     * @return amountIn     Amounts to be really put in
      */
     function swapTokensforExactTokens(
         uint256 _amountInMax,
@@ -339,13 +343,14 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Amount in is fixed
-     * @param _amountIn Fixed token input
+     *
+     * @param _amountIn     Fixed token input
      * @param _amountOutMin Minimum token output
-     * @param _tokenIn Address of input token
-     * @param _tokenOut Address of output token
-     * @param _to User address
-     * @param _deadline Deadline for this specific swap
-     * @return amountOut Amounts to be really given out
+     * @param _tokenIn      Address of input token
+     * @param _tokenOut     Address of output token
+     * @param _to           User address
+     * @param _deadline     Deadline for this specific swap
+     * @return amountOut    Amounts to be really given out
      */
     function swapExactTokensforTokens(
         uint256 _amountIn,
@@ -390,14 +395,15 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Internal function to finish adding liquidity
-     * @param _tokenA Address of tokenA
-     * @param _tokenB Address of tokenB
-     * @param _amountADesired Amount of tokenA to be added
-     * @param _amountBDesired Amount of tokenB to be added
-     * @param _amountAMin Minimum amount of tokenA
-     * @param _amountBMin Minimum amount of tokenB
-     * @return amountA Real amount of tokenA
-     * @return amountB Real amount of tokenB
+     *
+     * @param _tokenA           Address of tokenA
+     * @param _tokenB           Address of tokenB
+     * @param _amountADesired   Amount of tokenA to be added
+     * @param _amountBDesired   Amount of tokenB to be added
+     * @param _amountAMin       Minimum amount of tokenA
+     * @param _amountBMin       Minimum amount of tokenB
+     * @return amountA          Real amount of tokenA
+     * @return amountB          Real amount of tokenB
      */
     function _addLiquidity(
         address _tokenA,
@@ -437,10 +443,10 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Finish the erc20 transfer operation
-     * @param _token ERC20 token address
-     * @param _from Address to give out the token
-     * @param _to Pair address to receive the token
-     * @param _amount Transfer amount
+     * @param _token    ERC20 token address
+     * @param _from     Address to give out the token
+     * @param _to       Pair address to receive the token
+     * @param _amount   Transfer amount
      */
     function _transferHelper(
         address _token,
@@ -453,12 +459,12 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Finish swap process
-     * @param _pair Address of the pair
-     * @param _tokenIn Address of the input token
-     * @param _amountIn Amount of tokens put in
-     * @param _amountOut Amount of tokens get out
-     * @param _isBuying Whether this is a purchase or a sell
-     * @param _to Address of the user
+     * @param _pair         Address of the pair
+     * @param _tokenIn      Address of the input token
+     * @param _amountIn     Amount of tokens put in
+     * @param _amountOut    Amount of tokens get out
+     * @param _isBuying     Whether this is a purchase or a sell
+     * @param _to           Address of the user
      */
     function _swap(
         address _pair,
@@ -490,10 +496,11 @@ contract NaughtyRouter is OwnableUpgradeable {
     /**
      * @notice Used when users only provide stablecoins and want to mint & add liquidity in one step
      * @dev Need have approval before (done by the user himself)
-     * @param _policyTokenAddress Address of the policy token
-     * @param _stablecoin Address of the stablecoin
-     * @param _amount Amount to be used for minting policy tokens
-     * @param _user The user's address
+     *
+     * @param _policyTokenAddress   Address of the policy token
+     * @param _stablecoin           Address of the stablecoin
+     * @param _amount               Amount to be used for minting policy tokens
+     * @param _user                 The user's address
      */
     function _mintPolicyTokensForUser(
         address _policyTokenAddress,
@@ -525,15 +532,20 @@ contract NaughtyRouter is OwnableUpgradeable {
      * @notice Fetche the reserves for a pair
      * @dev You need to sort the token order by yourself!
      *      No matter your input order, the return value will always start with policy token reserve.
+     *
+     * @param _tokenA   Address of tokenA
+     * @param _tokenB   Address of tokenB
+     * @return reserveA Reserve of tokenA
+     * @return reserveB Reserve of tokenB
      */
-    function _getReserves(address tokenA, address tokenB)
+    function _getReserves(address _tokenA, address _tokenB)
         internal
         view
         returns (uint112 reserveA, uint112 reserveB)
     {
         address pairAddress = INaughtyFactory(factory).getPairAddress(
-            tokenA,
-            tokenB
+            _tokenA,
+            _tokenB
         );
 
         // (Policy token reserve, stablecoin reserve)
@@ -542,9 +554,9 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Used when swap exact tokens for tokens (in is fixed)
-     * @param isBuying Whether the user is buying policy tokens
+     * @param isBuying  Whether the user is buying policy tokens
      * @param _amountIn Amount of tokens put in
-     * @param _tokenIn Address of the input token
+     * @param _tokenIn  Address of the input token
      * @param _tokenOut Address of the output token
      */
     function _getAmountOut(
@@ -577,10 +589,13 @@ contract NaughtyRouter is OwnableUpgradeable {
 
     /**
      * @notice Used when swap tokens for exact tokens (out is fixed)
-     * @param isBuying Whether the user is buying policy tokens
-     * @param _amountOut Amount of tokens given out
-     * @param _tokenIn Address of the input token
-     * @param _tokenOut Address of the output token
+     *
+     * @param isBuying      Whether the user is buying policy tokens
+     * @param _amountOut    Amount of tokens given out
+     * @param _tokenIn      Address of the input token
+     * @param _tokenOut     Address of the output token
+     *
+     * @return amountIn     Amount of tokens put in
      */
     function _getAmountIn(
         bool isBuying,
@@ -612,7 +627,8 @@ contract NaughtyRouter is OwnableUpgradeable {
      * @notice Given some amount of an asset and pair reserves
      *         returns an equivalent amount of the other asset
      * @dev Used when add or remove liquidity
-     * @param _amountA Amount of tokenA ( can be policytoken or stablecoin)
+     *
+     * @param _amountA  Amount of tokenA ( can be policytoken or stablecoin)
      * @param _reserveA Reserve of tokenA
      * @param _reserveB Reserve of tokenB
      */

@@ -21,10 +21,10 @@
 pragma solidity ^0.8.10;
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
-import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { INaughtyPair } from "./interfaces/INaughtyPair.sol";
+import { IPolicyCore } from "./interfaces/IPolicyCore.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title Naughty Factory
@@ -111,7 +111,8 @@ contract NaughtyFactory is OwnableUpgradeable {
 
     /**
      * @notice Get the all tokens that have been deployed
-     * @return tokens All tokens
+     *
+     * @return tokens   All tokens
      */
     function getAllTokens() external view returns (address[] memory) {
         return allTokens;
@@ -123,8 +124,8 @@ contract NaughtyFactory is OwnableUpgradeable {
      *      Ethers.js:
      *      Address = ethers.utils.getCreate2Address(factory address, salt, INIT_CODE_HASH)
      *      salt = keccak256(abi.encodePacked(_policyTokenName))
-     * @param _tokenName Name of the policy token to be deployed
-     * @param _decimals Token decimals of this policy token
+     * @param _tokenName    Name of the policy token to be deployed
+     * @param _decimals     Token decimals of this policy token
      */
     function getInitCodeHashForPolicyToken(
         string memory _tokenName,
@@ -138,9 +139,9 @@ contract NaughtyFactory is OwnableUpgradeable {
      * @notice Get the pair address deployed by the factory
      *         PolicyToken address first, and then stablecoin address
      *         The order of the tokens will be sorted inside the function
-     * @param _tokenAddress1 Address of token1
-     * @param _tokenAddress2 Address of toekn2
-     * @return Pool address of the two tokens
+     * @param _tokenAddress1    Address of token1
+     * @param _tokenAddress2    Address of toekn2
+     * @return Pool             Address of the two tokens
      */
     function getPairAddress(address _tokenAddress1, address _tokenAddress2)
         public
@@ -200,9 +201,9 @@ contract NaughtyFactory is OwnableUpgradeable {
 
     /**
      * @notice For each round we need to first create the policytoken(ERC20)
-     * @param _policyTokenName Name of the policyToken
-     * @param _decimals Decimals of the policyToken
-     * @return tokenAddress PolicyToken address
+     * @param _policyTokenName  Name of the policyToken
+     * @param _decimals         Decimals of the policyToken
+     * @return tokenAddress     PolicyToken address
      */
     function deployPolicyToken(
         string memory _policyTokenName,
@@ -227,11 +228,11 @@ contract NaughtyFactory is OwnableUpgradeable {
     /**
      * @notice After deploy the policytoken and get the address,
      *         we deploy the policyToken - stablecoin pool contract
-     * @param _policyTokenAddress Address of policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _deadline Deadline of the pool
-     * @param _feeRate Fee rate given to LP holders
-     * @return poolAddress Address of the pool
+     * @param _policyTokenAddress   Address of policy token
+     * @param _stablecoin           Address of the stable coin
+     * @param _deadline             Deadline of the pool
+     * @param _feeRate              Fee rate given to LP holders
+     * @return poolAddress          Address of the pool
      */
     function deployPool(
         address _policyTokenAddress,
@@ -267,8 +268,8 @@ contract NaughtyFactory is OwnableUpgradeable {
 
     /**
      * @notice Deploy function with create2
-     * @param code Byte code of the contract (creation code)
-     * @param salt Salt for the deployment
+     * @param code  Byte code of the contract (creation code)
+     * @param salt  Salt for the deployment
      * @return addr The deployed contract address
      */
     function _deploy(bytes memory code, bytes32 salt)
@@ -285,8 +286,8 @@ contract NaughtyFactory is OwnableUpgradeable {
 
     /**
      * @notice Get the policyToken bytecode (with constructor parameters)
-     * @param _tokenName Name of policyToken
-     * @param _decimals Decimals of policyToken
+     * @param _tokenName    Name of policyToken
+     * @param _decimals     Decimals of policyToken
      */
     function _getPolicyTokenBytecode(
         string memory _tokenName,

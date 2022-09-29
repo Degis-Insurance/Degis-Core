@@ -19,7 +19,7 @@
 */
 
 pragma solidity ^0.8.10;
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title  Policy Token for Naughty Price
@@ -74,8 +74,9 @@ contract NPPolicyToken is ERC20 {
 
     /**
      * @notice Mint some policy tokens
-     * @param _account Address to receive the tokens
-     * @param _amount Amount to be minted
+     *
+     * @param _account  Address to receive the tokens
+     * @param _amount   Amount to be minted
      */
     function mint(address _account, uint256 _amount) public onlyMinter {
         _mint(_account, _amount);
@@ -84,8 +85,9 @@ contract NPPolicyToken is ERC20 {
 
     /**
      * @notice Burn some policy tokens
-     * @param _account Address to burn tokens
-     * @param _amount Amount to be burned
+     *
+     * @param _account  Address to burn tokens
+     * @param _amount   Amount to be burned
      */
     function burn(address _account, uint256 _amount) public onlyMinter {
         _burn(_account, _amount);

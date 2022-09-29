@@ -88,6 +88,8 @@ contract PriceGetter is Ownable {
 
     /**
      * @notice Can not give zero address
+     *
+     * @param _address Address to check if not zero address
      */
     modifier notZeroAddress(address _address) {
         require(_address != address(0), "Zero address");
@@ -106,6 +108,7 @@ contract PriceGetter is Ownable {
      * @notice Set a price feed oracle address for a token
      * @dev Only callable by the owner
      *      The price result decimal should be less than 18
+     *
      * @param _tokenName   Address of the token
      * @param _feedAddress Price feed oracle address
      * @param _decimals    Decimals of this price feed service
@@ -127,8 +130,10 @@ contract PriceGetter is Ownable {
 
     /**
      * @notice Get latest price of a token
-     * @param _tokenName Address of the token
-     * @return price The latest price
+     *
+     * @param _tokenName    Address of the token
+     *
+     * @return price        The latest price
      */
     function getLatestPrice(string memory _tokenName) public returns (uint256) {
         PriceFeedInfo memory priceFeed = priceFeedInfo[_tokenName];
