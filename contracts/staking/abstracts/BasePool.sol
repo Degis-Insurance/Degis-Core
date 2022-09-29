@@ -113,7 +113,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Get a user's deposit info
+     *
      * @param _user User address
+     *
      * @return deposits[] User's deposit info
      */
     function getUserDeposits(address _user)
@@ -126,7 +128,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Get pending rewards
+     *
      * @param _user User address
+     *
      * @return pendingReward User's pending rewards
      */
     function pendingReward(address _user) external view returns (uint256) {
@@ -152,25 +156,42 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         return pending;
     }
 
-    function rewardToWeight(uint256 reward, uint256 rewardPerWeight)
+    /**
+     * @notice Returns total reward weighted by the user's weight
+     *
+     * @param _reward            Reward ratio amount
+     * @param _rewardPerWeight   Amount of reward per weight
+     *
+     * @return pendingReward     User's pending rewards
+     */
+    function rewardToWeight(uint256 _reward, uint256 _rewardPerWeight)
         public
         pure
         returns (uint256)
     {
-        return (reward * REWARD_PER_WEIGHT_MULTIPLIER) / rewardPerWeight;
+        return (_reward * REWARD_PER_WEIGHT_MULTIPLIER) / _rewardPerWeight;
     }
 
-    function weightToReward(uint256 weight, uint256 rewardPerWeight)
+    /**
+     * @notice Returns rewards amount based on the user's weight
+     *
+     * @param _weight            Reward ratio amount
+     * @param _rewardPerWeight   Amount of reward per weight
+     *
+     * @return pendingReward     User's pending rewards
+     */
+    function weightToReward(uint256 _weight, uint256 _rewardPerWeight)
         public
         pure
         returns (uint256)
     {
-        return (weight * rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        return (_weight * _rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
+
     function setDegisPerSecond(uint256 _degisPerSecond) external onlyFactory {
         degisPerSecond = _degisPerSecond;
     }
@@ -181,8 +202,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Stake tokens
-     * @param _amount Amount of tokens to stake
-     * @param _lockUntil Lock until timestamp
+     *
+     * @param _amount       Amount of tokens to stake
+     * @param _lockUntil    Lock until timestamp
      */
     function stake(uint256 _amount, uint256 _lockUntil) external {
         _stake(msg.sender, _amount, _lockUntil);
@@ -190,8 +212,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Unstake tokens
-     * @param _depositId Deposit id to be unstaked
-     * @param _amount Amount of tokens to unstake
+     *
+     * @param _depositId    Deposit id to be unstaked
+     * @param _amount       Amount of tokens to unstake
      */
     function unstake(uint256 _depositId, uint256 _amount) external {
         _unstake(msg.sender, _depositId, _amount);
@@ -231,6 +254,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Update pool status with fee (if any)
+     *
      * @param _fee Fee to be distributed
      */
     function _updatePoolWithFee(uint256 _fee) internal {
@@ -258,6 +282,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Finish stake process
+     *
      * @param _user User address
      * @param _amount Amount of tokens to stake
      * @param _lockUntil Lock until timestamp
@@ -328,9 +353,10 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Finish unstake process
-     * @param _user User address
-     * @param _depositId deposit ID to unstake from, zero-indexed
-     * @param _amount amount of tokens to unstake
+     *
+     * @param _user         User address
+     * @param _depositId    Deposit ID to unstake from, zero-indexed
+     * @param _amount       Amount of tokens to unstake
      */
     function _unstake(
         address _user,
@@ -401,6 +427,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Check pending reward after update
+     *
      * @param _user User address
      */
     function _pendingReward(address _user)
@@ -419,6 +446,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Distribute reward to staker
+     *
      * @param _user User address
      */
     function _distributeReward(address _user) internal {
@@ -440,6 +468,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Transfer pool token from user to pool
+     *
      * @param _from User address
      * @param _to Pool address
      * @param _value Amount of tokens to transfer
@@ -454,8 +483,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
 
     /**
      * @notice Safe degis transfer (check if the pool has enough DEGIS token)
-     * @param _to User's address
-     * @param _amount Amount to transfer
+     *
+     * @param _to       User's address
+     * @param _amount   Amount to transfer
      */
     function _safeDegisTransfer(address _to, uint256 _amount) internal {
         uint256 totalDegis = IERC20(degisToken).balanceOf(address(this));

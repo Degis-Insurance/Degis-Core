@@ -20,10 +20,10 @@
 
 pragma solidity ^0.8.10;
 
-import {Ownable} from "../utils/Ownable.sol";
-import {IPool} from "./interfaces/IPool.sol";
-import {BasePool, CoreStakingPool} from "./CoreStakingPool.sol";
-import {IDegisToken} from "../tokens/interfaces/IDegisToken.sol";
+import { Ownable } from "../utils/Ownable.sol";
+import { IPool } from "./interfaces/IPool.sol";
+import { BasePool, CoreStakingPool } from "./CoreStakingPool.sol";
+import { IDegisToken } from "../tokens/interfaces/IDegisToken.sol";
 
 contract StakingPoolFactory is Ownable {
     // ---------------------------------------------------------------------------------------- //
@@ -73,7 +73,10 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Get the pool address from pool token address
+     *
      * @param _poolToken Pool token address
+     *
+     * @return pools[_poolToken] Pool address
      */
     function getPoolAddress(address _poolToken)
         external
@@ -85,7 +88,9 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Get pool data from pool token address
+     *
      * @param _poolToken Pool token address
+     *
      * @return poolData Pool data struct
      */
     function getPoolData(address _poolToken)
@@ -121,8 +126,9 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Set degis per second for a pool
-     * @param _pool Address of the staking pool
-     * @param _degisPerSecond Degis reward per second
+     *
+     * @param _pool             Address of the staking pool
+     * @param _degisPerSecond   Degis reward per second
      */
     function setDegisPerSecond(address _pool, uint256 _degisPerSecond)
         external
@@ -139,10 +145,12 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Creates a staking pool and registers it within the factory
+     *
      * @dev Only called by the owner
-     * @param _poolToken Pool token address
-     * @param _startTimestamp Start timestamp for reward
-     * @param _degisPerSecond Reward speed
+     *
+     * @param _poolToken        Pool token address
+     * @param _startTimestamp   Start timestamp for reward
+     * @param _degisPerSecond   Reward speed
      */
     function createPool(
         address _poolToken,
@@ -168,6 +176,7 @@ contract StakingPoolFactory is Ownable {
 
     /**
      * @notice Register a deployed pool instance within the factory
+     *
      * @param _poolAddr Address of the already deployed pool instance
      */
     function _registerPool(address _poolAddr) internal {
@@ -186,19 +195,16 @@ contract StakingPoolFactory is Ownable {
         pools[poolToken] = _poolAddr;
         poolExists[_poolAddr] = true;
 
-        emit PoolRegistered(
-            msg.sender,
-            poolToken,
-            _poolAddr,
-            degisPerSecond
-        );
+        emit PoolRegistered(msg.sender, poolToken, _poolAddr, degisPerSecond);
     }
 
     /**
      * @notice Mint degis tokens as reward
+     *
      * @dev With this function, we only need to add factory contract into minterList
-     * @param _to The address to mint tokens to
-     * @param _amount Amount of degis tokens to mint
+     *
+     * @param _to       The address to mint tokens to
+     * @param _amount   Amount of degis tokens to mint
      */
     function mintReward(address _to, uint256 _amount) external {
         // Verify that sender is a pool registered withing the factory

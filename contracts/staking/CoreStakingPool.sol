@@ -51,9 +51,10 @@ contract CoreStakingPool is Ownable, BasePool {
 
     /**
      * @notice Stake function, will call the stake in BasePool
-     * @param _user User address
-     * @param _amount Amount to stake
-     * @param _lockUntil Lock until timestamp (0 means flexible staking)
+     *
+     * @param _user         User address
+     * @param _amount       Amount to stake
+     * @param _lockUntil    Lock until timestamp (0 means flexible staking)
      */
     function _stake(
         address _user,
@@ -65,9 +66,10 @@ contract CoreStakingPool is Ownable, BasePool {
 
     /**
      * @notice Unstake function, will check some conditions and call the unstake in BasePool
-     * @param _user User address
-     * @param _depositId Deposit id
-     * @param _amount Amount to unstake
+     *
+     * @param _user         User address
+     * @param _depositId    Deposit id
+     * @param _amount       Amount to unstake
      */
     function _unstake(
         address _user,
