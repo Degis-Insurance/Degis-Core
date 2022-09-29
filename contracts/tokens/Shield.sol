@@ -116,7 +116,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Get discount by veDEG
+     *
      * @dev The discount depends on veDEG
+     *
      * @return discount The discount for the user
      */
     function _getDiscount() internal view returns (uint256) {
@@ -134,6 +136,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Deposit tokens and mint Shield
+     *
      * @param _stablecoin Stablecoin address
      * @param _amount     Input stablecoin amount
      * @param _minAmount  Minimum amount output (if need swap)
@@ -180,6 +183,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Withdraw stablecoins
+     *
      * @param _amount Amount of Shield to be burned
      */
     function withdraw(uint256 _amount) public {
