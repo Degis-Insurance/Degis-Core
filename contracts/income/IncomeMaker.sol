@@ -27,12 +27,16 @@ contract IncomeMaker is OwnableUpgradeable {
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
+    // Address of naughty router
     INaughtyRouter public router;
 
+    // Address of naughty factory
     INaughtyFactory public factory;
 
+    // Address of income sharing vault
     address public incomeSharingVault;
 
+    // Scale of the fee
     uint256 public PRICE_SCALE = 1e6;
 
     // ---------------------------------------------------------------------------------------- //
@@ -60,9 +64,10 @@ contract IncomeMaker is OwnableUpgradeable {
 
     /**
      * @notice Initialize function
-     * @param _router Address of the naughty router
-     * @param _factory Address of the naughty factory
-     * @param _vault Address of the income sharing vault
+     *
+     * @param _router   Address of the naughty router
+     * @param _factory  Address of the naughty factory
+     * @param _vault    Address of the income sharing vault
      */
     function initialize(
         address _router,
@@ -83,8 +88,9 @@ contract IncomeMaker is OwnableUpgradeable {
 
     /**
      * @notice Convert the income to stablecoin and transfer to the incomeSharingVault
-     * @param _policyToken Address of the policy token
-     * @param _stablecoin Address of the stablecoi
+     *
+     * @param _policyToken  Address of the policy token
+     * @param _stablecoin   Address of the stablecoi
      */
     function convertIncome(address _policyToken, address _stablecoin) external {
         // Get the pair
@@ -128,8 +134,9 @@ contract IncomeMaker is OwnableUpgradeable {
 
     /**
      * @notice Emergency withdraw by the owner
-     * @param _token Address of the token
-     * @param _amount Amount of the token
+     *
+     * @param _token    Address of the token
+     * @param _amount   Amount of the token
      */
     function emergencyWithdraw(address _token, uint256 _amount)
         external
@@ -145,10 +152,13 @@ contract IncomeMaker is OwnableUpgradeable {
 
     /**
      * @notice Swap policy tokens to stablecoins
-     * @param _policyToken Address of policy token
-     * @param _stablecoin Address of stablecoin
-     * @param _amount Amount of policy token
-     * @param _to Address of the receiver
+     *
+     * @param _policyToken  Address of policy token
+     * @param _stablecoin   Address of stablecoin
+     * @param _amount       Amount of policy token
+     * @param _to           Address of the receiver
+     *
+     * @return amountOut    Amount swapped out
      */
     function _swap(
         address _policyToken,

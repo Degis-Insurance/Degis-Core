@@ -156,7 +156,9 @@ contract IncomeSharingVault is
 
     /**
      * @notice Set round time
+     *
      * @dev Round time is only used for checking reward speed
+     *
      * @param _roundTime Round time in seconds
      */
     function setRoundTime(uint256 _roundTime) external onlyOwner {
@@ -166,9 +168,11 @@ contract IncomeSharingVault is
 
     /**
      * @notice Start a new income sharing pool
+     *
      * @dev Normally there will be two pools
      *          - USDC.e as reward (1)
      *          - Shield as reward (2)
+     *
      * @param _rewardToken Reward token address
      */
     function startPool(address _rewardToken) external onlyOwner {
@@ -182,6 +186,7 @@ contract IncomeSharingVault is
 
     /**
      * @notice Set reward speed for a pool
+     *
      * @param _poolId Pool id
      * @param _rewardPerSecond Reward speed
      */
@@ -209,6 +214,7 @@ contract IncomeSharingVault is
 
     /**
      * @notice Deposit
+     *
      * @param _poolId Pool Id
      * @param _amount Amount of tokens to deposit
      */
@@ -251,6 +257,7 @@ contract IncomeSharingVault is
 
     /**
      * @notice Withdraw all veDEG
+     *
      * @param _poolId Pool Id
      */
     function withdrawAll(uint256 _poolId) external {
@@ -259,6 +266,7 @@ contract IncomeSharingVault is
 
     /**
      * @notice Withdraw the reward from the pool
+     *
      * @param _poolId Pool Id
      * @param _amount Amount to withdraw
      */
@@ -297,8 +305,8 @@ contract IncomeSharingVault is
 
     /**
      * @notice Harvest income reward
-     * @param _poolId Pool Id
-     * @param _to Reward receiver address
+     * @param _poolId   Pool Id
+     * @param _to       Reward receiver address
      */
     function harvest(uint256 _poolId, address _to)
         public
@@ -366,11 +374,14 @@ contract IncomeSharingVault is
 
     /**
      * @notice Finish the reward token transfer
+     *
      * @dev Safe means not transfer exceeds the balance of contract
      *      Manually change the reward speed
-     * @param _to Address to transfer
-     * @param _amount Amount to transfer
-     * @return realAmount Real amount transferred
+     *
+     * @param _to           Address to transfer
+     * @param _amount       Amount to transfer
+     *
+     * @return realAmount   Real amount transferred
      */
     function _safeRewardTransfer(
         address _token,
