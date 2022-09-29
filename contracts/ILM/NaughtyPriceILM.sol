@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.10;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Decimals} from "../utils/interfaces/IERC20Decimals.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {IPolicyCore} from "../naughty-price/interfaces/IPolicyCore.sol";
-import {INaughtyRouter} from "../naughty-price/interfaces/INaughtyRouter.sol";
-import {INaughtyPair} from "../naughty-price/interfaces/INaughtyPair.sol";
-import {ILMToken as LPToken} from "./ILMToken.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { IERC20Decimals } from "../utils/interfaces/IERC20Decimals.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IPolicyCore } from "../naughty-price/interfaces/IPolicyCore.sol";
+import { INaughtyRouter } from "../naughty-price/interfaces/INaughtyRouter.sol";
+import { INaughtyPair } from "../naughty-price/interfaces/INaughtyPair.sol";
+import { ILMToken as LPToken } from "./ILMToken.sol";
 
 /**
  * @title Naughty Price Initial Liquidity Matching
@@ -252,11 +252,13 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Start a new ILM round
+     *
      * @dev A new lp token will be deployed when starting a new ILM round
      *      It will have a special farming reward pool
-     * @param _policyToken Policy token address
-     * @param _stablecoin Stablecoin address
-     * @param _ILMDeadline Deadline of ILM period
+     *
+     * @param _policyToken  Policy token address
+     * @param _stablecoin   Stablecoin address
+     * @param _ILMDeadline  Deadline of ILM period
      */
     function startILM(
         address _policyToken,
@@ -303,12 +305,14 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Finish a round of ILM
+     *
      * @dev The swap pool for the protection token will be deployed with inital liquidity\
      *      The amount of initial liquidity will be the total amount of the pair
      *      Can be called by any address
-     * @param _policyToken Policy token address
-     * @param _deadlineForSwap Pool deadline
-     * @param _feeRate Fee rate of the swap pool
+     *
+     * @param _policyToken      Policy token address
+     * @param _deadlineForSwap  Pool deadline
+     * @param _feeRate          Fee rate of the swap pool
      */
     function finishILM(
         address _policyToken,
@@ -364,14 +368,16 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Deposit stablecoin and choose the price
+     *
      * @dev Deposit only check the pair status not the deadline
      *      There may be a zero ILM and we still need to deposit some asset to make it start
      *      Anyone wants to enter ILM need to pay some DEG as entrance fee
      *      The ratio is 100:1(usd:deg) and your fee is distributed to the users prior to you
-     * @param _policyToken Policy token address
-     * @param _stablecoin Stablecoin address
-     * @param _amountA Amount of policy token (virtual)
-     * @param _amountB Amount of stablecoin (virtual)
+     *
+     * @param _policyToken  Policy token address
+     * @param _stablecoin   Stablecoin address
+     * @param _amountA      Amount of policy token (virtual)
+     * @param _amountB      Amount of stablecoin (virtual)
      */
     function deposit(
         address _policyToken,
@@ -427,11 +433,13 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Withdraw stablecoins
+     *
      * @dev Only checks the status not the deadline
-     * @param _policyToken Policy token address
-     * @param _stablecoin Stablecoin address
-     * @param _amountA Amount of policy token (virtual)
-     * @param _amountB Amount of stablecoin (virtual)
+     *
+     * @param _policyToken  Policy token address
+     * @param _stablecoin   Stablecoin address
+     * @param _amountA      Amount of policy token (virtual)
+     * @param _amountB      Amount of stablecoin (virtual)
      */
     function withdraw(
         address _policyToken,
@@ -498,8 +506,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Withdraw all stablecoins of a certain policy token
-     * @param _policyToken Policy token address
-     * @param _stablecoin Stablecoin address
+     *
+     * @param _policyToken  Policy token address
+     * @param _stablecoin   Stablecoin address
      */
     function withdrawAll(address _policyToken, address _stablecoin) external {
         uint256 amounAMax = users[msg.sender][_policyToken].amountA;
@@ -510,14 +519,17 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Claim liquidity back
+     *
      * @dev You will get back some DEG (depending on how many users deposit after you)
      *      The claim amount is determined by the LP Token balance of you (you can buy from others)
      *      But the DEG reward would only be got once
      *      Your LP token will be burnt and you can not join ILM farming pool again
-     * @param _policyToken Policy token address
-     * @param _stablecoin Stablecoin address
-     * @param _amountAMin Minimum amount of policy token (slippage)
-     * @param _amountBMin Minimum amount of stablecoin (slippage)
+     *
+     * @param _policyToken  Policy token address
+     * @param _stablecoin   Stablecoin address
+     * @param _amount       Amount of liquidity to claim
+     * @param _amountAMin   Minimum amount of policy token (slippage)
+     * @param _amountBMin   Minimum amount of stablecoin (slippage)
      */
     function claim(
         address _policyToken,
@@ -573,8 +585,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Emergency withdraw a certain token
-     * @param _token Token address
-     * @param _amount Token amount
+     *
+     * @param _token    Token address
+     * @param _amount   Token amount
      */
     function emergencyWithdraw(address _token, uint256 _amount) external {
         IERC20(_token).safeTransfer(owner(), _amount);
@@ -584,6 +597,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Approve stablecoins for naughty price contracts
+     *
      * @param _stablecoin Stablecoin address
      */
     function approveStablecoin(address _stablecoin) external {
@@ -597,8 +611,10 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Deploy the new lp token for a round
-     * @param _name Name of the lp token
-     * @return lpTokenAddress Address of the lp token
+     *
+     * @param _name             Name of the lp token
+     *
+     * @return lpTokenAddress   Address of the lp token
      */
     function _deployLPToken(string memory _name) internal returns (address) {
         address lpTokenAddress = address(
@@ -609,10 +625,12 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Safely transfer tokens
-     * @param _token Token address
-     * @param _receiver Receiver address
-     * @param _amount Amount of tokens
-     * @return realAmount Real amount that is transferred
+     *
+     * @param _token        Token address
+     * @param _receiver     Receiver address
+     * @param _amount       Amount of tokens
+     *
+     * @return realAmount   Real amount that is transferred
      */
     function _safeTokenTransfer(
         address _token,
@@ -632,9 +650,11 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Update debt & fee distribution
-     * @param _policyToken Policy token address
-     * @param _usdAmount Amount of stablecoins input
-     * @param _degAmount Amount of degis input
+     *
+     * @param _policyToken  Policy token address
+     * @param _usdAmount    Amount of stablecoins input
+     * @param _degAmount    Amount of degis input
+     * @param _decimalDiff  Difference of decimals between policy token and stablecoin
      */
     function _updateWhenDeposit(
         address _policyToken,
@@ -685,6 +705,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
 
     /**
      * @notice Update degis reward when claim
+     *
      * @param _policyToken Policy token address
      */
     function _updateWhenClaim(address _policyToken) internal {
