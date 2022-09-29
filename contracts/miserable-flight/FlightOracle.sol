@@ -64,8 +64,11 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice Returns the address of the LINK token
+     *
      * @dev This is the public implementation for chainlinkTokenAddress, which is
      *      an internal method of the ChainlinkClient contract
+     *
+     * @return chainlinkTokenAddress The address of the LINK token
      */
     function getChainlinkTokenAddress() external view returns (address) {
         return chainlinkTokenAddress();
@@ -77,6 +80,8 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice Set the oracle address
+     *
+     * @param _newOracle  The new address of the oracle
      */
     function setOracleAddress(address _newOracle) external onlyOwner {
         oracleAddress = _newOracle;
@@ -85,6 +90,8 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice Set a new job id
+     *
+     * @param _newJobId  The new job id
      */
     function setJobId(bytes32 _newJobId) external onlyOwner {
         jobId = _newJobId;
@@ -93,6 +100,8 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice Change the policy flow contract address
+     *
+     * @param _policyFlow The new address of the policy flow contract
      */
     function setPolicyFlow(address _policyFlow) external onlyOwner {
         policyFlow = IPolicyFlow(_policyFlow);
@@ -105,12 +114,16 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice Creates a request to the specified Oracle contract address
+     *
      * @dev This function ignores the stored Oracle contract address and
      *      will instead send the request to the address specified
-     * @param _payment Payment to the oracle
-     * @param _url The URL to fetch data from
-     * @param _path The dot-delimited path to parse of the response
-     * @param _times The number to multiply the result by
+     *
+     * @param _payment  Payment to the oracle
+     * @param _url      The URL to fetch data from
+     * @param _path     The dot-delimited path to parse of the response
+     * @param _times    The number to multiply the result by
+     *
+     * @return request  send request to in bytes32
      */
     function newOracleRequest(
         uint256 _payment,
@@ -144,8 +157,10 @@ contract FlightOracle is ChainlinkClient, Ownable {
 
     /**
      * @notice The fulfill method from requests created by this contract
+     *
      * @dev The recordChainlinkFulfillment protects this function from being called
      *      by anyone other than the oracle address that the request was sent to
+     *
      * @param _requestId The ID that was generated for the request
      * @param _data The answer provided by the oracle
      */

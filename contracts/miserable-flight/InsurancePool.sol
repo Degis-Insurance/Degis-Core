@@ -37,9 +37,10 @@ contract InsurancePool is
 
     /**
      * @notice Constructor function
-     * @param _emergencyPool Emergency pool address
-     * @param _degisLottery Lottery address
-     * @param _usdAddress USDToken address
+     *
+     * @param _emergencyPool    Emergency pool address
+     * @param _degisLottery     Lottery address
+     * @param _usdAddress       USDToken address
      */
     constructor(
         address _emergencyPool,
@@ -105,8 +106,11 @@ contract InsurancePool is
 
     /**
      * @notice Get the real balance: LPValue * LP_Num
+     *
      * @dev Used in many places so give it a seperate function
-     * @param _user User's address
+     *
+     * @param _user         User's address
+     *
      * @return _userBalance Real balance of this user
      */
     function getUserBalance(address _user)
@@ -120,8 +124,10 @@ contract InsurancePool is
 
     /**
      * @notice Get the balance that one user(LP) can unlock
-     * @param _user User's address
-     * @return _unlockedAmount Unlocked amount of the user
+     *
+     * @param _user             User's address
+     *
+     * @return _unlockedAmount  Unlocked amount of the user
      */
     function getUnlockedFor(address _user)
         public
@@ -136,8 +142,10 @@ contract InsurancePool is
 
     /**
      * @notice Check the conditions when receive new buying request
-     * @param _payoff Payoff of the policy to be bought
-     * @return Whether there is enough capacity in the pool for this payoff
+     *
+     * @param _payoff   Payoff of the policy to be bought
+     *
+     * @return Whether  there is enough capacity in the pool for this payoff
      */
     function checkCapacity(uint256 _payoff) external view returns (bool) {
         return availableCapacity >= _payoff;
@@ -149,6 +157,7 @@ contract InsurancePool is
 
     /**
      * @notice Set a new frozen time
+     *
      * @param _newFrozenTime New frozen time, in timestamp(s)
      */
     function setFrozenTime(uint256 _newFrozenTime) external onlyOwner {
@@ -158,6 +167,8 @@ contract InsurancePool is
 
     /**
      * @notice Set the address of policyFlow
+     *
+     * @param _policyFlowAddress New policyFlow address
      */
     function setPolicyFlow(address _policyFlowAddress)
         public
@@ -170,6 +181,7 @@ contract InsurancePool is
 
     /**
      * @notice Set the premium reward distribution
+     *
      * @param _newDistribution New distribution [LP, Lottery, Emergency]
      */
     function setRewardDistribution(uint256[3] memory _newDistribution)
@@ -193,6 +205,7 @@ contract InsurancePool is
 
     /**
      * @notice Change the collateral factor
+     *
      * @param _factor The new collateral factor
      */
     function setCollateralFactor(uint256 _factor) public onlyOwner {
@@ -208,6 +221,7 @@ contract InsurancePool is
 
     /**
      * @notice LPs stake assets into the pool
+     *
      * @param _amount The amount that the user want to stake
      */
     function stake(uint256 _amount) external nonReentrant {
@@ -224,7 +238,9 @@ contract InsurancePool is
 
     /**
      * @notice Unstake from the pool (May fail if a claim happens before this operation)
+     *
      * @dev Only unstake by yourself
+     *
      * @param _amount The amount that the user want to unstake
      */
     function unstake(uint256 _amount)
@@ -276,10 +292,12 @@ contract InsurancePool is
 
     /**
      * @notice Update the pool variables when buying policies
+     *
      * @dev Capacity check is done before calling this function
-     * @param _premium Policy's premium
-     * @param _payoff Policy's payoff (max payoff)
-     * @param _user Address of the buyer
+     *
+     * @param _premium  Policy's premium
+     * @param _payoff   Policy's payoff (max payoff)
+     * @param _user     Address of the buyer
      */
     function updateWhenBuy(
         uint256 _premium,
@@ -302,8 +320,9 @@ contract InsurancePool is
 
     /**
      * @notice Update the status when a policy expires
-     * @param _premium Policy's premium
-     * @param _payoff Policy's payoff (max payoff)
+     *
+     * @param _premium  Policy's premium
+     * @param _payoff   Policy's payoff (max payoff)
      */
     function updateWhenExpire(uint256 _premium, uint256 _payoff)
         external
@@ -324,10 +343,11 @@ contract InsurancePool is
 
     /**
      * @notice Pay a claim
-     * @param _premium Premium of the policy
-     * @param _payoff Max payoff of the policy
-     * @param _realPayoff Real payoff of the policy
-     * @param _user Address of the policy claimer
+     *
+     * @param _premium      Premium of the policy
+     * @param _payoff       Max payoff of the policy
+     * @param _realPayoff   Real payoff of the policy
+     * @param _user         Address of the policy claimer
      */
     function payClaim(
         uint256 _premium,
@@ -362,7 +382,9 @@ contract InsurancePool is
 
     /**
      * @notice Finish the deposit process
+     *
      * @dev LPValue will not change during deposit
+     *
      * @param _user Address of the user who deposits
      * @param _amount Amount he deposits
      */
@@ -389,7 +411,9 @@ contract InsurancePool is
 
     /**
      * @notice _withdraw: finish the withdraw action, only when meeting the conditions
+     *
      * @dev LPValue will not change during withdraw
+     *
      * @param _user address of the user who withdraws
      * @param _amount the amount he withdraws
      */
@@ -411,7 +435,10 @@ contract InsurancePool is
 
     /**
      * @notice Distribute the premium to lottery and emergency pool
-     * @param _premium Premium amount to be distributed
+     *
+     * @param _premium          Premium amount to be distributed
+     *
+     * @return remainingPremium The remaining premium after distribution
      */
     function _distributePremium(uint256 _premium) internal returns (uint256) {
         uint256 premiumToLottery = _premium.mul(rewardDistribution[1].div(100));
@@ -433,6 +460,7 @@ contract InsurancePool is
 
     /**
      * @notice Update the value of each lp token
+     *
      * @dev Normally it will update when claim or expire
      */
     function _updateLPValue() internal {

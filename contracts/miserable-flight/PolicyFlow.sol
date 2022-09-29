@@ -69,11 +69,13 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Initializer of the PolicyFlow contract
+     *
      * @dev Upgradeable contracts do not have a constrcutor
-     * @param _insurancePool The InsurancePool contract address
-     * @param _policyToken The PolicyToken contract address
-     * @param _sigManager The SigManager contract address
-     * @param _buyerToken The BuyerToken contract address
+     *
+     * @param _insurancePool    The InsurancePool contract address
+     * @param _policyToken      The PolicyToken contract address
+     * @param _sigManager       The SigManager contract address
+     * @param _buyerToken       The BuyerToken contract address
      */
     function initialize(
         address _insurancePool,
@@ -111,8 +113,11 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Show a user's policies (all)
+     *
      * @dev Should only be checked for frontend
-     * @param _user User's address
+     *
+     * @param _user         User's address
+     *
      * @return userPolicies User's all policy details
      */
     function viewUserPolicy(address _user)
@@ -135,7 +140,9 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Get the policyInfo from its count/order
+     *
      * @param _policyId Total count/order of the policy = NFT tokenId
+     *
      * @return policy A struct of information about this policy
      */
     // TODO: If still need this function
@@ -149,7 +156,9 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Get the policy buyer by policyId
+     *
      * @param _policyId Unique policy Id (uint256)
+     *
      * @return buyerAddress The buyer of this policy
      */
     // TODO: If still need this function
@@ -167,6 +176,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Change the oracle fee
+     *
      * @param _fee New oracle fee
      */
     function setFee(uint256 _fee) external onlyOwner {
@@ -176,6 +186,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Change the max payoff
+     *
      * @param _newMaxPayoff New maxpayoff amount
      */
     function setMaxPayoff(uint256 _newMaxPayoff) external onlyOwner {
@@ -185,6 +196,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice How long before departure when users can not buy new policies
+     *
      * @param _newMinTime New time set
      */
     function setMinTimeBeforeDeparture(uint256 _newMinTime) external onlyOwner {
@@ -194,6 +206,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Change the oracle address
+     *
      * @param _oracleAddress New oracle address
      */
     function setFlightOracle(address _oracleAddress) external onlyOwner {
@@ -211,6 +224,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Set the new delay threshold used for calculating payoff
+     *
      * @param _thresholdMin New minimum threshold
      * @param _thresholdMax New maximum threshold
      */
@@ -229,15 +243,19 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Buy a new flight delay policy
+     *
      * @dev The transaction should have the signature from the backend server
-     * @dev Premium is in stablecoin, so it is 6 decimals
-     * @param _productId ID of the purchased product (0: flightdelay; 1,2,3...: others)
-     * @param _flightNumber Flight number in string (e.g. "AQ1299")
-     * @param _premium Premium of this policy (decimals: 6)
-     * @param _departureTimestamp Departure date of this flight (unix timestamp in s, not ms!)
-     * @param _landingDate Landing date of this flight (uinx timestamp in s, not ms!)
-     * @param _deadline Deadline for this purchase request
-     * @param signature Use web3.eth.sign(hash(data), account) to generate the signature
+     *      Premium is in stablecoin, so it is 6 decimals
+     *
+     * @param _productId            ID of the purchased product (0: flightdelay; 1,2,3...: others)
+     * @param _flightNumber         Flight number in string (e.g. "AQ1299")
+     * @param _premium              Premium of this policy (decimals: 6)
+     * @param _departureTimestamp   Departure date of this flight (unix timestamp in s, not ms!)
+     * @param _landingDate          Landing date of this flight (uinx timestamp in s, not ms!)
+     * @param _deadline             Deadline for this purchase request
+     * @param _signature            Use web3.eth.sign(hash(data), account) to generate the signature
+     *
+     * @return _policyId            The policyId of this new policy
      */
     function newApplication(
         uint256 _productId,
@@ -246,7 +264,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
         uint256 _departureTimestamp,
         uint256 _landingDate,
         uint256 _deadline,
-        bytes calldata signature
+        bytes calldata _signature
     ) public returns (uint256 _policyId) {
         uint256 currentTimestamp = block.timestamp;
         require(
@@ -266,7 +284,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
         // Should be signed by operators
         _checkSignature(
-            signature,
+            _signature,
             _flightNumber,
             _departureTimestamp,
             _landingDate,
@@ -312,12 +330,14 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Make a claim request
+     *
      * @dev Anyone can make a new claim
-     * @param _policyId The total order/id of the policy
-     * @param _flightNumber The flight number
-     * @param _timestamp The flight departure timestamp
-     * @param _path Which data in json needs to get
-     * @param _forceUpdate Owner can force to update
+     *
+     * @param _policyId         The total order/id of the policy
+     * @param _flightNumber     The flight number
+     * @param _timestamp        The flight departure timestamp
+     * @param _path             Which data in json needs to get
+     * @param _forceUpdate      Owner can force to update
      */
     function newClaimRequest(
         uint256 _policyId,
@@ -381,7 +401,9 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Update information when a policy token's ownership has been transferred
+     *
      * @dev This function is called by the ERC721 contract of PolicyToken
+     *
      * @param _tokenId Token Id of the policy token
      * @param _oldOwner The initial owner
      * @param _newOwner The new owner
@@ -415,6 +437,7 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Do the final settlement, called by FlightOracle contract
+     *
      * @param _requestId Chainlink request id
      * @param _result Delay result (minutes) given by oracle
      */
@@ -458,9 +481,11 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice check the policy and then determine whether we can afford it
-     * @param _payoff the payoff of the policy sold
-     * @param _user user's address
-     * @param _policyId the unique policy ID
+     *
+     * @param _premium      Premium of the policy
+     * @param _payoff       Payoff of the policy sold
+     * @param _user         User's address
+     * @param _policyId     The unique policy ID
      */
     function _policyCheck(
         uint256 _premium,
@@ -484,11 +509,12 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
     }
 
     /**
-     * @notice update the policy when it is expired
-     * @param _premium the premium of the policy sold
-     * @param _payoff the payoff of the policy sold
-     * @param _user user's address
-     * @param _policyId the unique policy ID
+     * @notice Update the policy when it is expired
+     *
+     * @param _premium      The premium of the policy sold
+     * @param _payoff       The payoff of the policy sold
+     * @param _user         User's address
+     * @param _policyId     The unique policy ID
      */
     function _policyExpired(
         uint256 _premium,
@@ -503,10 +529,11 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Update the policy when it is claimed
-     * @param _premium Premium of the policy sold
-     * @param _payoff Payoff of the policy sold
-     * @param _user User's address
-     * @param _policyId The unique policy ID
+     *
+     * @param _premium      Premium of the policy sold
+     * @param _payoff       Payoff of the policy sold
+     * @param _user         User's address
+     * @param _policyId     The unique policy ID
      */
     function _policyClaimed(
         uint256 _premium,
@@ -521,8 +548,10 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice The payoff formula
-     * @param _delay Delay in minutes
-     * @return the final payoff volume
+     *
+     * @param _delay    Delay in minutes
+     *
+     * @return the      Final payoff volume
      */
     function calcPayoff(uint256 _delay) internal view returns (uint256) {
         uint256 payoff = 0;
@@ -544,11 +573,12 @@ contract PolicyFlow is IPolicyStruct, PolicyParameters, OwnableUpgradeable {
 
     /**
      * @notice Check whether the signature is valid
-     * @param signature 65 byte array: [[v (1)], [r (32)], [s (32)]]
+     *
+     * @param signature     65 byte array: [[v (1)], [r (32)], [s (32)]]
      * @param _flightNumber Flight number
-     * @param _address userAddress
-     * @param _premium Premium of the policy
-     * @param _deadline Deadline of the application
+     * @param _address      User's address
+     * @param _premium      Premium of the policy
+     * @param _deadline     Deadline of the application
      */
     function _checkSignature(
         bytes calldata signature,

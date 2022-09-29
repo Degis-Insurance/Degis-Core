@@ -56,8 +56,9 @@ contract FDPolicyToken is
 
     /**
      * @notice Get the tokenURI of a policy
-     * @param _tokenId Token Id of the policy token
-     * @return The tokenURI in string form
+     *
+     * @param _tokenId  Token Id of the policy token
+     * @return The      TokenURI in string form
      */
     function tokenURI(uint256 _tokenId)
         public
@@ -101,11 +102,13 @@ contract FDPolicyToken is
 
     /**
      * @notice Transfer the owner of a policy token and update the information in policyFlow
-     * @dev Need approval and is prepared for secondary market
-     * @dev If you just transfer the policy token, you will not transfer the right for claiming payoff
-     * @param _from The original owner of the policy
-     * @param _to The new owner of the policy
-     * @param _tokenId Token id of the policy
+     *
+     * @dev Need approval and is prepared for secondary market.
+     *      If you just transfer the policy token, you will not transfer the right for claiming payoff
+     *
+     * @param _from     The original owner of the policy
+     * @param _to       The new owner of the policy
+     * @param _tokenId  Token id of the policy
      */
     function transferOwner(
         address _from,
@@ -122,7 +125,10 @@ contract FDPolicyToken is
 
     /**
      * @notice Get the tokenURI, the metadata is from policyFlow contract
+     *
      * @param _tokenId Token Id of the policy token
+     *
+     * @return TokenURI in string form
      */
     function _getTokenURI(uint256 _tokenId)
         internal
@@ -148,7 +154,10 @@ contract FDPolicyToken is
 
     /**
      * @notice Construct the metadata of a specific policy token
+     *
      * @param _params The parameters of the policy token
+     *
+     * @return TokenURI in string form
      */
     function _constructTokenURI(PolicyTokenURIParam memory _params)
         internal

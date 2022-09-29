@@ -100,12 +100,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      *
      * @param _stablecoin Stablecoin address
      */
-    function addSupportedStablecoin(address _stablecoin)
-        external
-        onlyOwner
-    {
+    function addSupportedStablecoin(address _stablecoin) external onlyOwner {
         supportedStablecoin[_stablecoin] = true;
-     
+
         emit AddStablecoin(_stablecoin);
     }
 
@@ -156,7 +153,11 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
         // Transfer stablecoin to this contract
         // Transfer to this, no need for safeTransferFrom
-        IERC20(_stablecoin).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(_stablecoin).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
 
         if (_stablecoin != USDC) {
             // Swap stablecoin to USDC and directly goes to this contract
