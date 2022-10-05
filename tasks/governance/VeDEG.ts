@@ -79,38 +79,10 @@ task("addWhiteList-Ve", "Add whitelist for veDEG").setAction(async (_, hre) => {
     dev_account
   ).attach(veDEGAddress);
 
-  const income: IncomeSharingVault = new IncomeSharingVault__factory(
-    dev_account
-  ).attach(addressList[network.name].IncomeSharingVault);
-
-  // const IncomeSharingAddress = addressList[network.name].IncomeSharingVault;
-  // const myAddress = "0xeB496257B64Cc2D39c291B209F465f3cfADE0873";
-  const myAddress = "0xd135550c6ecee8d9e2953e498a570c2d5c278d82";
-
-  let lockedAmount, userAmount;
-
-  lockedAmount = await veDEG.locked(myAddress);
-  userAmount = (await income.users(1, myAddress)).totalAmount;
-
-  console.log("lockedAmount: ", lockedAmount.toString());
-  console.log("userAmount: ", userAmount.toString());
-
-  // const tx = await veDEG.removeWhitelist(
-  //   "0xcA11bde05977b3631167028862bE2a173976CA11"
-  // );
-
-  if (lockedAmount.gt(userAmount)) {
-    const tx = await veDEG.unlockVeDEG(myAddress, lockedAmount.sub(userAmount));
-    console.log("tx details: ", await tx.wait());
-  } else {
-    console.log("locked equal to userAmount");
-  }
-
-  lockedAmount = await veDEG.locked(myAddress);
-  userAmount = (await income.users(1, myAddress)).totalAmount;
-
-  console.log("lockedAmount: ", lockedAmount.toString());
-  console.log("userAmount: ", userAmount.toString());
+  const tx = await veDEG.addWhitelist(
+    "0xbFCCbDd581F1F977B08058d2d76BacF0A4463855"
+  );
+  console.log("tx details: ", await tx.wait());
 });
 
 task("checkVeState", "Add whitelist for veDEG").setAction(async (_, hre) => {

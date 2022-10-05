@@ -13,12 +13,12 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const DegisToken = await get("DegisToken");
+  const degisTokenAddress = addressList[network.name].DegisToken;
 
   const factory = await deploy("StakingPoolFactory", {
     contract: "StakingPoolFactory",
     from: deployer,
-    args: [DegisToken.address],
+    args: [degisTokenAddress],
     log: true,
   });
   addressList[network.name].StakingPoolFactory = factory.address;

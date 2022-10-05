@@ -32,9 +32,20 @@ import { formatEther } from "ethers/lib/utils";
 // WAVAX: 0xb31f66aa3c1e785363f0875a1b74e27b85fd66c7
 // JOE-WAVAX: 0x454E67025631C065d3cFAD6d71E6892f74487a15
 
+// Colony Avalanche Index
+// Name: CAI  Network: AVAX_C
+// Token Address: 0x48f88A3fE843ccb0b5003e70B4192c1d7448bEf0
+// Joe Pair Address: 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0
+// npx hardhat addIDOPriceFeed --network avax --name CAI_88.6_L_1610 
+//   --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0
+//   --start 1665820800
+
 task("addIDOPriceFeed", "Deploy a new naughty price token")
   .addParam("name", "Policy token name", null, types.string)
+  .addOptionalParam("decimals", "Token decimal", 18, types.string)
   .addParam("pair", "Trader joe pair")
+  .addOptionalParam("interval", "Sample interval", 600, types.int)
+  .addParam("start", "Start time", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const policyTokenName = taskArgs.name;
     const joePair = taskArgs.pair;
@@ -53,9 +64,9 @@ task("addIDOPriceFeed", "Deploy a new naughty price token")
       dev_account
     ).attach(idoPriceGetterAddress);
 
-    const decimals = 18;
-    const sampleInterval = 600; // 10 min
-    const startTime = 1659679200;
+    const decimals = taskArgs.decimals;
+    const sampleInterval = taskArgs.interval; // 10 min
+    const startTime = taskArgs.start;
 
     const tx = await idoPriceGetter.addIDOPair(
       policyTokenName,

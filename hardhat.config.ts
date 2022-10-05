@@ -35,7 +35,7 @@ import "./tasks/farming/farmingPool";
 import "./tasks/naughtyPrice/deployToken";
 // import "./tasks/naughtyPrice/deployPool";
 // import "./tasks/naughtyPrice/addStablecoin";
-// import "./tasks/naughtyPrice/IDOPriceGetter";
+import "./tasks/naughtyPrice/IDOPriceGetter";
 
 // // // Lucky Box Tasks
 // import "./tasks/lucky/setAddress";
@@ -50,7 +50,7 @@ import "./tasks/tokens/shield";
 import "./tasks/staking/stakingPoolFactory";
 
 // // import "./tasks/proxy/admin";
-// // import "./tasks/governance/VeDEG";
+import "./tasks/governance/VeDEG";
 
 // // // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";

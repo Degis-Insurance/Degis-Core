@@ -25,9 +25,9 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   // Read address list from local file
   const addressList = readAddressList();
 
-  const DegisToken = await get("DegisToken");
+  const degisTokenAddress = addressList[network.name].DegisToken;
 
-  console.log("DegisToken address: ", DegisToken.address);
+  console.log("DegisToken address: ", degisTokenAddress);
 
   const isProxy = 1;
 
@@ -35,7 +35,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const farmingPool = await deploy("FarmingPool", {
       contract: "FarmingPool",
       from: deployer,
-      args: [DegisToken.address],
+      args: [degisTokenAddress],
       log: true,
     });
     addressList[network.name].FarmingPool = farmingPool.address;
@@ -52,7 +52,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [DegisToken.address],
+          args: [degisTokenAddress],
         },
       },
     };

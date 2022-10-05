@@ -206,6 +206,41 @@
 			"deadline": "1663142400",
 			"lptoken": "0xF41Fa31c25739C1503273c7a4Aa7a4A9d9e619BC",
 			"pairAddress": "0x2D7381f4c15aeBc019f9caBF04d35014d1443B74"
+		},
+		"AVAX_16.9_L_1610": {
+			"policyToken": "0x5a09a9505eAC14329E0A84BCe7a7606Bbfe13C6B",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1664438400",
+			"lptoken": "0xeC5cA544fec89453BA4e9645949e4C24b33EF14f",
+			"pairAddress": "0x9691B9DE147dE9C69db31dFc9659c8Fb221a7c30"
+		},
+		"XAVA_0.335_L_1610": {
+			"policyToken": "0xe2aebb5a705b3d24377955c3cAF8C9c65818665b",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1664438400",
+			"lptoken": "0xbea4bC447Dae373231d932e1AAbeaAf552Dd9De2",
+			"pairAddress": "0xb44eF3460C6530BE60D3c326D28E9FEa9Fbed979"
+		},
+		"JOE_0.22_L_1610": {
+			"policyToken": "0xaC2cE307e2CA3370CD0AD3Be47096D5Fa51Fc97D",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1664438400",
+			"lptoken": "0x8e0DA29e4fb119252e2bB1aCbC7b45c9dEAb5C69",
+			"pairAddress": "0xeB6106f8AFfeCe2c1a2372eAfE331C980a23Be7e"
+		},
+		"BTC_18725.0_L_1610": {
+			"policyToken": "0x0ea4a89E0bcB4417Dc28981651496106207aa60E",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1664438400",
+			"lptoken": "0x93Ae435623064eaA1737A5065AFAf5132e3f1dc6",
+			"pairAddress": "0xd5Aa3B18bC8Dc9EDC80a30a363f21900fAA7042F"
+		},
+		"CAI_88.6_L_1610": {
+			"policyToken": "0x19B04Ab7b43956B1EdE9bCEf3d670C02a1A8F44A",
+			"stablecoin": "0xA7D7079b0FEaD91F3e65f86E8915Cb59c1a4C664",
+			"deadline": "1664438400",
+			"lptoken": "0x779DeD6aae2179831462683965798E056767BDdb",
+			"pairAddress": "0xe2f1F704cBfa28EA33F514aAD0B6bCaBaBbb3310"
 		}
 	},
 	"avaxTest": {

@@ -61,6 +61,54 @@ task("addMinterBurner", "add minter/burner manually")
     console.log("\nFinish Adding minter or burner...\n");
   });
 
+
+  task("addMinterBurnerWithAddress", "add minter/burner manually")
+  .addParam("type", "minter or burner", null, types.string)
+  .addParam("token", "Which token", null, types.string)
+  .addParam("address", "new minter/burner address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    console.log("\nAdding minter or burner...\n");
+
+    // Token "b" or "d"
+    let tokenName;
+    if (taskArgs.token == "b") tokenName = "BuyerToken";
+    else if (taskArgs.token == "d") tokenName = "DegisToken";
+    else {
+      console.log("Invalid token name");
+      return;
+    }
+    const minterContractName = taskArgs.name;
+
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    // Get the token contract instance
+    const TokenContract = await hre.ethers.getContractFactory(tokenName);
+    const token = TokenContract.attach(addressList[network.name][tokenName]);
+
+    // Get the minter address to be added
+    const newMinterContract = taskArgs.address;
+
+    if (taskArgs.type == "minter") {
+      // Add minter
+      const isAlready = await token.isMinter(newMinterContract);
+      if (!isAlready) {
+        const tx = await token.addMinter(newMinterContract);
+        console.log(await tx.wait());
+      } else console.log("Already minter");
+    } else if (taskArgs.type == "burner") {
+      // Add burner
+      const isAlready = await token.isBurner(newMinterContract);
+      if (!isAlready) {
+        const tx = await token.addBurner(newMinterContract);
+        console.log(await tx.wait());
+      } else console.log("Already burner");
+    }
+
+    console.log("\nFinish Adding minter or burner...\n");
+  });
+
 task("addStakingMinter", "add staking minter manually").setAction(
   async (_, hre) => {
     const addressList = readAddressList();

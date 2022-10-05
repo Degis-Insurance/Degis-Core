@@ -167,6 +167,9 @@ contract IDOPriceGetter is OwnableUpgradeable {
             "Wrong start time"
         );
 
+        newFeed.startTime = _startTime;
+        newFeed.endTime = endTime;
+
         emit NewIDOPair(
             _policyToken,
             _pair,

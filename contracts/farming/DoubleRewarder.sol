@@ -13,11 +13,33 @@ import "hardhat/console.sol";
 /**
  * @title Degis Double Rewarder Contract
  *
- * @notice
+ * @notice This contract is used to distribute double reward tokens (from other projects)
  *
+ *         PoolInfo is stored with the reward token address as the key
+ *         E.g. Double reward for TraderJoe
+ *         JoeAddress => PoolInfo
  *
+ *         Except the "rewardToken" this is also "realRewardToken" for the pool
+ *         - RewardToken is used for storing the info
+ *         - RealRewardToken is used for transfering the reward
  *
+ *         If realRewardToken is set as ZeroAddress, then rewardToken is used for transfering the reward
  *
+ *         Reward claiming is only available when that pool is set to be “claimable"
+ *         Before claimable, the reward is only calculated but not transfered
+ *
+ *         Typically, if multiple lp tokens are used for farming the same token reward,
+ *         We need a mock address to represent the reward token
+ *         E.g.
+ *         - IM_CAI_10.0_L_1610 => CLY
+ *             Reward token is CLY
+ *             Real reward token is ZeroAddress
+ *         - CAI_10.0_L_1610 => CLY
+ *             Reward token is address(keccak256(abi.encodePacked("IM_CAI_10.0_L_1610", "CLY")))
+ *             Real reward token is CLY
+ *         - CAI_10.0_L_1612 => CLY
+ *             Reward token is address(keccak256(abi.encodePacked("IM_CAI_10.0_L_1610", "CLY")))
+ *             Real reward token is CLY
  */
 
 contract DoubleRewarder is OwnableUpgradeable {
@@ -43,7 +65,6 @@ contract DoubleRewarder is OwnableUpgradeable {
         uint256 accTokenPerShare;
         uint256 lastRewardTimestamp;
     }
-
     // Reward token address => pool info
     mapping(address => PoolInfo) public pools;
 
@@ -64,6 +85,9 @@ contract DoubleRewarder is OwnableUpgradeable {
     // Some double reward farming start before the real reward token is deployed
     // So user get pending reward for the reward token address but they get real reward token when they claim the reward
     mapping(address => address) public realRewardToken;
+
+    // User address
+    mapping(address => mapping(address => UserInfo)) public newUserInfo;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -117,13 +141,12 @@ contract DoubleRewarder is OwnableUpgradeable {
     function pendingReward(address _token, address _user)
         external
         view
-        supported(_token)
         returns (uint256 pending)
     {
         require(pools[_token].lastRewardTimestamp > 0, "Non exist pool");
 
         PoolInfo memory pool = pools[_token];
-        UserInfo memory user = userInfo[_user];
+        UserInfo memory user = newUserInfo[_user][_token];
 
         uint256 accTokenPerShare = pool.accTokenPerShare;
 
@@ -144,6 +167,30 @@ contract DoubleRewarder is OwnableUpgradeable {
         pending = ((user.amount * accTokenPerShare) / SCALE) - user.rewardDebt;
     }
 
+    /**
+     * @notice Get mock reward token address
+     *
+     *         E.g. lpToken = IM_CAI  realRewardToken = CAI
+     *         mockAddress = address(keccak256(abi.encodePacked(IM_CAI_LP, CAI)))
+     *
+     *
+     * @param _lpToken         LP token address
+     * @param _realRewardToken Real reward token address
+     *
+     * @return mockRewardToken Mock reward token address
+     */
+    function getMockRewardToken(address _lpToken, address _realRewardToken)
+        public
+        pure
+        returns (address mockRewardToken)
+    {
+        mockRewardToken = address(
+            uint160(
+                uint256(keccak256(abi.encodePacked(_lpToken, _realRewardToken)))
+            )
+        );
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
@@ -151,31 +198,34 @@ contract DoubleRewarder is OwnableUpgradeable {
     /**
      * @notice Set reward speed for a pool
      *
-     * @param _lpToken       LP token address
-     * @param _rewardToken   Reward token address
-     * @param _reward        Reward per second
+     * @param _lpToken     LP token address
+     * @param _rewardToken Reward token address (real)
+     * @param _reward      Reward per second
      */
     function setRewardSpeed(
         address _lpToken,
         address _rewardToken,
         uint256 _reward
-    ) external supported(_rewardToken) onlyOwner {
+    ) external onlyOwner {
         uint256 lpSupply = IERC20(_lpToken).balanceOf(address(farmingPool));
-        updatePool(_rewardToken, lpSupply);
 
-        emit RewardRateUpdated(pools[_rewardToken].rewardPerSecond, _reward);
+        address mockRewardToken = getMockRewardToken(_lpToken, _rewardToken);
 
-        pools[_rewardToken].rewardPerSecond = _reward;
+        updatePool(mockRewardToken, lpSupply);
+
+        emit RewardRateUpdated(pools[mockRewardToken].rewardPerSecond, _reward);
+
+        pools[mockRewardToken].rewardPerSecond = _reward;
     }
 
     /**
      * @notice Add a new reward token
      *
-     * @param _rewardToken Reward token address
+     * @param _rewardToken Reward token address (mock)
      * @param _lpToken     LP token address
      */
     function addRewardToken(address _rewardToken, address _lpToken)
-        external
+        public
         onlyOwner
     {
         require(pools[_rewardToken].lastRewardTimestamp == 0, "Already exist");
@@ -183,8 +233,29 @@ contract DoubleRewarder is OwnableUpgradeable {
         supportedRewardToken[_rewardToken] = true;
 
         pools[_rewardToken].lpToken = _lpToken;
+        pools[_rewardToken].lastRewardTimestamp = block.timestamp;
 
         emit NewRewardTokenAdded(_rewardToken);
+    }
+
+    /**
+     * @notice Add a new reward token but with mocked address
+     *
+     * @param _lpToken         LP token address used for double farming
+     * @param _realRewardToken Real reward token address
+     */
+    function addRewardTokenWithMock(address _lpToken, address _realRewardToken)
+        external
+        onlyOwner
+    {
+        // Unique mock reward token address
+        address mockRewardToken = getMockRewardToken(
+            _lpToken,
+            _realRewardToken
+        );
+
+        addRewardToken(mockRewardToken, _lpToken);
+        realRewardToken[mockRewardToken] = _realRewardToken;
     }
 
     /**
@@ -192,16 +263,18 @@ contract DoubleRewarder is OwnableUpgradeable {
      *         If the token has been deployed when the farming start,
      *         then the real reward token should be address(0)
      *
-     * @param _rewardToken Reward token address (may be a mocked address)
+     *         Mock reward address should match the real reward address
+     *
+     * @param _rewardToken     Reward token address (mock)
      * @param _realRewardToken Real reward token adedress
      */
     function setClaimable(address _rewardToken, address _realRewardToken)
         external
         onlyOwner
     {
-        claimable[_rewardToken] = true;
+        require(realRewardToken[_rewardToken] == _realRewardToken, "Invalid");
 
-        realRewardToken[_rewardToken] = _realRewardToken;
+        claimable[_rewardToken] = true;
 
         emit RewardClaimable(_rewardToken);
     }
@@ -216,10 +289,7 @@ contract DoubleRewarder is OwnableUpgradeable {
      * @param _rewardToken Reward token address
      * @param _lpSupply    LP token balance of farming pool
      */
-    function updatePool(address _rewardToken, uint256 _lpSupply)
-        public
-        supported(_rewardToken)
-    {
+    function updatePool(address _rewardToken, uint256 _lpSupply) internal {
         PoolInfo storage pool = pools[_rewardToken];
 
         if (pool.rewardPerSecond > 0) {
@@ -258,7 +328,7 @@ contract DoubleRewarder is OwnableUpgradeable {
         updatePool(_rewardToken, _lpSupply);
 
         PoolInfo memory pool = pools[_rewardToken];
-        UserInfo storage user = userInfo[_user];
+        UserInfo storage user = newUserInfo[_user][_rewardToken];
 
         // Get pending reward
         uint256 pending = (user.amount * pool.accTokenPerShare) /
@@ -291,7 +361,7 @@ contract DoubleRewarder is OwnableUpgradeable {
      *         During IDO protection, the insured token have not been issued yet
      *         So we need to claim the pending reward later (after the farming)
      *
-     * @param _rewardToken Reward token address
+     * @param _rewardToken Reward token address (mock)
      */
     function claim(address _rewardToken) external supported(_rewardToken) {
         require(claimable[_rewardToken], "Not claimable");

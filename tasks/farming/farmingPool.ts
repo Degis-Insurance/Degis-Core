@@ -1,6 +1,5 @@
 import { subtask, task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
-// import hre from "hardhat";
 
 import {
   DoubleRewarder,
@@ -199,7 +198,7 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
   });
 
 task("setVeDEG", "Set the VeDEG of a farming pool").setAction(
-  async (taskArgs, hre) => {
+  async (_, hre) => {
     const { network } = hre;
 
     // Signers
@@ -331,9 +330,10 @@ task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   }
 );
 
+// CLY: 0xec3492a2508DDf4FDc0cD76F31f340b30d1793e6
 task("addDoubleRewardToken", "Add double reward to a farming pool")
-  .addParam("token", "Reward token address", null, types.string)
   .addParam("lptoken", "LPToken address", null, types.string)
+  .addParam("rewardtoken", "Reward token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
 
@@ -346,23 +346,29 @@ task("addDoubleRewardToken", "Add double reward to a farming pool")
       dev_account
     ).attach(doubleRewarderAddress);
 
-    let rewardTokenAddress: string;
-    if (taskArgs.token == "0") {
-      rewardTokenAddress = ethers.Wallet.createRandom().address;
-    } else rewardTokenAddress = taskArgs.token;
+    const rewardTokenAddress = taskArgs.rewardtoken;
 
     console.log("The reward token address is: ", rewardTokenAddress);
 
-    const tx = await doubleRewarderContract.addRewardToken(
-      rewardTokenAddress,
-      taskArgs.lptoken
+    const tx = await doubleRewarderContract.addRewardTokenWithMock(
+      taskArgs.lptoken,
+      rewardTokenAddress
     );
     console.log("Tx details: ", await tx.wait());
+
+    const mockAddress = await doubleRewarderContract.getMockRewardToken(
+      taskArgs.lptoken,
+      rewardTokenAddress
+    );
+    console.log("The mock address is: ", mockAddress);
+
+    const rewardInfo = await doubleRewarderContract.pools(mockAddress);
+    console.log("Reward info: ", rewardInfo);
   });
 
 task("setDoubleRewardSpeed", "Add double reward to a farming pool")
-  .addParam("token", "Token address", null, types.string)
   .addParam("lptoken", "LPToken address", null, types.string)
+  .addParam("rewardtoken", "Real reward token address", null, types.string)
   .addParam("reward", "Reward speed", null, types.string)
   .setAction(async (taskArgs, hre) => {
     const { network } = hre;
@@ -378,7 +384,7 @@ task("setDoubleRewardSpeed", "Add double reward to a farming pool")
 
     const tx = await doubleRewarderContract.setRewardSpeed(
       taskArgs.lptoken,
-      taskArgs.token,
+      taskArgs.rewardtoken,
       parseUnits(taskArgs.reward)
     );
     console.log("Tx details: ", await tx.wait());
@@ -403,34 +409,6 @@ task("setDoubleRewardContract", "Set the double reward contract").setAction(
     console.log("Tx details: ", await tx.wait());
   }
 );
-
-//npx hardhat addFarmingPool --network avaxTest --name testDouble --address 0x0c1902987652d5a6168dd65ee6b2536456ef92d3 --reward 0.1 --bonus 0 --doubleReward 0xf6924B8037b6235BC010C9Fdb69721C29B40c953
-
-task("mintMockERC20", "Mint mock erc20 token").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const erc20Address = addressList[network.name].MockERC20;
-  const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
-    erc20Address
-  );
-
-  const doubleRewardContractAddress = addressList[network.name].DoubleRewarder;
-
-  const address = "";
-  const amount = "1000000";
-
-  const tx = await erc20Contract.mint(
-    doubleRewardContractAddress,
-    parseUnits(amount)
-  );
-  console.log("Tx details: ", await tx.wait());
-});
-
-
 
 task("setClaimable", "Set double reward token claimable")
   .addParam("token", "Token address", null, types.string)
@@ -462,62 +440,3 @@ task("setClaimable", "Set double reward token claimable")
     console.log("Tx details: ", await tx.wait());
   });
 
-task("tt", "tt").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
-  const doubleRewarder = new DoubleRewarder__factory(dev_account).attach(
-    doubleRewarderAddress
-  );
-
-  const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
-  const pool: FarmingPoolUpgradeable = new FarmingPoolUpgradeable__factory(
-    dev_account
-  ).attach(farmingPoolAddress);
-
-  const rewardToken = "0x62B08d3173960B54C6A4a5d8C937108AbC6D4EAF";
-
-  const lptoken = await doubleRewarder.pools(rewardToken);
-  console.log("lp token", lptoken.lpToken);
-  console.log("speed", formatEther(lptoken.rewardPerSecond));
-  console.log("acc", formatEther(lptoken.accTokenPerShare));
-  console.log("last", lptoken.lastRewardTimestamp.toString());
-
-  const user = await doubleRewarder.userInfo(
-    "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
-  );
-  console.log("user amount", user.amount.toString());
-  console.log("user reward debt", user.rewardDebt.toString());
-
-  const rewarder = await pool.doubleRewarder(14);
-  console.log("rewarder", rewarder);
-
-  const pending = await doubleRewarder.pendingReward(
-    rewardToken,
-    "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
-  );
-  console.log("pending", pending.toString());
-
-  const erc20Address = "0x3afeb6172aa51Fca0537f3A4337aAC0ACC991B50";
-  const erc20Contract: MockERC20 = new MockERC20__factory(dev_account).attach(
-    erc20Address
-  );
-
-  const balance = await erc20Contract.balanceOf(pool.address);
-  console.log("balance", balance.toString());
-
-  const userPending = await doubleRewarder.userPendingReward(
-    "0xf15051fac04bdfdaf666806d1b4086ed3221d773",
-    erc20Address
-  );
-  console.log("userPending", userPending.toString());
-
-  // const tx = await doubleRewarder.clearRewardDebt(
-  //   "0xf15051fac04bdfdaf666806d1b4086ed3221d773"
-  // );
-  // console.log("tx", await tx.wait());
-});
