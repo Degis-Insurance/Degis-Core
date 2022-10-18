@@ -439,4 +439,3 @@ task("setClaimable", "Set double reward token claimable")
     );
     console.log("Tx details: ", await tx.wait());
   });
-

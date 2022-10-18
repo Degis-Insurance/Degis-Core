@@ -64,9 +64,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // All supporting swap pools
     mapping(string => address) public pools;
 
-    // User staked USDC balance
-    mapping(address => uint256) public userBalance;
-
     // Token address => swap pool address
     // If fromToken is x, then use mapping(x) to swap
     mapping(address => address) public tokenToPoolForDeposit;
@@ -259,9 +256,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             outAmount = _amount;
         }
 
-        // Record user balance
-        userBalance[msg.sender] += outAmount;
-
         // Mint shield
         _mint(msg.sender, outAmount);
 
@@ -283,8 +277,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         uint256 _minAmount
     ) external {
         require(supportedStablecoin[_stablecoin], "Stablecoin not supported");
-
-        require(userBalance[msg.sender] >= _amount, "Insufficient balance");
 
         uint256 actualAmount;
 
@@ -330,8 +322,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         // Transfer stablecoin back
         uint256 realAmount = _safeTokenTransfer(_stablecoin, _stablecoinAmount);
 
-        userBalance[msg.sender] -= _shieldAmount;
-
         // Burn shield token
         _burn(msg.sender, _shieldAmount);
 
@@ -340,11 +330,12 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
 
     /**
      * @notice Withdraw all of a user's balance
-     *         This function only return USDC back
+     *         This function only returns USDC back
+     *         If you want other tokens back, use withdraw()
      */
     function withdrawAll() external {
-        require(userBalance[msg.sender] > 0, "Insufficient balance");
-        withdraw(USDC, userBalance[msg.sender], userBalance[msg.sender]);
+        uint256 userBalance = balanceOf(msg.sender);
+        withdraw(USDC, userBalance, userBalance);
     }
 
     /**

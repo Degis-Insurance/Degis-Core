@@ -39,8 +39,8 @@
 	"fujiTest": {},
 	"avax": {
 		"0": {
-			"name": "IM_AVAX_16.9_L_1610",
-			"address": "0xeC5cA544fec89453BA4e9645949e4C24b33EF14f",
+			"name": "IM_BTC_19081.0_L_3110",
+			"address": "0x5FA88FEF8090Ea5E6851c03196409A4711b94e0B",
 			"poolId": 0,
 			"reward": "0.0",
 			"bonus": "0.0",
@@ -439,8 +439,8 @@
 			"name": "IM_XAVA_0.335_L_1610",
 			"address": "0xbea4bC447Dae373231d932e1AAbeaAf552Dd9De2",
 			"poolId": 53,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"54": {
@@ -455,57 +455,121 @@
 			"name": "IM_BTC_18725.0_L_1610",
 			"address": "0x93Ae435623064eaA1737A5065AFAf5132e3f1dc6",
 			"poolId": 55,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"56": {
 			"name": "IM_CAI_88.6_L_1610",
 			"address": "0x779DeD6aae2179831462683965798E056767BDdb",
 			"poolId": 56,
-			"reward": "0.00000000000000001",
-			"bonus": "0.00000000000000001",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0xD44C4C62B1c23E41eF9649dA8Cba5761a8f57B95"
 		},
 		"57": {
 			"name": "AVAX_16.9_L_1610",
 			"address": "0x9691B9DE147dE9C69db31dFc9659c8Fb221a7c30",
 			"poolId": 57,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"58": {
 			"name": "XAVA_0.335_L_1610",
 			"address": "0xb44eF3460C6530BE60D3c326D28E9FEa9Fbed979",
 			"poolId": 58,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"59": {
 			"name": "JOE_0.22_L_1610",
 			"address": "0xeB6106f8AFfeCe2c1a2372eAfE331C980a23Be7e",
 			"poolId": 59,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"60": {
 			"name": "BTC_18725.0_L_1610",
 			"address": "0xd5Aa3B18bC8Dc9EDC80a30a363f21900fAA7042F",
 			"poolId": 60,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"61": {
 			"name": "CAI_88.6_L_1610",
 			"address": "0xe2f1F704cBfa28EA33F514aAD0B6bCaBaBbb3310",
 			"poolId": 61,
-			"reward": "0.00000000000000001",
-			"bonus": "0.00000000000000001",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0xd5E54e6b03122D73F1aC42A0FdA50E73dbc2c8ab"
+		},
+		"62": {
+			"name": "IM_AVAX_15.6_L_3110",
+			"address": "0x7847344074B651E4ce164793cd1907a93eB22884",
+			"poolId": 62,
+			"reward": "0.00525",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"63": {
+			"name": "IM_XAVA_0.28_L_3110",
+			"address": "0xAE50F1d5991Dc29d1CE7753D15D4D2B707fd2e38",
+			"poolId": 63,
+			"reward": "0.00525",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"64": {
+			"name": "IM_JOE_0.2_L_3110",
+			"address": "0xdcd50AaF8fB462634Dd2E8665534D48aa53611a6",
+			"poolId": 64,
+			"reward": "0.00525",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"65": {
+			"name": "IM_BTC_19081.0_L_3110",
+			"address": "0x5FA88FEF8090Ea5E6851c03196409A4711b94e0B",
+			"poolId": 65,
+			"reward": "0.00525",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"66": {
+			"name": "AVAX_15.6_L_3110",
+			"address": "0xA9A1E8Bb613Ba1dE1922065D864f0cD4feC4bA6b",
+			"poolId": 66,
+			"reward": "0.00438",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"67": {
+			"name": "XAVA_0.28_L_3110",
+			"address": "0x0FFB1284503a063A53Abd16f76cDDc7999c22832",
+			"poolId": 67,
+			"reward": "0.00438",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"68": {
+			"name": "JOE_0.2_L_3110",
+			"address": "0xd49518ce3fB58Ccd99Ddf9F2792E8A47EBB1BaEf",
+			"poolId": 68,
+			"reward": "0.00438",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"69": {
+			"name": "BTC_19081.0_L_3110",
+			"address": "0xF3D31e8041251c36B257665c79054cF100cA77e5",
+			"poolId": 69,
+			"reward": "0.00438",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",

@@ -252,6 +252,31 @@
 			"address": "0x19B04Ab7b43956B1EdE9bCEf3d670C02a1A8F44A",
 			"deadline": 1665648000,
 			"settleTime": 1665907200
+		},
+		"AVAX_15.6_L_3110": {
+			"address": "0xAd7A958bb08C44122762c7eCE4448544E35f65bb",
+			"deadline": 1666944000,
+			"settleTime": 1667203200
+		},
+		"XAVA_0.28_L_3110": {
+			"address": "0x82e071fA825429d20fF5b58E90c8b1a68462478C",
+			"deadline": 1666944000,
+			"settleTime": 1667203200
+		},
+		"JOE_0.2_L_3110": {
+			"address": "0x6FD1299Dc0D2D10cEf458F5E7f8aA6F2Ba5EDC05",
+			"deadline": 1666944000,
+			"settleTime": 1667203200
+		},
+		"BTC_19081.0_L_3110": {
+			"address": "0xf26a938D9aE63AB63D092550D31C841A8960EcBE",
+			"deadline": 1666944000,
+			"settleTime": 1667203200
+		},
+		"CAI_78.7_L_3110": {
+			"address": "0xEDaC5Fbfb641E198beb571454B8Be41D82F9b88F",
+			"deadline": 1666944000,
+			"settleTime": 1667203200
 		}
 	},
 	"avaxTest": {
