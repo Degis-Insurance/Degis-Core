@@ -90,9 +90,6 @@ task("shieldDepositUSDC", "Deposit stablecoin to get shield").setAction(
 
     const shieldBalance = await shield.balanceOf(dev_account.address);
     console.log("Shield balance: ", formatUnits(shieldBalance, 6));
-
-    const userBalanceRecord = await shield.userBalance(dev_account.address);
-    console.log("User balance: ", formatUnits(userBalanceRecord, 6));
   }
 );
 
@@ -147,9 +144,6 @@ task("shieldDeposit", "Deposit stablecoin to get shield")
 
     const shieldBalance = await shield.balanceOf(dev_account.address);
     console.log("Shield balance: ", formatUnits(shieldBalance, 6));
-
-    const userBalanceRecord = await shield.userBalance(dev_account.address);
-    console.log("User balance: ", formatUnits(userBalanceRecord, 6));
   });
 
 task("shieldWithdraw", "Withdraw shield and get stablecoins back")
@@ -190,9 +184,6 @@ task("shieldWithdraw", "Withdraw shield and get stablecoins back")
 
     const shieldBalance = await shield.balanceOf(dev_account.address);
     console.log("Shield balance: ", formatUnits(shieldBalance, 6));
-
-    const userBalanceRecord = await shield.userBalance(dev_account.address);
-    console.log("User balance: ", formatUnits(userBalanceRecord, 6));
   });
 
 task("setTokenToPool", "Set token to pool for shield")
@@ -230,5 +221,3 @@ task("setTokenToPool", "Set token to pool for shield")
     );
     console.log("tokenToPoolForWithdraw: ", tokenToPoolForWithdraw);
   });
-
-
