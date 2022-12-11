@@ -30,12 +30,13 @@ import "./tasks/farming/farmingPool";
 // import "./tasks/misrableFlight/flightOracle";
 
 // // Naughty Price Tasks
-// import "./tasks/naughtyPrice/setAddress";
-// import "./tasks/naughtyPrice/settleResult";
+import "./tasks/naughtyPrice/setAddress";
+import "./tasks/naughtyPrice/settleResult";
 import "./tasks/naughtyPrice/deployToken";
 // import "./tasks/naughtyPrice/deployPool";
-// import "./tasks/naughtyPrice/addStablecoin";
+import "./tasks/naughtyPrice/addStablecoin";
 import "./tasks/naughtyPrice/IDOPriceGetter";
+import "./tasks/naughtyPrice/arbitraryPriceGetter";
 
 // // // Lucky Box Tasks
 // import "./tasks/lucky/setAddress";

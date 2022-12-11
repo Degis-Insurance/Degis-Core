@@ -339,3 +339,22 @@ task("checkPriceFeed", "Check price getter feeds").setAction(async (_, hre) => {
   const feedInfo = await priceGetter.priceFeedInfo("AVAX");
   console.log("feedInfo: ", feedInfo);
 });
+
+task("setArbitraryPriceGetterInCore").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const addressList = readAddressList();
+
+  const core = new PolicyCore__factory(dev_account).attach(
+    addressList[network.name].PolicyCoreUpgradeable
+  );
+
+  const tx = await core.setArbitraryPriceGetter(
+    addressList[network.name].ArbitraryPriceGetter
+  );
+  console.log("Tx details: ", await tx.wait());
+});

@@ -2,7 +2,12 @@ import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
-import { PolicyCore, PolicyCore__factory } from "../../typechain";
+import {
+  NaughtyFactory,
+  NaughtyFactory__factory,
+  PolicyCore,
+  PolicyCore__factory,
+} from "../../typechain";
 import {
   readAddressList,
   readNaughtyTokenList,
@@ -32,7 +37,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     null,
     types.int
   )
-  .addParam("ido", "Whether it is an IDO token", null, types.boolean)
+  .addParam("type", "Pool type", null, types.int)
   .setAction(async (taskArgs, hre) => {
     const nameisCall = taskArgs.iscall == 1 ? "H" : "L";
     const boolisCall: boolean = taskArgs.iscall == 1 ? true : false;
@@ -48,8 +53,6 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.round;
     console.log("Generated policy toke name: ", policyTokenName);
 
-    const isIDO = taskArgs.ido;
-
     let stablecoinAddress: string;
 
     const { network } = hre;
@@ -58,7 +61,7 @@ task("deployNPToken", "Deploy a new naughty price token")
     const tokenList = readNaughtyTokenList();
 
     if (network.name == "avax" || network.name == "avaxTest") {
-      if (taskArgs.stablecoin == "shield") {
+      if (taskArgs.stablecoin == "Shield") {
         stablecoinAddress = addressList[network.name].Shield;
       } else {
         stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
@@ -108,7 +111,7 @@ task("deployNPToken", "Deploy a new naughty price token")
       taskArgs.round,
       toBN(tokenDeadline),
       toBN(tokenSettleTime),
-      isIDO
+      taskArgs.type
     );
     console.log("tx details:", await tx.wait());
 
@@ -131,4 +134,24 @@ task("deployNPToken", "Deploy a new naughty price token")
     // const req = new XMLHttpRequest();
     // const lark_url =
     //   "https://open.larksuite.com/open-apis/bot/v2/hook/03430ecc-9b80-4b08-ab95-c34e8e27e01a";
+  });
+
+task("getPairAddress", "Get naughty pair address")
+  .addParam("token1", "Token 1 address", null, types.string)
+  .addParam("token2", "Token 2 address", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const factory: NaughtyFactory = new NaughtyFactory__factory(
+      dev_account
+    ).attach(addressList[network.name].NaughtyFactoryUpgradeable);
+
+    const pair = await factory.getPairAddress(taskArgs.token1, taskArgs.token2);
+    console.log("Pair address: ", pair);
   });

@@ -23,6 +23,9 @@ export const getTokenAddressOnAVAX = (name: string): string => {
     case "DAI.e":
       return "0xd586E7F844cEa2F87f50152665BCbc2C279D8d70";
 
+    case "Shield":
+      return "0x7BDBB20985A703a171781C2448097C6844bc3D48";
+
     default:
       return "";
   }

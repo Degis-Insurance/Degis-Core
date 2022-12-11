@@ -138,6 +138,10 @@ contract PolicyCore is OwnableUpgradeable {
     mapping(string => bool) public isIDOPool;
     IPriceGetter public idoPriceGetter;
 
+    // Arbitrary pool means the oracle is from a specific contract function
+    mapping(string => bool) public isArbitraryPool;
+    IPriceGetter public arbitraryPriceGetter;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Events ******************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -212,6 +216,10 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 amount
     );
     event IDOPriceGetterChanged(address oldPriceGetter, address newPriceGetter);
+    event ArbitraryPriceGetterChanged(
+        address oldArbitraryPriceGetter,
+        address newArbitraryPriceGetter
+    );
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -476,6 +484,17 @@ contract PolicyCore is OwnableUpgradeable {
         idoPriceGetter = IPriceGetter(_idoPriceGetter);
     }
 
+    function setArbitraryPriceGetter(address _arbitraryPriceGetter)
+        external
+        onlyOwner
+    {
+        emit ArbitraryPriceGetterChanged(
+            address(arbitraryPriceGetter),
+            _arbitraryPriceGetter
+        );
+        arbitraryPriceGetter = IPriceGetter(_arbitraryPriceGetter);
+    }
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
@@ -496,7 +515,7 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _round           Round of the token (e.g. 2203 -> expired at 22 March)
      * @param _deadline        Deadline of this policy token (deposit / redeem / swap)
      * @param _settleTimestamp Can settle after this timestamp (for oracle)
-     * @param _isIDOPool       Whether this token is an IDO pool
+     * @param _poolType        _poolType: 0 normal 1 IDO 2 arbitrary
      */
     function deployPolicyToken(
         string memory _tokenName,
@@ -508,7 +527,7 @@ contract PolicyCore is OwnableUpgradeable {
         string memory _round,
         uint256 _deadline,
         uint256 _settleTimestamp,
-        bool _isIDOPool
+        uint256 _poolType
     ) external onlyOwner {
         require(
             _nameDecimals <= 18 && _tokenDecimals <= 18,
@@ -565,7 +584,11 @@ contract PolicyCore is OwnableUpgradeable {
         );
 
         // Record if it is a IDO pool
-        isIDOPool[policyTokenName] = _isIDOPool;
+        if (_poolType == 1) {
+            isIDOPool[policyTokenName] = true;
+        } else if (_poolType == 2) {
+            isArbitraryPool[policyTokenName] = true;
+        }
     }
 
     /**
@@ -825,6 +848,8 @@ contract PolicyCore is OwnableUpgradeable {
         // Get the final price from oracle
         if (isIDOPool[_policyTokenName]) {
             finalPrice = idoPriceGetter.getLatestPrice(_policyTokenName);
+        } else if (isArbitraryPool[_policyTokenName]) {
+            finalPrice = arbitraryPriceGetter.getLatestPrice(_policyTokenName);
         } else {
             finalPrice = priceGetter.getLatestPrice(originalTokenName);
         }
@@ -1131,11 +1156,28 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 intPart = _strikePrice / 1e18;
         // require(intPart > 0, "Invalid int part");
 
+        uint256 decimalPart;
+        string memory decimalPartString;
+
         // Decimal part of the strike price (1234e16 => 34)
         // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
-        uint256 decimalPart = _frac(_strikePrice) / (10**(18 - _decimals));
-        if (_decimals >= 2)
-            require(decimalPart > 10**(_decimals - 1), "Invalid decimal part");
+        uint256 modRemaining = _frac(_strikePrice);
+
+        decimalPart = modRemaining / (10**(18 - _decimals));
+
+        if (decimalPart < 10**(_decimals - 1)) {
+            decimalPartString = string(
+                abi.encodePacked(
+                    _returnZeroes(_findZeroes(modRemaining, _decimals)),
+                    decimalPart.uintToString()
+                )
+            );
+        } else {
+            decimalPartString = decimalPart.uintToString();
+        }
+
+        // if (_decimals >= 2)
+        //     require(decimalPart > 10**(_decimals - 1), "Invalid decimal part");
 
         // Combine the string
         string memory name = string(
@@ -1144,7 +1186,7 @@ contract PolicyCore is OwnableUpgradeable {
                 "_",
                 intPart.uintToString(),
                 ".",
-                decimalPart.uintToString(),
+                decimalPartString,
                 "_",
                 direction,
                 "_",
@@ -1167,6 +1209,48 @@ contract PolicyCore is OwnableUpgradeable {
         uint256 SCALE = 1e18;
         assembly {
             result := mod(x, SCALE)
+        }
+    }
+
+    // E.g. number = 12.0456 e18 = 1204 e16
+    //      x = modRemaining = 456 e14
+    //      decimals = 4
+    //      Should return: 1
+    function _findZeroes(uint256 x, uint256 decimals)
+        internal
+        pure
+        returns (uint256 numOfZero)
+    {
+        assert(decimals <= 16);
+        numOfZero = 1;
+
+        uint256 fracRes;
+
+        for (uint256 i; i < decimals; ) {
+            fracRes = x / 10**(16 - i);
+            if (fracRes == 0) {
+                numOfZero++;
+            } else {
+                break;
+            }
+
+            unchecked {
+                ++i;
+            }
+        }
+    }
+
+    function _returnZeroes(uint256 num)
+        public
+        pure
+        returns (string memory zeroString)
+    {
+        for (uint256 i; i < num; ) {
+            zeroString = string(abi.encodePacked(zeroString, "0"));
+
+            unchecked {
+                ++i;
+            }
         }
     }
 }

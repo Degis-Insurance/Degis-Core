@@ -15,6 +15,11 @@ import {
 } from "../../typechain";
 import { formatUnits, parseUnits } from "ethers/lib/utils";
 
+/**
+ * @notice Start a new income sharing pool
+ *
+ * @param token Reward token address
+ */
 task("startIncomeSharingPool", "Start a new income sharing pool")
   .addParam("token", "The pool reward token", null, types.string)
   .setAction(async (taskArgs, hre) => {
@@ -28,27 +33,28 @@ task("startIncomeSharingPool", "Start a new income sharing pool")
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
-    let usdAddress: string;
-    if (network.name == "avax" || network.name == "avaxTest") {
-      usdAddress = getTokenAddressOnAVAX("USDC.e");
-    } else {
-      usdAddress = addressList[network.name].MockUSD;
-    }
-
-    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
+    const vault: IncomeSharingVault = new IncomeSharingVaultV2__factory(
       dev_account
     ).attach(vaultAddress);
 
-    // Set
+    // Tx
     const tx = await vault.startPool(taskArgs.token);
     console.log("Tx details: ", await tx.wait());
 
-    // Check the result
+    // Check the pool result
     const poolId = await vault.nextPool();
     const poolInfo = await vault.pools(poolId.sub(1));
     console.log("Income sharing pool info: ", poolInfo);
   });
 
+  /**
+   * @notice Set the income sharing speed for a pool
+   * 
+   *         !! An income sharing pool does not have to have a "speed"
+   * 
+   * @param id     Reward pool id
+   * @param reward Reward speed (/second)
+   */
 task("setIncomeSpeed", "Set income sharing speed")
   .addParam("pid", "The pool id", null, types.string)
   .addParam("reward", "Reward speed", null, types.string)

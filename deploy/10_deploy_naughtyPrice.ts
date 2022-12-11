@@ -20,27 +20,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //
   // Factory
   //
-  const proxyOptions_factory: ProxyOptions = {
-    proxyContract: "TransparentUpgradeableProxy",
-    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
-    execute: {
-      init: {
-        methodName: "initialize",
-        args: [],
-      },
-    },
-  };
+  // const proxyOptions_factory: ProxyOptions = {
+  //   proxyContract: "TransparentUpgradeableProxy",
+  //   viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+  //   execute: {
+  //     init: {
+  //       methodName: "initialize",
+  //       args: [],
+  //     },
+  //   },
+  // };
 
-  const factoryUpgradeable = await deploy("NaughtyFactoryUpgradeable", {
-    contract: "NaughtyFactory",
-    from: deployer,
-    proxy: proxyOptions_factory,
-    args: [],
-    log: true,
-  });
+  // const factoryUpgradeable = await deploy("NaughtyFactoryUpgradeable", {
+  //   contract: "NaughtyFactory",
+  //   from: deployer,
+  //   proxy: proxyOptions_factory,
+  //   args: [],
+  //   log: true,
+  // });
 
-  addressList[network.name].NaughtyFactoryUpgradeable =
-    factoryUpgradeable.address;
+  // addressList[network.name].NaughtyFactoryUpgradeable =
+  //   factoryUpgradeable.address;
 
   //
   // Core
@@ -53,7 +53,11 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       execute: {
         init: {
           methodName: "initialize",
-          args: [usdcAddress, factoryUpgradeable.address, priceGetter.address],
+          args: [
+            usdcAddress,
+            addressList[network.name].NaughtyFactoryUpgradeable,
+            addressList[network.name].PriceGetter,
+          ],
         },
       },
     };
@@ -77,8 +81,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
           methodName: "initialize",
           args: [
             MockUSD.address,
-            factoryUpgradeable.address,
-            priceGetter.address,
+            addressList[network.name].NaughtyFactoryUpgradeable,
+            addressList[network.name].PriceGetter,
           ],
         },
       },
@@ -98,27 +102,27 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   //
   // Router
   //
-  const proxyOptions_router: ProxyOptions = {
-    proxyContract: "TransparentUpgradeableProxy",
-    viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
-    execute: {
-      init: {
-        methodName: "initialize",
-        args: [factoryUpgradeable.address, BuyerToken.address],
-      },
-    },
-  };
+  // const proxyOptions_router: ProxyOptions = {
+  //   proxyContract: "TransparentUpgradeableProxy",
+  //   viaAdminContract: { name: "ProxyAdmin", artifact: "ProxyAdmin" },
+  //   execute: {
+  //     init: {
+  //       methodName: "initialize",
+  //       args: [factoryUpgradeable.address, BuyerToken.address],
+  //     },
+  //   },
+  // };
 
-  const routerUpgradeable = await deploy("NaughtyRouterUpgradeable", {
-    contract: "NaughtyRouter",
-    from: deployer,
-    proxy: proxyOptions_router,
-    args: [],
-    log: true,
-  });
+  // const routerUpgradeable = await deploy("NaughtyRouterUpgradeable", {
+  //   contract: "NaughtyRouter",
+  //   from: deployer,
+  //   proxy: proxyOptions_router,
+  //   args: [],
+  //   log: true,
+  // });
 
-  addressList[network.name].NaughtyRouterUpgradeable =
-    routerUpgradeable.address;
+  // addressList[network.name].NaughtyRouterUpgradeable =
+  //   routerUpgradeable.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);

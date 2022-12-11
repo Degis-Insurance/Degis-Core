@@ -277,6 +277,76 @@
 			"address": "0xEDaC5Fbfb641E198beb571454B8Be41D82F9b88F",
 			"deadline": 1666944000,
 			"settleTime": 1667203200
+		},
+		"AVAX_18.5_L_1611": {
+			"address": "0x7d1b60bd96D7cc1a2e862d7328482CC2518aBafa",
+			"deadline": 1668326400,
+			"settleTime": 1668585600
+		},
+		"XAVA_0.27_L_1611": {
+			"address": "0x168D4aD9Bb84831c8610b239281aa03d26D6453b",
+			"deadline": 1668326400,
+			"settleTime": 1668585600
+		},
+		"JOE_0.23_L_1611": {
+			"address": "0x070F49A13eB8aa43967B41a50c34Ea3546beDB3f",
+			"deadline": 1668326400,
+			"settleTime": 1668585600
+		},
+		"BTC_20720.0_L_1611": {
+			"address": "0xF055339aeD375912998971d0Fc45Cf42F8ceD911",
+			"deadline": 1668326400,
+			"settleTime": 1668585600
+		},
+		"AVAX_18.1_L_9911": {
+			"address": "0x6a19E367dDbf05De33b324cbc9BF4e423594EB3E",
+			"deadline": 1667476800,
+			"settleTime": 1667480400
+		},
+		"AVAX_13.5_L_0412": {
+			"address": "0x9F3fb092F71B8A50a954840EA15359a54AEC4743",
+			"deadline": 1669881600,
+			"settleTime": 1670140800
+		},
+		"XAVA_0.177_L_0412": {
+			"address": "0xedDDD8C252c026fceb7EDEAA11803c20C24217B4",
+			"deadline": 1669881600,
+			"settleTime": 1670140800
+		},
+		"JOE_0.16_L_0412": {
+			"address": "0x83F18e2A2cCed4Ecd4C2525462a3cf1668a43cA0",
+			"deadline": 1669881600,
+			"settleTime": 1670140800
+		},
+		"BTC_16862.0_L_0412": {
+			"address": "0xdAF91a29f24D08d9a211810292A97a90E106B328",
+			"deadline": 1669881600,
+			"settleTime": 1670140800
+		},
+		"AVAX_14.0_L_1912": {
+			"address": "0x95a696f981F911bc07672b694c947cE65063c96C",
+			"deadline": 1671177600,
+			"settleTime": 1671436800
+		},
+		"XAVA_0.18_L_1912": {
+			"address": "0x482481834D86459135Fb2b00450a4Fd3503d6DE6",
+			"deadline": 1671177600,
+			"settleTime": 1671436800
+		},
+		"JOE_0.186_L_1912": {
+			"address": "0x06A6B05261b13e9Ac661BbE3245a07211f8af4f9",
+			"deadline": 1671177600,
+			"settleTime": 1671436800
+		},
+		"BTC_17259.6_L_1912": {
+			"address": "0xd8A551Ba25EA7e864ED78536e2DB1cB42D9C3d26",
+			"deadline": 1671177600,
+			"settleTime": 1671436800
+		},
+		"RoboVault_1.029663_L_1912": {
+			"address": "0x80E30c7d9be1a16502F6f963F9c2Ad304B4FE689",
+			"deadline": 1671177600,
+			"settleTime": 1671436800
 		}
 	},
 	"avaxTest": {
