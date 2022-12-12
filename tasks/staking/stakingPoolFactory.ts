@@ -11,9 +11,30 @@ import {
 import { readAddressList } from "../../scripts/contractAddress";
 import { formatEther, parseUnits } from "ethers/lib/utils";
 
+task("getStakingPool", "Get the staking pool address of a token")
+  .addParam("pooltoken", "Address of the pool token", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The dfault signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+    const stakingPoolFactoryAddress =
+      addressList[network.name].StakingPoolFactory;
+
+    const factory: StakingPoolFactory = new StakingPoolFactory__factory(
+      dev_account
+    ).attach(stakingPoolFactoryAddress);
+
+    const poolAddress = await factory.getPoolAddress(taskArgs.pooltoken);
+    console.log("Pool address: ", poolAddress);
+  });
+
 task("setStakingReward", "Set the degis reward of a staking pool")
   .addParam("pool", "Address of the pool", null, types.string)
-  .addParam("reward", "Degis reward per second", null, types.int)
+  .addParam("reward", "Degis reward per second", null, types.string)
   .setAction(async (taskArgs, hre) => {
     // Get the args
     const poolAddress = taskArgs.pool;
@@ -40,7 +61,7 @@ task("setStakingReward", "Set the degis reward of a staking pool")
     // Set the start block
     const tx = await factory.setDegisPerSecond(
       poolAddress,
-      parseUnits(degisPerSecond.toString())
+      parseUnits(degisPerSecond)
     );
     console.log("Tx details: ", await tx.wait());
 
