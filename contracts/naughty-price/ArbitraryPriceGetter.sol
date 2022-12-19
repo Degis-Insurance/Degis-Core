@@ -46,6 +46,8 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
     // Policy Base Token Name => Price Feed Info
     mapping(string => PriceInfo) public priceFeeds;
 
+    mapping(string => string) public baseTokens;
+
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -73,17 +75,17 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     function addPair(
-        string calldata _policyToken,
+        string calldata _baseToken,
         address _contractAddress,
         string calldata _functionSignature,
         bytes calldata _calldata
     ) external onlyOwner {
         require(
-            priceFeeds[_policyToken].contractAddress == address(0),
+            priceFeeds[_baseToken].contractAddress == address(0),
             "Pair already exists"
         );
 
-        PriceInfo storage newFeed = priceFeeds[_policyToken];
+        PriceInfo storage newFeed = priceFeeds[_baseToken];
 
         newFeed.contractAddress = _contractAddress;
         newFeed.functionSignature = _functionSignature;
@@ -101,7 +103,14 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
 
         require(priceResult > 0, "Invalid price result");
 
-        emit NewPair(_policyToken, _contractAddress, _functionSignature);
+        emit NewPair(_baseToken, _contractAddress, _functionSignature);
+    }
+
+    function setBaseToken(string memory _policyToken, string memory _baseToken)
+        external
+        onlyOwner
+    {
+        baseTokens[_policyToken] = _baseToken;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -119,9 +128,11 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
         external
         returns (uint256 price)
     {
-        bytes memory data = priceFeeds[_policyToken].callData;
+        string memory baseToken = baseTokens[_policyToken];
 
-        (bool success, bytes memory res) = priceFeeds[_policyToken]
+        bytes memory data = priceFeeds[baseToken].callData;
+
+        (bool success, bytes memory res) = priceFeeds[baseToken]
             .contractAddress
             .call(data);
 

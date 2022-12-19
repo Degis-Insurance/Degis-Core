@@ -711,64 +711,64 @@
 			"name": "IM_AVAX_14.0_L_1912",
 			"address": "0xB910E5FB81B3BAe35163B67ed04068B91f3D8174",
 			"poolId": 86,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"87": {
 			"name": "IM_XAVA_0.18_L_1912",
 			"address": "0x21f555775A935ba27685e94529D67F840168cE34",
 			"poolId": 87,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"88": {
 			"name": "IM_JOE_0.186_L_1912",
 			"address": "0x1E07EB49B20aB5b432C256F33F1D5eaBAA7F4c75",
 			"poolId": 88,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"89": {
 			"name": "IM_BTC_17259.6_L_1912",
 			"address": "0x1fD0Fb9970709F852B0c2be5d2FA6954F3D75Cfe",
 			"poolId": 89,
-			"reward": "0.00525",
-			"bonus": "0.00105",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"90": {
 			"name": "AVAX_14.0_L_1912",
 			"address": "0x9825E646581B6C8354D8088b34aA9a575B10541b",
 			"poolId": 90,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"91": {
 			"name": "XAVA_0.18_L_1912",
 			"address": "0xdeB02fada6aD9a4D42402703E8723E5997e076eE",
 			"poolId": 91,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"92": {
 			"name": "JOE_0.186_L_1912",
 			"address": "0xb7F9C1e2aBa7a25D9861d59bbb94Cd6c035AE02b",
 			"poolId": 92,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"93": {
 			"name": "BTC_17259.6_L_1912",
 			"address": "0xd9c94Cf94Cfe159d1965B0bc664464d2A56eA9A0",
 			"poolId": 93,
-			"reward": "0.00438",
-			"bonus": "0.00088",
+			"reward": "0.0",
+			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
 		"1-old": {

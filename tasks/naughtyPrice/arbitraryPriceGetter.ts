@@ -3,7 +3,6 @@ import "@nomiclabs/hardhat-ethers";
 import { readAddressList } from "../../scripts/contractAddress";
 import { ArbitraryPriceGetter__factory } from "../../typechain";
 
-
 // Selector: 99530b06
 
 task("addArbitraryPriceFeed", "Add an arbitrary price feed")
@@ -35,5 +34,33 @@ task("addArbitraryPriceFeed", "Add an arbitrary price feed")
 
     const priceFeedInfo = await arbitraryPriceGetter.priceFeeds(taskArgs.name);
     console.log("Price feed info:", priceFeedInfo);
+  });
 
+task("setBaseToken", "Set the base token")
+  .addParam("policytoken", "Name of the policy token", null, types.string)
+  .addParam("basetoken", "Name of the base token", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    // Network info
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const arbitraryPriceGetter = new ArbitraryPriceGetter__factory(
+      dev_account
+    ).attach(addressList[network.name].ArbitraryPriceGetter);
+
+    const tx = await arbitraryPriceGetter.setBaseToken(
+      taskArgs.policytoken,
+      taskArgs.basetoken
+    );
+    console.log("tx details:", await tx.wait());
+
+    const baseToken = await arbitraryPriceGetter.baseTokens(
+      taskArgs.policytoken
+    );
+    console.log("Base token:", baseToken);
   });
