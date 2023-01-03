@@ -5,17 +5,16 @@ import { getTokenAddressOnAVAX } from "../info/tokenAddress";
 
 const stablecoin: string = getTokenAddressOnAVAX("USDC.e");
 
-// Deploy Basic Tokens
-// It is a non-proxy deployment
+// Deploy Shield
+// Proxy deployment
 // Contract:
-//    - Degis Token
-//    - Buyer Token
+//    - Shield Swap (previously called Shield)
 // Tags:
-//    - Tokens
+//    - Shield
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts, network } = hre;
-  const { deploy, save, getArtifact } = deployments;
+  const { deploy} = deployments;
 
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
@@ -35,15 +34,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     },
   };
 
-  const shield = await deploy("Shield", {
-    contract: "Shield",
+  const shieldSwap = await deploy("Shield", {
+    contract: "ShieldSwap",
     from: deployer,
     proxy: proxyOptions,
     args: [],
     log: true,
   });
 
-  addressList[network.name].Shield = shield.address;
+  addressList[network.name].ShieldSwap = shieldSwap.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);
