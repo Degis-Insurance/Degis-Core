@@ -771,6 +771,78 @@
 			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
+		"94": {
+			"name": "IM_AVAX_11.97_L_0701",
+			"address": "0xDb3AE651C92e8305Cabf02286C7BAc3FE470508E",
+			"poolId": 94,
+			"reward": "0.01103",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"95": {
+			"name": "IM_XAVA_0.153_L_0701",
+			"address": "0x7Fd22Fdc3A643A4383139540a311b9254c82d9bf",
+			"poolId": 95,
+			"reward": "0.01103",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"96": {
+			"name": "IM_JOE_0.144_L_0701",
+			"address": "0x33B8Dcae9C1b037aC4Df65cE441A35f64Bd5aa3b",
+			"poolId": 96,
+			"reward": "0.01103",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"97": {
+			"name": "IM_BTC_16812.1_L_0701",
+			"address": "0x24FE92C118C0200BdC6FD4aF108837cf025ff203",
+			"poolId": 97,
+			"reward": "0.01103",
+			"bonus": "0.00105",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"98": {
+			"name": "AVAX_11.97_L_0701",
+			"address": "0x967007Ec5a37E822fCC54d5bB94EcDDbaEA8bB56",
+			"poolId": 98,
+			"reward": "0.01016",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"99": {
+			"name": "XAVA_0.153_L_0701",
+			"address": "0x30B2411230E8D5A5d2dfE3857CA5ABE7d125AB5c",
+			"poolId": 99,
+			"reward": "0.01016",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"100": {
+			"name": "JOE_0.144_L_0701",
+			"address": "0x87e5b16342aD389E393Fa99d342c6B8DA90B46D4",
+			"poolId": 100,
+			"reward": "0.01016",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"101": {
+			"name": "BTC_16812.1_L_0701",
+			"address": "0xb4CA4424B040c9662832B33c8895f768E4B7a15C",
+			"poolId": 101,
+			"reward": "0.01016",
+			"bonus": "0.00088",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
+		"102": {
+			"name": "RoboVault_1.031094_L_0701",
+			"address": "0x14f6CF471Ed61195cD540DE78c496D9F3b7BbC4d",
+			"poolId": 102,
+			"reward": "0.00578",
+			"bonus": "0.0",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",
 			"address": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",

@@ -80,7 +80,7 @@ task("addWhiteList-Ve", "Add whitelist for veDEG").setAction(async (_, hre) => {
   ).attach(veDEGAddress);
 
   const tx = await veDEG.addWhitelist(
-    "0x0fa588a7351Fe333CeE9EC3f800D64E4B8Ed186A"
+    "0xcc274166c825bFFeC29FC3E6A56aAa95707c2f3d"
   );
   console.log("tx details: ", await tx.wait());
 });
