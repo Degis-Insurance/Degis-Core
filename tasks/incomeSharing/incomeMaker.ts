@@ -62,7 +62,7 @@ task("convertIncome", "Convert income from maker to income sharing vault")
     // Stablecoin address
     let usdAddress: string;
     if (network.name == "avax" || network.name == "avaxTest") {
-      usdAddress = getTokenAddressOnAVAX("USDC.e");
+      usdAddress = getTokenAddressOnAVAX("USDC");
     } else {
       usdAddress = addressList[network.name].MockUSD;
     }

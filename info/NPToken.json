@@ -372,6 +372,66 @@
 			"address": "0xc135954f62db00e761c3E35AAf693CB995B6bBAa",
 			"deadline": 1672819200,
 			"settleTime": 1673078400
+		},
+		"AVAX_11.82_L_2501": {
+			"address": "0x8157bA955cB00DC750b6AF23492766D791087ABF",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"XAVA_0.152_L_2501": {
+			"address": "0x19ab699100A2e4ff711eA1395681E96b6E3220c5",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"JOE_0.142_L_2501": {
+			"address": "0xcf31f30fa31acCd90DF03b830666Af52F4f22E90",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"BTC_16946.8_L_2501": {
+			"address": "0xEca10156e7ADB5865D0594FDe332d4fC447b7754",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"CAI_61.6_L_2501": {
+			"address": "0xA8BA1190a7fed1aC04D4B2137a57DFdb37Aef541",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"RoboVault_1.031811_L_2501": {
+			"address": "0xfA2aB0595ed435A5b555c2154662BC47C9b9eE7A",
+			"deadline": 1674374400,
+			"settleTime": 1674633600
+		},
+		"AVAX_20.56_L_1502": {
+			"address": "0xe29dbFe149f3188AE8B61b9855772bf34F338A29",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
+		},
+		"XAVA_0.446_L_1502": {
+			"address": "0x149951fdb69D09d78362300825565de67521F0D0",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
+		},
+		"JOE_0.224_L_1502": {
+			"address": "0x927d8f64698D6F07408824F8fFf7e5e6772F8bE0",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
+		},
+		"BTC_23010.2_L_1502": {
+			"address": "0x684e652DD061bf5DEF8d1BBb6E315073E916b517",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
+		},
+		"CAI_99.87_L_1502": {
+			"address": "0xB9bC91022179Bf6e11EA836A7Bd59DEeAb6917Bc",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
+		},
+		"RoboVault_1.034774_L_1502": {
+			"address": "0xe527dDCD120A346a03D2c99c52530C765af3194f",
+			"deadline": 1676188800,
+			"settleTime": 1676448000
 		}
 	},
 	"avaxTest": {
