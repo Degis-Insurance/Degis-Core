@@ -134,6 +134,7 @@ contract NaughtyPriceILM is OwnableUpgradeable {
     error ILM__StablecoinNotSupport();
     error ILM__NoDeposit();
     error ILM__NotEnoughDeposit();
+    error ILM__AlreadyStarted();
 
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Constructor ************************************** //
@@ -283,6 +284,9 @@ contract NaughtyPriceILM is OwnableUpgradeable {
         if (_ILMDeadline >= policyTokenDeadline) revert ILM__WrongILMDeadline();
 
         PairInfo storage pair = pairs[_policyToken];
+
+        if(pair.lptoken != address(0)) revert ILM__AlreadyStarted();
+
         // Update the status
         pair.status = Status.Active;
         pair.stablecoin = _stablecoin;
