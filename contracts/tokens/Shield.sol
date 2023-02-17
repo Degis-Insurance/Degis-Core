@@ -195,8 +195,12 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      * @param _token    Stablecoin address
      * @param _contract Contract address to give allowance
      */
-    function approveStablecoin(address _token, address _contract) external {
+    function approveStablecoin(address _token, address _contract) external onlyOwner {
         IERC20(_token).approve(_contract, type(uint256).max);
+    }
+
+    function unapprove(address _token, address _contract) external onlyOwner {
+        IERC20(_token).approve(_contract, 0);
     }
 
     // ---------------------------------------------------------------------------------------- //

@@ -35,14 +35,14 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   };
 
   const shieldSwap = await deploy("Shield", {
-    contract: "ShieldSwap",
+    contract: "Shield",
     from: deployer,
     proxy: proxyOptions,
     args: [],
     log: true,
   });
 
-  addressList[network.name].ShieldSwap = shieldSwap.address;
+  addressList[network.name].Shield = shieldSwap.address;
 
   // Store the address list after deployment
   storeAddressList(addressList);

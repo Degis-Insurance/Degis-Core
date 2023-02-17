@@ -169,3 +169,26 @@ task("approveStablecoin", "Approve stablecoin for ILM")
 
     console.log("\n Finish Approving stablecoin in ILM... \n");
   });
+
+task("emergencyStopILM", "Approve stablecoin for ILM").setAction(
+  async (taskArgs, hre) => {
+    console.log("\n Start Approving stablecoin in ILM... \n");
+    // Network info
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const addressList = readAddressList();
+
+    const ILM = new NaughtyPriceILM__factory(dev_account).attach(
+      addressList[network.name].ILM
+    );
+
+    const policyToken = "0x3cd749b5A124b35879a3278A41d9236be5EBA2a7";
+
+    const tx = await ILM.emergencyStop(policyToken);
+    console.log("tx details:", await tx.wait());
+  }
+);
