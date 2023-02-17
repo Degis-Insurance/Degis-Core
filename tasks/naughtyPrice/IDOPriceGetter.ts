@@ -36,11 +36,11 @@ import { formatEther } from "ethers/lib/utils";
 // Name: CAI  Network: AVAX_C
 // Token Address: 0x48f88A3fE843ccb0b5003e70B4192c1d7448bEf0
 // Joe Pair Address: 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0
-// npx hardhat addIDOPriceFeed --network avax --name CAI_88.6_L_1610 
+// npx hardhat addIDOPriceFeed --network avax --name CAI_88.6_L_1610
 //   --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0
 //   --start 1665820800
 
-// npx hardhat addIDOPriceFeed --network avax --name CAI_78.7_L_3110 --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0 --start 1667116800
+// npx hardhat addIDOPriceFeed --network avax --name CAI_97.74_L_0503 --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0 --start 1677657600
 
 task("addIDOPriceFeed", "Deploy a new naughty price token")
   .addParam("name", "Policy token name", null, types.string)
@@ -147,7 +147,31 @@ task("checkIDOPrice", "Check the current ido price").setAction(
       dev_account
     ).attach(idoPriceGetterAddress);
 
-    const currentPrice = await idoPriceGetter.priceFeeds("JOE_0.27_L_2806");
+    const currentPrice = await idoPriceGetter.priceFeeds("CAI_99.87_L_1502");
     console.log("current price: ", formatEther(currentPrice.priceAverage));
+  }
+);
+
+task("setIDOPrice", "Set IDO price manually").setAction(
+  async (taskArgs, hre) => {
+    const { network } = hre;
+
+    const addressList = readAddressList();
+
+    const idoPriceGetterAddress = addressList[network.name].IDOPriceGetter;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const idoPriceGetter: IDOPriceGetter = new IDOPriceGetter__factory(
+      dev_account
+    ).attach(idoPriceGetterAddress);
+
+    const policyTokenName = "CAI_99.87_L_1502";
+    const price = ethers.utils.parseEther("5.4");
+
+    const tx = await idoPriceGetter.setPrice(policyTokenName, price);
+    console.log("tx details: ", await tx.wait());
   }
 );

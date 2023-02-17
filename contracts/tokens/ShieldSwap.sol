@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.8.10;
 
-import { ERC20Upgradeable } from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -10,14 +9,10 @@ import { ICurvePool } from "./interfaces/ICurvePool.sol";
 import { IPlatypusPool } from "./interfaces/IPlatypusPool.sol";
 
 /**
- * @title  Shield Token (Derived Stablecoin on Degis)
+ * @title  Shield Swap
  * @author Eric Lee (ylikp.ust@gmail.com)
- * @dev    Users can swap other stablecoins to Shield (actually backed by USDC only)
- *         Shield can be used in NaughtyPrice and future products
- *
- *         When users want to withdraw, their shield tokens will be burned
- *         and USDC will be sent back to them (if no sepecific choice)
- *             other stablecoins will be sent back to them (if have sepecific choice)
+ * @dev    Users can swap other stablecoins to USDC without going to PTP or Curve
+ *         USDC can be used in NaughtyPrice and future products
  *
  *         Currently, the swap is done inside Platypus & Curve
  *
@@ -26,7 +21,7 @@ import { IPlatypusPool } from "./interfaces/IPlatypusPool.sol";
  *         When deposit, the toToken is USDC, which pool to use depends on tokenToPoolForDeposit(token)
  *         When withdraw, the fromToken is USDC, which pool to use depends on tokenToPoolForWithdraw(token)
  */
-contract Shield is ERC20Upgradeable, OwnableUpgradeable {
+contract ShieldSwap is OwnableUpgradeable {
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
@@ -91,7 +86,6 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     function initialize() public initializer {
-        __ERC20_init("Shield Token", "SHD");
         __Ownable_init();
 
         // USDT.e
@@ -176,6 +170,13 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
         }
     }
 
+    /**
+     * @notice Set the swap pool for a new token
+     *
+     * @param _isDeposit Whether for deposit or withdraw
+     * @param _token     Token address
+     * @param _pool      Pool address to swap
+     */
     function setTokenToPool(
         bool _isDeposit,
         address _token,
@@ -195,12 +196,8 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
      * @param _token    Stablecoin address
      * @param _contract Contract address to give allowance
      */
-    function approveStablecoin(address _token, address _contract) external onlyOwner {
+    function approveStablecoin(address _token, address _contract) external {
         IERC20(_token).approve(_contract, type(uint256).max);
-    }
-
-    function unapprove(address _token, address _contract) external onlyOwner {
-        IERC20(_token).approve(_contract, 0);
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -208,7 +205,7 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Deposit tokens and mint Shield
+     * @notice Deposit tokens and swap to USDC
      *         If the input is USDC, no swap needed, otherwise, swap to USDC
      *
      * @param _type       Swap type (1 for PTP, 2 for Curve)
@@ -260,93 +257,9 @@ contract Shield is ERC20Upgradeable, OwnableUpgradeable {
             outAmount = _amount;
         }
 
-        // Mint shield
-        _mint(msg.sender, outAmount);
+        _safeTokenTransfer(USDC, outAmount);
 
         emit Deposit(msg.sender, _stablecoin, _amount, outAmount);
-    }
-
-    /**
-     * @notice Withdraw stablecoins and burn shield
-     *
-     * @param _type       Swap type (use PTP/Curve, which pool)
-     * @param _stablecoin Stablecoin address
-     * @param _amount     Amount of shield to burn
-     * @param _minAmount  Minimum amount of stablecoin to withdraw (if need swap)
-     */
-    function withdraw(
-        uint256 _type,
-        address _stablecoin,
-        uint256 _amount,
-        uint256 _minAmount
-    ) external {
-        require(supportedStablecoin[_stablecoin], "Stablecoin not supported");
-
-        uint256 actualAmount;
-
-        if (_stablecoin == USDC) withdraw(_stablecoin, _amount, _amount);
-        else {
-            if (_type == PLATYPUS_SWAP) {
-                // Swap USDC to stablecoin and directly
-                actualAmount = _ptpSwap(
-                    tokenToPoolForWithdraw[_stablecoin],
-                    USDC,
-                    _stablecoin,
-                    _amount,
-                    _minAmount,
-                    address(this)
-                );
-            } else if (_type == CURVE_SWAP) {
-                actualAmount = _curveSwap(
-                    tokenToPoolForWithdraw[_stablecoin],
-                    USDC,
-                    _stablecoin,
-                    _amount,
-                    _minAmount
-                );
-            }
-
-            // Actual amount may have different decimals
-            withdraw(_stablecoin, actualAmount, _amount);
-        }
-    }
-
-    /**
-     * @notice Withdraw stablecoin and burn shield
-     *
-     * @param _stablecoin       Stablecoin address
-     * @param _stablecoinAmount Stablecoin amount to be transferred back
-     * @param _shieldAmount     Shield amount to be burned
-     */
-    function withdraw(
-        address _stablecoin,
-        uint256 _stablecoinAmount,
-        uint256 _shieldAmount
-    ) internal {
-        // Transfer stablecoin back
-        uint256 realAmount = _safeTokenTransfer(_stablecoin, _stablecoinAmount);
-
-        // Burn shield token
-        _burn(msg.sender, _shieldAmount);
-
-        emit Withdraw(msg.sender, realAmount);
-    }
-
-    /**
-     * @notice Withdraw all of a user's balance
-     *         This function only returns USDC back
-     *         If you want other tokens back, use withdraw()
-     */
-    function withdrawAll() external {
-        uint256 userBalance = balanceOf(msg.sender);
-        withdraw(USDC, userBalance, userBalance);
-    }
-
-    /**
-     * @notice Shield has 6 decimals
-     */
-    function decimals() public pure override returns (uint8) {
-        return 6;
     }
 
     // ---------------------------------------------------------------------------------------- //

@@ -221,3 +221,47 @@ task("setTokenToPool", "Set token to pool for shield")
     );
     console.log("tokenToPoolForWithdraw: ", tokenToPoolForWithdraw);
   });
+
+// 0xb0cf1a80f376baf21b6da140bc333e17c2040d06
+
+task("unapprove", "Set token to pool for shield")
+  .addParam("stablecoin", "Stablecoin name", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const addressList = readAddressList();
+
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The dfault signer is: ", dev_account.address);
+
+    const shieldAddress = addressList[network.name].Shield;
+    const shield: Shield = new Shield__factory(dev_account).attach(
+      shieldAddress
+    );
+
+    const stablecoinAddress = getTokenAddressOnAVAX(taskArgs.stablecoin);
+    if (stablecoinAddress == "") {
+      console.log("Invalid stablecoin address");
+      return;
+    }
+    const USDC = new Shield__factory(dev_account).attach(stablecoinAddress);
+
+    const allownace1 = await USDC.allowance(
+      shieldAddress,
+      "0xc7795cdD8c36951142956eA3E93771d3C617ef43"
+    );
+    console.log("allowance ", allownace1);
+
+    const tx = await shield.unapprove(
+      stablecoinAddress,
+      "0xc7795cdD8c36951142956eA3E93771d3C617ef43"
+    );
+    console.log("Tx details: ", await tx.wait());
+
+    const allownace2 = await USDC.allowance(
+      shieldAddress,
+      "0xc7795cdD8c36951142956eA3E93771d3C617ef43"
+    );
+    console.log("allowance ", allownace2);
+  });

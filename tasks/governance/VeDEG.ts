@@ -66,26 +66,45 @@ task("upgradeVeDEG", "Upgrade veDEG implementation").setAction(
   }
 );
 
-task("addWhiteList-Ve", "Add whitelist for veDEG").setAction(async (_, hre) => {
-  const { network } = hre;
+task("addWhiteList-Ve", "Add whitelist for veDEG")
+  .addParam("address", "The address to add", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
 
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
 
-  const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+    const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
-  const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
-    dev_account
-  ).attach(veDEGAddress);
+    const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+      dev_account
+    ).attach(veDEGAddress);
 
-  const tx = await veDEG.addWhitelist(
-    "0xcc274166c825bFFeC29FC3E6A56aAa95707c2f3d"
-  );
-  console.log("tx details: ", await tx.wait());
-});
+    const tx = await veDEG.addWhitelist(taskArgs.address);
+    console.log("tx details: ", await tx.wait());
+  });
 
-task("checkVeState", "Add whitelist for veDEG").setAction(async (_, hre) => {
+task("removeWhiteList-Ve", "Remove whitelist for veDEG")
+  .addParam("address", "The address to remove", null, types.string)
+  .setAction(async (taskArgs, hre) => {
+    const { network } = hre;
+
+    // Signers
+    const [dev_account] = await hre.ethers.getSigners();
+    console.log("The default signer is: ", dev_account.address);
+
+    const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+
+    const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+      dev_account
+    ).attach(veDEGAddress);
+
+    const tx = await veDEG.removeWhitelist(taskArgs.address);
+    console.log("tx details: ", await tx.wait());
+  });
+
+task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
   const { network } = hre;
 
   // Signers
@@ -188,3 +207,26 @@ task("filterLockEvent", "Filter locked event").setAction(async (_, hre) => {
   const events = await veDEG.queryFilter(filter, 16041710, 16043710);
   console.log(events);
 });
+
+task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
+  const { network } = hre;
+
+  // Signers
+  const [dev_account] = await hre.ethers.getSigners();
+  console.log("The default signer is: ", dev_account.address);
+
+  const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
+
+  const veDEG: VoteEscrowedDegis = new VoteEscrowedDegis__factory(
+    dev_account
+  ).attach(veDEGAddress);
+
+  const user = "0x81c2B3E6872aB8F9550864d357e236FA828B4CD8";
+
+  const locked = await veDEG.locked(user);
+  console.log("Locked before", formatEther(locked));
+
+  const tx = await veDEG.unlockVeDEG(user, locked);
+  console.log("tx details: ", await tx.wait());
+});
+
