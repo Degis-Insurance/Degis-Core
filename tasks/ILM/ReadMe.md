@@ -37,41 +37,30 @@ task: finishILM
 
 
 
-// npx hardhat stopILM --network avax --name AVAX_18.1_L_0503 --policytoken 0x86C2DB22c28FD5397405Ca0DBA241f04B64B06a7 --deadline 1677744000
-
-// npx hardhat stopILM --network avax --name XAVA_0.519_L_0503 --policytoken 0x3B1993aeC0658855e172034E6D938AC10A982904 --deadline 1677744000
-
-// npx hardhat stopILM --network avax --name JOE_0.24_L_0503 --policytoken 0x3650eF4231312d716817dA5CBFae3A7c8EC7D7c9 --deadline 1677744000
-
-// npx hardhat stopILM --network avax --name BTC_22120.9_L_0503 --policytoken 0xc8ad7c24Ca20DDFA58fB5D6cfEF1BdBc68d24157 --deadline 1677744000
-
-// npx hardhat stopILM --network avax --name CAI_97.74_L_0503 --policytoken 0x68B18d9a6d99Aeb284a1217f846F60A80b7E19E2 --deadline 1677744000
-
-// npx hardhat stopILM --network avax --name RoboVault_1.034774_L_1502 --policytoken 0xe527dDCD120A346a03D2c99c52530C765af3194f --deadline 1676188800
+// hh stopILM --network avax --name AVAX_16.6_L_1504 --policytoken 0x53dD54a49C3Ce0A593411347FF01977ed4f5CeCc --deadline 1681286400
+// hh stopILM --network avax --name XAVA_0.404_L_1504 --policytoken 0xe4BcEb6fEc88Fb57F20C0631353172d17201f82C --deadline 1681286400
+// hh stopILM --network avax --name JOE_0.57_L_1504 --policytoken 0xf95741aaac561743593FDCb45Dd0C51AF674C08A --deadline 1681286400
+// hh stopILM --network avax --name BTC_27022.8_L_1504 --policytoken 0xA702C79E46a60677FaCa42d025ac09e8930d1ec1 --deadline 1681286400
+// hh stopILM --network avax --name CAI_138.81_L_1504 --policytoken 0xafed3C37587Ece288eBE9494fA7aa5d463E94426 --deadline 1681286400
+// hh stopILM --network avax --name ETH_1728.55_L_1504 --policytoken 0xdDf439102e9E87B6e72760c227d7c96B1c18Ae9f --deadline 1681286400
 
 // farming
 
 // 0.00105 + 0.00011
 
-// npx hardhat addFarmingPool --network avax --name IM_AVAX_18.1_L_0503 --address 0x58638Eb847077d2f46C0DFDE914C2508fe751b5f --reward 0.00105 --bonus 0.00011 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name IM_XAVA_0.519_L_0503 --address 0x8921CD950f3fe03E61Ed335b0D4Ef6c209FCD657 --reward 0.00105 --bonus 0.00011 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name IM_JOE_0.24_L_0503 --address 0x468FC2461fa4c53B661673458FC0a45cC8c4e297 --reward 0.00105 --bonus 0.00011 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name IM_BTC_22120.9_L_0503 --address 0x23F6e1541BD9b2106d3771969F8044B75929CE10 --reward 0.00105 --bonus 0.00011 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name IM_CAI_97.74_L_0503 --address 0x26772971215D842628609E98B90DFB16B87d57Fd --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_AVAX_16.6_L_1504 --address 0x25D096063D016e4b6275b2f860F661f1AC3217E7 --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_XAVA_0.404_L_1504 --address 0x12676BDb69F0e096559175e3Fe6e24B9dD7BF679 --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_JOE_0.57_L_1504 --address 0x92C9d1F245A6faA056C59691FD9f8b6c9Bd4E694 --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_BTC_27022.8_L_1504 --address 0x1991Ef9C0FF31Fbe6fAb771208379fcA7F465776 --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_CAI_138.81_L_1504 --address 0xF2D5852d9F9C0bBba4DD70880d9dA28644b55c43 --reward 0.00105 --bonus 0.00011 --doublereward 0
+// hh addFarmingPool --network avax --name IM_ETH_1728.55_L_1504 --address 0x83d1B871909E6eEDded6816d5386A6cAFb39E979 --reward 0.00105 --bonus 0.00011 --doublereward 0
 
 
 // 0.00095 + 0.00009
 
-// npx hardhat addFarmingPool --network avax --name AVAX_18.1_L_0503 --address 0x01c8f9774beD44C917bB28F181Aaf0df98934D41 --reward 0.00095 --bonus 0.00009 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name XAVA_0.519_L_0503 --address 0x78c123Ab0622eA75399F7a422bD60Eb4D3a81276 --reward 0.00095  --bonus 0.00009 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name JOE_0.24_L_0503 --address 0x458568EBc386b064cA2F09b262f5dE9A7319DDd5 --reward 0.00095 --bonus 0.00009 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name BTC_22120.9_L_0503 --address 0x980D2855ab57661D8Df11453797751091806003e --reward 0.00095  --bonus 0.00009 --doublereward 0
-
-// npx hardhat addFarmingPool --network avax --name CAI_97.74_L_0503 --address 0x56718bf957251631d6BE1951CB84e2F3D231D9fc --reward 0.00095  --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name AVAX_16.6_L_1504 --address 0x62f39ea3f621045d9a0fE16e5240D3A6C0C35693 --reward 0.00095 --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name XAVA_0.404_L_1504 --address 0xb8e0f08117626b46cCcb22865Fc7B8016577A97b --reward 0.00095  --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name JOE_0.57_L_1504 --address 0x1B1d240854C56487158008b9D181cA370c019655 --reward 0.00095 --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name BTC_27022.8_L_1504 --address 0x94E52F2e0394002207F6eac4d698bB39298e6c1D --reward 0.00095  --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name CAI_138.81_L_1504 --address 0xDd2947927228530A2B50563ccb100da2ac5565a6 --reward 0.00095  --bonus 0.00009 --doublereward 0
+// hh addFarmingPool --network avax --name ETH_1728.55_L_1504 --address 0xCB0B0e2B6ece5DC448F1A5C56b112E36EE863380 --reward 0.00095  --bonus 0.00009 --doublereward 0
