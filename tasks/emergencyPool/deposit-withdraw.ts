@@ -19,13 +19,7 @@ task("depositEmergencyPool", "deposit funds into emergency pool")
     const tokenAddress = taskArgs.address;
     const depositAmount = taskArgs.amount;
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const pool = new EmergencyPool__factory(dev_account).attach(
       addressList[network.name].EmergencyPool
@@ -56,14 +50,7 @@ task("withdrawEmergencyPool", "withdraw funds from emergency pool")
 
     const tokenAddress = taskArgs.address;
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
-
+    const { network, addressList, dev_account } = await hre.run("preparation");
     const pool = new EmergencyPool__factory(dev_account).attach(
       addressList[network.name].EmergencyPool
     );

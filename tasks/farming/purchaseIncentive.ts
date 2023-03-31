@@ -1,6 +1,5 @@
 import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
-// import hre from "hardhat";
 
 import {
   PurchaseIncentiveVault,
@@ -8,20 +7,14 @@ import {
 } from "../../typechain";
 import { readAddressList } from "../../scripts/contractAddress";
 
-import { formatEther, parseUnits } from "ethers/lib/utils";
+import {  parseUnits } from "ethers/lib/utils";
 import { toWei } from "../../test/utils";
 
 task(
   "settlePurchaseIncentive",
   "Settle the current round of purchase incentive"
 ).setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
+  const { network, addressList, dev_account } = await hre.run("preparation");
   const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
 
   console.log(
@@ -56,13 +49,7 @@ task(
     const degisPerRound = taskArgs.reward;
     const rewardInterval = taskArgs.interval;
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
     const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
 
     console.log(
@@ -117,13 +104,7 @@ task(
     toWei("10000"),
   ];
 
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The dfault signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
+  const { network, addressList, dev_account } = await hre.run("preparation");
   const vaultAddress = addressList[network.name].PurchaseIncentiveVault;
 
   console.log(

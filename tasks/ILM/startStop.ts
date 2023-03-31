@@ -1,21 +1,10 @@
 import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
-import {
-  readAddressList,
-  readILMList,
-  storeILMList,
-} from "../../scripts/contractAddress";
+import { readILMList, storeILMList } from "../../scripts/contractAddress";
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 
-import {
-  NaughtyPriceILM__factory,
-  PolicyCore,
-  PolicyCore__factory,
-} from "../../typechain";
-import { formatEther, formatUnits } from "ethers/lib/utils";
-import { BigNumber, BigNumberish } from "ethers";
-import { stablecoinToWei } from "../../test/utils";
+import { NaughtyPriceILM__factory, PolicyCore__factory } from "../../typechain";
 
 task("startILM", "Start a new round ILM")
   .addParam("policytoken", "Policy token address", null, types.string)
@@ -23,14 +12,7 @@ task("startILM", "Start a new round ILM")
   .addParam("deadline", "ILM deadline", null, types.string)
   .setAction(async (taskArgs, hre) => {
     console.log("\n Starting a new round ILM... \n");
-    // Network info
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
     const ILMList = readILMList();
 
     const ILM = new NaughtyPriceILM__factory(dev_account).attach(
@@ -83,14 +65,7 @@ task("stopILM", "Stop a round ILM")
   .addParam("deadline", "swap deadline", null, types.string)
   .setAction(async (taskArgs, hre) => {
     console.log("\n Stopping a new round ILM... \n");
-    // Network info
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
     const ILMList = readILMList();
 
     const ILM = new NaughtyPriceILM__factory(dev_account).attach(
@@ -140,14 +115,7 @@ task("approveStablecoin", "Approve stablecoin for ILM")
   .addParam("stablecoin", "Stablecoin address", null, types.string)
   .setAction(async (taskArgs, hre) => {
     console.log("\n Start Approving stablecoin in ILM... \n");
-    // Network info
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const ILM = new NaughtyPriceILM__factory(dev_account).attach(
       addressList[network.name].ILM
@@ -173,14 +141,7 @@ task("approveStablecoin", "Approve stablecoin for ILM")
 task("emergencyStopILM", "Approve stablecoin for ILM").setAction(
   async (taskArgs, hre) => {
     console.log("\n Start Approving stablecoin in ILM... \n");
-    // Network info
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const ILM = new NaughtyPriceILM__factory(dev_account).attach(
       addressList[network.name].ILM

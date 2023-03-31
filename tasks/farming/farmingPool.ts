@@ -44,11 +44,7 @@ task("addFarmingPool", "Add new farming pool")
     console.log("Bonus reward speed: ", bonusDegisPerSecond, "degis/second");
     console.log("Double reward token address: ", doubleRewardTokenAddress);
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -57,10 +53,11 @@ task("addFarmingPool", "Add new farming pool")
       " is: ",
       farmingPoolAddress
     );
-    const FarmingPool: FarmingPoolUpgradeable__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
+    
     const farmingPool: FarmingPoolUpgradeable =
-      FarmingPool.attach(farmingPoolAddress);
+      new FarmingPoolUpgradeable__factory(dev_account).attach(
+        farmingPoolAddress
+      );
 
     console.log(
       "farming basic speed",
@@ -119,11 +116,7 @@ task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
     console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
     console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -172,11 +165,7 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
     const startTimestamp = taskArgs.start;
     console.log("New start timestamp: ", startTimestamp);
 
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -199,11 +188,7 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
 
 task("setVeDEG", "Set the VeDEG of a farming pool").setAction(
   async (_, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -245,10 +230,7 @@ task("setPieceWise-Farming", "Set piecewise reward level for farming")
       toWei("0.11574"),
     ];
 
-    const { network } = hre;
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -280,10 +262,7 @@ task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
 
     const reward: string[] = ["0"];
 
-    const { network } = hre;
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -308,11 +287,7 @@ task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
 
 task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
   async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
     console.log(
@@ -335,11 +310,7 @@ task("addDoubleRewardToken", "Add double reward to a farming pool")
   .addParam("lptoken", "LPToken address", null, types.string)
   .addParam("rewardtoken", "Reward token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
     const doubleRewarderContract: DoubleRewarder = new DoubleRewarder__factory(
@@ -371,11 +342,7 @@ task("setDoubleRewardSpeed", "Add double reward to a farming pool")
   .addParam("rewardtoken", "Real reward token address", null, types.string)
   .addParam("reward", "Reward speed", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
     const doubleRewarderContract: DoubleRewarder = new DoubleRewarder__factory(
@@ -392,11 +359,7 @@ task("setDoubleRewardSpeed", "Add double reward to a farming pool")
 
 task("setDoubleRewardContract", "Set the double reward contract").setAction(
   async (_, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
 
@@ -414,11 +377,7 @@ task("setClaimable", "Set double reward token claimable")
   .addParam("token", "Token address", null, types.string)
   .addParam("realtoken", "Real token address", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
     const doubleRewarder = new DoubleRewarder__factory(dev_account).attach(

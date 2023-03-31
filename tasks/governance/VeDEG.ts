@@ -1,10 +1,7 @@
-import { subtask, task, types } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
-// import hre from "hardhat";
 
 import {
-  FarmingPool,
-  FarmingPool__factory,
   IncomeSharingVault,
   IncomeSharingVault__factory,
   ProxyAdmin,
@@ -19,17 +16,10 @@ import {
 } from "../../scripts/contractAddress";
 import { parseUnits, formatEther } from "ethers/lib/utils";
 
-const addressList = readAddressList();
-const farmingPoolList = readFarmingPoolList();
-
 task("setGenerationRate", "Set the generation rate of veDEG")
   .addParam("rate", "The generation rate", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The dfault signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const veAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -46,11 +36,7 @@ task("setGenerationRate", "Set the generation rate of veDEG")
 
 task("upgradeVeDEG", "Upgrade veDEG implementation").setAction(
   async (_, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const veProxyAddress = addressList[network.name].VoteEscrowedDegis;
     const ProxyAdminAddress = addressList[network.name].ProxyAdmin;
@@ -69,11 +55,7 @@ task("upgradeVeDEG", "Upgrade veDEG implementation").setAction(
 task("addWhiteList-Ve", "Add whitelist for veDEG")
   .addParam("address", "The address to add", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -88,11 +70,7 @@ task("addWhiteList-Ve", "Add whitelist for veDEG")
 task("removeWhiteList-Ve", "Remove whitelist for veDEG")
   .addParam("address", "The address to remove", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -105,11 +83,7 @@ task("removeWhiteList-Ve", "Remove whitelist for veDEG")
   });
 
 task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   const user = "0x37d92a1bab189b2f58975c4ee6210343f3e926a0";
 
@@ -139,11 +113,7 @@ task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
 
 task("setNFTStaking", "Set nft staking address in veDEG").setAction(
   async (_, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -161,11 +131,7 @@ task("setNFTStaking", "Set nft staking address in veDEG").setAction(
 );
 
 task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -185,11 +151,7 @@ task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
 });
 
 task("filterLockEvent", "Filter locked event").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -209,11 +171,7 @@ task("filterLockEvent", "Filter locked event").setAction(async (_, hre) => {
 });
 
 task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
@@ -229,4 +187,3 @@ task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
   const tx = await veDEG.unlockVeDEG(user, locked);
   console.log("tx details: ", await tx.wait());
 });
-
