@@ -16,6 +16,8 @@ import "hardhat-contract-sizer";
 // tasks;
 // import "./tasks/clearRecord";
 
+import "./tasks/helper";
+
 // import "./tasks/emergencyPool/deposit-withdraw";
 
 // Farming Tasks

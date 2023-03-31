@@ -1,8 +1,6 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
-import { readAddressList } from "../../scripts/contractAddress";
-
 import {
   NaughtyFactory,
   NaughtyFactory__factory,
@@ -17,13 +15,7 @@ task(
   "Set the income maker address inside naughty factory"
 ).setAction(async (_, hre) => {
   console.log("\nSetting income maker in factory...\n");
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   const factoryAddress = addressList[network.name].NaughtyFactoryUpgradeable;
   const factory: NaughtyFactory = new NaughtyFactory__factory(
@@ -48,13 +40,7 @@ task(
   "setIncomeSharingInCore",
   "Set the income sharing contract address inside policy core"
 ).setAction(async (_, hre) => {
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   // Addresses to be set
   const incomeSharingAddress = addressList[network.name].IncomeSharingVault;
@@ -86,14 +72,7 @@ task(
   "Add income sharing contract to veDEG whitelist"
 ).setAction(async (_, hre) => {
   console.log("\n Adding income sharing contract to veDEG whitelist... \n");
-
-  const { network } = hre;
-
-  // Signers
-  const [dev_account] = await hre.ethers.getSigners();
-  console.log("The default signer is: ", dev_account.address);
-
-  const addressList = readAddressList();
+  const { network, addressList, dev_account } = await hre.run("preparation");
 
   // Addresses to be set
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;

@@ -23,13 +23,7 @@ import { formatUnits, parseUnits } from "ethers/lib/utils";
 task("startIncomeSharingPool", "Start a new income sharing pool")
   .addParam("token", "The pool reward token", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
@@ -47,25 +41,19 @@ task("startIncomeSharingPool", "Start a new income sharing pool")
     console.log("Income sharing pool info: ", poolInfo);
   });
 
-  /**
-   * @notice Set the income sharing speed for a pool
-   * 
-   *         !! An income sharing pool does not have to have a "speed"
-   * 
-   * @param id     Reward pool id
-   * @param reward Reward speed (/second)
-   */
+/**
+ * @notice Set the income sharing speed for a pool
+ *
+ *         !! An income sharing pool does not have to have a "speed"
+ *
+ * @param id     Reward pool id
+ * @param reward Reward speed (/second)
+ */
 task("setIncomeSpeed", "Set income sharing speed")
   .addParam("pid", "The pool id", null, types.string)
   .addParam("reward", "Reward speed", null, types.string)
   .setAction(async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
@@ -83,13 +71,7 @@ task("setIncomeSpeed", "Set income sharing speed")
 
 task("setRoundTime", "Set income sharing round time").setAction(
   async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
@@ -104,13 +86,7 @@ task("setRoundTime", "Set income sharing round time").setAction(
 
 task("getIncomeBalance", "Get balance in income sharing vault").setAction(
   async (taskArgs, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
@@ -153,13 +129,7 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
 
 task("updateLastRewardBalance", "Update last reward balance").setAction(
   async (_, hre) => {
-    const { network } = hre;
-
-    // Signers
-    const [dev_account] = await hre.ethers.getSigners();
-    console.log("The default signer is: ", dev_account.address);
-
-    const addressList = readAddressList();
+    const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
