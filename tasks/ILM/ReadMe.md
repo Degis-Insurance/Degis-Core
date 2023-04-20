@@ -23,26 +23,21 @@ task: finishILM
 // npx hardhat startILM --network avax --policytoken 0xFE21553f50d05552860F3396da5D092517470f38 --stablecoin USDC.e --deadline 1659254400 
 
 
-// npx hardhat startILM --network avax --policytoken 0x53dD54a49C3Ce0A593411347FF01977ed4f5CeCc --stablecoin USDC --deadline 1680076800
-
-// npx hardhat startILM --network avax --policytoken 0xe4BcEb6fEc88Fb57F20C0631353172d17201f82C --stablecoin USDC --deadline 1680076800
-
-// npx hardhat startILM --network avax --policytoken 0xf95741aaac561743593FDCb45Dd0C51AF674C08A --stablecoin USDC --deadline 1680076800
-
-// npx hardhat startILM --network avax --policytoken 0xA702C79E46a60677FaCa42d025ac09e8930d1ec1 --stablecoin USDC --deadline 1680076800
-
-// npx hardhat startILM --network avax --policytoken 0xafed3C37587Ece288eBE9494fA7aa5d463E94426 --stablecoin USDC --deadline 1680076800
-
-// npx hardhat startILM --network avax --policytoken 0xdDf439102e9E87B6e72760c227d7c96B1c18Ae9f --stablecoin USDC --deadline 1680076800
+// hh startILM --network avax --policytoken 0xed9975b0005455Bc1a60e609a57a5C9441DD1f7a --stablecoin USDC --deadline 1681804800
+// hh startILM --network avax --policytoken 0x160eB9507890Db37EC15ACC9a52dE38DF603016b --stablecoin USDC --deadline 1681804800
+// hh startILM --network avax --policytoken 0x5E8993Cb755De6373A2c01fcdE69De1Ec7deAB18 --stablecoin USDC --deadline 1681804800
+// hh startILM --network avax --policytoken 0x2B5Dc38043fEa552939D5A34a0015CBaE4463A79 --stablecoin USDC --deadline 1681804800
+// hh startILM --network avax --policytoken 0x79591AD745CB609B5d8A9FF56787D857A3E76EB5 --stablecoin USDC --deadline 1681804800
+// hh startILM --network avax --policytoken 0x1c0daf942D9500561941a1d6b23Ac309b5B0f3a7 --stablecoin USDC --deadline 1681804800
 
 
 
-// hh stopILM --network avax --name AVAX_16.6_L_1504 --policytoken 0x53dD54a49C3Ce0A593411347FF01977ed4f5CeCc --deadline 1681286400
-// hh stopILM --network avax --name XAVA_0.404_L_1504 --policytoken 0xe4BcEb6fEc88Fb57F20C0631353172d17201f82C --deadline 1681286400
-// hh stopILM --network avax --name JOE_0.57_L_1504 --policytoken 0xf95741aaac561743593FDCb45Dd0C51AF674C08A --deadline 1681286400
-// hh stopILM --network avax --name BTC_27022.8_L_1504 --policytoken 0xA702C79E46a60677FaCa42d025ac09e8930d1ec1 --deadline 1681286400
-// hh stopILM --network avax --name CAI_138.81_L_1504 --policytoken 0xafed3C37587Ece288eBE9494fA7aa5d463E94426 --deadline 1681286400
-// hh stopILM --network avax --name ETH_1728.55_L_1504 --policytoken 0xdDf439102e9E87B6e72760c227d7c96B1c18Ae9f --deadline 1681286400
+// hh stopILM --network avax --name AVAX_20.55_L_0505 --policytoken 0xed9975b0005455Bc1a60e609a57a5C9441DD1f7a --deadline   
+// hh stopILM --network avax --name XAVA_0.427_L_0505 --policytoken 0x160eB9507890Db37EC15ACC9a52dE38DF603016b --deadline 1683014400
+// hh stopILM --network avax --name JOE_0.63_L_0505--policytoken 0x5E8993Cb755De6373A2c01fcdE69De1Ec7deAB18 --deadline 1683014400
+// hh stopILM --network avax --name BTC_29890.5_L_0505 --policytoken 0x2B5Dc38043fEa552939D5A34a0015CBaE4463A79 --deadline 1683014400
+// hh stopILM --network avax --name CAI_164.1_L_0505 --policytoken 0x79591AD745CB609B5d8A9FF56787D857A3E76EB5 --deadline 1683014400
+// hh stopILM --network avax --name ETH_2091.6_L_0505 --policytoken 0x1c0daf942D9500561941a1d6b23Ac309b5B0f3a7 --deadline 1683014400
 
 // farming
 

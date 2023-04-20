@@ -32,7 +32,7 @@ import { IDoubleRewarder } from "./interfaces/IDoubleRewarder.sol";
 
 /**
  * @title  Farming Pool
- * @notice This contract is for LPToken mining on Degis
+ * @notice This contract is for LPToken mining on Degis.
  * @dev    The pool id starts from 1 rather than 0
  *         The degis reward is calculated by timestamp rather than block number
  *
