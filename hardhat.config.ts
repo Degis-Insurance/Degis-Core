@@ -110,6 +110,7 @@ const config: HardhatUserConfig = {
       fuji: 0,
       avax: 0,
       avaxTest: 0,
+      arb: 0,
     },
     testAddress: {
       default: 1,
@@ -117,6 +118,7 @@ const config: HardhatUserConfig = {
       fuji: 1,
       avax: 1,
       avaxTest: 1,
+      arb: 1,
     },
   },
 
@@ -169,6 +171,19 @@ const config: HardhatUserConfig = {
       },
       // gasPrice: 45000000000,
     },
+    arb: {
+      url: process.env.ARB_URL || "",
+      accounts: {
+        mnemonic:
+          process.env.PHRASE_AVAX !== undefined ? process.env.PHRASE_AVAX : "",
+        count: 20,
+      },
+    },
+    arb_goerli: {
+      url: process.env.ARB_GOERLI_URL || "",
+      accounts: {
+        
+    }
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,
