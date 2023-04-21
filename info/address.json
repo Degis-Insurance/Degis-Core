@@ -103,7 +103,22 @@
 		"ILM": "0x891e6983cBAe99036ee12DAfa5c478623F6468fd"
 	},
 	"arb_goerli": {
-		"ProxyAdmin": "0x44c6C8326D64dbaA2F3F0f5d4F4Cf9a7d185Ce15"
+		"ProxyAdmin": "0x44c6C8326D64dbaA2F3F0f5d4F4Cf9a7d185Ce15",
+		"DegisToken": "0x3b3FF6F69F16ac8593Dc17621fE329EAeA9e303e",
+		"BuyerToken": "0x6e95Fc19611cebD936B22Fd1A15D53d98bb31dAF",
+		"MockUSD": "0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3",
+		"EmergencyPool": "0x007a978861b169eCc8FB397dd875Ea246CBBF1dA",
+		"FarmingPoolUpgradeable": "0x4f6a37DAF8E5A07E1a9A7784CAC6f9476302a04a",
+		"PurchaseIncentiveVault": "0x0f3A2eE017930ec027b4b51faB51cecAfb2BE4cA",
+		"PriceGetter": "0x4e51aCaAe032D5d59BAd3fc7096DFB407Da1a06a",
+		"NaughtyFactoryUpgradeable": "0xE01564b561cA5a722d3391E55F34AC4a7162c1d2",
+		"PolicyCoreUpgradeable": "0xa3879D26219664ED90076a78EB788E53F7Ca2B69",
+		"NaughtyRouterUpgradeable": "0x4a71F5777440da190A9b03d6ee013c812c7d08f8",
+		"StakingPoolFactory": "0xfBA0De7536A616c53B38028db6F12Dd3ff5782ac",
+		"VoteEscrowedDegis": "0xA4A68A98FC7C0B8771D83764BF0d386bC21D215e",
+		"IncomeSharingVault": "0xC665f5a8e4E3BB618b6a3BD40Bb6e25718cf68FB",
+		"IncomeMaker": "0x35764D1068A8F59000Db7F217e51c9Be0761584b",
+		"ILM": "0xC6f2736FB4391399F9f89957F678a25C02fbF2a5"
 	},
 	"arb": {},
 	"reserve": {

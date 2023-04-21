@@ -48,7 +48,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Run some afterwards tasks
-  // await hre.run("setILMInCore");
+  await hre.run("setILMInCore");
 };
 
 func.tags = ["ILM"];

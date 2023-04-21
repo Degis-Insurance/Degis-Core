@@ -2,18 +2,13 @@ import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
 import {
-  IncomeSharingVault,
-  IncomeSharingVault__factory,
+  IncomeSharingVaultV2,
+  IncomeSharingVaultV2__factory,
   ProxyAdmin,
   ProxyAdmin__factory,
   VoteEscrowedDegis,
   VoteEscrowedDegis__factory,
 } from "../../typechain";
-import {
-  readAddressList,
-  readFarmingPoolList,
-  storeFarmingPoolList,
-} from "../../scripts/contractAddress";
 import { parseUnits, formatEther } from "ethers/lib/utils";
 
 task("setGenerationRate", "Set the generation rate of veDEG")
@@ -93,7 +88,7 @@ task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
     dev_account
   ).attach(veDEGAddress);
 
-  const incomeSharing: IncomeSharingVault = new IncomeSharingVault__factory(
+  const incomeSharing: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
     dev_account
   ).attach(addressList[network.name].IncomeSharingVault);
 

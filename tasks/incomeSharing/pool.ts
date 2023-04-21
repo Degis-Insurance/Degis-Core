@@ -6,10 +6,8 @@ import { readAddressList } from "../../scripts/contractAddress";
 import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
 
 import {
-  IncomeSharingVault,
   IncomeSharingVaultV2,
   IncomeSharingVaultV2__factory,
-  IncomeSharingVault__factory,
   MockUSD__factory,
   VoteEscrowedDegis__factory,
 } from "../../typechain";
@@ -27,7 +25,7 @@ task("startIncomeSharingPool", "Start a new income sharing pool")
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
-    const vault: IncomeSharingVault = new IncomeSharingVaultV2__factory(
+    const vault: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
       dev_account
     ).attach(vaultAddress);
 
@@ -41,56 +39,13 @@ task("startIncomeSharingPool", "Start a new income sharing pool")
     console.log("Income sharing pool info: ", poolInfo);
   });
 
-/**
- * @notice Set the income sharing speed for a pool
- *
- *         !! An income sharing pool does not have to have a "speed"
- *
- * @param id     Reward pool id
- * @param reward Reward speed (/second)
- */
-task("setIncomeSpeed", "Set income sharing speed")
-  .addParam("pid", "The pool id", null, types.string)
-  .addParam("reward", "Reward speed", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const vaultAddress = addressList[network.name].IncomeSharingVault;
-
-    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
-      dev_account
-    ).attach(vaultAddress);
-
-    const tx = await vault.setRewardSpeed(
-      taskArgs.pid,
-      parseUnits(taskArgs.reward, 6)
-    );
-
-    console.log("Tx details: ", await tx.wait());
-  });
-
-task("setRoundTime", "Set income sharing round time").setAction(
-  async (taskArgs, hre) => {
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const vaultAddress = addressList[network.name].IncomeSharingVault;
-
-    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
-      dev_account
-    ).attach(vaultAddress);
-
-    const tx = await vault.setRoundTime(1209600);
-    console.log("Tx details: ", await tx.wait());
-  }
-);
-
 task("getIncomeBalance", "Get balance in income sharing vault").setAction(
   async (taskArgs, hre) => {
     const { network, addressList, dev_account } = await hre.run("preparation");
 
     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
-    const vault: IncomeSharingVault = new IncomeSharingVault__factory(
+    const vault: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
       dev_account
     ).attach(vaultAddress);
 
@@ -116,9 +71,6 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
 
     const pool = await vault.pools(1);
 
-    console.log(formatUnits(pool.rewardPerSecond, 6));
-    console.log(pool.lastRewardTimestamp.toNumber());
-
     // const tx = await vault.setRewardSpeed(
     //   taskArgs.pid,
     //   parseUnits(taskArgs.reward, 6)
@@ -127,23 +79,23 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
   }
 );
 
-task("updateLastRewardBalance", "Update last reward balance").setAction(
-  async (_, hre) => {
-    const { network, addressList, dev_account } = await hre.run("preparation");
+// task("updateLastRewardBalance", "Update last reward balance").setAction(
+//   async (_, hre) => {
+//     const { network, addressList, dev_account } = await hre.run("preparation");
 
-    const vaultAddress = addressList[network.name].IncomeSharingVault;
+//     const vaultAddress = addressList[network.name].IncomeSharingVault;
 
-    const vault: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
-      dev_account
-    ).attach(vaultAddress);
+//     const vault: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
+//       dev_account
+//     ).attach(vaultAddress);
 
-    const init = await vault.lastRewardBalance(1);
-    console.log("Init: ", formatUnits(init, 6));
+//     const init = await vault.lastRewardBalance(1);
+//     console.log("Init: ", formatUnits(init, 6));
 
-    const tx = await vault.updateLastRewardBalance(1);
-    console.log("Tx details: ", await tx.wait());
+//     const tx = await vault.updateLastRewardBalance(1);
+//     console.log("Tx details: ", await tx.wait());
 
-    const final = await vault.lastRewardBalance(1);
-    console.log("Final: ", formatUnits(final, 6));
-  }
-);
+//     const final = await vault.lastRewardBalance(1);
+//     console.log("Final: ", formatUnits(final, 6));
+//   }
+// );

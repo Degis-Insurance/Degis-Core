@@ -49,7 +49,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   storeAddressList(addressList);
 
   // Add degis minter role to purchaseIncentiveVault contract
-  if (network.name != "avax") {
+  if (network.name != "arb") {
     await hre.run("addMinterBurner", {
       type: "minter",
       token: "d",
