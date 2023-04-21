@@ -62,22 +62,22 @@ contract PriceGetter is Ownable {
 
     /**
      * @notice Constructor function, initialize some price feeds
-     *         The first supported tokens are AVAX, BTC and ETH
+     *         The first supported tokens are ARB, BTC and ETH
      */
     constructor() Ownable(msg.sender) {
-        // Avalanche data feed addresses and decimals
-        priceFeedInfo["AVAX"] = PriceFeedInfo(
-            0x0A77230d17318075983913bC2145DB16C7366156,
+        // Arbitrum data feed addresses and decimals
+        priceFeedInfo["ARB"] = PriceFeedInfo(
+            0xb2A824043730FE05F3DA2efaFa1CBbe83fa548D6,
             8
         );
 
         priceFeedInfo["ETH"] = PriceFeedInfo(
-            0x976B3D034E162d8bD72D6b9C989d545b839003b0,
+            0x639Fe6ab55C921f74e7fac1ee960C0B6293ba612,
             8
         );
 
         priceFeedInfo["BTC"] = PriceFeedInfo(
-            0x2779D32d5166BAaa2B2b658333bA7e6Ec0C65743,
+            0x6ce185860a4963106506C203335A2910413708e9,
             8
         );
     }
@@ -152,7 +152,7 @@ contract PriceGetter is Ownable {
             answeredInRound
         );
         // Transfer the result decimals
-        uint256 finalPrice = uint256(price) * (10**(18 - priceFeed.decimals));
+        uint256 finalPrice = uint256(price) * (10 ** (18 - priceFeed.decimals));
 
         return finalPrice;
     }

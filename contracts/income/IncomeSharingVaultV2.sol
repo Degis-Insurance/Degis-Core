@@ -8,10 +8,6 @@ import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/securit
 import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import { IVeDEG } from "../governance/interfaces/IVeDEG.sol";
 
-import { IIncomeSharingCompensate } from "./interfaces/IIncomeSharingCompensate.sol";
-
-import "hardhat/console.sol";
-
 /**
  * @title Degis Income Sharing Contract
  * @notice This contract will receive part of the income from Degis products
@@ -19,11 +15,14 @@ import "hardhat/console.sol";
  *
  *         It is designed to be an ever-lasting reward
  *
- *         At first the reward is USDC.e and later may be transferred to Shield
+ *         This contract will have several pools: one pool for each reward token (e.g. USDC, USDT, etc.)
  *         To enter the income sharing vault, you need to lock some veDEG
  *             - When your veDEG is locked, it can not be withdrawed
  *
- *         The reward is distributed per second like a farming pool
+ *         The reward is updated each time there is an interaction with the contract.
+ *         But the reward amount depends on the token already came to the contract.
+ *         It is not a fixed amount of reward per second.
+ * 
  *         The income will come from (to be updated)
  *             - IncomeMaker: Collect swap fee in naughty price pool
  *             - PolicyCore: Collect deposit/redeem fee in policy core
@@ -35,13 +34,11 @@ contract IncomeSharingVaultV2 is
 {
     using SafeERC20 for IERC20;
 
+    uint256 public constant SCALE = 1e30;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
-
-    uint256 public constant SCALE = 1e30;
-
-    uint256 public roundTime;
 
     IVeDEG public veDEG;
 
@@ -49,9 +46,8 @@ contract IncomeSharingVaultV2 is
         bool available;
         address rewardToken;
         uint256 totalAmount;
-        uint256 rewardPerSecond;
         uint256 accRewardPerShare;
-        uint256 lastRewardTimestamp;
+        uint256 lastRewardBalance;
     }
     // Pool Id
     // 1: USDC.e as reward
@@ -66,16 +62,10 @@ contract IncomeSharingVaultV2 is
 
     uint256 public nextPool;
 
-    mapping(uint256 => uint256) public lastRewardBalance;
-
-    // @audit Add compensate pool
-    address public compensate;
-
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    event RoundTimeChanged(uint256 oldRoundTime, uint256 newRoundTime);
     event NewRewardPoolStart(uint256 poolId, address rewardToken);
     event RewardSpeedSet(uint256 poolId, uint256 rewardPerSecond);
     event PoolUpdated(uint256 poolId, uint256 accRewardPerSecond);
@@ -117,17 +107,11 @@ contract IncomeSharingVaultV2 is
      * @param _user   User address
      * @return pendingReward Amount of pending reward
      */
-    function pendingReward(uint256 _poolId, address _user)
-        external
-        view
-        returns (uint256)
-    {
+    function pendingReward(
+        uint256 _poolId,
+        address _user
+    ) external view returns (uint256) {
         PoolInfo memory pool = pools[_poolId];
-
-        if (
-            pool.lastRewardTimestamp == 0 ||
-            block.timestamp < pool.lastRewardTimestamp
-        ) return 0;
 
         uint256 accRewardPerShare = pool.accRewardPerShare;
 
@@ -139,9 +123,9 @@ contract IncomeSharingVaultV2 is
                 address(this)
             );
 
-            if (currentRewardBalance != lastRewardBalance[_poolId]) {
+            if (currentRewardBalance != pool.lastRewardBalance) {
                 uint256 newReward = currentRewardBalance -
-                    lastRewardBalance[_poolId];
+                    pool.lastRewardBalance;
 
                 accRewardPerShare += (newReward * SCALE) / pool.totalAmount;
             }
@@ -159,20 +143,7 @@ contract IncomeSharingVaultV2 is
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Set round time
-     * @dev Round time is only used for checking reward speed
-     * @param _roundTime Round time in seconds
-     */
-    function setRoundTime(uint256 _roundTime) external onlyOwner {
-        emit RoundTimeChanged(roundTime, _roundTime);
-        roundTime = _roundTime;
-    }
-
-    /**
-     * @notice Start a new income sharing pool
-     * @dev Normally there will be two pools
-     *          - USDC.e as reward (1)
-     *          - Shield as reward (2)
+     * @notice Start a new income sharing pool with its reward token
      * @param _rewardToken Reward token address
      */
     function startPool(address _rewardToken) external onlyOwner {
@@ -184,39 +155,14 @@ contract IncomeSharingVaultV2 is
         emit NewRewardPoolStart(nextPool - 1, _rewardToken);
     }
 
-    /**
-     * @notice Set reward speed for a pool
-     * @param _poolId Pool id
-     * @param _rewardPerSecond Reward speed
-     */
-    function setRewardSpeed(uint256 _poolId, uint256 _rewardPerSecond)
-        external
-    {
-        updatePool(_poolId);
-
-        PoolInfo memory pool = pools[_poolId];
-
-        // Ensure there is enough reward for this round
-        if (
-            roundTime * _rewardPerSecond >
-            IERC20(pool.rewardToken).balanceOf(address(this))
-        ) revert DIS__WrongSpeed();
-
-        pools[_poolId].rewardPerSecond = _rewardPerSecond;
-
-        emit RewardSpeedSet(_poolId, _rewardPerSecond);
-    }
-
-    function setCompensate(address _compensate) external onlyOwner {
-        compensate = _compensate;
-    }
-
     // ---------------------------------------------------------------------------------------- //
     // ************************************ Main Functions ************************************ //
     // ---------------------------------------------------------------------------------------- //
 
     /**
      * @notice Deposit
+     *         Will: update pool, lock veDEG, claim pending reward, update user info
+     * 
      * @param _poolId Pool Id
      * @param _amount Amount of tokens to deposit
      */
@@ -243,30 +189,21 @@ contract IncomeSharingVaultV2 is
                 msg.sender,
                 pending
             );
-            lastRewardBalance[_poolId] -= reward;
-
-            // @audit Compensate reward from another pool
-            uint256 diff = pending - reward;
-            if (diff > 0) {
-                IIncomeSharingCompensate(compensate).compensate(msg.sender, diff);
-            }
+            pool.lastRewardBalance -= reward;
 
             emit Harvest(msg.sender, _poolId, reward);
         }
 
-        // Update pool amount
         pool.totalAmount += _amount;
-
-        // Update user amount
         user.totalAmount += _amount;
-
         user.rewardDebt = (pool.accRewardPerShare * user.totalAmount) / SCALE;
 
         emit Deposit(msg.sender, _poolId, _amount);
     }
 
     /**
-     * @notice Withdraw all veDEG
+     * @notice Withdraw all veDEG from a pool
+     * 
      * @param _poolId Pool Id
      */
     function withdrawAll(uint256 _poolId) external {
@@ -274,7 +211,9 @@ contract IncomeSharingVaultV2 is
     }
 
     /**
-     * @notice Withdraw the reward from the pool
+     * @notice Withdraw veDEG from a pool
+     *         Will: update pool, unlock veDEG, harvest reward, update user info
+     * 
      * @param _poolId Pool Id
      * @param _amount Amount to withdraw
      */
@@ -297,13 +236,7 @@ contract IncomeSharingVaultV2 is
             msg.sender,
             pending
         );
-        lastRewardBalance[_poolId] -= reward;
-
-        // @audit Compensate reward from another pool
-        uint256 diff = pending - reward;
-        if (diff > 0) {
-            IIncomeSharingCompensate(compensate).compensate(msg.sender, diff);
-        }
+        pool.lastRewardBalance -= reward;
 
         emit Harvest(msg.sender, _poolId, reward);
 
@@ -321,14 +254,14 @@ contract IncomeSharingVaultV2 is
 
     /**
      * @notice Harvest income reward
+     * 
      * @param _poolId Pool Id
-     * @param _to Reward receiver address
+     * @param _to     Reward receiver address
      */
-    function harvest(uint256 _poolId, address _to)
-        public
-        nonReentrant
-        whenNotPaused
-    {
+    function harvest(
+        uint256 _poolId,
+        address _to
+    ) public nonReentrant whenNotPaused {
         updatePool(_poolId);
 
         PoolInfo memory pool = pools[_poolId];
@@ -342,13 +275,7 @@ contract IncomeSharingVaultV2 is
         user.rewardDebt = (user.totalAmount * pool.accRewardPerShare) / SCALE;
 
         uint256 reward = _safeRewardTransfer(pool.rewardToken, _to, pending);
-        lastRewardBalance[_poolId] -= reward;
-
-        // @audit Compensate reward from another pool
-        uint256 diff = pending - reward;
-        if (diff > 0) {
-            IIncomeSharingCompensate(compensate).compensate(_to, diff);
-        }
+        pool.lastRewardBalance -= reward;
 
         emit Harvest(msg.sender, _poolId, reward);
     }
@@ -360,8 +287,6 @@ contract IncomeSharingVaultV2 is
     function updatePool(uint256 _poolId) public {
         PoolInfo storage pool = pools[_poolId];
 
-        if (block.timestamp <= pool.lastRewardTimestamp) return;
-
         uint256 totalAmount = pool.totalAmount;
 
         // Current reward balance
@@ -369,22 +294,15 @@ contract IncomeSharingVaultV2 is
             address(this)
         );
 
-        if (
-            currentRewardBalance == lastRewardBalance[_poolId] ||
-            totalAmount == 0
-        ) {
-            pool.lastRewardTimestamp = block.timestamp;
+        if (currentRewardBalance == pool.lastRewardBalance || totalAmount == 0)
             return;
-        }
 
         // New reward received
-        uint256 newReward = currentRewardBalance - lastRewardBalance[_poolId];
+        uint256 newReward = currentRewardBalance - pool.lastRewardBalance;
 
         pool.accRewardPerShare += (newReward * SCALE) / totalAmount;
 
-        pool.lastRewardTimestamp = block.timestamp;
-
-        lastRewardBalance[_poolId] = currentRewardBalance;
+        pool.lastRewardBalance = currentRewardBalance;
 
         emit PoolUpdated(_poolId, pool.accRewardPerShare);
     }
@@ -392,7 +310,7 @@ contract IncomeSharingVaultV2 is
     function updateLastRewardBalance(uint256 _poolId) external onlyOwner {
         uint256 currentRewardBalance = IERC20(pools[_poolId].rewardToken)
             .balanceOf(address(this));
-        lastRewardBalance[_poolId] = currentRewardBalance;
+        pools[_poolId].lastRewardBalance = currentRewardBalance;
     }
 
     // ---------------------------------------------------------------------------------------- //
@@ -402,7 +320,6 @@ contract IncomeSharingVaultV2 is
     /**
      * @notice Finish the reward token transfer
      * @dev Safe means not transfer exceeds the balance of contract
-     *      Manually change the reward speed
      * @param _to Address to transfer
      * @param _amount Amount to transfer
      * @return realAmount Real amount transferred
@@ -415,8 +332,7 @@ contract IncomeSharingVaultV2 is
         uint256 balance = IERC20(_token).balanceOf(address(this));
 
         if (_amount > balance) {
-            IERC20(_token).safeTransfer(_to, balance);
-            return balance;
+            revert("Insufficient balance for reward");
         } else {
             IERC20(_token).safeTransfer(_to, _amount);
             return _amount;

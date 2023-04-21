@@ -102,6 +102,10 @@
 		"IncomeMaker": "0x5f93759c6420A4A14daEE27f1FcCd71791A58eA9",
 		"ILM": "0x891e6983cBAe99036ee12DAfa5c478623F6468fd"
 	},
+	"arb_goerli": {
+		"ProxyAdmin": "0x44c6C8326D64dbaA2F3F0f5d4F4Cf9a7d185Ce15"
+	},
+	"arb": {},
 	"reserve": {
 		"avax": {
 			"DegisToken": "0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645",

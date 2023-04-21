@@ -19,7 +19,7 @@
 */
 
 pragma solidity ^0.8.10;
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /**
  * @title  Policy Token for Naughty Price
@@ -64,7 +64,7 @@ contract NPPolicyToken is ERC20 {
      * @notice Only the minter can mint
      */
     modifier onlyMinter() {
-        require(msg.sender == minter, "only minter can call this function");
+        require(msg.sender == minter, "Only minter");
         _;
     }
 

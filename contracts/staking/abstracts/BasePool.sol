@@ -48,7 +48,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     address public factory;
 
     // Fees are paid to the previous stakers
-    uint256 public constant fee = 2;
+    uint256 public constant FEE_RATE = 2;
 
     // Weight multiplier constants
     uint256 internal constant WEIGHT_MULTIPLIER = 1e6;
@@ -116,11 +116,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
      * @param _user User address
      * @return deposits[] User's deposit info
      */
-    function getUserDeposits(address _user)
-        external
-        view
-        returns (Deposit[] memory)
-    {
+    function getUserDeposits(
+        address _user
+    ) external view returns (Deposit[] memory) {
         return users[_user].deposits;
     }
 
@@ -152,19 +150,17 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         return pending;
     }
 
-    function rewardToWeight(uint256 reward, uint256 rewardPerWeight)
-        public
-        pure
-        returns (uint256)
-    {
+    function rewardToWeight(
+        uint256 reward,
+        uint256 rewardPerWeight
+    ) public pure returns (uint256) {
         return (reward * REWARD_PER_WEIGHT_MULTIPLIER) / rewardPerWeight;
     }
 
-    function weightToReward(uint256 weight, uint256 rewardPerWeight)
-        public
-        pure
-        returns (uint256)
-    {
+    function weightToReward(
+        uint256 weight,
+        uint256 rewardPerWeight
+    ) public pure returns (uint256) {
         return (weight * rewardPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
@@ -257,17 +253,21 @@ abstract contract BasePool is IPool, ReentrancyGuard {
     }
 
     /**
-     * @notice Finish stake process
-     * @param _user User address
-     * @param _amount Amount of tokens to stake
-     * @param _lockUntil Lock until timestamp
+     * @notice Finish stake process.
+     *         Two types of staking: normal and lock.
+     *           - Normal: can unlock any time
+     *           - Lock: can only unlock after lockUntil timestamp, each stake action will create a different entity
+     *
+     * @param _user      User address
+     * @param _amount    Amount of tokens to stake
+     * @param _lockUntil Lock until timestamp (0 for normal staking)
      */
     function _stake(
         address _user,
         uint256 _amount,
         uint256 _lockUntil
     ) internal virtual nonReentrant {
-        require(block.timestamp > startTimestamp, "Pool not started yet");
+        require(block.timestamp > startTimestamp, "Pool not started");
         require(_amount > 0, "Zero amount");
         require(
             _lockUntil == 0 || (_lockUntil > block.timestamp),
@@ -279,7 +279,7 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         uint256 depositFee;
         if (IERC20(poolToken).balanceOf(address(this)) > 0) {
             // Charge deposit fee and distribute to previous stakers
-            depositFee = (_amount * fee) / 100;
+            depositFee = (_amount * FEE_RATE) / 100;
             _updatePoolWithFee(depositFee);
         } else updatePool();
 
@@ -296,33 +296,28 @@ abstract contract BasePool is IPool, ReentrancyGuard {
         // Actual amount is without the fee
         uint256 addedAmount = newBalance - previousBalance - depositFee;
 
+        // For normal staking, lockFrom = 0, lockUntil = 0
         uint256 lockFrom = _lockUntil > 0 ? block.timestamp : 0;
         uint256 lockUntil = _lockUntil;
 
         uint256 stakeWeight = timeToWeight(lockUntil - lockFrom) * addedAmount;
-
-        // makes sure stakeWeight is valid
         assert(stakeWeight > 0);
 
-        // create and save the deposit (append it to deposits array)
-        Deposit memory deposit = Deposit({
+        Deposit memory newDeposit = Deposit({
             tokenAmount: addedAmount,
             weight: stakeWeight,
             lockedFrom: lockFrom,
             lockedUntil: lockUntil
         });
         // deposit ID is an index of the deposit in `deposits` array
-        user.deposits.push(deposit);
+        user.deposits.push(newDeposit);
 
-        // update user record
         user.tokenAmount += addedAmount;
         user.totalWeight += stakeWeight;
         user.rewardDebt = weightToReward(user.totalWeight, accDegisPerWeight);
 
-        // update global variable
         totalWeight += stakeWeight;
 
-        // emit an event
         emit Stake(msg.sender, _amount, _lockUntil);
     }
 
@@ -389,11 +384,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
      *      1 week = 1e6
      *      2 weeks = 1e6 * ( 1 + 1 / 365)
      */
-    function timeToWeight(uint256 _length)
-        public
-        pure
-        returns (uint256 _weight)
-    {
+    function timeToWeight(
+        uint256 _length
+    ) public pure returns (uint256 _weight) {
         _weight =
             ((_length * WEIGHT_MULTIPLIER) / 365 days) +
             WEIGHT_MULTIPLIER;
@@ -403,11 +396,9 @@ abstract contract BasePool is IPool, ReentrancyGuard {
      * @notice Check pending reward after update
      * @param _user User address
      */
-    function _pendingReward(address _user)
-        internal
-        view
-        returns (uint256 pending)
-    {
+    function _pendingReward(
+        address _user
+    ) internal view returns (uint256 pending) {
         // read user data structure into memory
         UserInfo memory user = users[_user];
 

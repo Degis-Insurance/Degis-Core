@@ -26,8 +26,11 @@ import { IPolicyCore } from "./interfaces/IPolicyCore.sol";
 /**
  * @title Price Getter for arbitrary contract
  *
- * @notice This is the contract for getting price feed from arbitrary contract
- *         A special case of PriceGetter, not a normal "token price"
+ * @notice This is the contract for getting price feed from arbitrary contract.
+ *         A special case of PriceGetter, not a normal "token price" and usually just a variable from another contract.
+ * 
+ *         E.g. A state variable p inside a contract A should be the settlement price of an option token.
+ *              Then get latest price = A.p
  */
 
 contract ArbitraryPriceGetter is OwnableUpgradeable {
@@ -74,6 +77,14 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
     // ************************************ Set Functions ************************************* //
     // ---------------------------------------------------------------------------------------- //
 
+    /**
+     * @notice Add a new pair
+     * 
+     * @param _baseToken         Base toke name (e.g. "RoboVault")
+     * @param _contractAddress   Target contract address to get price
+     * @param _functionSignature Target function signature (e.g. "getPrice() returns(uint256)")
+     * @param _calldata          Calldata to call the function and get price
+     */
     function addPair(
         string calldata _baseToken,
         address _contractAddress,
@@ -106,6 +117,15 @@ contract ArbitraryPriceGetter is OwnableUpgradeable {
         emit NewPair(_baseToken, _contractAddress, _functionSignature);
     }
 
+    /**
+     * @notice Set base token for a policy token
+     *         E.g. RoboVault <=> RoboVault_1.2_L_0505
+     * 
+     *         (This is to keep the same interface with other price getters)
+     * 
+     * @param _policyToken Policy token name 
+     * @param _baseToken   Base token name 
+     */
     function setBaseToken(string memory _policyToken, string memory _baseToken)
         external
         onlyOwner

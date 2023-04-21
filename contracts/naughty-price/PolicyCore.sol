@@ -63,6 +63,8 @@ contract PolicyCore is OwnableUpgradeable {
     using StringsUtils for uint256;
     using SafeERC20 for IERC20;
 
+    uint256 internal constant SCALE = 1e18;
+
     // ---------------------------------------------------------------------------------------- //
     // ************************************* Variables **************************************** //
     // ---------------------------------------------------------------------------------------- //
@@ -83,6 +85,7 @@ contract PolicyCore is OwnableUpgradeable {
     address public naughtyRouter;
 
     // Contract for initial liquidity matching
+    // solhint-disable-next-line var-name-mixedcase
     address public ILMContract;
 
     // Income to lottery ratio (max 10)
@@ -113,14 +116,10 @@ contract PolicyCore is OwnableUpgradeable {
     mapping(address => address) public whichStablecoin;
 
     // PolicyToken => Strike Token (e.g. AVAX30L202101 address => AVAX address)
-    mapping(address => string) policyTokenToOriginal;
+    mapping(address => string) internal policyTokenToOriginal;
 
     // User Address => Token Address => User Quota Amount
-    mapping(address => mapping(address => uint256)) userQuota;
-
-    // Policy token address => All the depositors for this round
-    // (store all the depositors in an array)
-    mapping(address => address[]) public allDepositors;
+    mapping(address => mapping(address => uint256)) internal userQuota;
 
     struct SettlementInfo {
         uint256 price;
@@ -131,6 +130,7 @@ contract PolicyCore is OwnableUpgradeable {
     // Policy token address => Settlement result information
     mapping(address => SettlementInfo) public settleResult;
 
+    // Stalecoin address => Pending income amount
     mapping(address => uint256) public pendingIncomeToLottery;
     mapping(address => uint256) public pendingIncomeToSharing;
 
@@ -166,13 +166,6 @@ contract PolicyCore is OwnableUpgradeable {
         address policyTokenAddress,
         address stablecoin
     );
-    event PoolDeployedWithInitialLiquidity(
-        address poolAddress,
-        address policyTokenAddress,
-        address stablecoin,
-        uint256 initLiquidityA,
-        uint256 initLiquidityB
-    );
     event Deposit(
         address indexed userAddress,
         string indexed policyTokenName,
@@ -204,12 +197,6 @@ contract PolicyCore is OwnableUpgradeable {
         bool isHappened
     );
     event NewStablecoinAdded(address _newStablecoin);
-    event PolicyTokensSettledForUsers(
-        string policyTokenName,
-        address stablecoin,
-        uint256 startIndex,
-        uint256 stopIndex
-    );
     event UpdateUserQuota(
         address user,
         address policyTokenAddress,
@@ -227,21 +214,16 @@ contract PolicyCore is OwnableUpgradeable {
 
     /**
      * @notice Constructor, for some addresses
-     * @param _usdc        USDC.e is the first stablecoin supported in the pool
+     *
      * @param _factory     Address of naughty factory
      * @param _priceGetter Address of the oracle contract
      */
     function initialize(
-        address _usdc,
         address _factory,
         address _priceGetter
     ) public initializer {
         __Ownable_init();
 
-        // Add the first stablecoin supported
-        supportedStablecoin[_usdc] = true;
-
-        // Initialize the interfaces
         factory = INaughtyFactory(_factory);
         priceGetter = IPriceGetter(_priceGetter);
 
@@ -260,7 +242,7 @@ contract PolicyCore is OwnableUpgradeable {
     modifier validStablecoin(address _stablecoin) {
         require(
             supportedStablecoin[_stablecoin] == true,
-            "Do not support this stablecoin currently"
+            "Stablecoin not support"
         );
         _;
     }
@@ -277,7 +259,7 @@ contract PolicyCore is OwnableUpgradeable {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
         require(
             whichStablecoin[policyTokenAddress] == _stablecoin,
-            "Invalid policytoken with stablecoin"
+            "Invalid policytoken&stablecoin"
         );
         _;
     }
@@ -290,7 +272,7 @@ contract PolicyCore is OwnableUpgradeable {
         require(
             policyTokenInfoMapping[_policyTokenName].policyTokenAddress !=
                 address(0),
-            "This policy token has not been deployed, please deploy it first"
+            "Policytoken not deployed"
         );
         _;
     }
@@ -303,10 +285,7 @@ contract PolicyCore is OwnableUpgradeable {
      */
     modifier beforeDeadline(string memory _policyTokenName) {
         uint256 deadline = policyTokenInfoMapping[_policyTokenName].deadline;
-        require(
-            block.timestamp <= deadline,
-            "Can not deposit/redeem, has passed the deadline"
-        );
+        require(block.timestamp <= deadline, "Deadline passed");
         _;
     }
 
@@ -317,10 +296,7 @@ contract PolicyCore is OwnableUpgradeable {
     modifier afterSettlement(string memory _policyTokenName) {
         uint256 settleTimestamp = policyTokenInfoMapping[_policyTokenName]
             .settleTimestamp;
-        require(
-            block.timestamp >= settleTimestamp,
-            "Can not settle/claim, have not reached settleTimestamp"
-        );
+        require(block.timestamp >= settleTimestamp, "Not reach settle time");
         _;
     }
 
@@ -332,7 +308,7 @@ contract PolicyCore is OwnableUpgradeable {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
         require(
             settleResult[policyTokenAddress].alreadySettled == false,
-            "This policy has already been settled"
+            "Already settled"
         );
         _;
     }
@@ -346,11 +322,9 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _policyTokenName Name of the policy token (e.g. "AVAX_30_L_2103")
      * @return policyTokenAddress Address of the policy token
      */
-    function findAddressbyName(string memory _policyTokenName)
-        public
-        view
-        returns (address policyTokenAddress)
-    {
+    function findAddressbyName(
+        string memory _policyTokenName
+    ) public view returns (address policyTokenAddress) {
         policyTokenAddress = policyTokenInfoMapping[_policyTokenName]
             .policyTokenAddress;
 
@@ -362,11 +336,9 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _policyTokenAddress Address of the policy token
      * @return policyTokenName Name of the policy token
      */
-    function findNamebyAddress(address _policyTokenAddress)
-        public
-        view
-        returns (string memory policyTokenName)
-    {
+    function findNamebyAddress(
+        address _policyTokenAddress
+    ) public view returns (string memory policyTokenName) {
         policyTokenName = policyTokenAddressToName[_policyTokenAddress];
 
         require(bytes(policyTokenName).length > 0, "Policy name not found");
@@ -377,11 +349,9 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _policyTokenName Name of the policy token (e.g. "AVAX30L202103")
      * @return policyTokenInfo PolicyToken detail information
      */
-    function getPolicyTokenInfo(string memory _policyTokenName)
-        public
-        view
-        returns (PolicyTokenInfo memory)
-    {
+    function getPolicyTokenInfo(
+        string memory _policyTokenName
+    ) public view returns (PolicyTokenInfo memory) {
         return policyTokenInfoMapping[_policyTokenName];
     }
 
@@ -391,11 +361,10 @@ contract PolicyCore is OwnableUpgradeable {
      * @param _policyTokenAddress Address of the policy token
      * @return _quota User's quota result
      */
-    function getUserQuota(address _user, address _policyTokenAddress)
-        external
-        view
-        returns (uint256 _quota)
-    {
+    function getUserQuota(
+        address _user,
+        address _policyTokenAddress
+    ) external view returns (uint256 _quota) {
         _quota = userQuota[_user][_policyTokenAddress];
     }
 
@@ -484,10 +453,9 @@ contract PolicyCore is OwnableUpgradeable {
         idoPriceGetter = IPriceGetter(_idoPriceGetter);
     }
 
-    function setArbitraryPriceGetter(address _arbitraryPriceGetter)
-        external
-        onlyOwner
-    {
+    function setArbitraryPriceGetter(
+        address _arbitraryPriceGetter
+    ) external onlyOwner {
         emit ArbitraryPriceGetterChanged(
             address(arbitraryPriceGetter),
             _arbitraryPriceGetter
@@ -500,14 +468,20 @@ contract PolicyCore is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice Deploy a new policy token and return the token address
-     * @dev Only the owner can deploy new policy tokens
-     *      The name form is like "AVAX_50_L_2203" and is built inside the contract
-     *      Name decimals and token decimals are different here
-     *      The original token name should be the same in Chainlink PriceFeeds
-     *      Those tokens that are not listed on Chainlink are not supported
+     * @notice Deploy a new policy token and return the token address.
+     * @dev Only the owner can deploy new policy tokens.
+     *      The name form is like "Token_Price_Direction_Date" ("AVAX_50_L_2203") and is built inside the contract.
+     *      Name decimals and token decimals are different here.
+     *
+     *      Token decimals = Stablecoin decimals
+     *
+     *      For normal tokens: The original token name should be the same in Chainlink PriceFeeds.
+     *                         Those tokens that are not listed on Chainlink are not supported.
+     *      For DEX tokens:    The original token should have a valid DEX pair and be manually set in IDOPriceGetter.
+     *      For arbitrary tokens: The original token's price source should be manually set in ArbitraryPriceGetter.
+     *
      * @param _tokenName       Name of the original token (e.g. AVAX, BTC, ETH...)
-     * @param _stablecoin      Address of the stablecoin (Just for check decimals here)
+     * @param _stablecoin      Address of the stablecoin (check decimals here, should be the same stablecoin when deploying pools)
      * @param _isCall          The policy is for higher or lower than the strike price (call / put)
      * @param _nameDecimals    Decimals of this token's name (0~18)
      * @param _tokenDecimals   Decimals of this token's value (0~18) (same as paired stablecoin)
@@ -583,7 +557,7 @@ contract PolicyCore is OwnableUpgradeable {
             _settleTimestamp
         );
 
-        // Record if it is a IDO pool
+        // Record if it is a IDO pool or arbitrary pool
         if (_poolType == 1) {
             isIDOPool[policyTokenName] = true;
         } else if (_poolType == 2) {
@@ -592,11 +566,14 @@ contract PolicyCore is OwnableUpgradeable {
     }
 
     /**
-     * @notice Deploy a new pair (pool)
-     * @param _policyTokenName Name of the policy token
-     * @param _stablecoin      Address of the stable coin
-     * @param _poolDeadline    Swapping deadline of the pool (normally the same as the token's deadline)
-     * @param _feeRate         Fee rate given to LP holders
+     * @notice Deploy a new pair (pool).
+     *         The policy token should be already deployed.
+     *         Caller can be the owner or ILM contract.
+     *
+     * @param _policyTokenName Name of the policy token.
+     * @param _stablecoin      Address of the stable coin.
+     * @param _poolDeadline    Swapping deadline of the pool (normally the same as the token's deadline).
+     * @param _feeRate         Fee rate given to LP holders.
      */
     function deployPool(
         string memory _policyTokenName,
@@ -617,7 +594,7 @@ contract PolicyCore is OwnableUpgradeable {
         require(_poolDeadline > block.timestamp, "Wrong deadline");
         require(
             _poolDeadline == policyTokenInfoMapping[_policyTokenName].deadline,
-            "Policy token and pool deadline not the same"
+            "Different deadline"
         );
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
@@ -655,6 +632,7 @@ contract PolicyCore is OwnableUpgradeable {
     /**
      * @notice Delegate deposit (deposit and mint for other addresses)
      * @dev Only called by the router contract
+     *
      * @param _policyTokenName Name of the policy token
      * @param _stablecoin      Address of the sable coin
      * @param _amount          Amount of stablecoin
@@ -670,10 +648,7 @@ contract PolicyCore is OwnableUpgradeable {
         beforeDeadline(_policyTokenName)
         validPolicyTokenWithStablecoin(_policyTokenName, _stablecoin)
     {
-        require(
-            msg.sender == naughtyRouter,
-            "Only the router contract can delegate"
-        );
+        require(msg.sender == naughtyRouter, "Only router can delegate");
         require(_amount > 0, "Zero Amount");
 
         _deposit(_policyTokenName, _stablecoin, _amount, _user);
@@ -751,18 +726,11 @@ contract PolicyCore is OwnableUpgradeable {
             "Have not got the oracle result"
         );
 
-        // The event must be "not happend"
-        require(
-            result.isHappened == false,
-            "Only call this function when the event does not happen"
-        );
+        require(result.isHappened == false, "Event must not happen");
 
         uint256 quota = userQuota[msg.sender][policyTokenAddress];
         // User must have quota because this is for depositors when event not happens
-        require(
-            quota > 0,
-            "No quota, you did not deposit and mint policy tokens before"
-        );
+        require(quota > 0, "No quota");
 
         // Charge 1% Fee when redeem / claim
         uint256 amountWithFee = _chargeFee(_stablecoin, quota);
@@ -809,10 +777,7 @@ contract PolicyCore is OwnableUpgradeable {
         );
 
         // Check if the event happens
-        require(
-            result.isHappened,
-            "The result does not happen, you can not claim"
-        );
+        require(result.isHappened, "Event must happen");
 
         // Charge 1% fee
         uint256 amountWithFee = _chargeFee(_stablecoin, _amount);
@@ -830,7 +795,9 @@ contract PolicyCore is OwnableUpgradeable {
      * @notice Get the final price from the PriceGetter contract
      * @param _policyTokenName Name of the policy token
      */
-    function settleFinalResult(string memory _policyTokenName)
+    function settleFinalResult(
+        string memory _policyTokenName
+    )
         public
         afterSettlement(_policyTokenName)
         notAlreadySettled(_policyTokenName)
@@ -877,102 +844,16 @@ contract PolicyCore is OwnableUpgradeable {
     }
 
     /**
-     * @notice Settle the policies for the users when insurance events do not happen
-     *         Funds are automatically distributed back to the depositors
-     * @dev    Take care of the gas cost and can use the _startIndex and _stopIndex to control the size
-     * @param _policyTokenName Name of policy token
-     * @param _stablecoin      Address of stablecoin
-     * @param _startIndex      Settlement start index
-     * @param _stopIndex       Settlement stop index
-     */
-    function settleAllPolicyTokens(
-        string memory _policyTokenName,
-        address _stablecoin,
-        uint256 _startIndex,
-        uint256 _stopIndex
-    ) public onlyOwner {
-        address policyTokenAddress = findAddressbyName(_policyTokenName);
-
-        // Copy to memory (will not change the result)
-        SettlementInfo memory result = settleResult[policyTokenAddress];
-
-        // Must have got the final price
-        require(
-            result.price != 0 && result.alreadySettled == true,
-            "Have not got the oracle result"
-        );
-
-        // The event must be "not happend"
-        require(
-            result.isHappened == false,
-            "Only call this function when the event does not happen"
-        );
-
-        // Store the amount to collect to lottery and emergency pool
-        uint256 amountToCollect = 0;
-
-        // Length of all depositors for this policy token
-        uint256 length = allDepositors[policyTokenAddress].length;
-
-        require(
-            result.currentDistributionIndex <= length,
-            "Have distributed all"
-        );
-
-        // Settle the policies in [_startIndex, _stopIndex)
-        if (_startIndex == 0 && _stopIndex == 0) {
-            amountToCollect += _settlePolicy(
-                policyTokenAddress,
-                _stablecoin,
-                0,
-                length
-            );
-
-            // Update the distribution index for this policy token
-            settleResult[policyTokenAddress].currentDistributionIndex = length;
-
-            emit PolicyTokensSettledForUsers(
-                _policyTokenName,
-                _stablecoin,
-                0,
-                length
-            );
-        } else {
-            require(
-                result.currentDistributionIndex == _startIndex,
-                "You need to start from the last distribution point"
-            );
-            require(_stopIndex < length, "Invalid stop index");
-
-            amountToCollect += _settlePolicy(
-                policyTokenAddress,
-                _stablecoin,
-                _startIndex,
-                _stopIndex
-            );
-
-            // Update the distribution index for this policy token
-            settleResult[policyTokenAddress]
-                .currentDistributionIndex = _stopIndex;
-
-            emit PolicyTokensSettledForUsers(
-                _policyTokenName,
-                _stablecoin,
-                _startIndex,
-                _stopIndex
-            );
-        }
-    }
-
-    /**
      * @notice Collect the income
      * @dev Can be done by anyone, only when there is some income to be distributed
+     *      For each stablecoin, this function need to called separately
+     *
      * @param _stablecoin Address of stablecoin
      */
     function collectIncome(address _stablecoin) public {
         require(
             lottery != address(0) && incomeSharing != address(0),
-            "Please set the lottery & incomeSharing address"
+            "Not set lottery/incomeSharing"
         );
 
         uint256 amountToLottery = pendingIncomeToLottery[_stablecoin];
@@ -1059,11 +940,6 @@ contract PolicyCore is OwnableUpgradeable {
     ) internal {
         address policyTokenAddress = findAddressbyName(_policyTokenName);
 
-        // If this is the first deposit, store the user address
-        if (userQuota[_user][policyTokenAddress] == 0) {
-            allDepositors[policyTokenAddress].push(_user);
-        }
-
         // Update the user quota
         userQuota[_user][policyTokenAddress] += _amount;
 
@@ -1079,36 +955,6 @@ contract PolicyCore is OwnableUpgradeable {
     }
 
     /**
-     * @notice Settle the policy when the event does not happen
-     *
-     * @param _policyTokenAddress Address of policy token
-     * @param _stablecoin Address of stable coin
-     * @param _start Start index
-     * @param _stop Stop index
-     */
-    function _settlePolicy(
-        address _policyTokenAddress,
-        address _stablecoin,
-        uint256 _start,
-        uint256 _stop
-    ) internal returns (uint256 amountRemaining) {
-        for (uint256 i = _start; i < _stop; i++) {
-            address user = allDepositors[_policyTokenAddress][i];
-            uint256 amount = userQuota[user][_policyTokenAddress];
-            // Charge fee
-            uint256 amountWithFee = _chargeFee(_stablecoin, amount);
-
-            if (amountWithFee > 0) {
-                IERC20(_stablecoin).safeTransfer(user, amountWithFee);
-                delete userQuota[user][_policyTokenAddress];
-
-                // Accumulate the remaining part that will be collected later
-                amountRemaining += amount - amountWithFee;
-            } else continue;
-        }
-    }
-
-    /**
      * @notice Charge fee when redeem / claim
      *
      * @param _stablecoin Stablecoin address
@@ -1116,10 +962,10 @@ contract PolicyCore is OwnableUpgradeable {
      *
      * @return amountWithFee Amount with fee
      */
-    function _chargeFee(address _stablecoin, uint256 _amount)
-        internal
-        returns (uint256)
-    {
+    function _chargeFee(
+        address _stablecoin,
+        uint256 _amount
+    ) internal returns (uint256) {
         uint256 amountWithFee = (_amount * 990) / 1000;
         uint256 amountToCollect = _amount - amountWithFee;
 
@@ -1163,9 +1009,9 @@ contract PolicyCore is OwnableUpgradeable {
         // Can not start with 0 (e.g. 1204e16 => 0 this is incorrect, will revert in next step)
         uint256 modRemaining = _frac(_strikePrice);
 
-        decimalPart = modRemaining / (10**(18 - _decimals));
+        decimalPart = modRemaining / (10 ** (18 - _decimals));
 
-        if (decimalPart < 10**(_decimals - 1)) {
+        if (decimalPart < 10 ** (_decimals - 1)) {
             decimalPartString = string(
                 abi.encodePacked(
                     _returnZeroes(_findZeroes(modRemaining, _decimals)),
@@ -1206,7 +1052,6 @@ contract PolicyCore is OwnableUpgradeable {
      * @return result Fraction result
      */
     function _frac(uint256 x) internal pure returns (uint256 result) {
-        uint256 SCALE = 1e18;
         assembly {
             result := mod(x, SCALE)
         }
@@ -1216,18 +1061,17 @@ contract PolicyCore is OwnableUpgradeable {
     //      x = modRemaining = 456 e14
     //      decimals = 4
     //      Should return: 1
-    function _findZeroes(uint256 x, uint256 decimals)
-        internal
-        pure
-        returns (uint256 numOfZero)
-    {
+    function _findZeroes(
+        uint256 x,
+        uint256 decimals
+    ) internal pure returns (uint256 numOfZero) {
         assert(decimals <= 16);
         numOfZero = 1;
 
         uint256 fracRes;
 
         for (uint256 i; i < decimals; ) {
-            fracRes = x / 10**(16 - i);
+            fracRes = x / 10 ** (16 - i);
             if (fracRes == 0) {
                 numOfZero++;
             } else {
@@ -1240,11 +1084,9 @@ contract PolicyCore is OwnableUpgradeable {
         }
     }
 
-    function _returnZeroes(uint256 num)
-        public
-        pure
-        returns (string memory zeroString)
-    {
+    function _returnZeroes(
+        uint256 num
+    ) public pure returns (string memory zeroString) {
         for (uint256 i; i < num; ) {
             zeroString = string(abi.encodePacked(zeroString, "0"));
 

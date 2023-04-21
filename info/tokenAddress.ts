@@ -30,3 +30,23 @@ export const getTokenAddressOnAVAX = (name: string): string => {
       return "";
   }
 };
+
+
+export const getTokenAddressOnArb = (name: string): string => {
+  switch (name) {
+    case "USDC":
+      return "0xFF970A61A04b1cA14834A43f5dE4533eBDDB5CC8";
+
+    case "DEG":
+      return "0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645";
+
+    case "USDT":
+      return "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9";
+
+    case "DAI":
+      return "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1";
+
+    default:
+      return "";
+  }
+};

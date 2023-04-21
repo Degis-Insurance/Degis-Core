@@ -19,13 +19,13 @@
 */
 pragma solidity ^0.8.10;
 
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { ReentrancyGuardUpgradeable } from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../tokens/interfaces/IDegisToken.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
-import "hardhat/console.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { PausableUpgradeable } from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+
 /**
  * @title  Purchase Incentive Vault
  * @notice This is the purchase incentive vault for staking buyer tokens
@@ -46,13 +46,17 @@ contract PurchaseIncentiveVault is
     using SafeERC20 for IERC20;
 
     // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
+    // ************************************* Constants **************************************** //
     // ---------------------------------------------------------------------------------------- //
 
     string public constant name = "Degis Purchase Incentive Vault";
 
     // Buyer Token & Degis Token SCALE = 1e18
     uint256 public constant SCALE = 1e18;
+
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
 
     // Other contracts
     IERC20 buyerToken;
@@ -91,8 +95,8 @@ contract PurchaseIncentiveVault is
     // User address => Round number => User shares
     mapping(address => mapping(uint256 => uint256)) public userSharesInRound;
 
-    uint256[] threshold;
-    uint256[] piecewise;
+    uint256[] internal threshold;
+    uint256[] internal piecewise;
 
     // ---------------------------------------------------------------------------------------- //
     // *************************************** Events ***************************************** //
@@ -127,10 +131,10 @@ contract PurchaseIncentiveVault is
     // ************************************* Constructor ************************************** //
     // ---------------------------------------------------------------------------------------- //
 
-    function initialize(address _buyerToken, address _degisToken)
-        public
-        initializer
-    {
+    function initialize(
+        address _buyerToken,
+        address _degisToken
+    ) public initializer {
         __Ownable_init();
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -154,7 +158,6 @@ contract PurchaseIncentiveVault is
     modifier hasPassedInterval() {
         if (block.timestamp - lastDistribution <= distributionInterval)
             revert PIV__NotPassedInterval();
-
         _;
     }
 
@@ -167,11 +170,9 @@ contract PurchaseIncentiveVault is
      * @param _round Round number to check
      * @return totalUsers Total amount of users in _round
      */
-    function getTotalUsersInRound(uint256 _round)
-        external
-        view
-        returns (uint256)
-    {
+    function getTotalUsersInRound(
+        uint256 _round
+    ) external view returns (uint256) {
         return rounds[_round].users.length;
     }
 
@@ -180,11 +181,9 @@ contract PurchaseIncentiveVault is
      * @param _round Round number to check
      * @return users All user addresses in this round
      */
-    function getUsersInRound(uint256 _round)
-        external
-        view
-        returns (address[] memory)
-    {
+    function getUsersInRound(
+        uint256 _round
+    ) external view returns (address[] memory) {
         return rounds[_round].users;
     }
 
@@ -193,11 +192,9 @@ contract PurchaseIncentiveVault is
      * @param _user User address to check
      * @return pendingRounds User's pending rounds
      */
-    function getUserPendingRounds(address _user)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getUserPendingRounds(
+        address _user
+    ) external view returns (uint256[] memory) {
         return users[_user].pendingRounds;
     }
 
@@ -207,11 +204,10 @@ contract PurchaseIncentiveVault is
      * @param _round Round number
      * @return userShares User's shares in the current round
      */
-    function getUserShares(address _user, uint256 _round)
-        external
-        view
-        returns (uint256)
-    {
+    function getUserShares(
+        address _user,
+        uint256 _round
+    ) external view returns (uint256) {
         return userSharesInRound[_user][_round];
     }
 
@@ -220,11 +216,9 @@ contract PurchaseIncentiveVault is
      * @param _user User address
      * @return userPendingReward User's pending reward
      */
-    function pendingReward(address _user)
-        external
-        view
-        returns (uint256 userPendingReward)
-    {
+    function pendingReward(
+        address _user
+    ) external view returns (uint256 userPendingReward) {
         UserInfo memory user = users[_user];
 
         // Total rounds that need to be distributed
@@ -233,13 +227,17 @@ contract PurchaseIncentiveVault is
         // Start from last reward round index
         uint256 startIndex = user.lastRewardRoundIndex;
 
-        for (uint256 i = startIndex; i < startIndex + length; i++) {
+        for (uint256 i = startIndex; i < startIndex + length; ) {
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=
                 (rounds[round].degisPerShare *
                     userSharesInRound[_user][round]) /
                 SCALE;
+
+            unchecked {
+                ++i;
+            }
         }
     }
 
@@ -381,7 +379,7 @@ contract PurchaseIncentiveVault is
     }
 
     /**
-     * @notice Setttle the current round
+     * @notice Settle the current round
      * @dev Callable by any address, must pass the distribution interval
      */
     function settleCurrentRound() external hasPassedInterval whenNotPaused {
@@ -432,9 +430,8 @@ contract PurchaseIncentiveVault is
         } else users[msg.sender].lastRewardRoundIndex += roundsToClaim;
 
         uint256 userPendingReward;
-        
 
-        for (uint256 i = startIndex; i < startIndex + roundsToClaim;) {
+        for (uint256 i = startIndex; i < startIndex + roundsToClaim; ) {
             uint256 round = user.pendingRounds[i];
 
             userPendingReward +=

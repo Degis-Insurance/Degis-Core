@@ -67,7 +67,7 @@ contract IDOPriceGetter is OwnableUpgradeable {
     IPolicyCore public policyCore;
 
     struct IDOPriceInfo {
-        address pair; // Pair on TraderJoe
+        address pair; // Pair on DEX
         uint256 decimals; // If no special settings, it would be 0
         uint256 sampleInterval;
         uint256 isToken0;

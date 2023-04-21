@@ -43,7 +43,7 @@ contract StakingPoolFactory is Ownable {
     // Pool token address  => pool address
     mapping(address => address) public pools;
 
-    // Pool address -> whether exists
+    // Pool address => whether exists
     mapping(address => bool) public poolExists;
 
     // ---------------------------------------------------------------------------------------- //

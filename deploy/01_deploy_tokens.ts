@@ -10,6 +10,7 @@ const stablecoin: string = getTokenAddressOnAVAX("USDC.e");
 // Contract:
 //    - Degis Token
 //    - Buyer Token
+//    - MockUSD (if it is on testnet)
 // Tags:
 //    - Tokens
 

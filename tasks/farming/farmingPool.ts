@@ -4,10 +4,8 @@ import "@nomiclabs/hardhat-ethers";
 import {
   DoubleRewarder,
   DoubleRewarder__factory,
-  FarmingPool,
   FarmingPoolUpgradeable,
   FarmingPoolUpgradeable__factory,
-  FarmingPool__factory,
   MockERC20,
   MockERC20__factory,
 } from "../../typechain";
@@ -53,7 +51,7 @@ task("addFarmingPool", "Add new farming pool")
       " is: ",
       farmingPoolAddress
     );
-    
+
     const farmingPool: FarmingPoolUpgradeable =
       new FarmingPoolUpgradeable__factory(dev_account).attach(
         farmingPoolAddress
@@ -173,9 +171,10 @@ task("setFarmingStartTime", "Set the start timestamp of farming")
       farmingPoolAddress
     );
 
-    const FarmingPool: FarmingPool__factory =
+    const FarmingPool: FarmingPoolUpgradeable__factory =
       await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPool = FarmingPool.attach(farmingPoolAddress);
+    const farmingPool: FarmingPoolUpgradeable =
+      FarmingPool.attach(farmingPoolAddress);
 
     // Set the start block
     const tx = await farmingPool.setStartTimestamp(startTimestamp);

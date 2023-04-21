@@ -21,31 +21,32 @@
 pragma solidity ^0.8.10;
 import "./NPPolicyToken.sol";
 import "./NaughtyPair.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {INaughtyPair} from "./interfaces/INaughtyPair.sol";
-import {IPolicyCore} from "./interfaces/IPolicyCore.sol";
-import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { INaughtyPair } from "./interfaces/INaughtyPair.sol";
+import { IPolicyCore } from "./interfaces/IPolicyCore.sol";
+import { OwnableUpgradeable } from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 
 /**
  * @title Naughty Factory
- * @dev Factory contract to deploy new pools periodically
- *      Each pool(product) will have a unique naughtyId
- *      Each pool will have its pool token
- *      PolicyToken - Stablecoin
- *      Token 0 may change but Token 1 is always stablecoin.
+ * @notice Factory contract to deploy new price proteciton pools.
+ *
+ *         Each pool(product) will have a unique naughtyId
+ *         Each pool will have its pool token
+ *         PolicyToken - Stablecoin
+ *         Token 0 may change but Token 1 is always stablecoin.
  */
 
 contract NaughtyFactory is OwnableUpgradeable {
-    // ---------------------------------------------------------------------------------------- //
-    // ************************************* Variables **************************************** //
-    // ---------------------------------------------------------------------------------------- //
-
     // INIT_CODE_HASH for NaughtyPair, may be used in frontend
     bytes32 public constant PAIR_INIT_CODE_HASH =
         keccak256(abi.encodePacked(type(NaughtyPair).creationCode));
 
+    // ---------------------------------------------------------------------------------------- //
+    // ************************************* Variables **************************************** //
+    // ---------------------------------------------------------------------------------------- //
+
     // PolicyToken Address => StableCoin Address => Pool Address
-    mapping(address => mapping(address => address)) getPair;
+    mapping(address => mapping(address => address)) internal getPair;
 
     // Store all the pairs' addresses
     address[] public allPairs;
@@ -101,7 +102,7 @@ contract NaughtyFactory is OwnableUpgradeable {
      * @notice Only called by policyCore contract
      */
     modifier onlyPolicyCore() {
-        require(msg.sender == policyCore, "Only called by policyCore contract");
+        require(msg.sender == policyCore, "Only called by policyCore");
         _;
     }
 
@@ -142,11 +143,10 @@ contract NaughtyFactory is OwnableUpgradeable {
      * @param _tokenAddress2 Address of toekn2
      * @return Pool address of the two tokens
      */
-    function getPairAddress(address _tokenAddress1, address _tokenAddress2)
-        public
-        view
-        returns (address)
-    {
+    function getPairAddress(
+        address _tokenAddress1,
+        address _tokenAddress2
+    ) public view returns (address) {
         // Policy token address at the first place
         (address token0, address token1) = IPolicyCore(policyCore)
             .supportedStablecoin(_tokenAddress2)
@@ -199,9 +199,12 @@ contract NaughtyFactory is OwnableUpgradeable {
     // ---------------------------------------------------------------------------------------- //
 
     /**
-     * @notice For each round we need to first create the policytoken(ERC20)
+     * @notice Deploy a new policy token.
+     *         Detail info is included inside the token name and handled inside policyCore.       
+     * 
      * @param _policyTokenName Name of the policyToken
-     * @param _decimals Decimals of the policyToken
+     * @param _decimals        Decimals of the policyToken
+     * 
      * @return tokenAddress PolicyToken address
      */
     function deployPolicyToken(
@@ -226,11 +229,13 @@ contract NaughtyFactory is OwnableUpgradeable {
 
     /**
      * @notice After deploy the policytoken and get the address,
-     *         we deploy the policyToken - stablecoin pool contract
+     *         we deploy the policyToken - stablecoin pool contract.
+     * 
      * @param _policyTokenAddress Address of policy token
-     * @param _stablecoin Address of the stable coin
-     * @param _deadline Deadline of the pool
-     * @param _feeRate Fee rate given to LP holders
+     * @param _stablecoin         Address of the stable coin
+     * @param _deadline           Deadline of the pool
+     * @param _feeRate            Fee rate given to LP holders
+     * 
      * @return poolAddress Address of the pool
      */
     function deployPool(
@@ -271,10 +276,10 @@ contract NaughtyFactory is OwnableUpgradeable {
      * @param salt Salt for the deployment
      * @return addr The deployed contract address
      */
-    function _deploy(bytes memory code, bytes32 salt)
-        internal
-        returns (address addr)
-    {
+    function _deploy(
+        bytes memory code,
+        bytes32 salt
+    ) internal returns (address addr) {
         assembly {
             addr := create2(0, add(code, 0x20), mload(code), salt)
             if iszero(extcodesize(addr)) {

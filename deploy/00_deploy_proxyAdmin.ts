@@ -1,5 +1,5 @@
 import { HardhatRuntimeEnvironment } from "hardhat/types";
-import { DeployFunction, ProxyOptions } from "hardhat-deploy/types";
+import { DeployFunction } from "hardhat-deploy/types";
 import {
   readAddressList,
   storeAddressList,
@@ -21,12 +21,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   network.name = network.name == "hardhat" ? "localhost" : network.name;
 
   const { deployer } = await getNamedAccounts();
-
-  // Read address list from local file
+  
   const addressList = readAddressList();
   const proxyAddressList = readProxyAdmin();
 
-  // Proxy Admin contract artifact
   const proxyAdmin = await deploy("ProxyAdmin", {
     contract: "ProxyAdmin",
     from: deployer,
@@ -36,7 +34,6 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   addressList[network.name].ProxyAdmin = proxyAdmin.address;
   proxyAddressList[network.name] = proxyAdmin.address;
 
-  // Store the address list after deployment
   storeAddressList(addressList);
   storeProxyAdmin(proxyAddressList);
 };
