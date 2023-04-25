@@ -47,7 +47,6 @@ import "./tasks/naughtyPrice/arbitraryPriceGetter";
 // // // Token Tasks
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/mintToken";
-import "./tasks/tokens/shield";
 
 // // // Staking Tasks
 import "./tasks/staking/stakingPoolFactory";
