@@ -61,6 +61,8 @@ import "./tasks/incomeSharing/incomeMaker";
 // // import "./tasks/general/index";
 import "./tasks/ILM/startStop";
 
+import "./tasks/index";
+
 dotenv.config();
 
 // You need to export an object to set up your config

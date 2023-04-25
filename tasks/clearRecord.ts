@@ -1,19 +1,12 @@
-import { subtask, task, types } from "hardhat/config";
+import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 // import hre from "hardhat";
 
 import {
   readAddressList,
   readFarmingPoolList,
-  readNaughtyPoolList,
   readNaughtyTokenList,
   readProxyAdmin,
-  readSignerList,
-  clearAddressList,
-  clearFarmingPoolList,
-  clearNaughtyPoolList,
-  clearNaughtyTokenList,
-  clearProxyAdmin,
   clearSignerList,
   storeAddressList,
   storeFarmingPoolList,

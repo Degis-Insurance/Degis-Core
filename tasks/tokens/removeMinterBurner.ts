@@ -26,7 +26,7 @@ type AddMinterBurnerTaskArgs = {
 // ************************************* Task Action ************************************** //
 // ---------------------------------------------------------------------------------------- //
 
-export const addMinterBurnerAction = async (
+export const removeMinterBurnerAction = async (
   taskArgs: AddMinterBurnerTaskArgs,
   hre: HardhatRuntimeEnvironment
 ) => {
@@ -34,7 +34,7 @@ export const addMinterBurnerAction = async (
   const addressList = readAddressList();
 
   console.log(
-    `\n⏳⏳ Task Start: add minter or burner ⏳⏳\n`,
+    `\n⏳⏳ Task Start: remove minter or burner ⏳⏳\n`,
     `\n⏳⏳ Network: ${network.name} ⏳⏳\n`
   );
 
@@ -58,17 +58,17 @@ export const addMinterBurnerAction = async (
 
   if (taskArgs.type == MinterBurner.Minter) {
     const isAlready = await token.isMinter(newMinterContractAddress);
-    if (!isAlready) {
-      const tx = await token.addMinter(newMinterContractAddress);
+    if (isAlready) {
+      const tx = await token.removeMinter(newMinterContractAddress);
       console.log(await tx.wait());
-    } else console.log("Already a minter");
+    } else console.log("Not a minter");
   } else if (taskArgs.type == MinterBurner.Burner) {
     const isAlready = await token.isBurner(newMinterContractAddress);
-    if (!isAlready) {
-      const tx = await token.addBurner(newMinterContractAddress);
+    if (isAlready) {
+      const tx = await token.removeBurner(newMinterContractAddress);
       console.log(await tx.wait());
-    } else console.log("Already a burner");
+    } else console.log("Not a burner");
   }
 
-  console.log("\n✅✅ Task Finish: add minter or burner ✅✅\n");
+  console.log(`\n✅✅ Task Finish: remove minter or burner ✅✅\n`);
 };
