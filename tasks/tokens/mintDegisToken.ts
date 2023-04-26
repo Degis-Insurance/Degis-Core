@@ -36,7 +36,6 @@ export const mintDegisTokenAction = async (
     addressList[network.name].DegisToken
   );
 
-  // Add minter
   const tx = await degisToken.mintDegis(
     taskArgs.address,
     parseUnits(taskArgs.amount)

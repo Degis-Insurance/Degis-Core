@@ -2,13 +2,13 @@ import "@nomiclabs/hardhat-ethers";
 import { readAddressList } from "../../scripts/contractAddress";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { parseUnits } from "ethers/lib/utils";
-import { BuyerToken__factory } from "../../typechain";
+import { MockUSD__factory } from "../../typechain";
 
 // ---------------------------------------------------------------------------------------- //
 // *************************************** Types ****************************************** //
 // ---------------------------------------------------------------------------------------- //
 
-type MintBuyerTokenTaskArgs = {
+type MintMockUSDTaskArgs = {
   address: string;
   amount: string;
 };
@@ -17,31 +17,28 @@ type MintBuyerTokenTaskArgs = {
 // ************************************* Task Action ************************************** //
 // ---------------------------------------------------------------------------------------- //
 
-export const mintBuyerTokenAction = async (
-  taskArgs: MintBuyerTokenTaskArgs,
+export const mintMockUSDAction = async (
+  taskArgs: MintMockUSDTaskArgs,
   hre: HardhatRuntimeEnvironment
 ) => {
   const { network, ethers } = hre;
   const addressList = readAddressList();
 
   console.log(
-    `\n⏳⏳ Task Start: mint buyertoken ⏳⏳\n`,
+    `\n⏳⏳ Task Start: mint mock usd ⏳⏳\n`,
     `\n⏳⏳ Network: ${network.name} ⏳⏳\n`
   );
 
   const [dev] = await ethers.getSigners();
 
   // Get the token contract instance
-  const buyerToken = new BuyerToken__factory(dev).attach(
-    addressList[network.name].BuyerToken
+  const usd = new MockUSD__factory(dev).attach(
+    addressList[network.name].MockUSD
   );
 
-  const tx = await buyerToken.mintBuyerToken(
-    taskArgs.address,
-    parseUnits(taskArgs.amount)
-  );
+  const tx = await usd.mint(taskArgs.address, parseUnits(taskArgs.amount, 6));
 
   console.log(await tx.wait());
 
-  console.log(`\n✅✅ Task Finish: mint buyertoken ✅✅\n`);
+  console.log(`\n✅✅ Task Finish: mint mock usd ✅✅\n`);
 };
