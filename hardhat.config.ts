@@ -48,9 +48,6 @@ import "./tasks/naughtyPrice/arbitraryPriceGetter";
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/mintMockUSD";
 
-// // // Staking Tasks
-import "./tasks/staking/stakingPoolFactory";
-
 // // import "./tasks/proxy/admin";
 import "./tasks/governance/VeDEG";
 

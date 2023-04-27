@@ -1,20 +1,25 @@
 import "@nomiclabs/hardhat-ethers";
-import { readAddressList } from "../scripts/contractAddress";
+import { readAddressList } from "../../scripts/contractAddress";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+
+import {
+  StakingPoolFactory,
+  StakingPoolFactory__factory,
+} from "../../typechain";
 
 // ---------------------------------------------------------------------------------------- //
 // *************************************** Types ****************************************** //
 // ---------------------------------------------------------------------------------------- //
 
 type TaskArgs = {
-  arg1: string;
+  pooltoken: string;
 };
 
 // ---------------------------------------------------------------------------------------- //
 // ************************************* Task Action ************************************** //
 // ---------------------------------------------------------------------------------------- //
 
-export const addMinterBurnerAction = async (
+export const getStakingPoolAction = async (
   taskArgs: TaskArgs,
   hre: HardhatRuntimeEnvironment
 ) => {
@@ -23,9 +28,19 @@ export const addMinterBurnerAction = async (
   const [dev] = await ethers.getSigners();
 
   console.log(
-    `\n⏳⏳ Task Start: {task name} ⏳⏳\n`,
+    `\n⏳⏳ Task Start: get staking pool ⏳⏳\n`,
     `\n⏳⏳ Network: ${network.name} ⏳⏳\n`
   );
 
-  console.log("\n✅✅ Task Finish: {task name} ✅✅\n");
+  const stakingPoolFactoryAddress =
+    addressList[network.name].StakingPoolFactory;
+
+  const factory: StakingPoolFactory = new StakingPoolFactory__factory(
+    dev
+  ).attach(stakingPoolFactoryAddress);
+
+  const poolAddress = await factory.getPoolAddress(taskArgs.pooltoken);
+  console.log(`Staking pool address: ${poolAddress}`);
+
+  console.log("\n✅✅ Task Finish: get staking pool ✅✅\n");
 };
