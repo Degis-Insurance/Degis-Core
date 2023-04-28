@@ -33,24 +33,17 @@ import "./tasks/naughtyPrice/addStablecoin";
 import "./tasks/naughtyPrice/IDOPriceGetter";
 import "./tasks/naughtyPrice/arbitraryPriceGetter";
 
-// // // Lucky Box Tasks
-// import "./tasks/lucky/setAddress";
-// import "./tasks/lucky/degisLottery";
-
 // // // Token Tasks
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/mintMockUSD";
 
 import "./tasks/governance/VeDEG";
-import "./tasks/governance";
 
 // // // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
 import "./tasks/incomeSharing";
-// // import "./tasks/general/index";
-import "./tasks/ILM/startStop";
 
 import "./tasks/index";
 

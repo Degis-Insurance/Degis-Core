@@ -626,5 +626,13 @@
 			"settleTime": 1661774400
 		}
 	},
-	"localhost": {}
+	"localhost": {},
+	"arb_goerli": {
+		"BTC_20000.1_L_0001": {
+			"address": "0x835FC47250e835F5C396D7eB3F346e000B5053E1",
+			"deadline": 1682670600,
+			"settleTime": 1682671500
+		}
+	},
+	"arb": {}
 }

@@ -692,5 +692,15 @@
 		}
 	},
 	"localhost": {},
-	"rinkeby": {}
+	"rinkeby": {},
+	"arb_goerli": {
+		"BTC_20000.1_L_0001": {
+			"policyToken": "0x835FC47250e835F5C396D7eB3F346e000B5053E1",
+			"stablecoin": "0x23d0cddC1Ea9Fcc5CA9ec6b5fC77E304bCe8d4c3",
+			"deadline": "1682668800",
+			"lptoken": "0x81F287f2995CF62048f86e734188270f3e982441",
+			"pairAddress": "0x4D9D752F7f5D26366642086bBe4705ecb168cD94"
+		}
+	},
+	"arb": {}
 }
