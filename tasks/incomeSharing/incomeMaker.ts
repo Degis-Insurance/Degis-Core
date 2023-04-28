@@ -1,13 +1,7 @@
 import { task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 import { formatUnits } from "ethers/lib/utils";
-
-import { getTokenAddressOnAVAX } from "../../info/tokenAddress";
-import {
-  IncomeMaker__factory,
-  MockUSD__factory,
-  NaughtyPair__factory,
-} from "../../typechain";
+import { NaughtyPair__factory } from "../../typechain";
 
 task("getIncomeMakerBalance", "Get income maker lp balance")
   .addParam("pair", "The pool address", null, types.string)
@@ -21,47 +15,4 @@ task("getIncomeMakerBalance", "Get income maker lp balance")
 
     const balance = await pair.balanceOf(addressList[network.name].IncomeMaker);
     console.log("income maker lp balance: ", formatUnits(balance, 18));
-  });
-
-task(
-  "convertIncome",
-  "Convert income from income maker to income sharing vault"
-)
-  .addParam("token", "naughty token address", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    console.log("\nConvert income in income maker...\n");
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const policyTokenAddress = taskArgs.token;
-
-    // Income maker contract
-    const maker = new IncomeMaker__factory(dev_account).attach(
-      addressList[network.name].IncomeMaker
-    );
-
-    // Stablecoin address
-    let usdAddress: string;
-    if (network.name == "avax" || network.name == "avaxTest") {
-      usdAddress = getTokenAddressOnAVAX("USDC");
-    } else {
-      usdAddress = addressList[network.name].MockUSD;
-    }
-
-    const usd = new MockUSD__factory(dev_account).attach(usdAddress);
-
-    const balBefore = await usd.balanceOf(
-      addressList[network.name].IncomeSharingVault
-    );
-    console.log("Income sharing vault bal before: ", formatUnits(balBefore, 6));
-
-    const tx = await maker.convertIncome(policyTokenAddress, usdAddress);
-    console.log("Tx details: ", await tx.wait());
-
-    const balAfter = await usd.balanceOf(
-      addressList[network.name].IncomeSharingVault
-    );
-    console.log("Income sharing vault bal after: ", formatUnits(balAfter, 6));
-
-    const diff = balAfter.sub(balBefore);
-    console.log("New income: ", formatUnits(diff, 6));
   });

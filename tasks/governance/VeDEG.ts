@@ -1,4 +1,4 @@
-import { task, types } from "hardhat/config";
+import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
 import {

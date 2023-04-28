@@ -27,6 +27,9 @@ export const claimVeDEGAction = async (
     veAddress
   );
 
+  const balanceBefore = await veDEG.balanceOf(dev.address);
+  console.log("User balance before claim: ", formatUnits(balanceBefore));
+
   const tx = await veDEG.claim();
   console.log("tx details: ", await tx.wait());
 

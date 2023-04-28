@@ -78,24 +78,3 @@ task("getIncomeBalance", "Get balance in income sharing vault").setAction(
     // console.log("Tx details: ", await tx.wait());
   }
 );
-
-// task("updateLastRewardBalance", "Update last reward balance").setAction(
-//   async (_, hre) => {
-//     const { network, addressList, dev_account } = await hre.run("preparation");
-
-//     const vaultAddress = addressList[network.name].IncomeSharingVault;
-
-//     const vault: IncomeSharingVaultV2 = new IncomeSharingVaultV2__factory(
-//       dev_account
-//     ).attach(vaultAddress);
-
-//     const init = await vault.lastRewardBalance(1);
-//     console.log("Init: ", formatUnits(init, 6));
-
-//     const tx = await vault.updateLastRewardBalance(1);
-//     console.log("Tx details: ", await tx.wait());
-
-//     const final = await vault.lastRewardBalance(1);
-//     console.log("Final: ", formatUnits(final, 6));
-//   }
-// );

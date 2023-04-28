@@ -48,6 +48,7 @@ import "./tasks/governance";
 import "./tasks/incomeSharing/setAddress";
 import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
+import "./tasks/incomeSharing";
 // // import "./tasks/general/index";
 import "./tasks/ILM/startStop";
 
