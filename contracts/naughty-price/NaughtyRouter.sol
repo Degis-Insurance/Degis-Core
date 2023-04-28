@@ -94,7 +94,7 @@ contract NaughtyRouter is OwnableUpgradeable {
      */
     modifier beforeDeadline(uint256 _deadLine) {
         if (msg.sender != INaughtyFactory(factory).incomeMaker()) {
-            require(block.timestamp < _deadLine, "expired transaction");
+            require(block.timestamp <= _deadLine, "expired transaction");
         }
         _;
     }

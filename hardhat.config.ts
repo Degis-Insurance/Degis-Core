@@ -24,13 +24,6 @@ import "./tasks/helper";
 import "./tasks/farming/farmingPool";
 // import "./tasks/farming/purchaseIncentive";
 
-// // Miserable Flight Tasks
-// import "./tasks/misrableFlight/sigManager";
-// import "./tasks/misrableFlight/setAddress";
-// import "./tasks/misrableFlight/policyFlow";
-// import "./tasks/misrableFlight/insurancePool";
-// import "./tasks/misrableFlight/flightOracle";
-
 // // Naughty Price Tasks
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/naughtyPrice/settleResult";
@@ -48,8 +41,8 @@ import "./tasks/naughtyPrice/arbitraryPriceGetter";
 import "./tasks/tokens/addMinterBurner";
 import "./tasks/tokens/mintMockUSD";
 
-// // import "./tasks/proxy/admin";
 import "./tasks/governance/VeDEG";
+import "./tasks/governance";
 
 // // // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";

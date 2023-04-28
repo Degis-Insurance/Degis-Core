@@ -197,10 +197,10 @@ task("setVeDEG", "Set the VeDEG of a farming pool").setAction(
 
     const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
-    const FarmingPool: FarmingPoolUpgradeable__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
     const farmingPool: FarmingPoolUpgradeable =
-      FarmingPool.attach(farmingPoolAddress);
+      new FarmingPoolUpgradeable__factory(dev_account).attach(
+        farmingPoolAddress
+      );
 
     const tx = await farmingPool.setVeDEG(veDEGAddress);
     console.log("Tx details: ", await tx.wait());
