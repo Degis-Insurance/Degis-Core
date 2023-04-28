@@ -39,11 +39,9 @@ import "./tasks/tokens/mintMockUSD";
 
 import "./tasks/governance/VeDEG";
 
-// // // Income Sharing tasks
 import "./tasks/incomeSharing/setAddress";
-import "./tasks/incomeSharing/pool";
 import "./tasks/incomeSharing/incomeMaker";
-import "./tasks/incomeSharing";
+
 
 import "./tasks/index";
 

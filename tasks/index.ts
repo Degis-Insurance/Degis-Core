@@ -3,6 +3,7 @@ import * as stakingTasks from "./staking";
 import * as proxyTasks from "./proxy";
 import * as governanceTasks from "./governance";
 import * as ILMTasks from "./ILM";
+import * as incomeSharingTasks from "./incomeSharing";
 
 export default {
   tokenTasks,
@@ -10,4 +11,5 @@ export default {
   proxyTasks,
   governanceTasks,
   ILMTasks,
+  incomeSharingTasks,
 };

@@ -1347,5 +1347,16 @@
 			"reward": "1.0",
 			"bonus": "1.0"
 		}
-	}
+	},
+	"arb_goerli": {
+		"2": {
+			"name": "BTC_20000.1_L_0001",
+			"address": "0x4D9D752F7f5D26366642086bBe4705ecb168cD94",
+			"poolId": 2,
+			"reward": "0.1",
+			"bonus": "0.1",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		}
+	},
+	"arb": {}
 }
