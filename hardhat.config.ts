@@ -20,10 +20,6 @@ import "./tasks/helper";
 
 // import "./tasks/emergencyPool/deposit-withdraw";
 
-// Farming Tasks
-import "./tasks/farming/farmingPool";
-// import "./tasks/farming/purchaseIncentive";
-
 // // Naughty Price Tasks
 import "./tasks/naughtyPrice/setAddress";
 import "./tasks/naughtyPrice/settleResult";

@@ -1,4 +1,4 @@
-import { subtask, task, types } from "hardhat/config";
+import {  task, types } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
 import {
@@ -9,181 +9,9 @@ import {
   MockERC20,
   MockERC20__factory,
 } from "../../typechain";
-import {
-  readAddressList,
-  readFarmingPoolList,
-  storeFarmingPoolList,
-} from "../../scripts/contractAddress";
 import { parseUnits, formatEther } from "ethers/lib/utils";
 import { stablecoinToWei, toWei } from "../../test/utils";
 
-const addressList = readAddressList();
-const farmingPoolList = readFarmingPoolList();
-
-task("addFarmingPool", "Add new farming pool")
-  .addParam("name", "The name of the new farming pool", "unnamed", types.string)
-  .addParam("address", "The pool's address to be added", null, types.string)
-  .addParam("reward", "Initial degis reward per second", null, types.string)
-  .addParam("bonus", "Bonus degis reward per second", null, types.string)
-  .addParam("doublereward", "Double reward token address", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    const poolName = taskArgs.name;
-    const lptokenAddress = taskArgs.address;
-    const basicDegisPerSecond = taskArgs.reward;
-    const bonusDegisPerSecond = taskArgs.bonus;
-    const doubleRewardTokenAddress =
-      taskArgs.doublereward == "0"
-        ? ethers.constants.AddressZero
-        : taskArgs.doublereward;
-
-    console.log("The pool name is: ", poolName);
-    console.log("Pool address to be added: ", lptokenAddress);
-    console.log("Basic reward speed: ", basicDegisPerSecond, "degis/second");
-    console.log("Bonus reward speed: ", bonusDegisPerSecond, "degis/second");
-    console.log("Double reward token address: ", doubleRewardTokenAddress);
-
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
-    console.log(
-      "The farming pool address of ",
-      network.name,
-      " is: ",
-      farmingPoolAddress
-    );
-
-    const farmingPool: FarmingPoolUpgradeable =
-      new FarmingPoolUpgradeable__factory(dev_account).attach(
-        farmingPoolAddress
-      );
-
-    console.log(
-      "farming basic speed",
-      parseUnits(basicDegisPerSecond).toString()
-    );
-    console.log(
-      "farming bonus speed",
-      parseUnits(bonusDegisPerSecond).toString()
-    );
-
-    console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
-    console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
-
-    const tx = await farmingPool.add(
-      lptokenAddress,
-      parseUnits(basicDegisPerSecond),
-      parseUnits(bonusDegisPerSecond),
-      false,
-      doubleRewardTokenAddress
-    );
-    console.log("tx details: ", await tx.wait());
-
-    // Check the result
-    const poolId = await farmingPool.poolMapping(lptokenAddress);
-    const poolInfo = await farmingPool.poolList(poolId);
-    console.log("Pool info: ", poolInfo);
-
-    const doubleReward = await farmingPool.doubleRewarder(poolId);
-
-    // Store the new farming pool
-    const poolObject = {
-      name: poolName,
-      address: lptokenAddress,
-      poolId: poolId.toNumber(),
-      reward: formatEther(poolInfo.basicDegisPerSecond),
-      bonus: formatEther(poolInfo.bonusDegisPerSecond),
-      doubleRewardTokenAddress: doubleReward,
-    };
-    farmingPoolList[network.name][poolId.toNumber()] = poolObject;
-
-    console.log("Farming pool list now: ", farmingPoolList);
-    storeFarmingPoolList(farmingPoolList);
-  });
-
-task("setFarmingPoolDegisReward", "Set the degis reward of a farming pool")
-  .addParam("id", "Pool id", null, types.int)
-  .addParam("reward", "Basic Degis reward per second", null, types.string)
-  .addParam("bonus", "Bonus reward per second", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    // Get the args
-    const poolId = taskArgs.id;
-    const basicDegisPerSecond = taskArgs.reward;
-    const bonusDegisPerSecond = taskArgs.bonus;
-
-    console.log("Pool id to be set: ", poolId);
-    console.log("New reward speed: ", basicDegisPerSecond * 86400, "degis/day");
-    console.log("New Bonus speed: ", bonusDegisPerSecond * 86400, "degis/day");
-
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
-    console.log(
-      "The farming pool address of ",
-      network.name,
-      " is: ",
-      farmingPoolAddress
-    );
-    const FarmingPool: FarmingPoolUpgradeable__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPoolUpgradeable =
-      FarmingPool.attach(farmingPoolAddress);
-
-    // Set the start block
-    const tx = await farmingPool.setDegisReward(
-      poolId,
-      parseUnits(basicDegisPerSecond),
-      parseUnits(bonusDegisPerSecond),
-      false
-    );
-    console.log("Tx hash: ", (await tx.wait()).transactionHash);
-
-    // Check the result
-    const poolInfo = await farmingPool.poolList(poolId);
-    console.log(
-      "Degis reward after set: basic - ",
-      formatEther(poolInfo.basicDegisPerSecond),
-      " bonus - ",
-      formatEther(poolInfo.bonusDegisPerSecond)
-    );
-
-    // Store the new farming pool
-    farmingPoolList[network.name][poolId].reward = formatEther(
-      poolInfo.basicDegisPerSecond
-    );
-    farmingPoolList[network.name][poolId].bonus = formatEther(
-      poolInfo.bonusDegisPerSecond
-    );
-    console.log("Farming pool list now: ", farmingPoolList);
-    storeFarmingPoolList(farmingPoolList);
-  });
-
-task("setFarmingStartTime", "Set the start timestamp of farming")
-  .addParam("start", "The start timestamp", null, types.int)
-  .setAction(async (taskArgs, hre) => {
-    const startTimestamp = taskArgs.start;
-    console.log("New start timestamp: ", startTimestamp);
-
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
-    console.log(
-      "The farming pool address of this network is: ",
-      farmingPoolAddress
-    );
-
-    const FarmingPool: FarmingPoolUpgradeable__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPoolUpgradeable =
-      FarmingPool.attach(farmingPoolAddress);
-
-    // Set the start block
-    const tx = await farmingPool.setStartTimestamp(startTimestamp);
-    console.log("Tx details: ", await tx.wait());
-
-    // Check the result
-    const startBlockResult = await farmingPool.startTimestamp();
-    console.log("Start block for farming: ", startBlockResult.toNumber());
-  });
 
 task("setVeDEG", "Set the VeDEG of a farming pool").setAction(
   async (_, hre) => {
@@ -284,57 +112,9 @@ task("stopPieceWise-Farming", "Stop piecewise reward level for farming")
     console.log("Threshold basic: ", thresholdBasic.toString());
   });
 
-task("setVeDEGInFarming", "Set the VeDEG of a farming pool").setAction(
-  async (taskArgs, hre) => {
-    const { network, addressList, dev_account } = await hre.run("preparation");
 
-    const farmingPoolAddress = addressList[network.name].FarmingPoolUpgradeable;
-    console.log(
-      "The farming pool address of this network is: ",
-      farmingPoolAddress
-    );
-
-    const FarmingPool: FarmingPoolUpgradeable__factory =
-      await hre.ethers.getContractFactory("FarmingPoolUpgradeable");
-    const farmingPool: FarmingPoolUpgradeable =
-      FarmingPool.attach(farmingPoolAddress);
-
-    const poolInfo = await farmingPool.poolList(1);
-    console.log("Tx details: ", formatEther(poolInfo.bonusDegisPerSecond));
-  }
-);
 
 // CLY: 0xec3492a2508DDf4FDc0cD76F31f340b30d1793e6
-task("addDoubleRewardToken", "Add double reward to a farming pool")
-  .addParam("lptoken", "LPToken address", null, types.string)
-  .addParam("rewardtoken", "Reward token address", null, types.string)
-  .setAction(async (taskArgs, hre) => {
-    const { network, addressList, dev_account } = await hre.run("preparation");
-
-    const doubleRewarderAddress = addressList[network.name].DoubleRewarder;
-    const doubleRewarderContract: DoubleRewarder = new DoubleRewarder__factory(
-      dev_account
-    ).attach(doubleRewarderAddress);
-
-    const rewardTokenAddress = taskArgs.rewardtoken;
-
-    console.log("The reward token address is: ", rewardTokenAddress);
-
-    const tx = await doubleRewarderContract.addRewardTokenWithMock(
-      taskArgs.lptoken,
-      rewardTokenAddress
-    );
-    console.log("Tx details: ", await tx.wait());
-
-    const mockAddress = await doubleRewarderContract.getMockRewardToken(
-      taskArgs.lptoken,
-      rewardTokenAddress
-    );
-    console.log("The mock address is: ", mockAddress);
-
-    const rewardInfo = await doubleRewarderContract.pools(mockAddress);
-    console.log("Reward info: ", rewardInfo);
-  });
 
 task("setDoubleRewardSpeed", "Add double reward to a farming pool")
   .addParam("lptoken", "LPToken address", null, types.string)
