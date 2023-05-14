@@ -4,6 +4,9 @@ import { getStakingPoolAction } from "./getStakingPool";
 import { setStakingRewardAction } from "./setStakingReward";
 import { deployStakingPoolAction } from "./deployStakingPool";
 import { stakeAction } from "./stake";
+import { getUserStakingAction } from "./getUserStaking";
+
+// DEG Address: 0x9f285507Ea5B4F33822CA7aBb5EC8953ce37A645
 
 // hh getStakingPool --network arb --pooltoken 0x1234
 task(
@@ -31,3 +34,11 @@ task("stake", "Stake in staking pool", stakeAction)
   .addParam("pooltoken", "Address of the pool's reward token")
   .addParam("amount", "Amount of pool token to stake(no decimals, 1 = 1e18)")
   .addParam("lockuntil", "Lock the stake until this timestamp");
+
+task(
+  "getUserStaking",
+  "Get user staking info in a staking pool",
+  getUserStakingAction
+)
+  .addParam("pooltoken", "Address of the pool's reward token")
+  .addParam("address", "Address of the user");

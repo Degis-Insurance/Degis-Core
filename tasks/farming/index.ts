@@ -5,6 +5,7 @@ import { setFarmingRewardAction } from "./setFarmingReward";
 import { setFarmingStartTimeAction } from "./setFarmingStartTime";
 import { addDoubleRewardTokenAction } from "./addDoubleRewardToken";
 
+// hh addFarmingPool --network avax --name ProctectionPool --address 0x6D260Abb832E019F72De686cD67CA704b15F4D57 --reward 0.01157 --bonus 0 --doublereward 0
 task("addFarmingPool", "Add new farming pool", addFarmingPoolAction)
   .addParam("name", "The name of the new farming pool")
   .addParam("address", "The pool's address to be added")

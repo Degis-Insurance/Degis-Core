@@ -1210,6 +1210,14 @@
 			"bonus": "0.0",
 			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
 		},
+		"149": {
+			"name": "ProctectionPool",
+			"address": "0x6D260Abb832E019F72De686cD67CA704b15F4D57",
+			"poolId": 149,
+			"reward": "0.01157",
+			"bonus": "0.0",
+			"doubleRewardTokenAddress": "0x0000000000000000000000000000000000000000"
+		},
 		"1-old": {
 			"name": "AVAX_94.0_L_2104",
 			"address": "0xA0dA9378e0284440EDeaE49B54f11f4bC20c2C4c",
