@@ -10,7 +10,7 @@ import {  formatEther } from "ethers/lib/utils";
 task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
   const { network, addressList, dev_account } = await hre.run("preparation");
 
-  const user = "0x5181E7418b1BeDfc176703741E1b8A887E65a525";
+  const user = "0x00c7f020A6a379cfab9377BC79f5bB4100d013F8";
 
   const veDEGAddress = addressList[network.name].VoteEscrowedDegis;
 
