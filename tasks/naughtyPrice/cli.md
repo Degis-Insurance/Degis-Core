@@ -11,14 +11,32 @@ npx hardhat addFarmingPool --network avaxTest --name DCAR_0.25_L_2007 --address 
 
 ## Deploy NP Token
 
-hh deployNPToken --network avax --name AVAX --stablecoin USDC --k 20.55 --namedecimals 2 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 0
+# AVAX 
+hh deployNPToken --network avax --name AVAX --stablecoin USDC --k 14.16 --namedecimals 2 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
 
-hh deployNPToken --network avax --name XAVA --stablecoin USDC --k 0.427 --namedecimals 3 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 0
+hh deployNPToken --network avax --name AVAX --stablecoin USDC --k 14.16 --namedecimals 2 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
 
-hh deployNPToken --network avax --name JOE --stablecoin USDC --k 0.63 --namedecimals 2 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 0
+# XAVA
+hh deployNPToken --network avax --name XAVA --stablecoin USDC --k 0.253 --namedecimals 3 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
 
-hh deployNPToken --network avax --name BTC --stablecoin USDC --k 29890.5 --namedecimals 1 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 0
+hh deployNPToken --network avax --name XAVA --stablecoin USDC --k 0.253 --namedecimals 3 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
 
-hh deployNPToken --network avax --name CAI --stablecoin USDC --k 164.1 --namedecimals 1 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 1
+# JOE
+hh deployNPToken --network avax --name JOE --stablecoin USDC --k 0.41 --namedecimals 2 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
 
-hh deployNPToken --network avax --name ETH --stablecoin USDC --k 2091.6 --namedecimals 1 --iscall 0 --round 0505 --deadline 1683014400 --settletime 1683273600 --type 0
+hh deployNPToken --network avax --name JOE --stablecoin USDC --k 0.41 --namedecimals 2 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
+
+# BTC
+hh deployNPToken --network avax --name BTC --stablecoin USDC --k 27182.8 --namedecimals 1 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
+
+hh deployNPToken --network avax --name BTC --stablecoin USDC --k 27182.8 --namedecimals 1 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
+
+# CAI
+hh deployNPToken --network avax --name CAI --stablecoin USDC --k 114.1 --namedecimals 1 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 1
+
+hh deployNPToken --network avax --name CAI --stablecoin USDC --k 114.1 --namedecimals 1 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 1
+
+# ETH
+hh deployNPToken --network avax --name ETH --stablecoin USDC --k 1870.4 --namedecimals 1 --iscall 0 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0
+
+hh deployNPToken --network avax --name ETH --stablecoin USDC --k 1870.4 --namedecimals 1 --iscall 1 --round 1806 --deadline 1686816000 --settletime 1687075200 --type 0

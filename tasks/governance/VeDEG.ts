@@ -1,11 +1,8 @@
 import { task } from "hardhat/config";
 import "@nomiclabs/hardhat-ethers";
 
-import {
-  VoteEscrowedDegis,
-  VoteEscrowedDegis__factory,
-} from "../../typechain";
-import {  formatEther } from "ethers/lib/utils";
+import { VoteEscrowedDegis, VoteEscrowedDegis__factory } from "../../typechain";
+import { formatEther } from "ethers/lib/utils";
 
 task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
   const { network, addressList, dev_account } = await hre.run("preparation");
@@ -22,13 +19,13 @@ task("checkVeState", "Check veDEG state").setAction(async (_, hre) => {
   console.log("User veDEG balance: ", formatEther(balance));
 
   const userInfo = await veDEG.users(user);
-  console.log("User veDEG balance: ", formatEther(userInfo.amount));
+  console.log("User staked DEG balance: ", formatEther(userInfo.amount));
   console.log("User last release:", userInfo.lastRelease.toString());
   console.log("User veDEG locked: ", formatEther(userInfo.amountLocked));
   console.log("User lock until:", userInfo.lockUntil.toString());
 
   const locked = await veDEG.locked(user);
-  console.log("User veDEG locked: ", formatEther(locked));
+  console.log("User veDEG locked somewhere: ", formatEther(locked));
 
   const claimable = await veDEG.claimable(user);
   console.log("User veDEG claimable: ", formatEther(claimable));
@@ -72,4 +69,3 @@ task("unlockVeDEG", "Unlock veDEG").setAction(async (_, hre) => {
   const lockedAfter = await veDEG.locked(user);
   console.log("Locked after", formatEther(lockedAfter));
 });
-

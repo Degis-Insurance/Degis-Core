@@ -40,7 +40,8 @@ import { formatEther } from "ethers/lib/utils";
 //   --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0
 //   --start 1665820800
 
-// npx hardhat addIDOPriceFeed --network avax --name CAI_97.74_L_0503 --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0 --start 1677657600
+// npx hardhat addIDOPriceFeed --network avax --name CAI_114.1_L_1806 --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0 --start 1686902400
+// npx hardhat addIDOPriceFeed --network avax --name CAI_114.1_H_1806 --decimals 18 --pair 0xE5e9d67e93aD363a50cABCB9E931279251bBEFd0 --start 1686902400
 
 task("addIDOPriceFeed", "Deploy a new naughty price token")
   .addParam("name", "Policy token name", null, types.string)
