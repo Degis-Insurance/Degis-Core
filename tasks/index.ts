@@ -5,6 +5,7 @@ import * as governanceTasks from "./governance";
 import * as ILMTasks from "./ILM";
 import * as incomeSharingTasks from "./incomeSharing";
 import * as farmingTasks from "./farming";
+import * as emergencyPoolTasks from "./emergencyPool";
 
 export default {
   tokenTasks,
@@ -13,5 +14,6 @@ export default {
   governanceTasks,
   ILMTasks,
   incomeSharingTasks,
-  farmingTasks
+  farmingTasks,
+  emergencyPoolTasks,
 };
